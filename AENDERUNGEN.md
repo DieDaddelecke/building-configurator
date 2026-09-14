@@ -27,7 +27,9 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 - D2 – G1 intern für die Rolle `architect` freigeschaltet; Beta und öffentlich offen.
 - Einordnung von Lotissement-Straßen (eigene Parzelle = Straße), Eck- und Pfeifenstielgrundstücken bestätigt.
 - Keine Abnahme-Testmenge von 40 Grundstücken; der Architekt prüft die Grenzen erst beim Eingang einer Anfrage (Modul A).
-- Commits getrennt nach R0-Nacharbeiten (`c606387`) und G1; Push offen, weil noch kein Remote existiert.
+- Commits getrennt nach R0-Nacharbeiten (`c606387`) und G1 (`cc48386`).
+- Repository: privates GitHub-Repo `DieDaddelecke/building-configurator` als `origin`, `main` gepusht.
+- Erster CI-Lauf: Backend (111 Tests), Frontend und E2E grün nach Korrektur von `ci.yml` (pnpm-Version, Trivy-Action per SHA). Trivy fand HIGH-Lücken in den Basis-Images → `backend/Dockerfile` mit Debian-Updates, `frontend/Dockerfile` mit selbst gebautem Caddy (ANNAHMEN A27); lokal ohne Befund gescannt.
 
 **Ohne Dateiänderung**
 - Externe Dienste am 14.09.2026 live geprüft: Géoplateforme (Geokodierung, Höhen, WMTS, WFS BD TOPO), Etalab je Gemeinde (Stand 2026-06-01), Géorisques v1 ohne Token, v2 mit Token (ANNAHMEN G-Einleitung, G12, G13).

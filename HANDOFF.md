@@ -7,8 +7,8 @@
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` mit drei Commits: `1f4b646` (R0 und Dokumente), `c606387` (R0-Nacharbeiten: Unraid, Authentik, `storage-init`), darauf G1 mit diesem Hand-off. **Kein Remote-Repository, nichts gepusht** (Entscheidung Repository offen, Abschnitt 3).
-- **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; anbietergebundene Teile (Überwachung, Offsite-Sicherung, Mail) offen. Festlegungen [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A26.
+- **Git:** `main` mit drei Commits: `1f4b646` (R0 und Dokumente), `c606387` (R0-Nacharbeiten: Unraid, Authentik, `storage-init`), darauf G1 mit diesem Hand-off. Remote `origin`: privates Repo https://github.com/DieDaddelecke/building-configurator, `main` gepusht.
+- **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; anbietergebundene Teile (Überwachung, Offsite-Sicherung, Mail) offen. Festlegungen [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
 - **Betrieb bis zur Beta:** [deploy/unraid/README.md](deploy/unraid/README.md) mit Emprise- und Authentik-Stack, lokal geprüft, **noch nicht auf Unraid ausgeliefert**.
 - **G1 Grundstück (Plan 3.3):** umgesetzt, getestet und committet.
   - Backend `backend/app/site` + Adapter `backend/app/integrations`, Migration `0002`; Frontend Karte (MapLibre), `/grundstueck`, Büro-Prüfliste `/buero/grundstuecke`; E2E `frontend/e2e/site.spec.ts`.
@@ -29,7 +29,6 @@
 
 | Priorität | Nr. | Frage | Wo |
 |---|---|---|---|
-| 1 | – | Repository und CI: GitHub (Microsoft) oder Forgejo auf Unraid oder Codeberg? CI-Datei ist GitHub Actions. Blockiert den Push | `.github/workflows/ci.yml` |
 | 1 | – | Hostname für Authentik (Vorschlag `auth.aslani.work`); Cloudflare „DNS only“ (empfohlen, L8) oder Proxy | deploy/unraid README 2, A26 |
 | 1 | E2 | Mailanbieter (EU, z. B. Brevo, Scaleway TEM) | Spez. 16, BETRIEB 5 |
 | 2 | – | Wer schreibt die Hinweistexte L7 für G1 (`notice.cadastre_accuracy`, `notice.risks_public_data`)? Bis dahin Rückfalltext | ANNAHMEN G16, Plan 8 |
@@ -52,7 +51,7 @@
 3. Überwachung: Uptime Kuma mit `/api/health/ready`, `/api/health/jobs` und Authentik; Frische der Sicherung (README 7).
 4. Offsite-Kopie von `BACKUP_DIR` und Appdata; erste Wiederherstellungsübung (BETRIEB 6).
 5. SMTP nach E2 eintragen; Testmail über `POST /api/v1/admin/ops/test-mail`.
-6. CI erstmals laufen lassen, sobald ein Remote existiert; Versionen der Actions prüfen (u. a. `aquasecurity/trivy-action@0.33.1`); E2E-Schritt „ops schaltet frei“ dort erstmals ausgeführt.
+6. CI auf GitHub: Backend, Frontend und E2E grün (erster Lauf 14.09.2026); Sicherheits-Scan nach Anpassung der Images (A27) im letzten Lauf prüfen: `gh run list`. Schutz des Hauptzweigs einrichten (infra/README).
 7. Verarbeitungsverzeichnis anlegen (Plan 4.1 Kriterium 6, 6.9): Staff-E-Mail, Job-Nutzlast mit Mailadresse (A12), IP-HMAC (A7), Geokodierungs-Cache als HMAC (G13), IP an IGN beim Kartenaufruf (G15).
 8. Optional: lokal und in CI SeaweedFS statt MinIO (A16, A22).
 
@@ -74,8 +73,8 @@ Befunde der Prüfung vom 13.09.2026 (Lösung im Plan in Klammern): S1 Winkeltole
 
 ## 5. Empfohlener nächster Schritt
 
-1. Nutzer entscheidet Priorität 1 aus Abschnitt 3 (Repository, Authentik-Hostname/Cloudflare, E2).
-2. Remote anlegen und `main` pushen, dann Unraid nach 4.1 Punkt 1–2 in Betrieb nehmen und G1 dort intern freischalten.
+1. Nutzer entscheidet Priorität 1 aus Abschnitt 3 (Authentik-Hostname/Cloudflare, E2).
+2. Unraid nach 4.1 Punkt 1–2 in Betrieb nehmen und G1 dort intern freischalten.
 3. Danach nächstes Modul nach Plan 5: **G2 Regelwerk** (Plan 3.4; Spezifikation 5.2 vor Code vollständig lesen).
 
 ## 6. Hinweise und Stolperstellen

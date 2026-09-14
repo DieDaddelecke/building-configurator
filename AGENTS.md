@@ -10,7 +10,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 - Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P) und G1 wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3 und D4 sind entschieden (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet (`backend/`, `frontend/`, `compose.yaml`, CI-Datei). Git-Repository mit erstem Commit.
 - Betrieb bis zur Beta auf Unraid mit Authentik: Stacks und Anleitung in `deploy/unraid/`, lokal geprüft, auf dem Server noch nicht ausgeliefert.
-- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite im Frontend), lokal intern freigeschaltet; committet, noch nicht gepusht (kein Remote), auf Unraid noch nicht ausgeliefert.
+- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite im Frontend), lokal intern freigeschaltet; committet und auf GitHub (privat) gepusht, auf Unraid noch nicht ausgeliefert.
 - Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 noch nicht eingearbeitet.
 
 ## Dokumente
