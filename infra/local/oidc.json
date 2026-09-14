@@ -1,0 +1,24 @@
+{
+  "interactiveLogin": false,
+  "httpServer": "NettyWrapper",
+  "tokenCallbacks": [
+    {
+      "issuerId": "emprise",
+      "tokenExpiry": 3600,
+      "requestMappings": [
+        {
+          "requestParam": "grant_type",
+          "match": "*",
+          "claims": {
+            "sub": "local-ops-1",
+            "email": "ops@emprise.local",
+            "email_verified": true,
+            "name": "Lokale Betriebsperson",
+            "amr": ["pwd", "mfa"],
+            "aud": ["emprise-local"]
+          }
+        }
+      ]
+    }
+  ]
+}

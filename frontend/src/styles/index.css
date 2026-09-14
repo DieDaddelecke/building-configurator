@@ -1,0 +1,58 @@
+/* Gestaltung aus dem Mockup (Hauskonfigurator.jsx, STIL). Schriften im Build gebündelt, kein CDN (Plan 6.7). */
+@import "tailwindcss";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+:root {
+  --paper: #f3f4f1; --sheet: #fcfcfa; --ink: #1c2220; --mute: #59625e; --faint: #8b938f;
+  --line: #d7dbd7; --line-strong: #b0b6b2; --accent: #2b45b0; --accent-tint: #e5e9f6; --accent-ink: #ffffff;
+  --warn: #7d5300; --warn-tint: #f7eeda; --alert: #9e3526; --alert-tint: #f6e6e2;
+  --street: #e8eae6; --house: #262c29; --hatch: #aeb4b0; --axo: #2a2f2d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111413; --sheet: #171b19; --ink: #e3e7e4; --mute: #a2aba6; --faint: #737c77;
+    --line: #2b322f; --line-strong: #454e4a; --accent: #8fa0f0; --accent-tint: #1d2442; --accent-ink: #0e1330;
+    --warn: #e0b25c; --warn-tint: #2b2413; --alert: #ec8b7a; --alert-tint: #33201c;
+    --street: #1e2321; --house: #c8cec9; --hatch: #4f5854; --axo: #0c0f0e;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111413; --sheet: #171b19; --ink: #e3e7e4; --mute: #a2aba6; --faint: #737c77;
+  --line: #2b322f; --line-strong: #454e4a; --accent: #8fa0f0; --accent-tint: #1d2442; --accent-ink: #0e1330;
+  --warn: #e0b25c; --warn-tint: #2b2413; --alert: #ec8b7a; --alert-tint: #33201c;
+  --street: #1e2321; --house: #c8cec9; --hatch: #4f5854; --axo: #0c0f0e;
+}
+
+body { background: var(--paper); margin: 0; }
+.emp { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.55; min-height: 100vh; }
+.f-display { font-family: "Archivo Variable", "Helvetica Neue", Arial, sans-serif; font-stretch: 116%; letter-spacing: -0.012em; line-height: 1.12; }
+.f-mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
+.num { font-variant-numeric: tabular-nums; }
+.balance { text-wrap: balance; }
+.eyebrow { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.4; letter-spacing: .11em; text-transform: uppercase; color: var(--mute); }
+.t-ink { color: var(--ink); } .t-mute { color: var(--mute); } .t-faint { color: var(--faint); } .t-accent { color: var(--accent); }
+.t-warn { color: var(--warn); } .t-alert { color: var(--alert); } .t-on-accent { color: var(--accent-ink); }
+.bg-paper { background: var(--paper); } .bg-sheet { background: var(--sheet); } .bg-tint { background: var(--accent-tint); }
+.bg-accent { background: var(--accent); } .bg-warn { background: var(--warn-tint); } .bg-alert { background: var(--alert-tint); } .bg-street { background: var(--street); }
+.bd { border-color: var(--line); } .bd-strong { border-color: var(--line-strong); } .bd-accent { border-color: var(--accent); }
+.bd-warn { border-color: var(--warn); } .bd-alert { border-color: var(--alert); } .bd-ink { border-color: var(--ink); }
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .7rem 1.15rem; font-weight: 500; font-size: 14px; line-height: 1.2; border: 1px solid transparent; transition: background .15s, border-color .15s, color .15s; cursor: pointer; text-decoration: none; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:disabled { background: var(--line); color: var(--faint); cursor: not-allowed; filter: none; }
+.btn-ghost { border-color: var(--line-strong); color: var(--ink); background: transparent; }
+.btn-ghost:hover { border-color: var(--ink); }
+.chip { border: 1px solid var(--line-strong); padding: .45rem .8rem; font-size: 13px; color: var(--ink); background: var(--sheet); cursor: pointer; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-tint); }
+.link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.karte { border: 1px solid var(--line); background: var(--sheet); }
+.emp :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes einblenden { from { opacity: 0 } to { opacity: 1 } }
+.anim-seite { animation: einblenden .35s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .anim-seite { animation: none; } }

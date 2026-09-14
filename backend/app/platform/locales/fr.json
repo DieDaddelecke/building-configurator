@@ -1,0 +1,16 @@
+{
+  "problem.authentication_required": "Authentification requise",
+  "problem.forbidden": "Accès refusé",
+  "problem.not_found": "Ressource introuvable",
+  "problem.method_not_allowed": "Méthode non autorisée",
+  "problem.validation_error": "Données invalides",
+  "problem.csrf_failed": "Jeton de sécurité manquant ou invalide",
+  "problem.rate_limited": "Trop de requêtes, veuillez réessayer plus tard",
+  "problem.conflict": "Conflit avec l'état actuel",
+  "problem.internal_error": "Erreur interne",
+  "problem.service_unavailable": "Service temporairement indisponible",
+  "problem.unknown_flag": "Fonctionnalité inconnue",
+  "problem.oidc_not_configured": "Connexion du bureau non configurée",
+  "mail.platform_test.subject": "Emprise – e-mail de test",
+  "mail.platform_test.body": "Bonjour,\n\nCet e-mail confirme que l'envoi depuis la plateforme Emprise fonctionne.\nEnvironnement : {env}\n\nEmprise"
+}

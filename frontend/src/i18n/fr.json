@@ -1,0 +1,35 @@
+{
+  "brand": "Emprise",
+  "tagline": "Avant-projet sur votre parcelle",
+  "language": { "label": "Langue", "fr": "Français", "de": "Deutsch" },
+  "start": {
+    "eyebrow": "Bientôt disponible",
+    "title": "Ce que vous pouvez construire sur votre parcelle",
+    "intro": "Emprise traduit les règles d'urbanisme de votre parcelle en limites claires et prépare un avant-projet non contractuel, vérifié par un cabinet d'architecture.",
+    "notices": "Informations importantes",
+    "noNotices": "Les mentions légales seront publiées avant l'ouverture."
+  },
+  "office": {
+    "area": "Espace bureau",
+    "loginTitle": "Connexion du bureau",
+    "loginIntro": "Réservé aux collaborateurs du cabinet et de l'équipe Emprise. La connexion exige une authentification à deux facteurs.",
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "nav": { "home": "Accueil" },
+    "homeTitle": "Bienvenue",
+    "homeEmpty": "Aucun module n'est encore activé. Les fonctions apparaîtront ici dès leur mise en service.",
+    "roles": "Rôles",
+    "noAccessTitle": "Accès refusé",
+    "noAccess": {
+      "unknown": "Ce compte n'est pas autorisé. Contactez l'exploitation de la plateforme.",
+      "inactive": "Ce compte est désactivé.",
+      "email_unverified": "L'adresse e-mail n'est pas confirmée auprès du fournisseur d'identité.",
+      "mfa": "La connexion exige une authentification à deux facteurs.",
+      "fehler": "La connexion a échoué. Veuillez réessayer."
+    },
+    "backToLogin": "Retour à la connexion"
+  },
+  "sheet": { "project": "Projet", "parcel": "Parcelle", "date": "Date", "sheet": "Planche", "scale": "Échelle", "schematic": "schématique" },
+  "error": { "generic": "Une erreur est survenue.", "notFound": "Page introuvable", "home": "Retour à l'accueil" },
+  "loading": "Chargement…"
+}

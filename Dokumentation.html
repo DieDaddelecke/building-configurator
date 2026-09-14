@@ -1,0 +1,902 @@
+<title>Emprise Dokumentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --paper:#F3F4F1; --sheet:#FCFCFA; --ink:#1C2220; --mute:#59625E; --faint:#8B938F;
+  --line:#D7DBD7; --line-strong:#B0B6B2; --accent:#2B45B0; --accent-tint:#E5E9F6;
+  --warn:#7D5300; --warn-tint:#F7EEDA; --alert:#9E3526; --alert-tint:#F6E6E2;
+  --street:#E8EAE6; --house:#262C29; --hatch:#AEB4B0;
+  --vol-sued:#E4E2DB; --vol-ost:#CFCCC4; --vol-dach:#4C4F53; --vol-flach:#9A9E9B; --vol-kante:#2A2F2D;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111413; --sheet:#171B19; --ink:#E3E7E4; --mute:#A2ABA6; --faint:#737C77;
+    --line:#2B322F; --line-strong:#454E4A; --accent:#8FA0F0; --accent-tint:#1D2442;
+    --warn:#E0B25C; --warn-tint:#2B2413; --alert:#EC8B7A; --alert-tint:#33201C;
+    --street:#1E2321; --house:#C8CEC9; --hatch:#4F5854;
+    --vol-sued:#5A605C; --vol-ost:#474D49; --vol-dach:#23272A; --vol-flach:#3A3F3C; --vol-kante:#0C0F0E;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111413; --sheet:#171B19; --ink:#E3E7E4; --mute:#A2ABA6; --faint:#737C77;
+  --line:#2B322F; --line-strong:#454E4A; --accent:#8FA0F0; --accent-tint:#1D2442;
+  --warn:#E0B25C; --warn-tint:#2B2413; --alert:#EC8B7A; --alert-tint:#33201C;
+  --street:#1E2321; --house:#C8CEC9; --hatch:#4F5854;
+  --vol-sued:#5A605C; --vol-ost:#474D49; --vol-dach:#23272A; --vol-flach:#3A3F3C; --vol-kante:#0C0F0E;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Archivo","Helvetica Neue",Arial,sans-serif;font-stretch:116%;letter-spacing:-.012em;line-height:1.15;text-wrap:balance;margin:0;color:var(--ink)}
+h1{font-size:clamp(2rem,4vw,2.9rem);font-weight:600}
+h2{font-size:1.85rem;font-weight:600}
+h3{font-size:1.15rem;font-weight:600;margin-top:2.4rem}
+p{margin:.8rem 0;max-width:68ch}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:.88em}
+code{background:var(--accent-tint);padding:.05em .3em}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--mute)}
+.num{font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)} .accent{color:var(--accent)} .alert{color:var(--alert)} .warn{color:var(--warn)}
+
+.kopf{border-bottom:1px solid var(--line);background:var(--paper)}
+.kopf-innen{max-width:1240px;margin:0 auto;padding:1.1rem 2rem;display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}
+.marke{font-family:"Archivo",Arial,sans-serif;font-stretch:125%;font-weight:600;font-size:1.5rem;letter-spacing:-.02em}
+.titelblock{max-width:1240px;margin:0 auto;padding:3rem 2rem 2rem;display:grid;gap:1.4rem}
+.titelblock p{font-size:1.05rem;color:var(--mute);margin:0}
+.meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line-strong);background:var(--sheet);max-width:900px}
+.meta div{padding:.55rem .8rem;border-left:1px solid var(--line)}
+.meta div:first-child{border-left:0}
+.meta dd{margin:0;font-size:13px;font-family:"IBM Plex Mono",monospace}
+.meta dt{margin:0}
+
+.rahmen{max-width:1240px;margin:0 auto;padding:0 2rem 6rem;display:grid;grid-template-columns:220px minmax(0,1fr);gap:3.5rem;align-items:start}
+nav.toc{position:sticky;top:1.5rem;padding-top:2.4rem}
+nav.toc ol{list-style:none;margin:.7rem 0 0;padding:0;border-top:1px solid var(--line)}
+nav.toc li{border-bottom:1px solid var(--line)}
+nav.toc a{display:flex;gap:.7rem;padding:.55rem 0;color:var(--ink);text-decoration:none;font-size:14px;line-height:1.35}
+nav.toc a span{font-family:"IBM Plex Mono",monospace;color:var(--accent);font-size:13px}
+nav.toc a:hover{color:var(--accent)}
+main section{padding-top:2.4rem;margin-top:2.4rem;border-top:1px solid var(--line-strong)}
+main section:first-child{margin-top:0;border-top:0}
+.abschnitt-kopf{display:grid;gap:.5rem;margin-bottom:1.2rem}
+
+figure{margin:1.8rem 0;border:1px solid var(--line-strong);background:var(--sheet)}
+figure .fig-kopf{display:flex;justify-content:space-between;gap:1rem;padding:.45rem .9rem;border-bottom:1px solid var(--line)}
+figure .fig-inhalt{padding:1rem;overflow-x:auto}
+figcaption{padding:.6rem .9rem;border-top:1px solid var(--line);font-size:13.5px;color:var(--mute)}
+figure svg{display:block;width:100%;height:auto}
+.drei{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.drei .panel-titel{font-size:13px;margin:.2rem 0 .4rem}
+
+.tabelle{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:14px;background:var(--sheet)}
+th,td{text-align:left;padding:.55rem .75rem;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:500;background:var(--paper)}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody th{font-weight:500}
+
+.merke{border-left:3px solid var(--accent);background:var(--accent-tint);padding:.8rem 1rem;margin:1.4rem 0;max-width:72ch}
+.merke p{margin:.2rem 0}
+.offen{border:1px solid var(--warn);background:var(--warn-tint);padding:.8rem 1rem;margin:1.4rem 0;max-width:72ch}
+.offen ul{margin:.3rem 0 0;padding-left:1.1rem}
+.formel{font-family:"IBM Plex Mono",monospace;font-size:13.5px;background:var(--sheet);border:1px solid var(--line);padding:.9rem 1rem;overflow-x:auto;white-space:pre;line-height:1.7}
+.status{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line-strong);padding:.05rem .4rem;white-space:nowrap}
+.status.ok{color:var(--ink)} .status.nein{color:var(--alert);border-color:var(--alert)} .status.hin{color:var(--warn);border-color:var(--warn)} .status.offen{color:var(--mute)}
+.swatch{display:inline-block;width:14px;height:14px;border:1px solid var(--line-strong);vertical-align:-2px;margin-right:.45rem}
+ul.liste{padding-left:1.1rem;max-width:68ch} ul.liste li{margin:.25rem 0}
+
+.mail{border:1px solid var(--line-strong);background:var(--sheet);margin:1.6rem 0}
+.mail dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);border-bottom:1px solid var(--line)}
+.mail dt,.mail dd{margin:0;padding:.4rem .9rem;border-top:1px solid var(--line);font-size:14px}
+.mail dl > dt:first-of-type,.mail dl > dd:first-of-type{border-top:0}
+.mail dt{color:var(--mute)}
+.mail pre{margin:0;padding:1.1rem 1.2rem;font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-x:auto;color:var(--ink)}
+pre.code{margin:1rem 0;padding:1rem 1.1rem;background:var(--sheet);border:1px solid var(--line);font-size:12.5px;line-height:1.6;overflow-x:auto}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+@media (max-width:980px){
+  .rahmen{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.toc{position:static;padding-top:1rem}
+  .meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .meta div:nth-child(3){border-left:0}
+  .meta div:nth-child(n+3){border-top:1px solid var(--line)}
+}
+@media (max-width:640px){
+  .drei{grid-template-columns:minmax(0,1fr)}
+  .kopf-innen,.titelblock,.rahmen{padding-left:1.1rem;padding-right:1.1rem}
+}
+</style>
+
+<header class="kopf">
+  <div class="kopf-innen">
+    <span class="marke">Emprise</span>
+    <span class="eyebrow">Dokumentation · Hauskonfigurator</span>
+  </div>
+</header>
+
+<div class="titelblock">
+  <span class="eyebrow">Mockup · Parzelle AB 0147 · Treillières</span>
+  <h1>Vom PLU zum Vorentwurf</h1>
+  <p>Wie der Konfigurator aufgebaut ist, wie er die Bauvorschriften auf die Parzelle überträgt, die Haustypen in Volumen umsetzt, Materialien und Preise zueinander ins Verhältnis setzt und den fertigen Vorentwurf an das Architekturbüro übergibt.</p>
+  <dl class="meta">
+    <div><dt class="eyebrow">Bezug</dt><dd>Hauskonfigurator.jsx</dd></div>
+    <div><dt class="eyebrow">Stand</dt><dd>13.09.2026</dd></div>
+    <div><dt class="eyebrow">Status</dt><dd>Prototyp</dd></div>
+    <div><dt class="eyebrow">Daten</dt><dd>fest im Code</dd></div>
+  </dl>
+</div>
+
+<div class="rahmen">
+  <nav class="toc" aria-label="Inhalt">
+    <span class="eyebrow">Inhalt</span>
+    <ol>
+      <li><a href="#aufbau"><span>1</span>Genereller Aufbau der Seite</a></li>
+      <li><a href="#regelwerk"><span>2</span>Grafische Ableitung der Bauvorschriften</a></li>
+      <li><a href="#typen"><span>3</span>Gebäudetypen und Volumetrie</a></li>
+      <li><a href="#material"><span>4</span>Materialauswahl und Preisverhältnisse</a></li>
+      <li><a href="#mail"><span>5</span>Übergabe als Mail an das Büro</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+<!-- ============================ 1 AUFBAU ============================ -->
+<section id="aufbau">
+  <div class="abschnitt-kopf">
+    <span class="eyebrow">Abschnitt 1</span>
+    <h2>Genereller Aufbau der Seite</h2>
+  </div>
+  <p>Der Konfigurator ist eine einzelne React-Komponente. Er verkauft nichts und schließt nichts ab: Er ersetzt die Vorentwurfsphase und erzeugt einen qualifizierten Kontakt für das Architekturbüro. Diese Haltung bestimmt jede Gestaltungsentscheidung, von der Wortwahl der Schaltflächen bis zur Darstellung der Preise als Spanne.</p>
+
+  <h3>Bildschirmaufbau</h3>
+  <p>Jeder Schritt nutzt dasselbe Gerüst aus vier festen Zonen. Die Zeichnungen stehen immer auf einem „Planblatt“ mit Schriftfeld, wie in einem Architekturbüro üblich.</p>
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 1 · Gerüst eines Schritts</span><span class="eyebrow">Desktop</span></div>
+    <div class="fig-inhalt">
+      <svg viewBox="0 0 960 520" role="img" aria-label="Schema: Kopfzeile mit Schrittnavigation, Arbeitsspalte links, Planblatt rechts, Korridorbalken unten">
+        <rect x="0.5" y="0.5" width="959" height="519" style="fill:var(--paper);stroke:var(--line-strong)"/>
+        <rect x="0.5" y="0.5" width="959" height="52" style="fill:var(--paper);stroke:var(--line)"/>
+        <text x="24" y="33" style="fill:var(--ink);font:600 19px Archivo,Arial,sans-serif;font-stretch:125%">Emprise</text>
+        <g style="font:11px 'IBM Plex Mono',monospace;fill:var(--mute)">
+          <text x="470" y="33">1 Adresse · 2 Parzelle · 3 Regelwerk · 4 Haustyp · 5 Linie …</text>
+        </g>
+        <line x1="630" y1="50" x2="690" y2="50" style="stroke:var(--accent);stroke-width:3"/>
+        <!-- Arbeitsspalte -->
+        <rect x="24" y="76" width="470" height="330" style="fill:none;stroke:var(--line-strong);stroke-dasharray:4 3"/>
+        <text x="40" y="100" style="font:11px 'IBM Plex Mono',monospace;fill:var(--mute);letter-spacing:1px">ARBEITSSPALTE</text>
+        <rect x="40" y="116" width="260" height="22" style="fill:var(--ink)"/>
+        <rect x="40" y="150" width="400" height="8" style="fill:var(--line-strong)"/>
+        <rect x="40" y="166" width="360" height="8" style="fill:var(--line-strong)"/>
+        <g style="fill:var(--sheet);stroke:var(--line)">
+          <rect x="40" y="194" width="438" height="58"/><rect x="40" y="260" width="438" height="58"/><rect x="40" y="326" width="438" height="58"/>
+        </g>
+        <text x="56" y="228" style="font:13px 'IBM Plex Sans',sans-serif;fill:var(--ink)">Karten, Tabellen, Optionen, Formular</text>
+        <!-- Planblatt -->
+        <rect x="518" y="76" width="418" height="330" style="fill:var(--sheet);stroke:var(--line-strong)"/>
+        <line x1="518" y1="98" x2="936" y2="98" style="stroke:var(--line)"/>
+        <text x="530" y="92" style="font:10px 'IBM Plex Mono',monospace;fill:var(--mute);letter-spacing:1px">LAGEPLAN · REGELWERK</text>
+        <text x="924" y="92" text-anchor="end" style="font:10px 'IBM Plex Mono',monospace;fill:var(--mute);letter-spacing:1px">MASSSTAB</text>
+        <rect x="640" y="118" width="120" height="200" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+        <rect x="658" y="150" width="84" height="136" style="fill:var(--accent-tint);stroke:var(--accent);stroke-width:2"/>
+        <line x1="518" y1="360" x2="936" y2="360" style="stroke:var(--line-strong)"/>
+        <g style="stroke:var(--line)"><line x1="622" y1="360" x2="622" y2="406"/><line x1="727" y1="360" x2="727" y2="406"/><line x1="831" y1="360" x2="831" y2="406"/></g>
+        <g style="font:10px 'IBM Plex Mono',monospace;fill:var(--mute)">
+          <text x="530" y="378">PROJEKT</text><text x="634" y="378">PARZELLE</text><text x="739" y="378">STAND</text><text x="843" y="378">BLATT</text>
+        </g>
+        <text x="843" y="396" style="font:12px 'IBM Plex Mono',monospace;fill:var(--ink)">3 / 9</text>
+        <!-- Korridorbalken -->
+        <rect x="0.5" y="440" width="959" height="79" style="fill:var(--sheet);stroke:var(--line-strong)"/>
+        <text x="24" y="464" style="font:10px 'IBM Plex Mono',monospace;fill:var(--mute);letter-spacing:1px">KOSTENKORRIDOR · SCHÄTZUNG, UNVERBINDLICH</text>
+        <text x="24" y="492" style="font:600 21px Archivo,Arial,sans-serif;fill:var(--ink)">ca. 384.000 – 418.000 €</text>
+        <line x1="380" y1="482" x2="600" y2="482" style="stroke:var(--line-strong)"/>
+        <rect x="453" y="476" width="30" height="12" style="fill:var(--accent)"/>
+        <rect x="720" y="462" width="80" height="38" style="fill:none;stroke:var(--line-strong)"/>
+        <text x="760" y="486" text-anchor="middle" style="font:13px 'IBM Plex Sans',sans-serif;fill:var(--ink)">Zurück</text>
+        <rect x="812" y="462" width="124" height="38" style="fill:var(--accent)"/>
+        <text x="874" y="486" text-anchor="middle" style="font:13px 'IBM Plex Sans',sans-serif;fill:var(--sheet)">Weiter →</text>
+        <!-- Beschriftung -->
+        <g style="font:12px 'IBM Plex Sans',sans-serif;fill:var(--accent)">
+          <text x="24" y="430">A · Arbeitsspalte</text><text x="518" y="430">B · Planblatt mit Schriftfeld</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Kopfzeile mit Schrittnavigation (bereits besuchte Schritte sind anklickbar), Arbeitsspalte (A), Planblatt (B) und dauerhaft sichtbarer Korridorbalken. Die Spaltenbreiten wechseln je Schritt: in der Implantation bekommt der Plan 8 von 12 Spalten.</figcaption>
+  </figure>
+
+  <h3>Ablauf in neun Schritten</h3>
+  <p>Die Reihenfolge ist fest, weil jede Stufe auf der vorherigen aufbaut: erst die Grenzen, dann das Haus. „Weiter“ bleibt gesperrt, solange eine Pflichtentscheidung fehlt; der Grund steht neben der Schaltfläche.</p>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Nr.</th><th>Schritt</th><th>Inhalt</th><th>Planblatt</th><th>Weiter, wenn …</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><th>Startseite</th><td>Erklärung, Adresseingabe</td><td>Prinzipskizze der drei Ebenen</td><td>Adresse nicht leer</td></tr>
+        <tr><td class="num">2</td><th>Parzelle</th><td>Katasterdaten, Suchphase ca. 1 s</td><td>Lageplan Bestand</td><td>Parzelle gefunden</td></tr>
+        <tr><td class="num">3</td><th>Regelwerk</th><td>PLU-Werte gruppiert</td><td>Lageplan mit bebaubarer Fläche</td><td>immer</td></tr>
+        <tr><td class="num">4</td><th>Haustyp</th><td>drei Karten mit 3D-Vorschau</td><td>Grundfläche im Baufeld</td><td>zulässiger Typ gewählt</td></tr>
+        <tr><td class="num">5</td><th>Linie</th><td>Vergleichstabelle, RE2020-Hinweis</td><td>Axonometrie mit Materiallegende</td><td>Linie gewählt</td></tr>
+        <tr><td class="num">6</td><th>Optionen</th><td>neun Optionen in fünf Gruppen</td><td>Axonometrie, live</td><td>immer</td></tr>
+        <tr><td class="num">7</td><th>Implantation</th><td>Ziehen, Drehen, Schnellauswahl</td><td>Lageplan mit Maßketten</td><td>immer (Lage ist stets gültig)</td></tr>
+        <tr><td class="num">8</td><th>Vorentwurf</th><td>Angaben, Regelabgleich, Korridor</td><td>Lageplan und Axonometrie</td><td>immer</td></tr>
+        <tr><td class="num">9</td><th>Kontakt</th><td>Formular, Bestätigung „unverbindlich“</td><td>Übergabeliste</td><td>Name, gültige E-Mail, Häkchen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Zustand</h3>
+  <p>Der gesamte Zustand liegt in der Hauptkomponente <code>Hauskonfigurator</code> in React-State; Browser-Speicher wird nicht verwendet. Weil die Schritte nur Anzeige und Eingabe sind, bleibt beim Zurückgehen jede Entscheidung erhalten.</p>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>State</th><th>Inhalt</th><th>Beispiel</th></tr></thead>
+      <tbody>
+        <tr><th><code>schritt</code>, <code>maxSchritt</code></th><td>aktueller und weitester erreichter Schritt</td><td class="mono">7, 8</td></tr>
+        <tr><th><code>adresse</code>, <code>gefunden</code></th><td>Eingabe und Suchstatus</td><td class="mono">"12 rue des Tilleuls…", true</td></tr>
+        <tr><th><code>typId</code>, <code>linieId</code></th><td>gewählter Haustyp und Linie</td><td class="mono">"ligne", "confort"</td></tr>
+        <tr><th><code>optionen</code></th><td>angeklickte Options-IDs, auch wenn in der Linie enthalten</td><td class="mono">["holz_sued","terrasse"]</td></tr>
+        <tr><th><code>lage</code></th><td>Nordwest-Ecke des Baukörpers in Metern, Drehung</td><td class="mono">{x:4, y:5, gedreht:false}</td></tr>
+        <tr><th><code>verletzt</code></th><td>zuletzt berührte Abstandsregel, 2,4 s sichtbar</td><td class="mono">"strasse"</td></tr>
+        <tr><th><code>kontakt</code>, <code>bestaetigt</code>, <code>gesendet</code></th><td>Formularwerte, Bestätigung, Übergabestatus</td><td class="mono">{name:"…"}, true, false</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Code-Gliederung</h3>
+  <ul class="liste">
+    <li><strong>Daten</strong>: <code>PARZELLE</code>, <code>REGELWERK</code>, <code>BEBAUBARE_FLAECHE</code>, <code>ENERGIE</code>, <code>HAUSTYPEN</code>, <code>LINIEN</code>, <code>OPTIONEN</code>, <code>KONTAKTFORMULAR</code>. Austauschbar, ohne den Darstellungscode anzufassen.</li>
+    <li><strong>Darstellungskonstanten</strong>: Schrittliste, Optionsgruppen, Ausschlüsse, Materialfarben, abgeleitete Geometrie.</li>
+    <li><strong>Rechenfunktionen</strong>: <code>korridorBerechnen</code>, <code>lageBegrenzen</code>, <code>voreinstellung</code>, <code>abstaende</code>, <code>materialien</code>, <code>pruefungen</code>.</li>
+    <li><strong>Zeichnungen</strong>: <code>Lageplan</code>, <code>Axonometrie</code>, <code>TypSkizze</code>, <code>Planblatt</code>, Maßketten <code>MassH</code>/<code>MassV</code>.</li>
+    <li><strong>Schritte</strong> 1–9, <code>Bestaetigung</code> und die Hauptkomponente.</li>
+  </ul>
+  <p><code>emprise.html</code> ist dieselbe Datei, vorab nach JavaScript übersetzt. Sie lädt React 18.3.1, Tailwind 3.4.16 und die Schriften Archivo, IBM Plex Sans und IBM Plex Mono aus dem Netz.</p>
+
+  <h3>Gestaltung</h3>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Rolle</th><th>Hell</th><th>Dunkel</th><th>Verwendung</th></tr></thead>
+      <tbody>
+        <tr><th>Papier</th><td class="mono"><span class="swatch" style="background:#F3F4F1"></span>#F3F4F1</td><td class="mono"><span class="swatch" style="background:#111413"></span>#111413</td><td>Seitengrund</td></tr>
+        <tr><th>Blatt</th><td class="mono"><span class="swatch" style="background:#FCFCFA"></span>#FCFCFA</td><td class="mono"><span class="swatch" style="background:#171B19"></span>#171B19</td><td>Planblätter, Karten</td></tr>
+        <tr><th>Tinte</th><td class="mono"><span class="swatch" style="background:#1C2220"></span>#1C2220</td><td class="mono"><span class="swatch" style="background:#E3E7E4"></span>#E3E7E4</td><td>Text, Parzellengrenze</td></tr>
+        <tr><th>Akzent Kobalt</th><td class="mono"><span class="swatch" style="background:#2B45B0"></span>#2B45B0</td><td class="mono"><span class="swatch" style="background:#8FA0F0"></span>#8FA0F0</td><td>bebaubare Fläche, Auswahl, Hauptaktion</td></tr>
+        <tr><th>Hinweis</th><td class="mono"><span class="swatch" style="background:#7D5300"></span>#7D5300</td><td class="mono"><span class="swatch" style="background:#E0B25C"></span>#E0B25C</td><td>RE2020-Befund</td></tr>
+        <tr><th>Sperre</th><td class="mono"><span class="swatch" style="background:#9E3526"></span>#9E3526</td><td class="mono"><span class="swatch" style="background:#EC8B7A"></span>#EC8B7A</td><td>Sperrgründe, verletzte Abstände</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Schriften: Archivo in breitem Schnitt für Überschriften und Beträge, IBM Plex Sans für Fließtext, IBM Plex Mono für Maße, Beschriftungen im Plan und das Schriftfeld. Keine Verläufe, keine Schatten, keine Icons: Flächen, feine Linien und Maßketten tragen die Darstellung.</p>
+</section>
+
+<!-- ============================ 2 REGELWERK ============================ -->
+<section id="regelwerk">
+  <div class="abschnitt-kopf">
+    <span class="eyebrow">Abschnitt 2</span>
+    <h2>Grafische Ableitung der Bauvorschriften auf die Parzelle</h2>
+  </div>
+  <p>Das Regelwerk der Zone UB wird nicht als Liste neben das Grundstück gestellt, sondern in Geometrie übersetzt. Ab Schritt 3 ist die bebaubare Fläche eine harte Grenze: Kein Baukörper kann sie verlassen, kein unzulässiger Typ kann gewählt werden.</p>
+
+  <h3>Koordinatensystem</h3>
+  <p>Alle Zeichnungen rechnen in Metern. Der Ursprung liegt in der Nordwest-Ecke der Parzelle, <span class="mono">x</span> läuft nach Osten, <span class="mono">y</span> nach Süden. Die Straße liegt im Norden, also am oberen Rand des Plans; der Nordpfeil zeigt nach oben. Die SVG-<code>viewBox</code> ist ebenfalls in Metern angelegt, so dass Strichstärken und Schriftgrößen in Metern angegeben werden (Parzellengrenze 0,16 m, Maßlinie 0,045 m).</p>
+
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 2 · Ableitung der bebaubaren Fläche</span><span class="eyebrow">Parzelle AB 0147</span></div>
+    <div class="fig-inhalt">
+      <div class="drei">
+        <div>
+          <div class="panel-titel"><span class="mono accent">a</span> Parzelle aus dem Kataster</div>
+          <svg viewBox="-7 -8 34 46" role="img" aria-label="Parzelle 20 mal 31 Meter, 612 Quadratmeter, Straße im Norden">
+            <rect x="-7" y="-7.5" width="34" height="6" style="fill:var(--street)"/>
+            <text x="10" y="-3.9" text-anchor="middle" style="fill:var(--mute);font:1.05px 'IBM Plex Mono',monospace;letter-spacing:.2px">RUE DES TILLEULS</text>
+            <rect x="0" y="0" width="20" height="31" style="fill:var(--sheet);stroke:var(--ink);stroke-width:.18"/>
+            <text x="10" y="16" text-anchor="middle" style="fill:var(--ink);font:600 2px Archivo,Arial,sans-serif">612 m²</text>
+            <g style="stroke:var(--ink);stroke-width:.06">
+              <line x1="0" y1="34.5" x2="20" y2="34.5"/><line x1="-.35" y1="34.85" x2=".35" y2="34.15" style="stroke-width:.1"/><line x1="19.65" y1="34.85" x2="20.35" y2="34.15" style="stroke-width:.1"/>
+              <line x1="-3" y1="0" x2="-3" y2="31"/><line x1="-3.35" y1=".35" x2="-2.65" y2="-.35" style="stroke-width:.1"/><line x1="-3.35" y1="31.35" x2="-2.65" y2="30.65" style="stroke-width:.1"/>
+            </g>
+            <text x="10" y="34" text-anchor="middle" style="fill:var(--ink);font:1px 'IBM Plex Mono',monospace">20,00</text>
+            <text x="-3.4" y="15.5" text-anchor="middle" transform="rotate(-90 -3.4 15.5)" style="fill:var(--ink);font:1px 'IBM Plex Mono',monospace">31,00</text>
+            <g transform="translate(24 33.5)"><circle r="1.5" style="fill:none;stroke:var(--ink);stroke-width:.07"/><path d="M0 -1.5 L.55 .9 L0 .45 L-.55 .9Z" style="fill:var(--ink)"/></g>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-titel"><span class="mono accent">b</span> Abstandsflächen abziehen</div>
+          <svg viewBox="-7 -8 34 46" role="img" aria-label="Abstände: 5 Meter zur Straße, je 3 Meter seitlich, 5 Meter hinten">
+            <defs><pattern id="p-abstand" patternUnits="userSpaceOnUse" width=".7" height=".7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2=".7" style="stroke:var(--hatch);stroke-width:.07"/></pattern></defs>
+            <rect x="-7" y="-7.5" width="34" height="6" style="fill:var(--street)"/>
+            <rect x="0" y="0" width="20" height="31" style="fill:var(--sheet)"/>
+            <g style="fill:url(#p-abstand)"><rect x="0" y="0" width="20" height="5"/><rect x="0" y="26" width="20" height="5"/><rect x="0" y="5" width="3" height="21"/><rect x="17" y="5" width="3" height="21"/></g>
+            <rect x="0" y="0" width="20" height="31" style="fill:none;stroke:var(--ink);stroke-width:.18"/>
+            <g style="stroke:var(--accent);stroke-width:.06;stroke-dasharray:.45 .3"><line x1="0" y1="5" x2="20" y2="5"/><line x1="0" y1="26" x2="20" y2="26"/><line x1="3" y1="0" x2="3" y2="31"/><line x1="17" y1="0" x2="17" y2="31"/></g>
+            <g style="font:1px 'IBM Plex Mono',monospace;fill:var(--ink)" text-anchor="middle">
+              <text x="10" y="2.9">5,0 m · Straße</text>
+              <text x="10" y="28.9">5,0 m · hinten</text>
+              <text x="1.5" y="15.5" transform="rotate(-90 1.5 15.5)">3,0 m · West</text>
+              <text x="18.5" y="15.5" transform="rotate(90 18.5 15.5)">3,0 m · Ost</text>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-titel"><span class="mono accent">c</span> Bebaubare Fläche und GFZ</div>
+          <svg viewBox="-7 -8 34 46" role="img" aria-label="Bebaubare Fläche 14 mal 21 Meter, 294 Quadratmeter; Grundflächenzahl begrenzt auf 244,8 Quadratmeter">
+            <defs><pattern id="p-bau" patternUnits="userSpaceOnUse" width=".9" height=".9" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2=".9" style="stroke:var(--accent);stroke-width:.05"/></pattern></defs>
+            <rect x="-7" y="-7.5" width="34" height="6" style="fill:var(--street)"/>
+            <rect x="0" y="0" width="20" height="31" style="fill:var(--sheet);stroke:var(--line-strong);stroke-width:.12"/>
+            <rect x="3" y="5" width="14" height="21" style="fill:var(--accent-tint)"/>
+            <rect x="3" y="5" width="14" height="21" style="fill:url(#p-bau);opacity:.55"/>
+            <rect x="3" y="5" width="14" height="21" style="fill:none;stroke:var(--accent);stroke-width:.2"/>
+            <text x="10" y="12.6" text-anchor="middle" style="fill:var(--accent);font:600 1.75px Archivo,Arial,sans-serif">14,0 × 21,0 m</text>
+            <text x="10" y="14.6" text-anchor="middle" style="fill:var(--accent);font:1.05px 'IBM Plex Mono',monospace">= 294,0 m²</text>
+            <line x1="3" y1="22.49" x2="17" y2="22.49" style="stroke:var(--ink);stroke-width:.09;stroke-dasharray:.5 .3"/>
+            <text x="10" y="21.8" text-anchor="middle" style="fill:var(--ink);font:.85px 'IBM Plex Mono',monospace">GFZ 40 % · 244,8 m²</text>
+            <text x="10" y="24.1" text-anchor="middle" style="fill:var(--mute);font:.8px 'IBM Plex Mono',monospace">Fläche nur rechnerisch</text>
+            <text x="10" y="25.2" text-anchor="middle" style="fill:var(--mute);font:.8px 'IBM Plex Mono',monospace">nicht überbaubar</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <figcaption>Die bebaubare Fläche entsteht aus der Parzelle minus Abstandsflächen. Die gestrichelte Linie in (c) ist schematisch: Die Grundflächenzahl begrenzt die überbaute Fläche auf 244,8 m², nicht ihre Lage. Alle Haustypen liegen mit 96 bis 132 m² deutlich darunter.</figcaption>
+  </figure>
+
+  <div class="formel">Breite  = Straßenfront − 2 × Abstand seitlich = 20,0 − 2 × 3,0 = 14,0 m
+Tiefe   = Parzellentiefe − Abstand Straße − Abstand hinten = 31,0 − 5,0 − 5,0 = 21,0 m
+Fläche  = 14,0 × 21,0 = 294,0 m²
+GFZ     = 612 m² × 40 % = 244,8 m² max. Grundfläche
+Freifl. = 612 m² × 30 % = 183,6 m² min. unversiegelt</div>
+
+  <h3>Vom Regelwert zum Planelement</h3>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Regel im PLU</th><th>Wert</th><th>Darstellung im Lageplan</th><th>Wirkung im Konfigurator</th></tr></thead>
+      <tbody>
+        <tr><th>Abstand zur Straße</th><td class="r">5,0 m</td><td>gestrichelte Kobaltlinie bei y = 5, Maßkette links</td><td>obere Grenze beim Verschieben</td></tr>
+        <tr><th>Abstand seitlich</th><td class="r">3,0 m</td><td>Linien bei x = 3 und x = 17, Maßkette unten</td><td>linke und rechte Grenze</td></tr>
+        <tr><th>Abstand hinten</th><td class="r">5,0 m</td><td>Linie bei y = 26</td><td>untere Grenze</td></tr>
+        <tr><th>Bebaubare Fläche</th><td class="r">14,0 × 21,0 m</td><td>Kobaltfläche, 45°-Schraffur, Kontur 0,17 m, Maß groß beschriftet</td><td>Sperre von Plateau (16,5 m), Rahmen der Implantation</td></tr>
+        <tr><th>Grundflächenzahl</th><td class="r">40 % · 244,8 m²</td><td>Beschriftung in der Fläche</td><td>Prüfung in Schritt 8</td></tr>
+        <tr><th>Firsthöhe / Traufhöhe</th><td class="r">9,0 / 6,0 m</td><td>Höhenmaß in der 3D-Vorschau</td><td>Prüfung in Schritt 8</td></tr>
+        <tr><th>Dachform</th><td>Satteldach 35°–45°, Walmdach</td><td>Flachdach in der Plateau-Vorschau sichtbar</td><td>Sperrgrund von Plateau</td></tr>
+        <tr><th>Freifläche</th><td class="r">30 % · 183,6 m²</td><td>–</td><td>rechnerische Prüfung in Schritt 8</td></tr>
+        <tr><th>Fassade</th><td>helle Putztöne, Naturholz, Ziegel</td><td>Materialfarben der Axonometrie</td><td>alle angebotenen Materialien sind zulässig</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ebenen des Lageplans</h3>
+  <p>Der Lageplan ist eine einzige Komponente mit vier Modi (<code>parzelle</code>, <code>regelwerk</code>, <code>typ</code>, <code>implantation</code> und <code>uebersicht</code> für Schritt 8). Die Ebenen werden von unten nach oben gezeichnet:</p>
+  <ol class="liste">
+    <li>Straßenband mit Straßenname, Nachbarparzellen mit schraffierten Bestandsgebäuden im Osten und Westen.</li>
+    <li>Parzelle mit Kennung und Fläche, Gesamtmaße 20,00 und 31,00.</li>
+    <li>ab Schritt 3: Tönung und Schraffur der bebaubaren Fläche, vier Abstandslinien, Kontur, Maßketten 5,00 / 21,00 / 5,00 und 3,00 / 14,00 / 3,00.</li>
+    <li>ab Schritt 4: Baukörper als dunkle Fläche mit gestrichelter Firstlinie und Grundfläche in m².</li>
+    <li>in Schritt 7 und 8: Maßketten vom Baukörper zu allen vier Grenzen, optional die Terrasse 8 × 3 m südlich des Hauses.</li>
+    <li>Nordpfeil und Maßstabsleiste 0–10 m.</li>
+  </ol>
+
+  <div class="merke">
+    <p><strong>Der visuelle Höhepunkt.</strong> Beim Betreten von Schritt 3 zeichnet sich die Kontur der bebaubaren Fläche in einer Sekunde ein. Nach 0,75 s blenden Fläche und Abstandslinien auf, nach 1,25 s die Beschriftung „14,0 × 21,0 m“ und die Maßketten. Bei aktivierter Einstellung „Bewegung reduzieren“ erscheint alles sofort. Fährt man mit der Maus über einen Abstand in der Regelliste, wird die zugehörige Linie rot hervorgehoben.</p>
+  </div>
+
+  <h3>Nachweis der Sperre von Plateau</h3>
+  <p>Klickt man die gesperrte Karte an, zeigt der Lageplan Plateau mittig auf der Parzelle: 16,5 m Breite gegen 14,0 m bebaubare Breite. Die Überstände von je 1,25 m jenseits der seitlichen Abstandslinien sind rot schraffiert, die Maßkette nennt „16,50 &gt; 14,00“. Der zweite Grund, das Flachdach, ist in der 3D-Vorschau der Karte zu sehen.</p>
+
+  <h3>Implantation innerhalb der Grenzen</h3>
+  <p>Die Lage wird als Nordwest-Ecke des Baukörpers gespeichert. Jede Änderung, ob durch Ziehen, Pfeiltasten, Drehen oder Schnellauswahl, läuft durch <code>lageBegrenzen</code>: Die Position wird auf das zulässige Intervall beschnitten, und die zuerst verletzte Regel wird gemeldet.</p>
+  <div class="formel">x ∈ [ 3 ;  17 − b ]      b = Breite in Ost-West-Richtung
+y ∈ [ 5 ;  26 − t ]      t = Tiefe in Nord-Süd-Richtung
+Raster 0,25 m · Pfeiltaste 0,5 m · mit Umschalt 1,0 m · R dreht um 90° um den Mittelpunkt</div>
+
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 3 · Spielraum und Schnellauswahl · Ligne 12 × 8 m</span><span class="eyebrow">Maße in m</span></div>
+    <div class="fig-inhalt">
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem">
+        <div>
+          <div class="panel-titel">Wo der Hausmittelpunkt liegen kann</div>
+          <svg viewBox="-3 -2 26 35" role="img" aria-label="Mittelpunkt längs: x 9 bis 11, y 9 bis 22; gedreht: x 7 bis 13, y 11 bis 20">
+            <defs><pattern id="p-mitte" patternUnits="userSpaceOnUse" width=".5" height=".5" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2=".5" style="stroke:var(--accent);stroke-width:.08"/></pattern></defs>
+            <rect x="0" y="0" width="20" height="31" style="fill:var(--sheet);stroke:var(--ink);stroke-width:.16"/>
+            <rect x="3" y="5" width="14" height="21" style="fill:var(--accent-tint);stroke:var(--accent);stroke-width:.14"/>
+            <rect x="7" y="11" width="6" height="9" style="fill:none;stroke:var(--ink);stroke-width:.1;stroke-dasharray:.4 .25"/>
+            <rect x="9" y="9" width="2" height="13" style="fill:url(#p-mitte);stroke:var(--accent);stroke-width:.1"/>
+            <g style="font:.8px 'IBM Plex Mono',monospace">
+              <text x="11.5" y="8.6" style="fill:var(--accent)">längs: 9–11 / 9–22</text>
+              <text x="13.4" y="21.4" style="fill:var(--ink)">gedreht:</text>
+              <text x="13.4" y="22.4" style="fill:var(--ink)">7–13 / 11–20</text>
+            </g>
+            <text x="10" y="29" text-anchor="middle" style="fill:var(--mute);font:.8px 'IBM Plex Mono',monospace">bebaubare Fläche 3–17 / 5–26</text>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-titel">Die drei Stellungen der Schnellauswahl</div>
+          <svg viewBox="-3 -2 26 35" role="img" aria-label="Straßennah bei x 4 y 5; zurückversetzt bei x 4 y 11,5; Süd-Garten maximal bei x 3 y 5">
+            <rect x="0" y="0" width="20" height="31" style="fill:var(--sheet);stroke:var(--ink);stroke-width:.16"/>
+            <rect x="3" y="5" width="14" height="21" style="fill:var(--accent-tint);stroke:var(--accent);stroke-width:.14"/>
+            <rect x="4" y="5" width="12" height="8" style="fill:var(--house);opacity:.9"/>
+            <rect x="3" y="5" width="12" height="8" style="fill:none;stroke:var(--accent);stroke-width:.16;stroke-dasharray:.5 .3"/>
+            <rect x="4" y="11.5" width="12" height="8" style="fill:none;stroke:var(--ink);stroke-width:.14;stroke-dasharray:.15 .25"/>
+            <g style="font:.8px 'IBM Plex Mono',monospace">
+              <text x="10" y="9.3" text-anchor="middle" style="fill:var(--sheet)">straßennah</text>
+              <text x="3.2" y="4.4" style="fill:var(--accent)">Süd-Garten maximal</text>
+              <text x="10" y="16.8" text-anchor="middle" style="fill:var(--ink)">zurückversetzt</text>
+              <text x="10" y="23" text-anchor="middle" style="fill:var(--mute)">Garten 18,0 / 11,5 / 18,0 m tief</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <figcaption>Links: Längs liegend kann sich Ligne nur 2 m seitlich bewegen, aber 13 m in der Tiefe. Rechts: „straßennah“ zentriert das Haus an der Straßengrenze und behält die Drehung bei, „zurückversetzt“ zentriert es in der Tiefe, „Süd-Garten maximal“ legt es ungedreht an die Westgrenze, damit der Garten im Süden und Osten zusammenhängt.</figcaption>
+  </figure>
+
+  <h3>Regelabgleich im Vorentwurf</h3>
+  <p>Schritt 8 prüft den fertigen Entwurf noch einmal gegen das Regelwerk (<code>pruefungen</code>). Für Durchlauf A (Ligne, Confort, Lärche Süd, Terrasse, straßennah) ergibt sich:</p>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Prüfpunkt</th><th>Rechnung</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><th>Grundfläche</th><td class="num">96 m² ≤ 244,8 m²</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Firsthöhe</th><td class="num">8,4 m ≤ 9,0 m</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Traufhöhe</th><td class="num">5,6 m ≤ 6,0 m (bei den Plateau-Typen nicht angegeben)</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Abstände</th><td class="num">Straße 5,00 · West 4,00 · Ost 4,00 · hinten 18,00 m</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Unversiegelt</th><td class="num">612 − 96 − 24 (Terrasse) = 492 m² ≥ 183,6 m², vor Zufahrt und Wegen</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Dachform, Fassade</th><td>nur zulässige Typen und Materialien wählbar</td><td><span class="status ok">erfüllt</span></td></tr>
+        <tr><th>RE2020</th><td>nur für Base ein Befund; dann Aufpreis eingerechnet</td><td><span class="status ok">erfüllt</span> / <span class="status hin">eingerechnet</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="offen">
+    <strong>Offene Punkte</strong>
+    <ul>
+      <li>Der Sperrstatus der Haustypen stammt aus den Daten (<code>status</code>, <code>sperrgruende</code>) und wird nicht aus dem Regelwerk berechnet.</li>
+      <li>Liegt der Baukörper an zwei Grenzen zugleich, wird nur eine Regel gemeldet (Reihenfolge Straße, hinten, West, Ost).</li>
+      <li>Beim Überfahren von „seitlich“ in der Regelliste wird nur die Westlinie hervorgehoben.</li>
+      <li>Dachform und Fassade werden im Abgleich nicht gerechnet, sondern gelten als erfüllt, weil nur Zulässiges wählbar ist.</li>
+      <li>Die Freiflächenrechnung kennt weder Zufahrt noch Carportfläche.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================ 3 TYPEN ============================ -->
+<section id="typen">
+  <div class="abschnitt-kopf">
+    <span class="eyebrow">Abschnitt 3</span>
+    <h2>Konfiguration und volumetrische Umsetzung der Gebäudetypen</h2>
+  </div>
+  <p>Der Katalog umfasst drei Typen. Alle werden gezeigt, auch der unzulässige, denn der Kunde soll sehen, warum eine Idee auf seinem Grundstück nicht funktioniert und welcher Weg stattdessen offensteht.</p>
+
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 4 · Die drei Haustypen im gleichen Maßstab</span><span class="eyebrow">Blick von Südost · Höhen in m</span></div>
+    <div class="fig-inhalt"><div class="drei" id="volumen"></div></div>
+    <figcaption>Gleiche Darstellung wie die 3D-Vorschau in Schritt 4. Die gestrichelte Marke bei 9,0 m ist die zulässige Firsthöhe. Plateau ist das niedrigste Haus, scheitert aber an Breite und Dachform; die angepasste Variante ist 3 m schmaler und erhält ein Satteldach.</figcaption>
+  </figure>
+
+  <h3>Abgleich der Typen mit dem Regelwerk</h3>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th></th><th>Ligne</th><th>Plateau</th><th>Plateau — angepasst</th></tr></thead>
+      <tbody>
+        <tr><th>Kubatur</th><td>kompakter Baukörper, R+1</td><td>breit gelagert, eingeschossig mit Teilobergeschoss</td><td>breit gelagert, angepasste Variante</td></tr>
+        <tr><th>Abmessung</th><td class="num">12,0 × 8,0 m</td><td class="num alert">16,5 × 8,0 m</td><td class="num">13,5 × 8,0 m</td></tr>
+        <tr><th>Breite gegen 14,0 m</th><td class="num">2,0 m Reserve <span class="status ok">erfüllt</span></td><td class="num">2,5 m zu breit <span class="status nein">verletzt</span></td><td class="num">0,5 m Reserve <span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Grundfläche</th><td class="num">96 m²</td><td class="num">132 m²</td><td class="num">108 m²</td></tr>
+        <tr><th>Wohnfläche</th><td class="num">158 m²</td><td class="num">141 m²</td><td class="num">132 m²</td></tr>
+        <tr><th>Räume</th><td>4 Zimmer, 1 Bad + 1 Gäste-WC</td><td>4 Zimmer, 2 Bäder</td><td>4 Zimmer, 2 Bäder</td></tr>
+        <tr><th>Dach</th><td>Satteldach 40°, First längs <span class="status ok">erfüllt</span></td><td class="alert">Flachdach mit Attika <span class="status nein">verletzt</span></td><td>Satteldach 38° <span class="status ok">erfüllt</span></td></tr>
+        <tr><th>Firsthöhe (max. 9,0 m)</th><td class="num">8,4 m</td><td class="num">6,8 m</td><td class="num">8,1 m</td></tr>
+        <tr><th>Traufhöhe (max. 6,0 m)</th><td class="num">5,6 m</td><td class="mute">nicht angegeben</td><td class="mute">nicht angegeben, gezeichnet ca. 4,97 m</td></tr>
+        <tr><th>Basispreis</th><td class="num">328.000 – 362.000 €</td><td class="num">341.000 – 379.000 €</td><td class="num">334.000 – 368.000 €</td></tr>
+        <tr><th>Status</th><td><span class="status ok">wählbar</span></td><td><span class="status nein">gesperrt</span></td><td><span class="status ok">wählbar · Vorschlag</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Konfiguration in Schritt 4</h3>
+  <ul class="liste">
+    <li>Jede Karte zeigt links die 3D-Vorschau und einen Mini-Plan „Grundfläche im Baufeld“, rechts Kennwerte und Basispreis.</li>
+    <li>Die Plateau-Karte ist nicht wählbar. Beide Sperrgründe stehen im Klartext auf der Karte. Ein Klick darauf zeigt einen Hinweis und den Überstand im Lageplan.</li>
+    <li>Direkt unter der gesperrten Karte hängt der Vorschlag „Satteldach 38° statt Flachdach, 13,5 m statt 16,5 m breit“ mit Sprung zur angepassten Variante.</li>
+    <li>Die erste Typwahl setzt den Baukörper „straßennah“. Ein späterer Typwechsel behält die Lage und schiebt den Körper nur so weit, bis er wieder in die bebaubare Fläche passt.</li>
+    <li>Die Vorschau zeigt die Materialien der gewählten Linie, anfangs Base. Kommt man aus Schritt 5 oder 6 zurück, erscheinen Linie und Optionen.</li>
+  </ul>
+
+  <h3>Axonometrische Projektion</h3>
+  <p>Die 3D-Ansichten sind keine Renderings, sondern isometrische Zeichnungen aus flächig gefüllten Polygonen. Jeder Raumpunkt wird mit einer einzigen Formel auf die Zeichenebene gebracht:</p>
+  <div class="formel">X = Osten, Y = Süden, Z = oben (Meter)
+x_Bild = (X − Y) · cos 30°
+y_Bild = (X + Y) · 0,5 − Z</div>
+  <p>Der Blick kommt von Südosten, sichtbar sind Südfassade, Ostgiebel und die Dachflächen. Verdeckungen löst die Zeichenreihenfolge: Boden, Terrasse, nördliche Dachfläche, Südfassade mit Textur und Fenstern, Ostgiebel mit leichter Abschattung von 7 %, südliche Dachfläche mit Ziegellinien und Photovoltaik, zuletzt Carport und der gestrichelte Keller.</p>
+
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Bauteil</th><th>Regel</th><th>Ligne</th><th>Plateau</th><th>angepasst</th></tr></thead>
+      <tbody>
+        <tr><th>Traufhöhe</th><td>aus den Daten, sonst First − (Tiefe / 2) · tan(Neigung)</td><td class="r">5,60</td><td class="r">3,40 *</td><td class="r">4,97</td></tr>
+        <tr><th>Teilobergeschoss</th><td>nur Plateau: ca. 40 % der Länge im Westen, bis Firsthöhe</td><td class="r">–</td><td class="r">6,5 m *</td><td class="r">–</td></tr>
+        <tr><th>Fenster EG Süd</th><td>⌊Breite / 2,8⌋ Stück, 1,25 m breit, 0,95–2,25 m hoch</td><td class="r">4</td><td class="r">5</td><td class="r">4</td></tr>
+        <tr><th>bodentief Süd</th><td>max(2, ⌊Breite / 4⌋) Stück, 2,30 m breit, 0,05–2,40 m</td><td class="r">3</td><td class="r">4</td><td class="r">3</td></tr>
+        <tr><th>Fenster OG Süd</th><td>⌊Breite / 3⌋ Stück ab 3,70 m, wenn Wandhöhe &gt; 4,4 m</td><td class="r">4</td><td class="r">2 im Teil-OG</td><td class="r">4</td></tr>
+        <tr><th>Ostgiebel</th><td>EG-Fenster, OG-Fenster, Dachfenster wenn First − Traufe &gt; 2,5 m</td><td class="r">3</td><td class="r">1 + 1</td><td class="r">3</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="mute" style="font-size:13.5px">* Schematische Annahme für die Zeichnung, nicht aus den Typdaten.</p>
+
+  <h3>Groß und kompakt</h3>
+  <p>Dieselbe Komponente <code>Axonometrie</code> zeichnet die großen Ansichten in Schritt 5, 6 und 8 und die kleinen Vorschauen in Schritt 4. Im kompakten Modus gilt für alle Karten ein gemeinsamer Bildausschnitt, berechnet aus der größten Typbreite (16,5 m) und der zulässigen Firsthöhe (9,0 m). Die Häuser stehen auf derselben Grundlinie; so ist der Größenunterschied ablesbar. Carport und Keller entfallen dort, damit der Ausschnitt stabil bleibt.</p>
+  <p>Im Lageplan wird der Typ als Rechteck mit gestrichelter Firstlinie gezeichnet. Eine Drehung um 90° vertauscht Breite und Tiefe; die Firstlinie folgt der Längsseite.</p>
+</section>
+
+<!-- ============================ 4 MATERIAL ============================ -->
+<section id="material">
+  <div class="abschnitt-kopf">
+    <span class="eyebrow">Abschnitt 4</span>
+    <h2>Materialauswahl und Preisverhältnisse</h2>
+  </div>
+  <p>Materialien werden in zwei Stufen gewählt: Die Ausstattungslinie legt ein vollständiges Paket fest, Einzeloptionen verändern es gezielt. Jede Stufe wirkt sofort auf die Axonometrie und auf den Kostenkorridor.</p>
+
+  <h3>Die drei Ausstattungslinien</h3>
+  <p>Bezugsgröße für die Prozentwerte ist die Mitte des Ligne-Basispreises, 345.000 €.</p>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th></th><th>Base</th><th>Confort</th><th>Signature</th></tr></thead>
+      <tbody>
+        <tr><th>Aufpreis</th><td class="num">enthalten im Basispreis</td><td class="num">+ ca. 34.000 € · 9,9 %</td><td class="num">+ ca. 71.000 € · 20,6 %</td></tr>
+        <tr><th>Fassade</th><td>Putz weißgrau</td><td>Putz durchgefärbt</td><td>Naturholz vorvergraut</td></tr>
+        <tr><th>Fenster</th><td>Kunststoff dreifach</td><td>Holz-Alu</td><td>Holz-Alu bodentief</td></tr>
+        <tr><th>Boden</th><td>Vinyl</td><td>Eiche-Fertigparkett</td><td>Massivholzdiele</td></tr>
+        <tr><th>Sanitär</th><td>Standardserie</td><td>gehobene Serie, bodengleiche Dusche</td><td>Designserie</td></tr>
+        <tr><th>Heizung</th><td>Luft-Wasser-Wärmepumpe</td><td>Wärmepumpe mit Fußbodenheizung</td><td>Wärmepumpe, Fußbodenheizung, kontrollierte Lüftung</td></tr>
+        <tr><th>Dach</th><td>Betondachstein anthrazit</td><td>Tonziegel</td><td>Tonziegel handgeformt</td></tr>
+        <tr><th>Photovoltaik</th><td class="mute">–</td><td class="mute">–</td><td>6 kWp</td></tr>
+        <tr><th>RE2020</th><td class="warn">Bbio-Schwellenwert knapp verfehlt: + ca. 9.500 € für verstärkte Dämmung und kontrollierte Lüftung</td><td class="mute">kein Befund</td><td class="mute">kein Befund</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Vom Material zur Farbfläche</h3>
+  <p>Materialien erscheinen als Farbflächen mit einfacher Textur, nie als Produktfoto. Die Funktion <code>materialien</code> leitet aus Linie und Optionen ab, was gezeichnet wird.</p>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Material</th><th>Farbe</th><th>Textur</th><th>erscheint, wenn …</th></tr></thead>
+      <tbody>
+        <tr><th>Putz weißgrau</th><td class="mono"><span class="swatch" style="background:#E6E4DD"></span>#E6E4DD</td><td>flächig</td><td>Linie Base</td></tr>
+        <tr><th>Putz durchgefärbt</th><td class="mono"><span class="swatch" style="background:#D8C8AE"></span>#D8C8AE</td><td>flächig</td><td>Linie Confort</td></tr>
+        <tr><th>Naturholz vorvergraut</th><td class="mono"><span class="swatch" style="background:#AAA397"></span>#AAA397</td><td>senkrechte Leisten, 0,38 m</td><td>Linie Signature, alle Fassaden</td></tr>
+        <tr><th>Lärche</th><td class="mono"><span class="swatch" style="background:#BF8E5E"></span>#BF8E5E</td><td>senkrechte Leisten</td><td>Holz Süd (nur Südfassade) oder vollflächig, außer bei Signature</td></tr>
+        <tr><th>Ziegelsichtmauerwerk</th><td class="mono"><span class="swatch" style="background:#A85D42"></span>#A85D42</td><td>Lagerfugen, 0,36 m</td><td>Option Ziegel EG, Band bis 2,90 m</td></tr>
+        <tr><th>Betondachstein anthrazit</th><td class="mono"><span class="swatch" style="background:#4C4F53"></span>#4C4F53</td><td>Ziegelreihen</td><td>Linie Base</td></tr>
+        <tr><th>Tonziegel naturrot</th><td class="mono"><span class="swatch" style="background:#B9583A"></span>#B9583A</td><td>Ziegelreihen</td><td>Base mit Option Dachziegel</td></tr>
+        <tr><th>Tonziegel</th><td class="mono"><span class="swatch" style="background:#B45D3E"></span>#B45D3E</td><td>Ziegelreihen</td><td>Linie Confort</td></tr>
+        <tr><th>Tonziegel handgeformt</th><td class="mono"><span class="swatch" style="background:#9F5339"></span>#9F5339</td><td>Ziegelreihen</td><td>Linie Signature</td></tr>
+        <tr><th>Photovoltaik</th><td class="mono"><span class="swatch" style="background:#2E3844"></span>#2E3844</td><td>Modulraster</td><td>Option PV oder Signature, südliche Dachfläche</td></tr>
+        <tr><th>Glas</th><td class="mono"><span class="swatch" style="background:#A9BBC6"></span>#A9BBC6</td><td>Rahmen hell (Base) oder dunkel</td><td>immer; bodentief mit Option oder Signature</td></tr>
+        <tr><th>Holzdeck</th><td class="mono"><span class="swatch" style="background:#C9A57B"></span>#C9A57B</td><td>Dielen, 0,5 m</td><td>Option Terrasse, 8 × 3 m vor der Südfassade</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Alle Fassadenmaterialien liegen innerhalb dessen, was der PLU erlaubt (helle Putztöne, Naturholz, Ziegel). Die beiden Holzverschalungen schließen sich gegenseitig aus: Wer „vollflächig“ wählt, ersetzt „Südfassade“ und umgekehrt.</p>
+
+  <h3>Optionen: Differenz statt Summe</h3>
+  <p>Jede Option zeigt ihren Aufpreis als „+ ca.“. Ist sie in der gewählten Linie enthalten, wird sie grau markiert, lässt sich nicht abwählen und kostet „+0 €“. Die Auswahl des Nutzers bleibt dabei gespeichert: Wechselt er zurück zu einer Linie ohne diese Option, wird sie wieder berechnet.</p>
+
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 5 · Aufpreise im Verhältnis</span><span class="eyebrow">in Tsd. € · % von 345.000 €</span></div>
+    <div class="fig-inhalt" id="chart-aufpreise"></div>
+    <figcaption>Linien, RE2020-Anpassung und Einzeloptionen auf einer Skala. Der Keller ist die teuerste Einzelentscheidung und kostet mehr als der Schritt von Base zu Confort. Rechts: in welcher Linie die Option bereits enthalten ist.</figcaption>
+  </figure>
+
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Option</th><th class="r">Aufpreis</th><th class="r">% Ligne-Mitte</th><th>enthalten in</th><th>Wirkung in der Zeichnung</th></tr></thead>
+      <tbody>
+        <tr><th>Holzverschalung Lärche statt Putz (Südfassade)</th><td class="r">+ ca. 12.400 €</td><td class="r">3,6 %</td><td>Signature</td><td>Südfassade Lärche</td></tr>
+        <tr><th>Vollflächige Holzverschalung</th><td class="r">+ ca. 28.900 €</td><td class="r">8,4 %</td><td>Signature</td><td>alle Fassaden Lärche</td></tr>
+        <tr><th>Ziegelsichtmauerwerk Erdgeschoss</th><td class="r">+ ca. 19.700 €</td><td class="r">5,7 %</td><td class="mute">–</td><td>Ziegelband EG</td></tr>
+        <tr><th>Dachziegel Tonziegel naturrot statt anthrazit</th><td class="r">+ ca. 4.200 €</td><td class="r">1,2 %</td><td>Confort, Signature</td><td>Dach naturrot (nur bei Base sichtbar)</td></tr>
+        <tr><th>Fenster bodentief Südseite</th><td class="r">+ ca. 8.600 €</td><td class="r">2,5 %</td><td>Signature</td><td>breite Glasflächen EG Süd</td></tr>
+        <tr><th>Carport zweistellig</th><td class="r">+ ca. 14.500 €</td><td class="r">4,2 %</td><td class="mute">–</td><td>Carport östlich, nur große Ansicht</td></tr>
+        <tr><th>Keller unter halber Grundfläche</th><td class="r">+ ca. 47.000 €</td><td class="r">13,6 %</td><td class="mute">–</td><td>gestrichelter Kellerkörper</td></tr>
+        <tr><th>Photovoltaik 6 kWp</th><td class="r">+ ca. 11.200 €</td><td class="r">3,2 %</td><td>Signature</td><td>Module auf der Süddachfläche</td></tr>
+        <tr><th>Terrasse Holz 24 m²</th><td class="r">+ ca. 9.800 €</td><td class="r">2,8 %</td><td class="mute">–</td><td>Holzdeck, auch im Lageplan</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Was die Linien wirklich kosten</h3>
+  <ul class="liste">
+    <li><strong>Base ist nicht kostenlos.</strong> Mit der RE2020-Anpassung liegt Base effektiv bei + ca. 9.500 €. Der Schritt zu Confort kostet damit nur noch rund 24.500 € mehr.</li>
+    <li><strong>Signature enthält Optionen im Wert von ca. 52.900 €</strong> (vollflächiges Holz 28.900, Photovoltaik 11.200, bodentiefe Fenster 8.600, Tonziegel 4.200; die Holzverschalung Süd zählt nicht doppelt). Das sind rund 75 % des Aufpreises von 71.000 €. Die übrigen rund 18.100 € entfallen auf Boden, Sanitär, Lüftung und Fensterqualität.</li>
+    <li><strong>Confort enthält nur eine Option</strong>, die Tonziegel für 4.200 €, also rund 12 % des Aufpreises. Der Rest steckt in Innenausbau und Haustechnik.</li>
+    <li><strong>Pro Quadratmeter Wohnfläche</strong> (Mitte des Basispreises) ist Ligne mit ca. 2.180 € am günstigsten, die angepasste Plateau-Variante mit ca. 2.660 € am teuersten, weil sie die kleinste Wohnfläche hat.</li>
+  </ul>
+
+  <h3>Der Kostenkorridor</h3>
+  <p>Der Korridor ist immer eine Spanne, nie ein Betrag. Beide Enden werden gleich verschoben, die Breite der Spanne kommt allein aus dem Basispreis des Haustyps (34.000 € bei Ligne und der angepassten Variante).</p>
+  <div class="formel">unten = Basispreis min + Linie + RE2020 (nur Base) + Σ Optionen, die nicht in der Linie enthalten sind
+oben  = Basispreis max + dieselben Aufpreise
+Anzeige: beide Enden auf 1.000 € gerundet, mit „ca.“
+
+Schritt 1–2   kein Korridor
+Schritt 3     Spanne der zulässigen Typen: ca. 328.000 – 368.000 €
+ab Schritt 4  Korridor der aktuellen Auswahl</div>
+
+  <figure>
+    <div class="fig-kopf"><span class="eyebrow">Abb. 6 · Korridore typischer Konfigurationen</span><span class="eyebrow">Skala des Preisbalkens, 300–550 Tsd. €</span></div>
+    <div class="fig-inhalt" id="chart-korridore"></div>
+    <figcaption>Jeder Balken ist ein Korridor, wie ihn der Preisbalken zeigt. Die günstigste mögliche Konfiguration ist Ligne mit Base einschließlich RE2020-Anpassung, die teuerste die angepasste Plateau-Variante mit Signature und allen nicht enthaltenen Optionen.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ 5 MAIL ============================ -->
+<section id="mail">
+  <div class="abschnitt-kopf">
+    <span class="eyebrow">Abschnitt 5</span>
+    <h2>Ableitung des Projekts als Mail an das Architekturbüro</h2>
+  </div>
+  <p>Am Ende des Ablaufs steht kein Kauf, sondern eine Übergabe: Der Vorentwurf geht als strukturierte Mail an das Architekturbüro, das ihn prüft und ein verbindliches Angebot erstellt. Die Mail ist das eigentliche Arbeitsergebnis des Konfigurators.</p>
+
+  <div class="offen">
+    <strong>Stand im Mockup</strong>
+    <p style="margin:.3rem 0 0">Das Mockup prüft das Formular und zeigt die Bestätigungsseite mit Vorgangsnummer. Es versendet keine Mail und erzeugt keine Anlagen; dafür fehlt ein Backend. Dieser Abschnitt beschreibt, wie die Mail aus dem Zustand abgeleitet wird.</p>
+  </div>
+
+  <h3>Auslöser und Voraussetzungen</h3>
+  <ol class="liste">
+    <li>Der Nutzer klickt in Schritt 9 auf „Vorentwurf zur Prüfung übergeben“.</li>
+    <li>Pflicht sind Name, eine gültige E-Mail-Adresse und das Häkchen „Mir ist bewusst, dass ich eine unverbindliche Vorentwurfsskizze übergebe“. Telefon, Baubeginn und Finanzierung sind freiwillig.</li>
+    <li>Aus Zustand und Daten entsteht ein Datensatz. Aus ihm werden die Büro-Mail, die Kopie an den Nutzer und die Anlagen erzeugt.</li>
+    <li>Die Bestätigungsseite nennt die Vorgangsnummer und die Adresse, an die die Kopie geht.</li>
+  </ol>
+
+  <h3>Vom Zustand zur Mail</h3>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Mail-Abschnitt</th><th>Quelle im Konfigurator</th></tr></thead>
+      <tbody>
+        <tr><th>Betreff</th><td>Vorgangsnummer, <code>PARZELLE.kennung</code>, Typname, Linienname</td></tr>
+        <tr><th>1 Kontakt</th><td><code>kontakt</code> (Felder aus <code>KONTAKTFORMULAR</code>); Antwort-an = E-Mail des Nutzers</td></tr>
+        <tr><th>2 Parzelle</th><td><code>PARZELLE</code>, <code>REGELWERK.zone</code></td></tr>
+        <tr><th>3 Entwurf</th><td><code>typId</code> → <code>HAUSTYPEN</code>; <code>linieId</code> → <code>LINIEN</code>; <code>optionen</code> plus enthaltene Optionen</td></tr>
+        <tr><th>4 Implantation</th><td><code>lage</code> → <code>abstaende()</code>, Stellung längs oder gedreht</td></tr>
+        <tr><th>5 Regelabgleich</th><td><code>pruefungen()</code>, wie in Schritt 8</td></tr>
+        <tr><th>6 Kostenkorridor</th><td><code>korridorBerechnen()</code> mit allen Posten</td></tr>
+        <tr><th>7 Hinweise</th><td>RE2020-Befund, bekannte Rechenlücken, Zeitpunkt der Bestätigung</td></tr>
+        <tr><th>Anlagen</th><td>Lageplan und Axonometrie als PDF aus denselben SVG-Zeichnungen, Datensatz als JSON</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Beispiel: Büro-Mail zu Durchlauf A</h3>
+  <p>Ligne, Confort, Lärche Süd und Terrasse, straßennah. Name, Adressen und Telefonnummer sind Platzhalter.</p>
+  <div class="mail">
+    <dl>
+      <dt>Von</dt><dd>Emprise Vorentwurf &lt;vorentwurf@emprise.example&gt;</dd>
+      <dt>An</dt><dd>Architekturbüro &lt;projekte@architekturbuero.example&gt;</dd>
+      <dt>Antwort an</dt><dd>Camille Martin &lt;camille.martin@example.fr&gt;</dd>
+      <dt>Betreff</dt><dd><strong>Vorentwurf VE-AB0147-1309 · Parzelle AB 0147 Treillières · Ligne / Confort</strong></dd>
+      <dt>Anlagen</dt><dd class="mono">VE-AB0147-1309_Lageplan.pdf · VE-AB0147-1309_Axonometrie.pdf · VE-AB0147-1309.json</dd>
+    </dl>
+<pre>Guten Tag,
+
+über Emprise ist ein neuer Vorentwurf zur Prüfung eingegangen. Es handelt sich
+um eine unverbindliche Vorentwurfsskizze; die anfragende Person hat dies vor dem
+Absenden ausdrücklich bestätigt. Bitte melden Sie sich direkt bei ihr.
+
+1  KONTAKT
+   Name                  Camille Martin
+   E-Mail                camille.martin@example.fr
+   Telefon               +33 6 00 00 00 00
+   Baubeginn             in 6 bis 12 Monaten
+   Finanzierung geklärt  ja
+
+2  PARZELLE
+   Adresse               12 rue des Tilleuls, 44119 Treillières
+   Kennung               AB 0147 · 612 m²
+   Front / Tiefe         20,0 m / 31,0 m · Straße Norden, Garten Süden
+   Nachbarn bebaut       Osten, Westen
+   Zone                  UB — zone urbaine à vocation résidentielle
+
+3  ENTWURF
+   Haustyp               Ligne · kompakter Baukörper, R+1
+                         96 m² Grundfläche · 158 m² Wohnfläche
+                         4 Zimmer, 1 Bad + 1 Gäste-WC
+                         Satteldach 40°, First längs · First 8,4 m · Traufe 5,6 m
+   Ausstattungslinie     Confort                                  + ca. 34.000 €
+   Optionen              Holzverschalung Lärche (Südfassade)      + ca. 12.400 €
+                         Terrasse Holz 24 m²                      + ca.  9.800 €
+                         Tonziegel naturrot statt anthrazit       in Confort enthalten
+
+4  IMPLANTATION
+   Stellung              Längsseite nach Süden (straßennah)
+   Abstände              Straße 5,00 · West 4,00 · Ost 4,00 · hinten 18,00 m
+   Garten                18,00 m tief, ca. 360 m²
+
+5  REGELABGLEICH (automatisch, bitte prüfen)
+   Grundfläche           96 m² von max. 244,8 m²                  erfüllt
+   Firsthöhe             8,4 m von max. 9,0 m                     erfüllt
+   Traufhöhe             5,6 m von max. 6,0 m                     erfüllt
+   Dachform              Satteldach 40°                           erfüllt
+   Abstände              siehe Implantation                       erfüllt
+   Unversiegelt          ca. 492 m² von mind. 183,6 m²            erfüllt
+   Fassade               Putz durchgefärbt, Lärche                erfüllt
+   RE2020                kein Befund für Linie Confort            erfüllt
+
+6  KOSTENKORRIDOR (Schätzung, unverbindlich)
+   ca. 384.000 – 418.000 €
+   Ligne                 328.000 – 362.000 €
+   Linie Confort         + ca. 34.000 €
+   2 Optionen            + ca. 22.200 €
+
+7  HINWEISE FÜR DIE PRÜFUNG
+   – Unversiegelte Fläche ohne Zufahrt und Wege gerechnet.
+   – Traufhöhe und Dachneigung sind Katalogwerte, nicht standortbezogen geprüft.
+   – Bestätigung „unverbindliche Vorentwurfsskizze“: 13.09.2026, 14:32 Uhr
+
+Lageplan, Axonometrie und der vollständige Datensatz liegen bei.
+
+Emprise · Vorgang VE-AB0147-1309</pre>
+  </div>
+
+  <h3>Kopie an den Nutzer</h3>
+  <p>Die Kopie trägt den Betreff „Ihr Vorentwurf für Parzelle AB 0147 liegt beim Architekturbüro“ und enthält die Abschnitte 2, 3, 4 und 6 sowie dieselben Anlagen. Den internen Regelabgleich und die Prüfhinweise enthält sie nicht. Sie endet mit den drei nächsten Schritten: Prüfung, Rückmeldung, verbindliches Angebot.</p>
+
+  <h3>Regeln für Inhalt und Ton</h3>
+  <ul class="liste">
+    <li>Keine Begriffe aus dem Handel: nicht „Bestellung“, „Auftrag“, „Kauf“, sondern „Vorentwurf“, „Übergabe“, „Prüfung“.</li>
+    <li>Beträge nur als Spanne oder mit „ca.“; bei Optionen die Differenz, enthaltene Optionen ohne Betrag.</li>
+    <li>Der Regelabgleich ist als automatisch gekennzeichnet; die rechtliche Prüfung bleibt beim Büro.</li>
+    <li>Antwort-an ist immer die Adresse des Nutzers, damit das Büro direkt antworten kann.</li>
+    <li>Personenbezogene Daten gehören nicht in Links oder Betreffzeilen.</li>
+  </ul>
+
+  <h3>Datensatz als Anlage</h3>
+  <p>Der JSON-Datensatz enthält nur IDs und Rohwerte. Das Büro kann ihn in die eigene Projektverwaltung übernehmen oder den Konfigurator damit wieder öffnen.</p>
+<pre class="code">{
+  "vorgang": "VE-AB0147-1309",
+  "bestaetigt_unverbindlich": "2026-09-13T14:32:00+02:00",
+  "kontakt": { "name": "Camille Martin", "email": "camille.martin@example.fr",
+               "telefon": "+33 6 00 00 00 00", "baubeginn": "in 6 bis 12 Monaten",
+               "finanzierung": "ja" },
+  "parzelle": "AB 0147",
+  "haustyp": "ligne",
+  "linie": "confort",
+  "optionen_gewaehlt": ["holz_sued", "terrasse"],
+  "optionen_enthalten": ["ziegel_dach"],
+  "lage": { "x_m": 4.0, "y_m": 5.0, "gedreht": false },
+  "abstaende_m": { "strasse": 5.0, "west": 4.0, "ost": 4.0, "hinten": 18.0 },
+  "korridor_eur": { "unten": 384200, "oben": 418200, "anzeige": "ca. 384.000 – 418.000 €" },
+  "pruefungen": { "grundflaeche": "ok", "firsthoehe": "ok", "traufhoehe": "ok",
+                  "abstaende": "ok", "unversiegelt": "ok", "re2020": "ok" }
+}</pre>
+
+  <h3>Umsetzung</h3>
+  <ul class="liste">
+    <li>Versand über einen eigenen Server-Endpunkt, der Datensatz und SVG-Zeichnungen entgegennimmt, die PDFs erzeugt und beide Mails verschickt. Ein <code>mailto:</code>-Link reicht nicht: Er kann keine Anlagen tragen und legt Personendaten in die URL.</li>
+    <li>Die Vorgangsnummer folgt im Mockup dem Muster <span class="mono">VE-&lt;Kennung&gt;-&lt;TTMM&gt;</span>. Zwei Übergaben derselben Parzelle am selben Tag ergäben dieselbe Nummer; im Betrieb braucht sie einen laufenden Zähler.</li>
+    <li>Die Bestätigungsseite sollte erst erscheinen, wenn der Server den Eingang quittiert hat, und bei einem Fehler sagen, was zu tun ist.</li>
+  </ul>
+</section>
+
+  </main>
+</div>
+
+<footer style="border-top:1px solid var(--line);padding:1.4rem 2rem;max-width:1240px;margin:0 auto">
+  <span class="eyebrow">Emprise · Dokumentation Hauskonfigurator · Stand 13.09.2026</span>
+</footer>
+
+<style>
+.zeile .hit{fill:transparent}
+.zeile:hover .hit{fill:var(--accent-tint)}
+</style>
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var C = Math.cos(Math.PI / 6);
+  function P(X, Y, Z){ return [(X - Y) * C, (X + Y) * 0.5 - Z]; }
+  function pts(a){ return a.map(function(p){ return P(p[0], p[1], p[2]).map(function(v){ return v.toFixed(3); }).join(','); }).join(' '); }
+  function de(n, d){ return Number(n).toLocaleString('de-DE', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  var K = 'stroke:var(--vol-kante);stroke-width:.09;stroke-linejoin:round';
+
+  /* ---------- Abb. 4: Volumen ---------- */
+  var typen = [
+    { name: 'Ligne', w: 12, d: 8, R: 8.4, E: 5.6, flach: false, info: '12,0 × 8,0 m · Satteldach 40°', status: ['ok', 'wählbar'] },
+    { name: 'Plateau', w: 16.5, d: 8, R: 6.8, flach: true, info: '16,5 × 8,0 m · Flachdach mit Attika', status: ['nein', 'gesperrt'] },
+    { name: 'Plateau — angepasst', w: 13.5, d: 8, R: 8.1, E: 8.1 - 4 * Math.tan(38 * Math.PI / 180), flach: false, info: '13,5 × 8,0 m · Satteldach 38°', status: ['ok', 'wählbar · Vorschlag'] }
+  ];
+  function rahmen(w, d, h){
+    var pp = [[-1.2,-1.2,0],[w+1.2,-1.2,0],[w+1.2,d+1.2,0],[-1.2,d+1.2,0],[0,0,h],[0,d/2,h],[-4.8,d,h/2],[-5.6,d,9]].map(function(p){ return P(p[0],p[1],p[2]); });
+    var xs = pp.map(function(p){ return p[0]; }), ys = pp.map(function(p){ return p[1]; });
+    return { minX: Math.min.apply(0, xs) - .4, maxX: Math.max.apply(0, xs) + .4, minY: Math.min.apply(0, ys) - .6, maxY: Math.max.apply(0, ys) + .4 };
+  }
+  var ref = rahmen(16.5, 8, 9);
+  var bw = ref.maxX - ref.minX, bh = ref.maxY - ref.minY;
+  var ziel = document.getElementById('volumen');
+  typen.forEach(function(t){
+    var w = t.w, d = t.d, R = t.R, g = rahmen(w, d, R);
+    var vb = [(g.minX + g.maxX) / 2 - bw / 2, g.maxY - bh, bw, bh];
+    var s = '';
+    s += '<polygon points="' + pts([[-1.2,-1.2,0],[w+1.2,-1.2,0],[w+1.2,d+1.2,0],[-1.2,d+1.2,0]]) + '" style="fill:var(--street);stroke:var(--line-strong);stroke-width:.05"/>';
+    var xm = -1.3, a = P(xm, d, 0), b = P(xm, d, R), m9 = P(xm, d, 9), lab = P(xm, d, R / 2), top = t.flach ? [0, d, R] : [0, d / 2, R];
+    s += '<polyline points="' + pts([[0,d,0],[xm-.4,d,0]]) + '" style="fill:none;stroke:var(--mute);stroke-width:.05"/>';
+    s += '<polyline points="' + pts([top,[xm-.4,d,R]]) + '" style="fill:none;stroke:var(--mute);stroke-width:.05;stroke-dasharray:.3 .2"/>';
+    s += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" style="stroke:var(--mute);stroke-width:.07"/>';
+    [a, b].forEach(function(q){ s += '<line x1="' + (q[0]-.35) + '" y1="' + (q[1]+.35) + '" x2="' + (q[0]+.35) + '" y2="' + (q[1]-.35) + '" style="stroke:var(--mute);stroke-width:.12"/>'; });
+    s += '<line x1="' + (m9[0]-1.2) + '" y1="' + m9[1] + '" x2="' + (m9[0]+1.2) + '" y2="' + m9[1] + '" style="stroke:var(--accent);stroke-width:.1;stroke-dasharray:.35 .2"/>';
+    s += '<text x="' + (m9[0]-1.4) + '" y="' + (m9[1]+.35) + '" text-anchor="end" style="fill:var(--accent);font:1.05px \'IBM Plex Mono\',monospace">9,0</text>';
+    s += '<text x="' + (lab[0]-.5) + '" y="' + (lab[1]+.5) + '" text-anchor="end" style="fill:var(--ink);font:1.45px \'IBM Plex Mono\',monospace">' + de(R, 1) + '</text>';
+    if (!t.flach) {
+      var E = t.E;
+      s += '<polygon points="' + pts([[0,0,E],[w,0,E],[w,d/2,R],[0,d/2,R]]) + '" style="fill:var(--vol-dach);' + K + '"/>';
+      s += '<polygon points="' + pts([[0,d,0],[w,d,0],[w,d,E],[0,d,E]]) + '" style="fill:var(--vol-sued);' + K + '"/>';
+      s += '<polygon points="' + pts([[w,0,0],[w,d,0],[w,d,E],[w,d/2,R],[w,0,E]]) + '" style="fill:var(--vol-ost);' + K + '"/>';
+      s += '<polygon points="' + pts([[0,d,E],[w,d,E],[w,d/2,R],[0,d/2,R]]) + '" style="fill:var(--vol-dach);' + K + '"/>';
+      for (var k = 1; k < 7; k++) { var f = k / 7, y = d - f * d / 2, z = E + f * (R - E); s += '<polyline points="' + pts([[0,y,z],[w,y,z]]) + '" style="fill:none;stroke:var(--vol-kante);stroke-width:.04;opacity:.5"/>'; }
+    } else {
+      var W = 3.4, o = 6.5;
+      s += '<polygon points="' + pts([[0,d,0],[w,d,0],[w,d,W],[0,d,W]]) + '" style="fill:var(--vol-sued);' + K + '"/>';
+      s += '<polygon points="' + pts([[w,0,0],[w,d,0],[w,d,W],[w,0,W]]) + '" style="fill:var(--vol-ost);' + K + '"/>';
+      s += '<polygon points="' + pts([[0,0,W],[w,0,W],[w,d,W],[0,d,W]]) + '" style="fill:var(--vol-flach);' + K + '"/>';
+      s += '<polygon points="' + pts([[0,d,W],[o,d,W],[o,d,R],[0,d,R]]) + '" style="fill:var(--vol-sued);' + K + '"/>';
+      s += '<polygon points="' + pts([[o,0,W],[o,d,W],[o,d,R],[o,0,R]]) + '" style="fill:var(--vol-ost);' + K + '"/>';
+      s += '<polygon points="' + pts([[0,0,R],[o,0,R],[o,d,R],[0,d,R]]) + '" style="fill:var(--vol-flach);' + K + '"/>';
+    }
+    var el = document.createElement('div');
+    el.innerHTML = '<svg viewBox="' + vb.join(' ') + '" role="img" aria-label="' + t.name + ', ' + t.info + ', Firsthöhe ' + de(R, 1) + ' m">' + s + '</svg>' +
+      '<div style="border-top:1px solid var(--line);margin-top:.4rem;padding-top:.5rem;display:grid;gap:.15rem">' +
+      '<strong style="font-family:Archivo,Arial,sans-serif;font-stretch:116%;font-size:1rem">' + t.name + '</strong>' +
+      '<span class="mute num" style="font-size:13px">' + t.info + '</span>' +
+      '<span><span class="status ' + t.status[0] + '">' + t.status[1] + '</span></span></div>';
+    ziel.appendChild(el);
+  });
+
+  /* ---------- Balkendiagramme ---------- */
+  function txt(x, y, s, st, anchor){ return '<text x="' + x + '" y="' + y + '"' + (anchor ? ' text-anchor="' + anchor + '"' : '') + ' style="' + st + '">' + s + '</text>'; }
+  var SANS = "font:13px 'IBM Plex Sans',sans-serif;fill:var(--ink)";
+  var MONO = "font:11.5px 'IBM Plex Mono',monospace;fill:var(--mute)";
+  function balken(x0, x1, y, h){ var r = 3, wd = Math.max(x1 - x0, r + 1); return '<path d="M' + x0 + ' ' + y + 'H' + (x0 + wd - r) + 'Q' + (x0 + wd) + ' ' + y + ' ' + (x0 + wd) + ' ' + (y + r) + 'V' + (y + h - r) + 'Q' + (x0 + wd) + ' ' + (y + h) + ' ' + (x0 + wd - r) + ' ' + (y + h) + 'H' + x0 + 'Z" style="fill:var(--accent)"/>'; }
+
+  // Abb. 5
+  var auf = [
+    ['Linie Signature', 71000, 'Linie'], ['Keller unter halber Grundfläche', 47000, ''], ['Linie Confort', 34000, 'Linie'],
+    ['Vollflächige Holzverschalung', 28900, 'Signature'], ['Ziegelsichtmauerwerk EG', 19700, ''], ['Carport zweistellig', 14500, ''],
+    ['Holzverschalung Lärche Süd', 12400, 'Signature'], ['Photovoltaik 6 kWp', 11200, 'Signature'], ['Terrasse Holz 24 m²', 9800, ''],
+    ['RE2020-Anpassung bei Base', 9500, ''], ['Fenster bodentief Südseite', 8600, 'Signature'], ['Tonziegel naturrot', 4200, 'Confort, Signature']
+  ];
+  var L0 = 280, SK = 400 / 75000, ZH = 30, OB = 34, H1 = OB + auf.length * ZH + 8;
+  var s1 = '';
+  [0, 25000, 50000, 75000].forEach(function(v){ var x = L0 + v * SK; s1 += '<line x1="' + x + '" y1="' + (OB - 6) + '" x2="' + x + '" y2="' + (H1 - 4) + '" style="stroke:var(--line);stroke-width:1"/>' + txt(x, OB - 12, de(v / 1000), MONO, 'middle'); });
+  s1 += txt(790, OB - 12, 'ENTHALTEN IN', MONO + ';letter-spacing:.08em');
+  auf.forEach(function(r, i){
+    var y = OB + i * ZH, x1 = L0 + r[1] * SK, pr = de(r[1] / 345000 * 100, 1);
+    s1 += '<g class="zeile"><title>' + r[0] + ': + ca. ' + de(r[1]) + ' € (' + pr + ' % von 345.000 €)</title>' +
+      '<rect class="hit" x="0" y="' + y + '" width="920" height="' + ZH + '"/>' +
+      txt(0, y + 19, r[0], SANS) + balken(L0, x1, y + 8, 14) +
+      txt(x1 + 8, y + 19, de(r[1] / 1000, 1) + ' · ' + pr + ' %', "font:12px 'IBM Plex Mono',monospace;fill:var(--ink)") +
+      txt(790, y + 19, r[2] || '–', MONO) + '</g>';
+  });
+  document.getElementById('chart-aufpreise').innerHTML = '<svg viewBox="0 0 920 ' + H1 + '" style="min-width:720px" role="img" aria-label="Balkendiagramm der Aufpreise, Werte auch in der Tabelle darunter">' + s1 + '</svg>';
+
+  // Abb. 6
+  var kor = [
+    ['Ligne · Base inkl. RE2020', 337500, 371500], ['Ligne · Confort', 362000, 396000],
+    ['Durchlauf A · Ligne · Confort · 2 Optionen', 384200, 418200], ['Ligne · Signature', 399000, 433000],
+    ['Angepasst · Base inkl. RE2020', 343500, 377500], ['Angepasst · Confort', 368000, 402000],
+    ['Angepasst · Signature', 405000, 439000], ['Angepasst · Signature · alle Optionen', 496000, 530000]
+  ];
+  var X0 = 330, S2 = 440 / 250000, x = function(v){ return X0 + (v - 300000) * S2; }, H2 = OB + kor.length * ZH + 8;
+  var s2 = '';
+  [300000, 350000, 400000, 450000, 500000, 550000].forEach(function(v){ s2 += '<line x1="' + x(v) + '" y1="' + (OB - 6) + '" x2="' + x(v) + '" y2="' + (H2 - 4) + '" style="stroke:var(--line);stroke-width:1"/>' + txt(x(v), OB - 12, de(v / 1000), MONO, 'middle'); });
+  kor.forEach(function(r, i){
+    var y = OB + i * ZH, rund = function(v){ return de(Math.round(v / 1000) * 1000); };
+    var anzeige = 'ca. ' + rund(r[1]) + ' – ' + rund(r[2]) + ' €';
+    var a = x(r[1]), b = x(r[2]);
+    s2 += '<g class="zeile"><title>' + r[0] + ': ' + anzeige + '</title>' +
+      '<rect class="hit" x="0" y="' + y + '" width="920" height="' + ZH + '"/>' +
+      txt(0, y + 19, r[0], SANS + (i === 2 ? ';font-weight:600' : '')) +
+      '<rect x="' + a + '" y="' + (y + 8) + '" width="' + (b - a) + '" height="14" rx="3" style="fill:var(--accent)"/>' +
+      txt(b + 8, y + 19, anzeige, "font:12px 'IBM Plex Mono',monospace;fill:var(--ink)") + '</g>';
+  });
+  document.getElementById('chart-korridore').innerHTML = '<svg viewBox="0 0 920 ' + H2 + '" style="min-width:720px" role="img" aria-label="Spannen der Kostenkorridore für acht Konfigurationen">' + s2 + '</svg>';
+})();
+</script>

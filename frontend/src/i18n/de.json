@@ -1,0 +1,35 @@
+{
+  "brand": "Emprise",
+  "tagline": "Vorentwurf auf Ihrer Parzelle",
+  "language": { "label": "Sprache", "fr": "Français", "de": "Deutsch" },
+  "start": {
+    "eyebrow": "Demnächst verfügbar",
+    "title": "Was Sie auf Ihrem Grundstück bauen dürfen",
+    "intro": "Emprise macht die Vorgaben des Bebauungsplans für Ihr Grundstück zu klaren Grenzen und erstellt einen unverbindlichen Vorentwurf, den ein Architekturbüro prüft.",
+    "notices": "Wichtige Hinweise",
+    "noNotices": "Die rechtlichen Hinweise werden vor dem Start veröffentlicht."
+  },
+  "office": {
+    "area": "Büro",
+    "loginTitle": "Anmeldung Büro",
+    "loginIntro": "Nur für Mitarbeitende des Architekturbüros und des Emprise-Teams. Die Anmeldung verlangt einen zweiten Faktor.",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "nav": { "home": "Start" },
+    "homeTitle": "Willkommen",
+    "homeEmpty": "Noch keine Module freigeschaltet. Funktionen erscheinen hier, sobald sie in Betrieb gehen.",
+    "roles": "Rollen",
+    "noAccessTitle": "Kein Zugang",
+    "noAccess": {
+      "unknown": "Dieses Konto ist nicht freigeschaltet. Bitte an den Plattformbetrieb wenden.",
+      "inactive": "Dieses Konto ist gesperrt.",
+      "email_unverified": "Die E-Mail-Adresse ist beim Identitätsdienst nicht bestätigt.",
+      "mfa": "Die Anmeldung verlangt einen zweiten Faktor.",
+      "fehler": "Die Anmeldung ist fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "sheet": { "project": "Projekt", "parcel": "Parzelle", "date": "Stand", "sheet": "Blatt", "scale": "Maßstab", "schematic": "schematisch" },
+  "error": { "generic": "Es ist ein Fehler aufgetreten.", "notFound": "Seite nicht gefunden", "home": "Zur Startseite" },
+  "loading": "Wird geladen …"
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommitsDisabled"],
+  "timezone": "Europe/Paris",
+  "schedule": ["before 7am on monday"],
+  "labels": ["abhängigkeiten"],
+  "lockFileMaintenance": { "enabled": true },
+  "packageRules": [
+    { "matchUpdateTypes": ["minor", "patch"], "groupName": "kleine Updates" },
+    { "matchPackageNames": ["typescript"], "allowedVersions": "<6", "description": "typescript-eslint und openapi-typescript verlangen TypeScript 5" }
+  ]
+}

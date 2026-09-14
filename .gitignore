@@ -1,0 +1,31 @@
+# Allgemein
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example
+
+# Claude Code: lokale Einstellungen bleiben lokal
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+
+# Werkzeuge des Mockups (esbuild wird mit --no-save installiert)
+/package.json
+/package-lock.json

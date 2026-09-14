@@ -1,0 +1,28 @@
+# Annahmen und Festlegungen in der Umsetzung
+
+Festlegungen, die weder Spezifikation noch Umsetzungsplan decken oder die davon abweichen (Spez. Kapitel 0 Punkt 7, Plan 4.1 Kriterium 9). Neueste Einträge unten. Spez. 12 nennt `backend/docs/ANNAHMEN.md`; Plan 4.1 nennt `docs/ANNAHMEN.md`. Diese Datei folgt dem Plan, weil sie auch Frontend und Infrastruktur betrifft.
+
+## R0 – Plattform (14.09.2026)
+
+| Nr. | Festlegung | Begründung | Betrifft |
+|---|---|---|---|
+| A1 | R0 ist in zwei Teile geschnitten: **anbieterunabhängig** (Code, lokale Umgebung, CI, Betriebsanleitungen) ist umgesetzt; **anbietergebunden** (OpenTofu, Auslieferung nach Staging/Produktion, Sicherung in zweiter Region, Fehler-Tracking-Konto, Uptime-Dienst, Domain, Maildienst) folgt im Proof of Concept | Hängt an D3, D4, D5, E2; Konten und Verträge schließt der Auftraggeber | Plan 3.2, 6.4 |
+| A2 | **Jobs in eigener Tabelle** mit `SELECT … FOR UPDATE SKIP LOCKED` statt Procrastinate | Die stabile Dokumentation von Procrastinate nennt für SQLAlchemy nur einen psycopg2-Connector; die transaktionale Anlage mit psycopg 3 war nicht belegbar. Die eigene Lösung hat rund 250 Zeilen, keine zusätzliche Abhängigkeit und ist getestet. Plan 6.3 sieht genau diesen Rückfall vor | Plan 6.3 |
+| A3 | Die Tabelle `project` entsteht in P (minimal: Zugangstoken, Status, letzte Aktivität), nicht erst in A | Das anonyme Projekt-Cookie aus P braucht ein Projekt; G1 hängt Grundstücke daran. A ergänzt Kontakt und Anfrage | Plan 3.2, 3.6 |
+| A4 | Rollen der Mitarbeitenden stehen in `staff_user`, nicht in Claims des Identitätsdienstes. Freischaltung per `python -m app.cli staff-add`. Die erste Anmeldung bindet das Konto über die **bestätigte** E-Mail-Adresse an das OIDC-Subjekt; danach zählt nur das Subjekt | Anbieterunabhängig, solange D4 offen ist; keine automatische Anlage unbekannter Konten | Spez. 6.2, D4 |
+| A5 | MFA wird über den Claim `amr` geprüft (`EMPRISE_OIDC_REQUIRE_MFA`, Standard an). Wird die Prüfung abgeschaltet, muss der Identitätsdienst MFA selbst erzwingen | Nicht jeder Anbieter liefert `amr` (z. B. Google) | Plan 6.7 |
+| A6 | CSRF-Schutz als Double-Submit-Cookie (`emprise_csrf` + Header `X-CSRF-Token`) für alle schreibenden Aufrufe unter `/api/` | Frontend und API unter einer Domain; ohne Sitzungsspeicher | Plan 6.7 |
+| A7 | Rate-Limits in PostgreSQL (feste Zeitfenster); gespeichert wird nur ein HMAC der IP-Adresse. Die API übernimmt `X-Forwarded-For` nur vom vorgeschalteten Web-Container (`FORWARDED_ALLOW_IPS`); die API darf deshalb nicht direkt aus dem Internet erreichbar sein | Kein Redis (Plan 6.1); IP-Adressen sind personenbezogen | Spez. 10.1 |
+| A8 | **Auslieferung des Frontends über einen Web-Container** (Caddy), der statische Dateien liefert und `/api` an die API weiterleitet. Lastverteiler → Web → API statt Pfadrouting im Lastverteiler (Plan 6.2) | Nicht jede Container-Plattform routet nach Pfaden; so bleibt der Anbieter austauschbar. CSP und Sicherheitsköpfe stehen im `Caddyfile` | Plan 6.2 |
+| A9 | Gesundheitsprüfungen unter `/api/health/live`, `/ready` (Datenbank, PostGIS, Migrationsstand des Images), `/jobs` (503, wenn ein fälliger Job länger als 15 min wartet). Der Uptime-Dienst prüft `/ready` und `/jobs`; das ersetzt vorerst eigene Kennzahlen-Infrastruktur für die Alarme „API nicht erreichbar“ und „Job wartet“ | Wenige Bausteine | Plan 6.8 |
+| A10 | `audit_log` und `legal_text` sind per Trigger unveränderlich (auch `TRUNCATE`) | L4; Einwilligungen verweisen später auf eine Textversion | Spez. 4.1 |
+| A11 | `retention_cleanup` löscht Projekte mit Status `draft` 90 Tage nach der letzten Aktivität. **Modul A muss die Bedingung** um „ohne Kontakt und ohne Anfrage“ erweitern | Sonst würden Projekte mit Anfrage gelöscht, sobald A existiert | Plan 6.6 |
+| A12 | Die Nutzlast eines Mailjobs enthält die Empfängeradresse (Datenbank, nicht Log). Erledigte Jobs werden nach 14 Tagen gelöscht | Zustellung mit Wiederholung braucht die Adresse; Eintrag ins Verarbeitungsverzeichnis nötig | Plan 4.1 Kriterium 6 |
+| A13 | Versionen werden über `uv.lock` und `pnpm-lock.yaml` exakt festgehalten, in `pyproject.toml` und `package.json` stehen Mindestversionen | Üblicher Weg mit Lockdateien; Renovate pflegt beide | Spez. 3.2 |
+| A14 | TypeScript 5.9 statt 7.0 | `typescript-eslint` und `openapi-typescript` verlangen TypeScript 5 | Frontend |
+| A15 | `httpx2` statt `httpx` | Authlib 1.8 und Starlette 1.6 kündigen `httpx` ab | Backend |
+| A16 | MinIO lokal und in CI aus `quay.io` mit festem Release von 2025 | MinIO verteilt keine Community-Images mehr über Docker Hub. Nur für Entwicklung und Tests; Ersatz bei Bedarf z. B. SeaweedFS | Plan 6.5 |
+| A17 | Lokaler Identitätsdienst: `navikt/mock-oauth2-server`, erreichbar als `oidc.localhost:8081` im Browser und im Compose-Netz | Gleiche Aussteller-URL für Browser und API, echter OIDC-Ablauf mit PKCE und Nonce | lokal |
+| A18 | Aus dem Mockup übernommen: Gestaltungstokens, Schriften (gebündelt), `Planblatt`, `MassH`/`MassV`, `Schraffur`, `Nordpfeil`, `Massstab`. **Nicht** übernommen: `Lageplan`, weil er fest auf das Rechteck 20 × 31 m zugeschnitten ist. Neu: `PlanSvg` für Polygone in lokalen Metern mit umgekehrter y-Achse; der Lageplan entsteht in G3 darauf | Plan 3.2 Zeile „Frontend“, Plan 3.5 | Frontend |
+| A19 | Sprachwahl: gespeicherte Wahl, sonst Browsersprache, sonst Französisch | D7 | Frontend |
+| A20 | Die Queue-Namen `net` und `sandbox` (Spez. 7) sind noch nicht eingeführt; alle Jobs laufen in `default` | Erst X2 braucht einen Worker ohne Internetzugang | Spez. 7 |

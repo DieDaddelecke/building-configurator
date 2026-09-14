@@ -1,0 +1,16 @@
+{
+  "problem.authentication_required": "Anmeldung erforderlich",
+  "problem.forbidden": "Zugriff verweigert",
+  "problem.not_found": "Nicht gefunden",
+  "problem.method_not_allowed": "Methode nicht erlaubt",
+  "problem.validation_error": "Ungültige Eingabe",
+  "problem.csrf_failed": "Sicherheitstoken fehlt oder ist ungültig",
+  "problem.rate_limited": "Zu viele Anfragen, bitte später erneut versuchen",
+  "problem.conflict": "Konflikt mit dem aktuellen Stand",
+  "problem.internal_error": "Interner Fehler",
+  "problem.service_unavailable": "Dienst vorübergehend nicht verfügbar",
+  "problem.unknown_flag": "Unbekannte Funktion",
+  "problem.oidc_not_configured": "Anmeldung für das Büro nicht eingerichtet",
+  "mail.platform_test.subject": "Emprise – Testmail",
+  "mail.platform_test.body": "Guten Tag,\n\ndiese Mail bestätigt, dass der Versand aus der Plattform Emprise funktioniert.\nUmgebung: {env}\n\nEmprise"
+}

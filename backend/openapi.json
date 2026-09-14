@@ -1,0 +1,951 @@
+{
+  "components": {
+    "schemas": {
+      "FlagIn": {
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled_for_all": {
+            "default": false,
+            "title": "Enabled For All",
+            "type": "boolean"
+          },
+          "enabled_project_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Enabled Project Ids",
+            "type": "array"
+          },
+          "enabled_roles": {
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "title": "Enabled Roles",
+            "type": "array"
+          }
+        },
+        "title": "FlagIn",
+        "type": "object"
+      },
+      "FlagOut": {
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled_for_all": {
+            "default": false,
+            "title": "Enabled For All",
+            "type": "boolean"
+          },
+          "enabled_project_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Enabled Project Ids",
+            "type": "array"
+          },
+          "enabled_roles": {
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            },
+            "title": "Enabled Roles",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "required": [
+          "key",
+          "updated_at",
+          "updated_by"
+        ],
+        "title": "FlagOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobCreated": {
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "JobCreated",
+        "type": "object"
+      },
+      "JobStatus": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "attempts",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "JobStatus",
+        "type": "object"
+      },
+      "LegalTextIn": {
+        "properties": {
+          "body": {
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[a-z][a-z0-9_.]{1,79}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "de"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "locale",
+          "title",
+          "body"
+        ],
+        "title": "LegalTextIn",
+        "type": "object"
+      },
+      "LegalTextOut": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "de"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "locale",
+          "version",
+          "title",
+          "body",
+          "published_at"
+        ],
+        "title": "LegalTextOut",
+        "type": "object"
+      },
+      "OpsStatus": {
+        "properties": {
+          "env": {
+            "title": "Env",
+            "type": "string"
+          },
+          "jobs_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Jobs By Status",
+            "type": "object"
+          },
+          "jobs_failed_last_24h": {
+            "title": "Jobs Failed Last 24H",
+            "type": "integer"
+          },
+          "oldest_waiting_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Waiting Seconds"
+          },
+          "release": {
+            "title": "Release",
+            "type": "string"
+          },
+          "storage_ok": {
+            "title": "Storage Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "env",
+          "release",
+          "jobs_by_status",
+          "jobs_failed_last_24h",
+          "oldest_waiting_seconds",
+          "storage_ok"
+        ],
+        "title": "OpsStatus",
+        "type": "object"
+      },
+      "ProjectOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at"
+        ],
+        "title": "ProjectOut",
+        "type": "object"
+      },
+      "Role": {
+        "enum": [
+          "architect",
+          "rules_admin",
+          "catalog_admin",
+          "ops"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "SessionInfo": {
+        "properties": {
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StaffInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "staff",
+          "project_id"
+        ],
+        "title": "SessionInfo",
+        "type": "object"
+      },
+      "StaffInfo": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "roles"
+        ],
+        "title": "StaffInfo",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Emprise API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health/jobs": {
+      "get": {
+        "description": "503, wenn ein fälliger Job länger als der Schwellwert wartet: Worker steht oder ist überlastet.",
+        "operationId": "jobs_api_health_jobs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Jobs",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/health/live": {
+      "get": {
+        "operationId": "live_api_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Live Api Health Live Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Live",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "description": "Datenbank erreichbar, PostGIS vorhanden, Schema mindestens auf dem Stand dieses Images.",
+        "operationId": "ready_api_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ready",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/admin/flags": {
+      "get": {
+        "operationId": "list_flags_api_v1_admin_flags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FlagOut"
+                  },
+                  "title": "Response List Flags Api V1 Admin Flags Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Flags",
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/admin/flags/{key}": {
+      "put": {
+        "operationId": "put_flag_api_v1_admin_flags__key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlagIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlagOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Flag",
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/admin/legal-texts": {
+      "post": {
+        "operationId": "publish_text_api_v1_admin_legal_texts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LegalTextIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalTextOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Text",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/v1/admin/ops/status": {
+      "get": {
+        "operationId": "ops_status_api_v1_admin_ops_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ops Status",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/api/v1/admin/ops/test-mail": {
+      "post": {
+        "description": "Testmail an die eigene Adresse der angemeldeten Person.",
+        "operationId": "send_test_mail_api_v1_admin_ops_test_mail_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Send Test Mail",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/api/v1/auth/staff/login": {
+      "get": {
+        "operationId": "staff_login_api_v1_auth_staff_login_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "next",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Staff Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/staff/logout": {
+      "post": {
+        "operationId": "staff_logout_api_v1_auth_staff_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Staff Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/flags": {
+      "get": {
+        "description": "Nur die für die anfragende Person eingeschalteten Flags; ausgeschaltete bleiben unsichtbar.",
+        "operationId": "my_flags_api_v1_flags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response My Flags Api V1 Flags Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Flags",
+        "tags": [
+          "flags"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "description": "Status eines Hintergrundjobs (Spez. 6.1). Kunden sehen nur Jobs ihres Projekts, `ops` alle.",
+        "operationId": "get_job_api_v1_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/api/v1/legal/notices": {
+      "get": {
+        "operationId": "notices_api_v1_legal_notices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LegalTextOut"
+                  },
+                  "title": "Response Notices Api V1 Legal Notices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Notices",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/api/v1/projects": {
+      "post": {
+        "operationId": "create_project_api_v1_projects_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Create Project",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "operationId": "get_project_api_v1_projects__project_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Project",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/session": {
+      "get": {
+        "description": "Wer bin ich. Setzt beim ersten Aufruf das CSRF-Cookie (Middleware).",
+        "operationId": "current_session_api_v1_session_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionInfo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Current Session",
+        "tags": [
+          "auth"
+        ]
+      }
+    }
+  }
+}

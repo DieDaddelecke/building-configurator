@@ -1,0 +1,672 @@
+# Emprise – Umsetzungsplan in Modulen
+
+> **Status:** Vorschlag zur Entscheidung · **Stand:** 13.09.2026
+> **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
+> **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
+
+---
+
+## 1. Grundsätze
+
+1. **Jedes Release ist allein produktiv nutzbar.** Kein Modul wartet auf ein späteres, um Nutzen zu stiften.
+2. **Risiko zuerst.** Früh geprüft werden: Qualität der Katasterdaten, Aufwand der Regelerfassung je Zone, Nachfrage.
+3. **Inhalte gehören zum Release.** Ein Modul ohne erfasste Regelwerke, Typdaten oder Rechtstexte ist nicht produktiv (Kapitel 8).
+4. **Wenige Bausteine.** Modularer Monolith, eine Datenbank, verwaltete Dienste in Frankreich.
+5. **Ausbau nach Auslösern, nicht nach Kalender.** Aufwendige Automatik (Sprachmodell, IFC) erst, wenn messbar gebraucht (Kapitel 3.11).
+6. **Einheitliche Produktionsreife** für jedes Modul (Kapitel 4).
+
+---
+
+## 2. Modullandkarte
+
+### 2.1 Module
+
+| Kürzel | Modul | Liefert | Release |
+|---|---|---|---|
+| **P** | Plattform | Hosting, Auslieferung, Anmeldung, Rollen, Queue, Speicher, Mail, Rechtstexte, Überwachung, Büro-Rahmen | R0 |
+| **G1** | Grundstück | Aus Adresse oder Kartenklick ein bestätigtes Grundstück mit eingeordneten Kanten, Gelände, Risiken | R1 |
+| **G2** | Regelwerk | Zone, Planunterlagen, vom Architekten erfasste und freigegebene Regeln mit Zitat, Abdeckung, Planstandsprüfung | R1 |
+| **G3** | Baurahmen | Rahmenbedingungen des Grundstücks: bebaubare Fläche, Grenzwerte, Vorgaben, Hinweise; Steckbrief als PDF | R1 |
+| **A** | Anfrage | Kontakt, E-Mail-Bestätigung, Einwilligung, Snapshot, Mail an Büro, Zugangslink, Export und Löschung, Anfragenliste im Büro | R1 |
+| **H1** | Hauskatalog | Typen, Varianten, Linien, Optionen, Preise, RE2020-Bewertungen – von Hand gepflegt, versioniert | R2 |
+| **H2** | Zulässigkeit und Implantation | Welche Typen passen, Lage verschieben und drehen, Prüfung je Kante, Schnellstellungen | R2 |
+| **H3** | Konfiguration und Kosten | Linie, Optionen, Ausschlüsse, Regelprüfung der Auswahl, RE2020-Status, Kostenkorridor | R2 |
+| **V** | Vorentwurf-Übergabe | Neuprüfung beim Absenden, Snapshot, Dossier-PDF, Lageplan als DXF, Zustände, Nachrichten | R2 |
+| **X1–X5** | Ausbau | PLU-Automatik, Uploads, IFC-Typen, erweitertes Dossier, Integrationen | nach Auslöser |
+
+Oberflächen für das Büro gehören jeweils zu ihrem Fachmodul (Kantenkorrektur zu G1, Regelerfassung zu G2, Katalogpflege zu H1). P stellt nur Anmeldung, Navigation und Rechte bereit.
+
+A funktioniert auch ohne Baurahmen: Liegt ein Grundstück außerhalb der erfassten Gemeinden oder fragt der Kunde eine Prüfung an, entsteht eine Anfrage ohne Baurahmen. Die Abhängigkeit G3 → A ist deshalb weich.
+
+### 2.2 Abhängigkeiten
+
+```mermaid
+flowchart LR
+  P[P Plattform] --> G1[G1 Grundstück]
+  P --> G2[G2 Regelwerk]
+  G1 --> G3[G3 Baurahmen]
+  G2 --> G3
+  G3 --> A[A Anfrage]
+  G3 --> H2[H2 Zulässigkeit<br/>und Implantation]
+  P --> H1[H1 Hauskatalog]
+  H1 --> H2
+  H2 --> H3[H3 Konfiguration<br/>und Kosten]
+  H3 --> V[V Vorentwurf-Übergabe]
+  A --> V
+  G2 -.-> X1[X1 PLU-Automatik]
+  G1 -.-> X2[X2 Uploads]
+  H1 -.-> X3[X3 IFC-Typen]
+  V -.-> X4[X4 Erweitertes Dossier]
+  X3 -.-> X4
+  V -.-> X5[X5 Integrationen]
+```
+
+### 2.3 Releases
+
+| Release | Module | Produktiver Nutzen | Größe (grob) |
+|---|---|---|---|
+| **R0 Fundament** | P | Betriebsfähige Plattform, auf die Module ohne Umbau aufsetzen | 3–5 PW |
+| **R1 Bebaubarkeitscheck** | G1, G2, G3, A | „Was darf ich auf diesem Grundstück bauen?“ mit Lageplan, Grenzwerten und Zitaten; qualifizierte Anfrage an das Büro | 14–24 PW |
+| **R2 Hauskonfigurator** | H1, H2, H3, V | Vorentwurf mit Typ, Linie, Optionen, Lage und Kostenkorridor auf echtem Grundstück | 15–25 PW |
+| **R3+ Ausbau** | X1–X5 | Mehr Gemeinden, mehr Typen, mehr Büros | je Modul |
+
+Größen in Personenwochen (PW) für eine erfahrene Entwicklerperson mit Claude Code, ohne Inhaltsarbeit, Rechtstexte und Gestaltung. Grobe Größenordnung; nach R1 anhand der tatsächlichen Dauer nachkalibrieren.
+
+Jedes Release wird in drei Stufen eingeführt: **intern** (Büro testet mit echten Grundstücken) → **geschlossene Beta** (ausgewählte Interessenten) → **öffentlich** im Einzugsgebiet. Freigeschaltet wird über Feature-Flags, nicht über getrennte Codestände.
+
+---
+
+## 3. Module im Einzelnen
+
+Jedes Modul ist ein senkrechter Schnitt: Tabellen, Fachlogik, API, Oberfläche für Kunde und Büro, Hintergrundjobs, Tests, Überwachung, Betriebsanleitung.
+
+### 3.1 Kette vom Plan zum Baurahmen
+
+```mermaid
+flowchart LR
+  KD[Kataster-Massendaten<br/>Einzugsgebiet] --> G1
+  AD[Adresse oder<br/>Kartenklick] --> G1
+  G1[G1 Grundstück<br/>Umriss, Kanten,<br/>Gelände, Risiken] --> G3
+  GPU[Géoportail de l'Urbanisme<br/>Zonen, Dokumente,<br/>Servituden] --> G2
+  AR[Architekt erfasst<br/>und gibt frei] --> G2
+  G2[G2 Regelwerk<br/>je Zone und Planstand] --> G3
+  G3[G3 Baurahmen<br/>bebaubare Fläche,<br/>Grenzwerte, Vorgaben] --> UI[Lageplan, Tabelle,<br/>Steckbrief-PDF]
+  G3 --> H2[H2 Implantation<br/>ab R2]
+```
+
+### 3.2 P – Plattform (R0)
+
+**Zweck:** Alles, was jedes Modul braucht, einmal richtig.
+
+| Bereich | Umfang |
+|---|---|
+| Code | Ein Repository (`frontend/`, `backend/`, `infra/`, `docs/`), Schutz des Hauptzweigs, Pull Requests mit CI |
+| Auslieferung | Pipeline Test → Staging → Produktion, Migrationen als eigener Schritt, Rückrollen auf das vorige Image (Kapitel 6.5) |
+| Anmeldung | Kunden: anonymes Projekt-Cookie, später E-Mail-Code (in A). Büro: OIDC mit MFA (Kapitel 6.7) |
+| Rechte | Rollen `customer`, `architect`, `rules_admin`, `catalog_admin`, `ops` (Spez. 6.2); Prüfung je Endpunkt, getestet |
+| Querschnitt | Audit-Log, Job-Queue in PostgreSQL, Objektspeicher, Mailversand, Feature-Flags, Problem-Details-Fehler (Spez. 6.1) |
+| Sprache | Französisch führend, Deutsch zusätzlich, ab dem ersten Bildschirm über Übersetzungsschlüssel |
+| Rechtstexte | Mechanismus für versionierte Texte (Hinweise L7, Einwilligungen, Datenschutzerklärung) mit Ausgabe über `GET /legal/notices`; die Texte selbst entstehen in R1 (Kapitel 8) |
+| Überwachung | Strukturierte Logs, Fehler-Tracking, Uptime-Prüfung, Alarme, Sicherung mit getesteter Wiederherstellung |
+| Büro-Rahmen | Anmeldung, Navigation, leere Startseite unter `/buero` |
+| Frontend | Vite, React, TypeScript, Tailwind im Build (kein CDN-Skript), API-Client aus OpenAPI erzeugt; Planblatt-, Lageplan- und Maßkettenkomponenten aus dem Mockup übernommen |
+
+**Codeaufbau Backend** (nach Fachmodulen statt nach Schichten, damit Module einzeln lieferbar sind):
+
+```
+backend/app/
+  platform/        Anmeldung, Rollen, Audit, Queue, Speicher, Mail, Rechtstexte, Flags
+  integrations/    geoplateforme, gpu, georisques, mail
+  site/            G1   je Modul: domain/ (rein, ohne I/O), models.py, service.py, api.py, jobs.py
+  rules/           G2
+  envelope/        G3
+  inquiry/         A, erweitert durch V
+  catalog/         H1
+  placement/       H2
+  configuration/   H3
+```
+
+Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `domain/` hängt nicht von FastAPI, SQLAlchemy oder der Queue ab (Spez. 12).
+
+**Abnahme:** Leere Anwendung läuft in Staging und Produktion; Auslieferung und Rückrollen per Pipeline vorgeführt; Wiederherstellung einer Sicherung in Staging vorgeführt; Alarm bei Ausfall kommt an; Anmeldung Büro mit MFA; Übersetzung fr/de wirksam.
+
+### 3.3 G1 – Grundstück (R1)
+
+**Zweck:** Aus Adresse oder Kartenklick ein bestätigtes Grundstück mit eingeordneten Kanten.
+
+**Umfang:**
+- Adresssuche mit Vorschlägen
+- Karte mit Luftbild oder Plan und Parzellen; Auswahl einer oder mehrerer zusammenhängender Parzellen
+- Grundstück bilden, Flächenvergleich, Kanten vereinfachen und einordnen (Spez. 5.1.3, 5.1.4)
+- Kantenkorrektur: Kunde einfach („Straße“ oder „Nachbar“), Architekt vollständig. Eine Korrektur durch den Kunden kann den Baurahmen vergrößern; sie wird deshalb gekennzeichnet, macht den Baurahmen nicht bindend und muss vom Architekten bestätigt werden
+- Gelände über den Höhendienst (Spez. 5.9.4), Risiken über Géorisques (Spez. 5.9.5)
+- Hinweis zur Katastergenauigkeit (L7)
+
+**Nicht in R1:** Datei-Uploads und Georeferenzierung (→ X2). Grundstücke außerhalb des Einzugsgebiets: keine Parzellenauswahl, da es dort ohnehin keine Regelwerke gibt; stattdessen Hinweis und Anfrage ohne Baurahmen (A).
+
+**Daten:**
+
+| Tabelle | Inhalt |
+|---|---|
+| `ref_parcel`, `ref_building` | Kataster-Massendaten des Einzugsgebiets in Lambert-93, GiST-Index |
+| `ref_import` | Quelle, Stand, SHA-256, Anzahl, Importzeit |
+| `parcel`, `site`, `site_edge`, `terrain`, `site_risk` | Projektdaten nach Spez. 4.2; `parcel` ist eine Kopie zum Zeitpunkt der Auswahl |
+
+**Ablauf:**
+
+1. `GET /geocode?q=` – Weiterleitung mit Cache an die Géoplateforme; Rate-Limit.
+2. `GET /cadastre/parcels?bbox=` – GeoJSON aus `ref_parcel` ab Zoomstufe 17. Die Karte zeigt dieselben Daten, die ausgewählt werden; ein fremder Kartenlayer mit anderem Datenstand würde Klick und Anzeige auseinanderlaufen lassen.
+3. `POST /projects/{id}/parcels/lookup` – Parzelle am Punkt (`ST_Contains`), sonst alle im Umkreis von 20 m zur Auswahl.
+4. `PUT /projects/{id}/site` – Vereinigung, Zusammenhangsprüfung, Kanteneinordnung mit Nachbarparzellen und Gebäuden; `site.revision + 1`.
+5. Job `site_enrich` – Höhen und Risiken; bei Ausfall Hinweis „nicht abgefragt“, kein Abbruch.
+6. `PATCH /projects/{id}/site/edges/{seq}` – Korrektur mit Audit.
+
+**Massendaten-Import:** Job im Rhythmus der Quelle (Etalab-Kataster, Rhythmus prüfen): Download je Département → Staging-Tabelle → Plausibilität (Anzahl ± 2 % zum Vorstand, gültige Geometrien) → Tabellentausch in einer Transaktion. Bestätigte Grundstücke behalten ihre Kopie. Die Kataster-API (Spez. 9) wird erst gebraucht, wenn das Einzugsgebiet ohne Import erweitert werden soll.
+
+**Ausfallverhalten:** Parzellen kommen aus der eigenen Datenbank. Fällt die Géoplateforme aus, fehlen Adresssuche und Hintergrundkarte, die Parzellen bleiben aber sichtbar und per Klick wählbar.
+
+**Schwierige Fälle** (Pflicht in der Testmenge): Eckgrundstück; Pfeifenstielgrundstück (terrain en drapeau), bei dem die Regel aus Spez. 5.1.4 die Kanten des hinterliegenden Teils nicht eindeutig einordnen kann – die richtige Einordnung hängt vom Lexique des PLU ab, deshalb niedrige Konfidenz und Bestätigung durch den Architekten; Privatweg als eigene Parzelle; mehrere Parzellen; Flächenabweichung über 3 %.
+
+**Abnahme:** Testmenge von 40 realen Grundstücken aus dem Einzugsgebiet mit von Hand bestimmten Kantenarten: mindestens 90 % der Kanten automatisch richtig, jede Kante korrigierbar. Parzellensuche p95 unter 500 ms. Simulierter Ausfall der Géoplateforme: Parzellenwahl per Klick funktioniert weiter.
+
+**Größe:** M (3–5 PW).
+
+### 3.4 G2 – Regelwerk (R1)
+
+**Zweck:** Für jede Zone der Pilotgemeinden ein freigegebenes, zitiertes Regelwerk; für alle anderen Gemeinden ein ehrlicher Status.
+
+**Warum das tragfähig ist:** Regeln gelten je Zone eines Planstands, nicht je Parzelle. Der Erfassungsaufwand wächst mit der Zahl der Zonen im Einzugsgebiet, nicht mit der Zahl der Anfragen.
+
+**Umfang:**
+- Zone automatisch aus dem GPU ermitteln, einschließlich Sektoren (z. B. `UBa`) und Teilflächen bei mehreren Zonen (Spez. 5.2.1, 5.2.2)
+- Planunterlagen (règlement écrit, Zonenplan) automatisch laden und mit SHA-256 ablegen; ist ein Link defekt, lädt das Büro die Datei hoch
+- Überlagernde Vorgaben aus dem GPU als Hinweis, u. a. Servituden wie der Schutzbereich eines Baudenkmals (Zustimmung des Architecte des Bâtiments de France nötig)
+- **Erfassungsoberfläche** für Architekten: PDF links, Regelformular rechts; Zitat durch Markieren im PDF, Seite und Wortlaut werden übernommen; Pflichtregelarten als Checkliste (Spez. 5.2.4)
+- **Vorab-Erfassung per XLSX-Vorlage** mit Import (gleiche Felder wie die Regelschemas, Seite und Zitat von Hand). So beginnt die Inhaltsarbeit, bevor die Erfassungsoberfläche fertig ist.
+- Freigabe mit Audit (Spez. 5.2.3 Schritt 5)
+- Abdeckung je Gemeinde und Zone: `nicht erfasst`, `in Arbeit`, `freigegeben`, `veraltet`
+- Wöchentliche Prüfung auf neue Planstände (Spez. 5.2.5)
+- **Lotissement:** Viele Neubaugrundstücke liegen in einem Lotissement mit eigenen, oft strengeren Regeln, die nicht im GPU stehen. Der Kunde wird gefragt; die Unterlagen erfasst der Architekt als zusätzliches Regelwerk mit dem Umriss des Lotissement als Geltungsbereich. PLU und Lotissement gelten gemeinsam; maßgeblich ist je Regelart der strengere Wert. Bis dahin Hinweis „Regeln des Lotissement nicht berücksichtigt“.
+
+**Nicht in R1:** Auswertung per Sprachmodell (→ X1), Zonenpläne nur als PDF ohne GPU-Daten (→ X2).
+
+**Daten:** `land_use_plan`, `zone`, `overlay_constraint`, `rule_set`, `rule_set_version`, `rule` (Spez. 4.2); zusätzlich `source_file` für Planunterlagen und die Sicht `coverage`. Abweichend von Spez. 4.2 hat `rule_set` einen Geltungsbereich: Zone oder Umriss eines Lotissement.
+
+**Technik:**
+- Regelarten als Pydantic-Modelle; daraus JSON-Schema; daraus erzeugt das Frontend die Formulare. Eine Quelle, keine doppelte Pflege.
+- PDF-Anzeige mit pdf.js; markierter Text wird als `citation {source_file_id, page, quote}` gespeichert.
+- Die Kunden-API liefert **nur Regeln aus freigegebenen Regelwerken**. Sonst: Status der Abdeckung, Link zum Dokument im GPU, Knopf „Prüfung anfragen“ (wird zur Anfrage in A).
+- Planstandsprüfung: Job vergleicht Dokumentkennung und Datum im GPU. Bei Änderung: Status `veraltet`, Mail an `rules_admin`, Hinweis in offenen Projekten. Veraltete Regelwerke erscheinen weiter, aber als **nicht bindend** mit Warnung „Planstand geändert, Regeln werden aktualisiert“; sie sperren ab R2 nichts (L2).
+
+**Abnahme:** Alle Zonen der Pilotgemeinden erfasst und freigegeben; Planstandsänderung mit aufgezeichneter GPU-Antwort erkannt; nicht freigegebene Regeln erscheinen nie beim Kunden; Erfassungsdauer je Zone gemessen (Grundlage für X1).
+
+**Größe:** L (6–10 PW); die Erfassungsoberfläche ist der größte Teil.
+
+### 3.5 G3 – Baurahmen (R1)
+
+**Zweck:** Aus Grundstück und Regelwerk die Rahmenbedingungen, in die ein Haus gesetzt werden kann. G3 ist die Schnittstelle zwischen Standort und Haus: H2 prüft später jede Lage gegen diesen Baurahmen.
+
+**Inhalt:**
+
+| Bestandteil | Herleitung | Spez. |
+|---|---|---|
+| Teilflächen je Zone | Verschneidung Grundstück × Zonen | 5.2.2 |
+| Bebaubare Fläche `B(0)` und `B(H_max)` | Grundstück minus Abstandsstreifen je Kante minus Bauverbotsflächen | 5.3.1, 5.3.2 |
+| Abstandsfunktion je Kante | Mindestmaß, Höhenfaktor, Höhenbasis, Bezugskontur, Bauen auf Grenze | 5.3.4 |
+| Höchste Grundfläche je Teilfläche | Grundflächenzahl × Fläche der Teilfläche | 5.3.2 |
+| Höhengrenzen | First, Traufe, Attika, Geschosse, Bezugshöhe aus dem Gelände | 5.9.4 |
+| Dach- und Fassadenvorgaben | Formen, Neigungen, Firstrichtung, Materialklassen, Farbfamilien | 5.2.4 |
+| Freifläche, Stellplätze, Nebengebäude | Mindestwerte aus den Regeln | 5.9.2 |
+| Hinweise | Eckgrundstück, Hanglage über 5 %, mehrere Zonen, Lotissement, Denkmalschutz, Risiken, L7 | – |
+| Bindung und Herkunft | je Wert: bindend oder nicht (nicht bindend bei veraltetem Planstand oder unbestätigter Kundenkorrektur einer Kante), Zitat, verwendete Versionen | L2, L3 |
+
+**Technik:**
+- Reine Funktion `derive_envelope(site, edges, terrain, rule_sets) → Envelope` in `envelope/domain`, ohne Datenbank und Netz, deterministisch, mit `input_hash` über Grundstücksrevision, Regelwerksversionen und Engine-Version.
+- Speicherung als Cache `site_envelope`; ungültig bei neuer Grundstücksrevision oder neuer Regelwerksversion; Neuberechnung beim nächsten Abruf statt in Stapelläufen.
+- Nennt der PLU nur Geschosse (`R+1+C`) und keine Meter, hinterlegt der Architekt bei der Erfassung eine Vergleichshöhe. Ohne sie zeigt die Oberfläche nur `B(0)` mit Hinweis.
+- `GET /projects/{id}/envelope` liefert lokale Meter (Ursprung `site.local_origin`, Achsen Ost/Nord) und GeoJSON.
+- Oberfläche: Schritt 3 des Mockups; Lageplan als SVG mit den Mockup-Komponenten (im SVG die y-Achse umkehren, da Nord oben); Tabelle „Was darf ich bauen?“ mit Zitat je Wert.
+- Steckbrief als PDF (WeasyPrint im Worker) mit derselben Grafik.
+
+**Abnahme:** Parität 14,0 × 21,0 m = 294 m² (Spez. 11.2); Rechenbeispiel D4 und aus D10 die Grenzwerte je Teilfläche (UB 200 m², N 0 m²; die Prüfung mit Haus folgt in H3) (Spez. Anhang D); Eigenschaftstests; Mehrzonenfall; Bauverbotsfläche; p95 unter 300 ms; Steckbrief für 10 reale Grundstücke vom Architekten fachlich bestätigt.
+
+**Größe:** M (3–5 PW).
+
+### 3.6 A – Anfrage (R1)
+
+**Zweck:** Aus dem Bebaubarkeitscheck eine verwertbare Anfrage an das Büro.
+
+**Umfang:**
+- Anonymes Projekt bis zur Kontaktaufnahme
+- Kontaktformular; **E-Mail-Code vor dem Absenden** (keine Anfrage mit unbestätigter Adresse, keine Verfallszustände)
+- Bestätigung „unverbindlich“ und Einwilligung zur Übermittlung an das namentlich genannte Büro, Textversion gespeichert
+- Snapshot aus Grundstück und Baurahmen mit Bindungsstatus (oder ohne Baurahmen, siehe 2.1); Vorgangsnummer aus Datenbank-Sequenz
+- Mail an das Büro mit Steckbrief, Kopie an den Kunden, Zugangslink zum Projekt
+- Anfragenliste im Büro mit Status `neu`, `in Bearbeitung`, `beantwortet`, `geschlossen`
+- Export und Löschung für Kunden (Spez. 10.2)
+- Hinweis in der Antwortvorlage des Büros: verbindliche Auskunft über ein Certificat d'urbanisme bei der Gemeinde
+
+**Technik:** Tabellen `customer`, `project`, `inquiry`, `consent`, `audit_log`; Mails und Folgeschritte als Jobs in derselben Transaktion wie die Anfrage (die Queue in PostgreSQL ersetzt die Outbox, Kapitel 6.3); Idempotenz-Schlüssel; E-Mail-Codes gehasht, 10 Minuten gültig, Versand je Adresse und IP begrenzt; Links signiert und ohne personenbezogene Daten.
+
+**Abnahme:** Doppelklick erzeugt eine Anfrage; Ausfall des Maildienstes verliert keine Anfrage; Löschung entfernt Daten und Dateien; Codeversand an fremde Adressen in Serie wird gebremst.
+
+**Größe:** S–M (2–4 PW).
+
+### 3.7 H1 – Hauskatalog (R2)
+
+**Zweck:** Pflegbarer, versionierter Katalog ohne IFC-Import.
+
+**Umfang:**
+- Typen mit Kennwerten von Hand (`facts_source = manual`, Spez. 4.3): Umriss Fassade und Projektion als Polygon, Höhen, Dachform, Neigung, Firstrichtung, Geschosse, Wohnfläche, Zimmer, Fassadenrollen der Umrisskanten, Lage von Eingang und Garagentor (für die Zufahrt, Spez. 5.9.3)
+- Nur regelrelevante Variantengruppen (z. B. Dachform); reine Materialvarianten sind Optionen
+- Linien, Optionen, Ausschlüsse, in Linien enthaltene Optionen
+- Preiskatalog mit Versionen; Basispreis, Linienaufpreis und Optionspreise als Spanne **je Typ**
+- RE2020-Bewertungen je Typ und Linie für die Klimazone des Einzugsgebiets, mit Ausrichtungsbereich der Gartenfassade (Spez. 5.9.6); fehlt eine Bewertung, zeigt H3 „nicht bewertet“
+- Bilder, Axonometrie und Grundriss-PDF als Anhang
+- Katalogpflege im Büro mit `draft`, `review`, `published`, `retired`
+
+**Übernahme aus ArchiCAD:** Typdatenblatt als XLSX-Vorlage (Kennwerte, Räume, Preise) und Umriss als eigene Ebene im DXF (Import mit `ezdxf`). Niemand tippt Koordinaten.
+
+**Technik:**
+- Veröffentlichte Versionen unveränderlich (Datenbank-Trigger, Spez. 4.1).
+- **Preise und RE2020-Bewertungen beziehen sich auf die Typ-Identität** mit Gültigkeit ab einer Typversion. Eine neue Typversion übernimmt sie erst nach Bestätigung der Katalogpflege. So erzwingt eine kleine Modelländerung keinen neuen Preiskatalog und kein neues Gutachten.
+- Veröffentlichung gesperrt, wenn Basispreis oder Pflichtkennwert fehlt. Eine fehlende RE2020-Bewertung sperrt nicht (Spez. 5.9.6), damit R2 nicht auf Gutachten wartet.
+- Kennwertprüfung: Neigung aus First, Traufe und Tiefe gegen die Angabe (± 2°, Spez. 5.4.5).
+- Toleranzen als Konstanten, auch für Winkel (0,1°). Ohne Winkeltoleranz fiele Ligne mit berechneten 34,99° unter die Mindestneigung von 35°.
+
+**Abnahme:** Mockup-Katalog vollständig erfasst; Veröffentlichung unveränderlich (Test); Kennwertprüfung meldet die Abweichung bei Ligne (40° angegeben, 35° aus der Geometrie).
+
+**Größe:** M (3–5 PW).
+
+### 3.8 H2 – Zulässigkeit und Implantation (R2)
+
+**Zweck:** Welche Typen passen auf den Baurahmen, und wo steht das Haus.
+
+**Umfang:** Zulässigkeit je Typ mit allen Gründen und Vorschlägen (Spez. 5.4.6); Lage verschieben und drehen; Prüfung je Kante mit allen Verstößen (Spez. 5.3.4); Schnellstellungen (Spez. 5.3.5); Firstrichtung. Terrasse an der Gartenfassade und Carport an der Straßenkante werden automatisch gesetzt, nicht frei platziert. Der Carport muss dabei die Regeln für Nebengebäude erfüllen; findet sich keine zulässige Stelle, ist die Option mit Begründung nicht wählbar.
+
+**Technik:**
+- **Erlaubte Lagen als Fläche statt Rasterprobe.** Für eine feste Drehung ist die Menge aller zulässigen Hausursprünge eine Fläche: der Baurahmen „geschrumpft“ um den Hausumriss, je Kante mit der Bezugskontur ihrer Regel (Minkowski-Differenz, z. B. mit `pyclipper`). Daraus folgen direkt: Typ passt (Fläche nicht leer), `street_near` und `set_back` (Punkte der Fläche mit kleinstem Straßenabstand bzw. mittlerer Tiefe), exakte Vorschau im Frontend. `garden_max` hängt von der Restfläche ab und wird aus wenigen Kandidaten auf dem Rand der Fläche gewählt. Die Rastersuche aus Spez. 5.3.6 bleibt Rückfall für Abstände, die von der Höhe der jeweiligen Fassade abhängen.
+- Deshalb in R2 **nur Drehungen in festen Schritten**: Kantenrichtungen des Grundstücks und 90°. Freie Drehung später.
+- Variantenkombinationen mit gleichem Umriss und gleichen Höhen nur einmal prüfen; Variantengruppen ohne Einfluss auf Prüfungen nicht kombinieren.
+- Frontend erhält die Fläche erlaubter Ursprünge je Drehung und prüft beim Ziehen lokal per Punkt-in-Polygon; beim Loslassen `PATCH /configuration` mit `If-Match`; die Serverantwort ist maßgeblich. Die Fläche gilt nur für das Haus; Verstöße von Terrasse oder Carport meldet erst der Server.
+
+**Abnahme:** Paritätsfälle Spez. 11.2, wobei der Firstrichtungsfall mit einem Satteldachtyp statt Plateau (Flachdach) geprüft wird; Eigenschaftstests (Spez. 11.1); Zulässigkeit für bis zu 20 Typen unter 3 s; `PATCH` p95 unter 800 ms.
+
+**Größe:** L (6–10 PW).
+
+### 3.9 H3 – Konfiguration und Kosten (R2)
+
+**Umfang:** Linien, Optionen, Ausschlüsse (Spez. 5.5.4), in Linien enthaltene Optionen (Spez. 5.5.6), Regelprüfung der Ausführungen (Fassade, Dach), Grundfläche und Freifläche mit Terrasse, Carport und Zufahrt (Spez. 5.9.3), RE2020-Status mit Konformitätsaufpreis (Spez. 5.9.6), Kostenkorridor (Spez. 5.6.5) aus festen Preisspannen je Typ, Mehrwertsteuer nach Entscheidung E4.
+
+**Technik:** `evaluate()` als reine Funktion in zwei Teilen: **Typteil** (hängt nur von Typ, Varianten, Linie, Optionen ab) wird gecacht; **Lageteil** (Abstände, Himmelsrichtung, Freifläche) wird bei jeder Änderung neu gerechnet. Kein Einzelbetrag in der API (L1).
+
+**Abnahme:** Korridorfälle Spez. 11.2 mit Lärche als fester Spanne je Typ; Freiflächenrechnung mit Zufahrt; in einer Linie enthaltene Option erhöht den Korridor nicht.
+
+**Größe:** M (3–5 PW).
+
+### 3.10 V – Vorentwurf-Übergabe (R2)
+
+**Umfang:**
+- Erweitert A um Konfiguration und Auswertung im Snapshot (Spez. 5.10.4)
+- **Vollständige Neuprüfung beim Absenden:** Regelwerke, Katalog, Preise und Kantenkorrekturen können sich seit dem Speichern geändert haben. Ergebnis wird vor dem Absenden angezeigt.
+- Bestätigung „mit Abweichungen übergeben“ (Spez. 5.10.2 Punkt 6)
+- Dossier-PDF: Projektbeschreibung, Lageplan, Regelprüfung mit Zitaten, Kosten (Spez. 5.10.6, gekürzt)
+- **Lageplan als DXF** (Grundstück, Kanten, bebaubare Fläche, Hausumriss): in Lambert-93 und zusätzlich in lokalen Metern mit dokumentiertem Ursprung, weil Landeskoordinaten in Millionenhöhe in CAD-Programmen oft unhandlich sind; geringer Aufwand, direkt im Büro nutzbar
+- Zustände mit Neuübergabe und `superseded` (Spez. 5.10.1), Nachrichten Büro ↔ Kunde
+
+**Nicht in R2:** IFC-Export, XLSX-Mengen, gestempelte Planunterlagen (→ X4).
+
+**Abnahme:** Durchlauf A des Mockups erzeugt vollständiges PDF und DXF; eine zwischen Speichern und Absenden freigegebene Regel wird erkannt; Neuübergabe setzt die vorige auf `superseded`; das Büro übernimmt den DXF-Lageplan nach beschriebenem Vorgehen lagerichtig in ArchiCAD.
+
+**Größe:** M (3–5 PW).
+
+### 3.11 Ausbau nach Auslösern
+
+| Modul | Inhalt | Auslöser | Infrastruktur neu |
+|---|---|---|---|
+| **X1 PLU-Automatik** | Regelvorschläge per Claude (Spez. 5.2.3), Referenzmenge (Spez. 11.4), gleiche Erfassungsoberfläche | Gemessene Erfassungsdauer × Zonen im geplanten Einzugsgebiet übersteigt die Kapazität des Büros | Ausgehender Zugang zur Claude API, AVV mit Anthropic, Kostenbudget je Lauf |
+| **X2 Uploads und Georeferenzierung** | Kataster und Zonenpläne als Vektor oder PDF (Spez. 5.1.1 C/D, 5.1.2); nur für das Büro | Gemeinden ohne GPU-Daten oder Vermessungspläne im Einzugsgebiet | Virenscan, isolierter Worker ohne Internetzugang, GDAL |
+| **X3 Modellbasierte Typen** | IFC-Import, Mengen, `finish_delta`, SHAB/SDP (Spez. 5.4, 5.6, 5.8) | Mehr als etwa 10 Typen oder häufige Modelländerungen, und das Büro modelliert nach Spez. Anhang A | Speicherstarke Worker, lange Jobs |
+| **X4 Erweitertes Dossier** | IFC mit Lage, XLSX, gestempelte Pläne (Spez. 5.7, 5.10.5) | Büro fragt die Daten nach | IfcConvert, mehr Speicher |
+| **X5 Integrationen** | CRM-Webhooks, 3D-Viewer, mehrere Büros (`office_id`) | Konkreter Bedarf | ggf. eigener Identitätsdienst mit Föderation |
+
+---
+
+## 4. Produktionsreife
+
+### 4.1 Ein Modul ist produktiv, wenn …
+
+| # | Kriterium |
+|---|---|
+| 1 | Abnahmekriterien erfüllt und auf Staging mit echten Daten des Einzugsgebiets vorgeführt |
+| 2 | Einheits-, Eigenschafts- und Integrationstests grün in CI; Hauptpfad als Ende-zu-Ende-Test (Playwright) |
+| 3 | Jeder externe Dienst mit Zeitlimit, Wiederholung, Cache und sichtbarem Ausfallverhalten |
+| 4 | Logs, Fehler-Tracking, Kennzahlen und mindestens ein Alarm für den Hauptpfad |
+| 5 | Rechte je Endpunkt getestet; Eingaben validiert; Rate-Limits auf öffentlichen Endpunkten |
+| 6 | Neue personenbezogene Daten im Verarbeitungsverzeichnis, von Export und Löschung erfasst, nicht in Logs |
+| 7 | Texte und Hinweise (L7) auf Französisch und Deutsch |
+| 8 | Bedienbar mit Tastatur, Kontraste nach WCAG 2.1 AA, mobil nutzbar |
+| 9 | Betriebsanleitung für die typischen Störungen des Moduls; Annahmen in `docs/ANNAHMEN.md` |
+| 10 | Hinter Feature-Flag ausgeliefert; Rückrollen vorgeführt |
+| 11 | Leistungsziele gemessen |
+
+### 4.2 Einführung
+
+1. **Intern:** Flag nur für Rolle `architect`. Büro arbeitet zwei Wochen mit echten Fällen.
+2. **Beta:** Flag für eingeladene Projekte. Rückmeldungen gesammelt, Fehler behoben.
+3. **Öffentlich:** Flag für alle im Einzugsgebiet. Außerhalb: Hinweis und Anfrage ohne Baurahmen.
+
+---
+
+## 5. Zeitliche Staffelung
+
+```
+R0  P ─────────────┐
+R1                 ├─ G1 ──┐
+                   ├─ G2 ──┼─ G3 ── A ── intern ── Beta ── öffentlich
+     Inhalt: Regelwerke Pilotgemeinden erfassen (parallel ab G2-Erfassungsoberfläche)
+R2  H1 ── H2 ── H3 ── V ── intern ── Beta ── öffentlich
+     Inhalt: Typdatenblätter, Preise, RE2020-Bewertungen (parallel ab H1)
+R3+ X1 … X5 nach Auslöser
+```
+
+Mit einer Entwicklerperson laufen die Module nacheinander; parallel läuft dann nur die Inhaltsarbeit. Mit zwei Personen können G1 und G2 gleichzeitig entstehen und H1 schon während der R1-Einführung beginnen.
+
+---
+
+## 6. IT-Infrastruktur
+
+### 6.1 Leitlinien
+
+1. **Hosting in Frankreich, Sicherung in einer zweiten EU-Region** (L8).
+2. **Verwaltete Dienste vor Eigenbetrieb.** Datenbank, Objektspeicher, Container-Laufzeit, Mail, Geheimnisse: vom Anbieter.
+3. **Wenige Bausteine.** Kein Redis, kein Kubernetes, keine Microservices, solange sie nicht messbar nötig sind.
+4. **Alles reproduzierbar.** Infrastruktur als Code, gleiche Images in Staging und Produktion.
+5. **Wechselbar.** Standardschnittstellen (Container, PostgreSQL, S3, SMTP, OIDC), damit der Anbieter austauschbar bleibt.
+
+### 6.2 Zielbild
+
+```mermaid
+flowchart LR
+  subgraph Nutzer
+    K[Kunde<br/>Browser]
+    BU[Büro<br/>Browser]
+  end
+  subgraph Anbieter FR
+    LB[Lastverteiler<br/>TLS, Weiterleitung]
+    FE[Frontend<br/>statische Dateien]
+    API[API<br/>FastAPI-Container]
+    WK[Worker<br/>gleiches Image]
+    DB[(PostgreSQL + PostGIS<br/>verwaltet, PITR)]
+    S3[(Objektspeicher)]
+    SEC[Secret Manager]
+    LOG[Logs und Kennzahlen]
+  end
+  subgraph Extern
+    IGN[Géoplateforme<br/>Adressen, Höhen, Karten]
+    GPU[API Carto GPU]
+    GR[Géorisques]
+    MAIL[Maildienst EU]
+    IDP[OIDC-Anbieter Büro]
+    ERR[Fehler-Tracking EU]
+  end
+  subgraph Entwicklung
+    GIT[Repository + CI]
+    REG[Container-Registry]
+  end
+  K --> LB
+  BU --> LB
+  LB -->|/| FE
+  LB -->|/api| API
+  API --> DB
+  API --> S3
+  WK --> DB
+  WK --> S3
+  API --> IGN
+  WK --> IGN
+  WK --> GPU
+  WK --> GR
+  WK --> MAIL
+  API --> IDP
+  API --> ERR
+  WK --> ERR
+  API --> SEC
+  API --> LOG
+  WK --> LOG
+  GIT --> REG --> API
+  REG --> WK
+  S3 -.->|Sicherung| S3B[(Objektspeicher<br/>zweite EU-Region)]
+  DB -.->|Dump| S3B
+```
+
+Frontend und API liegen unter **derselben Domain** (`/` und `/api`). Das erspart CORS, und die Cookies bleiben `SameSite=Lax`.
+
+### 6.3 Bausteine
+
+| Baustein | Vorschlag | Alternative | Begründung |
+|---|---|---|---|
+| Frontend | Vite, React, TypeScript, Tailwind, MapLibre GL, pdf.js, TanStack Query, i18next | Next.js mit Server-Rendering | Konfigurator ist eine Anwendung, keine Inhaltsseite; Marketingseiten getrennt statisch |
+| Karten | Géoplateforme-Kartendienste (Plan IGN, Luftbild) | OpenStreetMap-Kacheln | Amtliche französische Daten, keine Übermittlung an US-Anbieter; Nutzungsbedingungen prüfen |
+| API | Python 3.12, FastAPI, Pydantic 2, SQLAlchemy 2, GeoAlchemy2, Alembic, Shapely 2, pyproj | TypeScript-Backend | Geodaten und später IFC sind in Python am besten abgedeckt (Spez. 3.1) |
+| Jobs | **PostgreSQL-Queue** (z. B. Procrastinate, prüfen) mit periodischen Jobs | Celery + Redis (Spez. 3.1) | Job wird in derselben Transaktion wie die Fachänderung angelegt: Outbox, Dispatcher, Redis und `job`-Spiegeltabelle entfallen. Voraussetzung im Proof of Concept prüfen: Die Bibliothek kann Jobs über die Datenbankverbindung der laufenden Transaktion anlegen. Sonst eigene Jobtabelle mit `SELECT … FOR UPDATE SKIP LOCKED` |
+| PDF | WeasyPrint im Worker | – | wie Spez. |
+| Datenbank | PostgreSQL 16 + PostGIS 3, verwaltet, Point-in-Time-Recovery | selbst betrieben auf VM | Sicherung, Updates, Ausfallsicherheit vom Anbieter |
+| Dateien | S3-kompatibler Objektspeicher, privat, Versionierung an | – | Uploads, PDFs, Snapshots, Massendaten-Downloads |
+| Cache | PostgreSQL und Prozess-Cache | Redis | Erst bei mehreren API-Instanzen mit gemeinsamem Cache-Bedarf |
+| Mail | EU-Transaktionsmaildienst mit AVV (z. B. Brevo oder Scaleway TEM, prüfen) | eigener SMTP | Zustellbarkeit, SPF/DKIM/DMARC |
+| Anmeldung Büro | OIDC über einen Identitätsdienst mit Föderation | Konto im Microsoft-365- oder Google-Konto des Büros direkt | Siehe Kapitel 9, D4 |
+| Fehler-Tracking | Sentry mit EU-Datenhaltung | GlitchTip selbst betrieben | Geringer Aufwand |
+| Infrastruktur als Code | OpenTofu mit Anbieter-Provider | Handkonfiguration | Reproduzierbar, Staging = Produktion |
+| CI/CD | GitHub Actions oder GitLab CI | – | Keine Produktionsdaten im Repository |
+| Abhängigkeiten | `uv` (Python), `pnpm` (Frontend), Renovate für Updates | – | Schnell, reproduzierbar |
+
+### 6.4 Hosting (Spez. E1)
+
+| Option | Beispiele (Angebot prüfen) | Betriebsaufwand | Eignung |
+|---|---|---|---|
+| **A. Container-Plattform + verwaltete Datenbank** | Scaleway, Clever Cloud, OVHcloud | niedrig | **Empfehlung für R0–R2** |
+| B. Virtuelle Maschinen mit Docker Compose | OVHcloud, Scaleway, Hetzner | mittel: Updates, Sicherung, Ausfall selbst | nur mit eigener Betriebserfahrung |
+| C. Verwaltetes Kubernetes | Scaleway Kapsule, OVHcloud MKS | hoch | erst bei vielen Diensten oder Mandanten |
+
+**Pflichtanforderungen an den Anbieter** (vor Vertrag in einem eintägigen Proof of Concept prüfen):
+
+1. Rechenzentrum in Frankreich, AVV nach DSGVO
+2. Verwaltetes PostgreSQL mit **PostGIS** und Point-in-Time-Recovery
+3. Container mit **dauerhaft laufendem Hintergrundprozess** (Worker ohne eingehende Anfragen) und Mindestzahl von einer Instanz ohne Kaltstart
+4. S3-kompatibler Objektspeicher mit Versionierung
+5. Private Verbindung zwischen Containern und Datenbank
+6. Secret Manager, Container-Registry, Logs
+7. OpenTofu/Terraform-Provider
+8. Zweite EU-Region für Sicherungen
+
+Der Proof of Concept stellt das Gerüst aus P bereit, installiert PostGIS, stellt eine Sicherung wieder her und misst die Kosten.
+
+### 6.5 Umgebungen und Auslieferung
+
+| Umgebung | Zweck | Daten |
+|---|---|---|
+| `local` | Entwicklung mit Docker Compose: `postgis`, `api`, `worker`, `minio`, `mailpit` | Testdaten, Katasterausschnitt einer Gemeinde |
+| `staging` | Abnahme | Echte Referenzdaten (Kataster, GPU), keine echten Kundendaten |
+| `production` | Betrieb | Echt |
+
+**Ablauf:**
+
+1. Pull Request → CI: `ruff`, `mypy`, `pytest` gegen PostGIS-Container, Frontend-Typprüfung und Tests, Ende-zu-Ende-Tests gegen Compose.
+2. Merge in `main` → Images bauen, mit Commit-Kennung taggen, in die Registry.
+3. Automatisch nach Staging: Migrationsjob `alembic upgrade head`, dann neue Container, dann Rauchtests.
+4. Produktion nach manueller Freigabe mit **demselben Image**.
+5. **Rückrollen** = voriges Image ausrollen. Deshalb sind Migrationen abwärtskompatibel (erst erweitern, später in einem eigenen Release aufräumen).
+6. Neue Funktionen hinter Feature-Flags (Tabelle `feature_flag`, je Rolle oder Projekt schaltbar). Interne Einführung und Beta (4.2) laufen in **Produktion** hinter dem Flag, damit Mails, Daten und Leistung echt sind.
+
+### 6.6 Daten, Sicherung, Referenzdaten
+
+| Thema | Festlegung |
+|---|---|
+| Datenbankrollen | `app` ohne DDL-Rechte; `migrator` nur im Migrationsjob; `readonly` für Auswertungen |
+| Sicherung Datenbank | Anbieter-Sicherung mit Point-in-Time-Recovery; zusätzlich täglicher Dump in den Objektspeicher der zweiten EU-Region |
+| Sicherung Dateien | Versionierung, tägliche Replikation in die zweite Region |
+| Wiederherstellung | Vierteljährlich in Staging geübt und protokolliert |
+| Ziele | Datenverlust höchstens 1 h (RPO) über Point-in-Time-Recovery; bei Verlust der ganzen Region höchstens 24 h (täglicher Dump). Wiederanlauf innerhalb 4 h an Werktagen (RTO) |
+| Referenzdaten | Kataster des Einzugsgebiets in `ref_*`-Tabellen, Import mit Staging-Tabelle und Tausch; GPU-Antworten und Planunterlagen mit `fetched_at` gecacht |
+| Aufbewahrung | Projekte ohne Kontakt 90 Tage nach letzter Aktivität, danach Löschjob; Anfragen und Übergaben nach Entscheidung E10 |
+
+### 6.7 Sicherheit
+
+- TLS, HSTS, Content-Security-Policy ohne fremde Skripte; alle Bibliotheken im Build gebündelt.
+- Kunden-Cookies `Secure`, `HttpOnly`, `SameSite=Lax`; schreibende Aufrufe zusätzlich mit CSRF-Schutz.
+- Büro: OIDC mit MFA; Rollen serverseitig geprüft; Audit-Log für Freigaben, Veröffentlichungen, Statuswechsel, Löschungen.
+- Rate-Limits auf `/geocode`, `/cadastre/parcels`, Parzellensuche, E-Mail-Code; bei Missbrauch datenschutzfreundliche Bot-Abwehr ohne US-Dienst.
+- Geheimnisse nur im Secret Manager; CI meldet sich möglichst ohne dauerhafte Schlüssel beim Anbieter an.
+- Renovate für Updates, Image-Scan (z. B. Trivy) und Geheimnis-Scan in CI.
+- Uploads nur durch angemeldetes Büro bis X2; ab X2 Virenscan und isolierter Worker (Spez. 10.1).
+- **Vor öffentlichem Start von R1:** externer Sicherheitstest der öffentlichen Endpunkte.
+
+### 6.8 Betrieb und Überwachung
+
+| Thema | Festlegung |
+|---|---|
+| Verfügbarkeit | Ziel 99,5 % im Monat; Betreuung an Werktagen 9–18 Uhr |
+| Kennzahlen | Antwortzeit p95 je Endpunkt, Fehlerquote, Alter des ältesten Jobs, Fehlerquote je externem Dienst, Alter der Katasterdaten |
+| Alarme | API nicht erreichbar; Fehlerquote über 2 %; wartender Job älter als 15 min; Mailversand scheitert; Katasterimport gescheitert; Sicherung fehlt |
+| Synthetische Prüfung | Stündlich Adresse suchen, Parzelle wählen, Baurahmen abrufen |
+| Logs | JSON mit `request_id`, `project_id`, `job_id`; keine personenbezogenen Daten; 30 Tage |
+| Betriebsanleitungen | Ausliefern und Rückrollen; Wiederherstellung; Katasterimport gescheitert; Géoplateforme oder GPU ausgefallen; Mailzustellung gestört; Löschanfrage; Sicherheitsvorfall mit Meldung an die CNIL binnen 72 h |
+| Zuständigkeit | Eine benannte Betriebsverantwortung mit Vertretung (Entscheidung D5) |
+
+### 6.9 Datenschutz und Recht
+
+- Verarbeitungsverzeichnis, AVV mit Hosting, Maildienst, Fehler-Tracking; ab X1 mit Anthropic.
+- Rollen klären: Emprise betreibt die Plattform, das Büro erhält Daten nach Einwilligung. Ob getrennte oder gemeinsame Verantwortliche: vor R1 rechtlich festlegen (D6).
+- Nur technisch notwendige Cookies; Reichweitenmessung nur in einer von der CNIL als einwilligungsfrei anerkannten Konfiguration, sonst keine.
+- Hinweise L7 in jeder Ausgabe; im Steckbrief ausdrücklich: Orientierung, keine Bauauskunft, verbindlich ist das Certificat d'urbanisme.
+- Erforderlichkeit einer Datenschutz-Folgenabschätzung vor R1 prüfen.
+
+### 6.10 Kosten
+
+Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurobetrag pro Monat (kleine verwaltete Datenbank mit PITR, je zwei kleine Container, Objektspeicher, Maildienst, Fehler-Tracking). Der Proof of Concept (6.4) ersetzt diese Schätzung durch Anbieterpreise. Größere Posten entstehen erst mit X1 (Sprachmodell je Auswertung) und X3 (speicherstarke Worker).
+
+### 6.11 Infrastruktur je Release
+
+| Release | Kommt hinzu |
+|---|---|
+| R0 | Alles aus 6.2 außer externen Fachdiensten; Proof of Concept; Überwachung; Sicherung |
+| R1 | Kataster-Massendaten der Départements im Einzugsgebiet (Größenordnung wenige GB), Jobs für Import und Planstandsprüfung, Egress zu Géoplateforme, GPU, Géorisques; Maildomain mit SPF/DKIM/DMARC; WeasyPrint und Schriften im Worker-Image; synthetische Prüfung; Sicherheitstest |
+| R2 | Leistungsmessung Implantation; ggf. zweite API-Instanz; Ende-zu-Ende-Tests Konfigurator |
+| X1 | Egress zur Claude API, Kostenbudget und Alarm |
+| X2 | Virenscan, Worker ohne Internetzugang mit Speicher- und CPU-Grenzen, GDAL |
+| X3, X4 | Worker mit 4–8 GB Speicher, IfcOpenShell und IfcConvert, längere Zeitlimits, Auslieferung großer Dateien über signierte URLs |
+| X5 | Webhook-Zustellung mit Signatur; bei mehreren Büros eigener Identitätsdienst mit Föderation |
+
+---
+
+## 7. Abweichungen von der Spezifikation
+
+| Thema | Spezifikation | Plan | Grund |
+|---|---|---|---|
+| Reihenfolge | Meilensteine M0–M10, Übergabe zuletzt | Releases R0–R2, Ausbau nach Auslöser | Früher produktiver Nutzen, Risiko zuerst |
+| Kataster | Kataster-API bei jedem Abruf | Massendaten des Einzugsgebiets; außerhalb keine Parzellenauswahl | Schneller, unabhängig von Ausfällen und Zugriffsgrenzen, Nachbarn direkt verfügbar; außerhalb gibt es ohnehin keine Regelwerke |
+| Kantenkorrektur Kunde | wirkt wie Korrektur durch Architekt | gekennzeichnet, nicht bindend bis zur Bestätigung | Kunde könnte sonst den Baurahmen vergrößern |
+| Uploads Kataster | Wege C und D für Kunden | Nur Büro, erst X2 | Passpunkte und Koordinatensysteme sind für Laien nicht bedienbar |
+| Regeln beim Kunden | Rückfall auf jüngsten Entwurf | Nur freigegebene Regelwerke; veraltete als nicht bindend | Keine ungeprüften Regeln beim Kunden |
+| Lotissement | nicht behandelt | Frage an Kunden, zusätzliches Regelwerk mit eigenem Geltungsbereich, strengerer Wert gilt | Häufiger Fall bei Neubaugrundstücken |
+| E-Mail-Bestätigung | Nach dem Absenden, Verfall nach 7 Tagen | Vor dem Absenden | Keine zusätzlichen Zustände und Verfallsjobs |
+| Neuprüfung | „gespeicherte Konfigurationen sind immer auswahlgültig“ | Vollständige Neuprüfung beim Absenden | Regeln, Katalog und Kanten ändern sich nach dem Speichern |
+| Preisbezug | An Typversion | An Typ-Identität mit Gültigkeit | Modelländerung erzwingt keinen neuen Preiskatalog und kein neues Gutachten |
+| Katalogdaten | IFC ab M4 | Typdatenblatt und DXF-Umriss; IFC erst X3 | Bei wenigen Typen günstiger und genauer |
+| Optionspreise | Mengen × Einheitspreis ab M5 | Feste Spanne je Typ; Mengen erst X3 | Kein Mengengerüst nötig für gerundete Spannen |
+| Lagesuche | Rastersuche 0,25 m | Fläche erlaubter Ursprünge je Drehung; Raster als Rückfall | Leistungsziele erreichbar, exakte Vorschau |
+| Drehung | beliebig | R2 in festen Schritten | Voraussetzung für die Flächenmethode |
+| Jobs | Celery, Redis, Outbox, Dispatcher | PostgreSQL-Queue | Weniger Bausteine, transaktional |
+| Codeaufbau | nach Schichten (Spez. 12) | nach Fachmodulen mit reinem `domain/` je Modul | Module einzeln lieferbar |
+| Winkel | keine Toleranz | Konstante 0,1° | Ligne hätte 34,99° < 35° |
+| Paritätstest Firstrichtung | mit Plateau (Flachdach) | mit Satteldachtyp | Flachdach hat keinen First |
+| Dossier R2 | alle Dateien in M9 | PDF und DXF-Lageplan; Rest X4 | Größter Nutzen für das Büro bei geringem Aufwand |
+| RE2020 beim Veröffentlichen | – | Fehlende Bewertung sperrt nicht, Anzeige „nicht bewertet“ | Katalog wartet nicht auf Gutachten |
+| Sprache | Dokumente zweisprachig | Oberfläche Französisch führend | Kunden sind in Frankreich |
+
+---
+
+## 8. Inhalte und Organisation je Release
+
+| Release | Aufgabe | Verantwortlich |
+|---|---|---|
+| R0 | Domain und Maildomain, Hosting-Vertrag mit AVV, Repository, Zugänge, Betriebsverantwortung benennen | Emprise |
+| R1 | Einzugsgebiet und Pilotgemeinden festlegen | Emprise und Büro |
+| R1 | Regelwerke aller Zonen der Pilotgemeinden erfassen und freigeben; Vergleichshöhen hinterlegen | Büro (`rules_admin`) |
+| R1 | Testmenge 40 Grundstücke mit Kantenarten; 10 Steckbriefe fachlich prüfen | Büro |
+| R1 | Rechtstexte, Einwilligungs- und Hinweistexte auf Französisch und Deutsch | Emprise mit Rechtsberatung |
+| R1 | Ablauf der Anfragebearbeitung im Büro mit Antwortfrist; Antwortvorlagen | Büro |
+| R2 | Typdatenblätter und DXF-Umrisse aller Typen | Büro |
+| R2 | Preiskatalog mit Spannen je Typ, Linie, Option | Emprise und Büro |
+| R2 | RE2020-Bewertungen je Typ und Linie für die Klimazone des Einzugsgebiets | Thermik-Büro (Spez. E12) |
+| R2 | Texte zu Linien und Optionen, Bilder, Axonometrien | Emprise |
+
+---
+
+## 9. Offene Entscheidungen
+
+Ergänzt Spez. 16. Vorschlag jeweils als Standard.
+
+| Nr. | Frage | Vorschlag |
+|---|---|---|
+| D1 | Einzugsgebiet und Pilotgemeinden | Gemeinden um Treillières innerhalb einer Klimazone (Loire-Atlantique: H2b) |
+| D2 | R1 öffentlich oder nur intern | Erst intern, dann Beta, dann öffentlich (4.2) |
+| D3 | Hosting-Anbieter (Spez. E1) | Option A nach Proof of Concept (6.4) |
+| D4 | Anmeldung für Büro und Emprise-Team | Identitätsdienst mit Föderation; solange Emprise und Büro ein Team sind, deren vorhandenes Microsoft- oder Google-Konto |
+| D5 | Wer betreibt die Plattform | Emprise mit benannter Betriebsverantwortung und Vertretung |
+| D6 | Datenschutzrolle Emprise ↔ Büro | Vor R1 rechtlich festlegen |
+| D7 | Sprache der Oberfläche | Französisch führend, Deutsch zusätzlich |
+| D8 | Was bietet das Büro an: Honorar oder Bauleistung | Vor R2 klären; bestimmt Bedeutung und Pflege der Preisspannen |
+| D9 | Vier-Augen-Prinzip bei Regelfreigabe (Spez. E6) | Im Pilot eine Person mit Stichprobenprüfung; ab mehreren Erfassern Pflicht |
+| D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto |
+
+---
+
+## 10. Prüfprotokoll
+
+Nach der ersten Fassung wurde der Plan vollständig gegengelesen. Die gefundenen Fehler sind im Text behoben; 10.2 hält fest, welche Alternativen geprüft wurden.
+
+### 10.1 Logikfehler der ersten Fassung
+
+| Nr. | Fehler | Folge ohne Korrektur | Behoben in |
+|---|---|---|---|
+| 1 | Die Kataster-API sollte außerhalb des Einzugsgebiets einspringen. Dort gibt es aber keine Regelwerke, und die Kartenebene aus eigenen Daten wäre leer | Aufwand ohne Nutzen, leere Karte | 3.3, 7 |
+| 2 | Kunden durften Kanten umklassifizieren, der Baurahmen blieb trotzdem bindend | Kunde vergrößert die bebaubare Fläche selbst | 3.3, 3.5, 7 |
+| 3 | „Bindung“ war unklar, weil beim Kunden ohnehin nur freigegebene Regeln erscheinen | Bindungsstatus ohne Bedeutung | 3.4, 3.5 |
+| 4 | Veraltete Regelwerke nach PLU-Änderung hatten kein Anzeigeverhalten | Kunde sieht nichts oder altes Recht als bindend | 3.4 |
+| 5 | Lotissement-Regeln sollten als Regelwerk erfasst werden, Regelwerke hängen aber an Zonen | Datenmodell nicht umsetzbar | 3.4, 7 |
+| 6 | Eine fehlende RE2020-Bewertung sperrte die Veröffentlichung, strenger als Spez. 5.9.6 | R2 wartet auf Gutachten | 3.7, 7 |
+| 7 | Rechenbeispiel D10 sollte in G3 geprüft werden, braucht aber ein Haus | Abnahme von G3 nicht erfüllbar | 3.5 |
+| 8 | Die Zufahrt (Spez. 5.9.3) braucht die Lage des Garagentors, die es ohne IFC nicht gab; der automatisch gesetzte Carport prüfte keine Nebengebäuderegeln | Freifläche nicht berechenbar, unzulässiger Carport | 3.7, 3.8 |
+| 9 | `garden_max` wurde als Extrempunkt der Ursprungsfläche beschrieben, hängt aber von der Restfläche ab | Falsche Schnellstellung | 3.8 |
+| 10 | Die Ursprungsfläche berücksichtigt nur das Haus | Frontend zeigt Lage als gültig, Server lehnt wegen Terrasse ab, ohne Erklärung | 3.8 |
+| 11 | Interne Einführung stand einmal in Staging, einmal in Produktion hinter Flag | Widersprüchlicher Ablauf | 6.5 |
+| 12 | Die transaktionale Job-Anlage wurde der Queue-Bibliothek unterstellt, ohne Prüfung | Verlorene Mails bei Absturz | 6.3 |
+| 13 | Die Regelerfassung konnte erst beginnen, wenn die Erfassungsoberfläche fertig ist | Inhaltsarbeit wird kritischer Pfad von R1 | 3.4 |
+| 14 | DXF nur in Lambert-93 | Unhandliche Koordinaten in ArchiCAD, Abnahme „richtige Stelle“ nicht prüfbar | 3.10 |
+| 15 | RPO 1 h galt auch bei Verlust der Region, obwohl der Dump täglich läuft | Falsches Versprechen | 6.6 |
+| 16 | Alarm bei jedem Job über 15 min, auch beim langen Katasterimport | Fehlalarme | 6.8 |
+| 17 | Rechtstexte standen in P und in Kapitel 8 | Doppelte Zuständigkeit | 3.2 |
+| 18 | Paralleles Arbeiten an G1, G2 und H1 setzte stillschweigend zwei Personen voraus | Zu optimistische Zeitplanung | 5 |
+| 19 | Summen der Releasegrößen passten nicht zu den Modulgrößen; falscher Kapitelverweis | Fehlplanung | 1, 2.3 |
+| 20 | A setzte einen Baurahmen voraus, obwohl Anfragen auch aus nicht erfassten Gemeinden kommen | Keine Anfrage außerhalb des Einzugsgebiets möglich | 2.1, 3.6 |
+
+### 10.2 Geprüfte Alternativen
+
+| Frage | Gewählt | Alternative | Die Alternative ist besser, wenn … |
+|---|---|---|---|
+| Erstes Release | Bebaubarkeitscheck (R1) | Konfigurator zuerst, Grundstücke und Regeln legt der Architekt je Anfrage von Hand an | das Büro bereits genug Interessenten mit Grundstück hat und vor allem Typen vorstellen will. Nachteil: jede Anfrage bleibt Handarbeit |
+| Herkunft der Regeln | Architekt erfasst von Hand | Sprachmodell (X1) oder Zukauf strukturierter PLU-Daten von einem kommerziellen Anbieter | das Einzugsgebiet schnell wachsen soll. Vor X1 eine Marktrecherche zu Anbietern, Abdeckung und Lizenz machen |
+| Katasterdaten | Massendaten-Import | Kataster-API bei jedem Abruf | das Gebiet ganz Frankreich umfasst und Importe zu groß würden |
+| Lagesuche | Fläche erlaubter Ursprünge | Rastersuche (Spez. 5.3.6) | freie Drehung Pflicht ist; dann Raster mit Abbruch beim ersten Treffer |
+| Typdaten | Typdatenblatt und DXF-Umriss | IFC-Import (X3) | viele Typen oder häufige Modelländerungen |
+| Optionspreise | Feste Spanne je Typ | Menge × Einheitspreis | Optionen stark von der Größe abhängen und viele Typen existieren |
+| Jobs | PostgreSQL-Queue | Celery + Redis | sehr viele, kurze Jobs oder Team mit Celery-Erfahrung |
+| Hosting | Container-Plattform + verwaltete DB | VMs mit Compose; Kubernetes | eigene Betriebserfahrung vorhanden (VM) bzw. viele Dienste und Mandanten (Kubernetes) |
+| Backend-Sprache | Python | TypeScript mit gemeinsamer Geometrie im Frontend | IFC nie kommt; die Flächenmethode in H2 macht doppelte Geometrie im Frontend aber ohnehin überflüssig |
+| Frontend | Single-Page-App mit Vite | Next.js mit Server-Rendering | Suchmaschinen-Sichtbarkeit von Konfiguratorseiten wichtig wird; Marketingseiten sind ohnehin getrennt |
+| Katalogpflege | Eigene Oberfläche mit Admin-Baukasten | Headless-CMS auf PostgreSQL | nur Texte und Bilder gepflegt werden; Versionierung, Unveränderlichkeit und Prüfungen sind im CMS schwer abzubilden |
+| Anmeldung Büro | Identitätsdienst mit Föderation | Direkt das Microsoft- oder Google-Konto des Büros | Emprise und Büro dauerhaft eine Einheit bleiben; widerspricht sonst der getrennten Marke |
+| Karten | Géoplateforme | OpenStreetMap; Google Maps | Géoplateforme-Bedingungen nicht passen (OSM); Google scheidet wegen Datenübermittlung und Kosten aus |
+| PDF-Erzeugung | WeasyPrint | Headless-Chromium | komplexe Layouts nötig sind, die WeasyPrint nicht darstellt; Image wird deutlich größer |
+| Verbindliche Auskunft | Hinweis auf Certificat d'urbanisme | Emprise beantragt es für den Kunden | das Büro dies als Leistung anbietet; ergänzt, ersetzt den Baurahmen nicht |
