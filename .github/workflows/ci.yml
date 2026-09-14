@@ -63,6 +63,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          # Version aus packageManager; package.json liegt nicht im Wurzelordner
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -93,6 +96,9 @@ jobs:
           docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures
           docker compose exec -T api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force
       - uses: pnpm/action-setup@v4
+        with:
+          # Version aus packageManager; package.json liegt nicht im Wurzelordner
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -130,14 +136,14 @@ jobs:
           docker build -t emprise-backend:ci --target runtime backend
           docker build -t emprise-web:ci frontend
       - name: Image-Scan Backend
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: emprise-backend:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
       - name: Image-Scan Web
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: emprise-web:ci
           severity: CRITICAL,HIGH
