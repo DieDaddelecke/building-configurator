@@ -2,15 +2,15 @@
 
 Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben des Bebauungsplans (PLU) werden zu harten Grenzen, darin wird ein Haus konfiguriert (Typ, Ausstattungslinie, Optionen, Lage). Ergebnis ist kein Kauf, sondern ein unverbindlicher Vorentwurf, den ein Architekturbüro prüft und in ein Angebot überführt. „Emprise“ ist eine eigene Marke, getrennt vom Büro.
 
-## Stand (13.09.2026)
+## Stand (14.09.2026)
 
 Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
-- Klickbares Frontend-Mockup mit festen Beispieldaten: fertig.
-- Fachdokumentation des Mockups: fertig.
-- Backend: spezifiziert, noch kein Code.
-- Umsetzungsplan in Modulen und Releases (R0–R2, Ausbau X1–X5) mit IT-Infrastruktur: Vorschlag, noch nicht freigegeben. Bis zur Freigabe gilt Kapitel 14 der Spezifikation; nächster Schritt nach Freigabe ist R0 mit Proof of Concept beim Hosting-Anbieter.
-- Der Ordner ist noch kein Git-Repository.
+- Mockup und Fachdokumentation des Mockups: fertig.
+- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P) und G1 wurden daraus beauftragt. D3 und D4 sind entschieden (Plan Kapitel 9).
+- R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet (`backend/`, `frontend/`, `compose.yaml`, CI-Datei). Git-Repository mit erstem Commit.
+- Betrieb bis zur Beta auf Unraid mit Authentik: Stacks und Anleitung in `deploy/unraid/`, lokal geprüft, auf dem Server noch nicht ausgeliefert.
+- Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 noch nicht eingearbeitet.
 
 ## Dokumente
 
@@ -20,6 +20,11 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 | [AENDERUNGEN.md](AENDERUNGEN.md) | Änderungsprotokoll je Session, neueste zuerst | zu Beginn jeder Session (neuester Eintrag) |
 | [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen, Prüfprotokoll | vor jeder Backend-Arbeit; Kapitel 0 regelt die Arbeitsweise |
 | [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, technische Umsetzung je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), offene Entscheidungen D1–D10, Prüfprotokoll | vor Planung oder Beginn eines Moduls; welche Spezifikationskapitel ein Modul braucht, steht im Modulabschnitt |
+| [README.md](README.md) | Aufbau des Repositorys, lokal starten, Prüfbefehle, Regeln für API-Änderungen | vor Code-Arbeit |
+| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen in der Umsetzung (Spez. 0 Punkt 7), je Modul ein Abschnitt | vor Code-Arbeit; neue Annahmen hier eintragen |
+| [docs/BETRIEB.md](docs/BETRIEB.md) | Betriebsanleitung: Ausliefern, Rückrollen, Zugang, Jobs, Mail, Wiederherstellung, Sicherheitsvorfall | Betrieb, Störungen |
+| [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung | Auslieferung, Arbeit an `deploy/unraid` |
+| [infra/README.md](infra/README.md) | Anforderungen an einen späteren verwalteten Anbieter, Umgebungsvariablen, Proof-of-Concept-Liste | Wechsel des Hostings |
 | [Hauskonfigurator.jsx](Hauskonfigurator.jsx) | Mockup als einzelne React-Datei; Daten als Konstanten am Dateianfang | Frontend-Arbeit; Zuordnung zum Backend in Spezifikation 8.1 |
 | [emprise.html](emprise.html) | Aus der JSX erzeugte, eigenständige Seite | nie von Hand ändern, nur neu erzeugen |
 | [Dokumentation.html](Dokumentation.html) | Beschreibung des Mockups: Seitenaufbau, Ableitung der Regeln, Volumetrie, Material und Preise, Beispiel-Mail, Gestaltung (Farben, Schriften) | fachliche Logik oder Gestaltung des Mockups |
@@ -32,6 +37,8 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 2. `BACKEND_SPEZIFIKATION.md` – auch dort, wo sie Fehler des Mockups korrigiert (Anhang E.2)
 3. `Hauskonfigurator.jsx` für Verhalten und Aussehen der Oberfläche
 4. `Dokumentation.html` – beschreibt den Stand des Mockups und wird nicht automatisch nachgezogen
+
+Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
 
 Die Leitplanken L1–L8 (Spezifikation 1.2) gelten auch für Änderungen am Frontend.
 

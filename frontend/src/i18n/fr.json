@@ -24,7 +24,7 @@
       "unknown": "Ce compte n'est pas autorisé. Contactez l'exploitation de la plateforme.",
       "inactive": "Ce compte est désactivé.",
       "email_unverified": "L'adresse e-mail n'est pas confirmée auprès du fournisseur d'identité.",
-      "mfa": "La connexion exige une authentification à deux facteurs.",
+      "mfa": "La connexion exige une authentification à deux facteurs. Si vous venez de la configurer, veuillez vous reconnecter.",
       "fehler": "La connexion a échoué. Veuillez réessayer."
     },
     "backToLogin": "Retour à la connexion"

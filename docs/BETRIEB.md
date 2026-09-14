@@ -23,7 +23,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 3. Produktion: dieselben Images nach Freigabe, gleiche Reihenfolge.
 4. **Rückrollen:** `api`, `worker`, `web` auf das vorige Image setzen. Migrationen **nicht** zurückdrehen: Sie sind abwärtskompatibel (erst erweitern, später aufräumen). `/api/health/ready` meldet dann `"migration_state": "ahead"` und bleibt bereit (200). Nur `"pending"` (Image neuer als Datenbank, Migrationsjob fehlt) ergibt 503.
 
-> Offen bis D3: Die Pipeline-Schritte 2–4 als `deploy.yml` mit dem OpenTofu-Stand des Anbieters.
+> **Unraid (bis zur Beta):** Schritte 2–4 übernimmt `deploy/unraid/deploy.sh`, Rückrollen mit `deploy.sh rollback <release>`. Eine getrennte Staging-Umgebung gibt es dort nicht; neue Funktionen laufen hinter Feature-Flags. Anleitung: `deploy/unraid/README.md`.
 
 ## 3. Zugang für Mitarbeitende
 
@@ -56,11 +56,12 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 - **Verlust der Region (höchstens 24 h):** täglichen Dump aus dem Objektspeicher der zweiten Region in eine neue Instanz einspielen (`pg_restore --no-owner --role=migrator`), danach Rollen und Rechte nach `infra/local/postgres-init.sql` prüfen.
 - Übung vierteljährlich in Staging, Ergebnis mit Datum, Dauer und Datenstand in diesem Abschnitt protokollieren.
 
-> Offen bis D3: konkrete Befehle des Anbieters; erste Übung im Proof of Concept.
+> **Unraid (bis zur Beta):** Kein PITR; Wiederherstellung aus dem nächtlichen Dump (Datenverlust bis 24 h), Befehle in `deploy/unraid/README.md` Abschnitt 6.
 
 | Datum | Umgebung | Verfahren | Dauer | Ergebnis |
 |---|---|---|---|---|
-| – | – | – | – | noch nicht geübt |
+| 14.09.2026 | lokal, Unraid-Stack | `backup now` → `pg_restore --no-owner --no-comments` in `restore_test` | < 1 min (leere Datenbank) | vollständig, 13 Tabellen, Schutztrigger vorhanden |
+| – | Unraid | Übung mit echtem Datenstand | – | ausstehend |
 
 ## 7. Sicherheitsvorfall
 

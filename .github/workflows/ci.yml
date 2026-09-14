@@ -52,7 +52,7 @@ jobs:
       - name: Bucket anlegen
         run: |
           for i in $(seq 1 20); do curl -sf http://localhost:9000/minio/health/live && break; sleep 1; done
-          EMPRISE_ENV=test uv run python -m app.cli local-storage-init
+          EMPRISE_ENV=test uv run python -m app.cli storage-init
       - run: uv run pytest
 
   frontend:

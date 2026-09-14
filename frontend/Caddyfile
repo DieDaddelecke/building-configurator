@@ -2,9 +2,13 @@
 	auto_https off
 	admin off
 	persist_config off
+	servers {
+		# Nur vorgeschaltete Proxys im privaten Netz dürfen die Client-IP über X-Forwarded-For setzen
+		trusted_proxies static {$TRUSTED_PROXIES:private_ranges}
+	}
 }
 
-# TLS endet am Lastverteiler des Anbieters; dieser Container spricht HTTP im privaten Netz.
+# TLS endet am vorgeschalteten Reverse Proxy; dieser Container spricht HTTP im privaten Netz.
 :8080 {
 	encode zstd gzip
 

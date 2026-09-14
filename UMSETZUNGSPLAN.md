@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung · **Stand:** 13.09.2026
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P) und G1; D3 und D4 entschieden (Kapitel 9) · **Stand:** 14.09.2026
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -611,8 +611,8 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 |---|---|---|
 | D1 | Einzugsgebiet und Pilotgemeinden | Gemeinden um Treillières innerhalb einer Klimazone (Loire-Atlantique: H2b) |
 | D2 | R1 öffentlich oder nur intern | Erst intern, dann Beta, dann öffentlich (4.2) |
-| D3 | Hosting-Anbieter (Spez. E1) | Option A nach Proof of Concept (6.4) |
-| D4 | Anmeldung für Büro und Emprise-Team | Identitätsdienst mit Föderation; solange Emprise und Büro ein Team sind, deren vorhandenes Microsoft- oder Google-Konto |
+| D3 | Hosting-Anbieter (Spez. E1) | Option A nach Proof of Concept (6.4). **Entschieden 14.09.2026:** bis zur Beta selbst betrieben auf Unraid (`deploy/unraid`, Annahme A21); vor dem öffentlichen Start von R1 neu entscheiden |
+| D4 | Anmeldung für Büro und Emprise-Team | Identitätsdienst mit Föderation; solange Emprise und Büro ein Team sind, deren vorhandenes Microsoft- oder Google-Konto. **Entschieden 14.09.2026:** eigener Dienst, kein Microsoft, Google oder Vergleichbares; Authentik auf Unraid (Annahme A23) |
 | D5 | Wer betreibt die Plattform | Emprise mit benannter Betriebsverantwortung und Vertretung |
 | D6 | Datenschutzrolle Emprise ↔ Büro | Vor R1 rechtlich festlegen |
 | D7 | Sprache der Oberfläche | Französisch führend, Deutsch zusätzlich |

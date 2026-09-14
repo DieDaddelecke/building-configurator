@@ -24,7 +24,7 @@
       "unknown": "Dieses Konto ist nicht freigeschaltet. Bitte an den Plattformbetrieb wenden.",
       "inactive": "Dieses Konto ist gesperrt.",
       "email_unverified": "Die E-Mail-Adresse ist beim Identitätsdienst nicht bestätigt.",
-      "mfa": "Die Anmeldung verlangt einen zweiten Faktor.",
+      "mfa": "Die Anmeldung verlangt einen zweiten Faktor. Wenn Sie ihn gerade eingerichtet haben, melden Sie sich bitte noch einmal an.",
       "fehler": "Die Anmeldung ist fehlgeschlagen. Bitte erneut versuchen."
     },
     "backToLogin": "Zurück zur Anmeldung"

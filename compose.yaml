@@ -74,7 +74,7 @@ services:
       context: backend
       target: runtime
     image: emprise-backend:local
-    command: ["sh", "-c", "alembic upgrade head && python -m app.cli local-storage-init"]
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli storage-init"]
     environment: *backend-env
     depends_on:
       db:

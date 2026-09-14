@@ -8,7 +8,8 @@ Hauskonfigurator für Bauinteressenten in Frankreich. Projektbeschreibung, Dokum
 |---|---|
 | `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), später je Fachmodul ein Paket (Plan 3.2) |
 | `frontend/` | Vite, React, TypeScript, Tailwind; Web-Container mit Caddy |
-| `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anbieter-Infrastruktur nach D3 |
+| `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anforderungen an einen späteren verwalteten Anbieter |
+| `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
 | `docs/` | [ANNAHMEN.md](docs/ANNAHMEN.md), [BETRIEB.md](docs/BETRIEB.md) |
 | Wurzel | Spezifikation, Umsetzungsplan, Mockup (siehe AGENTS.md) |
 

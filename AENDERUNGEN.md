@@ -4,6 +4,45 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 14.09.2026 – R0 Plattform, Betrieb auf Unraid mit Authentik
+
+**Neu**
+- Git-Repository (`main`), erster Commit `1f4b646` mit allen Dokumenten und R0.
+- `backend/` – FastAPI-Plattform (Modul P): OIDC-Anmeldung Büro mit MFA-Prüfung, Rollen, Projekt-Cookie, CSRF, Zugriffsregel je Route (per Test erzwungen), Audit-Log und Rechtstexte unveränderlich, Job-Queue in PostgreSQL, Mail, S3, Feature-Flags, Rate-Limits, Fehler nach RFC 9457 auf fr/de, Gesundheitsprüfungen, CLI; Migration `0001`; 50 Tests.
+- `frontend/` – Vite, React, TypeScript, Tailwind, i18n fr/de; Gestaltung, Planblatt und Maßketten aus dem Mockup; Startseite, Büro-Rahmen `/buero`; Caddy-Web-Container mit CSP; 7 Unit-Tests, 3 Playwright-Tests.
+- `compose.yaml` – lokale Umgebung mit PostGIS, MinIO, Mailpit, OIDC-Testdienst, migrate, api, worker, web.
+- `.github/workflows/ci.yml`, `renovate.json` – CI und Abhängigkeitspflege (CI noch nie gelaufen).
+- `README.md`, `docs/ANNAHMEN.md` (A1–A26), `docs/BETRIEB.md`, `infra/README.md`, `infra/local/*`.
+- `deploy/unraid/` – Emprise-Stack für Unraid (PostGIS, SeaweedFS, migrate, api, worker, web, backup), `deploy.sh` mit Rückrollen, Authentik-Stack mit Blueprint, Anleitung.
+
+**Geändert**
+- `UMSETZUNGSPLAN.md` – Status im Kopf; Kapitel 9: D3 und D4 entschieden.
+- `AGENTS.md` – Stand, Dokumententabelle, Hinweis zur Geltung des Plans für beauftragte Module.
+- `.claude/skills/handoff/SKILL.md` – Ort der Annahmen `docs/ANNAHMEN.md`.
+- Nach dem Commit, noch nicht committet: `backend/app/cli.py` (`storage-init`), `compose.yaml`, `ci.yml`, `frontend/Caddyfile` (trusted_proxies), `frontend/src/i18n/*.json` (Hinweis nach MFA-Einrichtung), `.gitignore`, `README.md`, Dokumente oben.
+
+**Entschieden**
+- D3 – Hosting bis zur Beta selbst betrieben auf Unraid; vor öffentlichem R1 neu entscheiden.
+- D4 – Eigener Identitätsdienst, kein Microsoft/Google; Authentik.
+- R0 und G1 aus dem Plan beauftragt; der Plan als Ganzes bleibt Vorschlag.
+- Vorläufige Adresse `https://building-configurator.aslani.work`; Reverse Proxy auf Unraid vorhanden.
+
+**Ohne Dateiänderung**
+- Procrastinate: transaktionale Job-Anlage mit psycopg 3 nicht belegbar → eigene Queue (ANNAHMEN A2).
+- Authentik: `amr: mfa` nur mit bereits eingerichtetem Gerät; 2026 verlangt `grant_types`; Passkey ohne Passwort = `user` (ANNAHMEN A23–A25).
+- SeaweedFS 3.97: Bucket, Versionierung, signierte URLs geprüft (A22).
+- Selbstprüfung: `/ready` hätte nach Rückrollen 503 gemeldet → `migration_state` eingeführt (BETRIEB 2). Sicherung enthielt `spatial_ref_sys` → ausgeschlossen, Wiederherstellung fehlerfrei (BETRIEB 6).
+- DNS 14.09.2026: `building-configurator.aslani.work` existiert noch nicht; `aslani.work` liegt bei Cloudflare (HANDOFF 2 und 3).
+- Parallele Session `building-configurator-a7` setzt G1 um; Dateien abgestimmt, Stand in HANDOFF 1.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+
+**Memory:** `project-hosting-unraid` angelegt (D3/D4, keine Microsoft-/Google-Dienste, Cloudflare-Hinweis).
+
+**Hand-off:** `/handoff` erstmals als Befehl aufgerufen und ausgeführt (Punkt aus HANDOFF 4.2 erledigt).
+
+---
+
 ## 13.09.2026 – Prüfung Spezifikation, Umsetzungsplan, Session-Übergabe
 
 **Neu**

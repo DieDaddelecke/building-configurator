@@ -1,0 +1,65 @@
+# Authentik als Identitätsdienst für die Anmeldung im Büro (Entscheidung D4, 14.09.2026)
+# Nach der offiziellen Compose-Datei 2026.8, ohne Docker-Socket (keine automatischen Outposts).
+# Eigener Stack, weil er später auch andere Dienste schützen kann und unabhängig von Emprise aktualisiert wird.
+name: authentik
+
+x-authentik-env: &authentik-env
+  AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?}
+  AUTHENTIK_POSTGRESQL__HOST: postgresql
+  AUTHENTIK_POSTGRESQL__USER: authentik
+  AUTHENTIK_POSTGRESQL__NAME: authentik
+  AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS:?}
+  AUTHENTIK_WEB__BASE_URL: ${AUTHENTIK_BASE_URL:?}
+  AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+  # Für den Blueprint blueprints/emprise.yaml
+  EMPRISE_PUBLIC_BASE_URL: ${EMPRISE_PUBLIC_BASE_URL:?}
+  EMPRISE_OIDC_CLIENT_SECRET: ${EMPRISE_OIDC_CLIENT_SECRET:?}
+  TZ: ${TZ:-Europe/Paris}
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?}
+      POSTGRES_USER: authentik
+      POSTGRES_DB: authentik
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  server:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.8.2}
+    restart: unless-stopped
+    command: server
+    environment: *authentik-env
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/data:/data
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/custom-templates:/templates
+      - ./blueprints:/blueprints/custom:ro
+    ports:
+      # Ziel für den Reverse Proxy (auth.…); nicht direkt ins Internet freigeben
+      - "${AUTHENTIK_PORT:-9000}:9000"
+    shm_size: 512mb
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.8.2}
+    restart: unless-stopped
+    command: worker
+    environment: *authentik-env
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/data:/data
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/certs:/certs
+      - ${APPDATA_DIR:-/mnt/user/appdata/authentik}/custom-templates:/templates
+      - ./blueprints:/blueprints/custom:ro
+    shm_size: 512mb
+    depends_on:
+      postgresql:
+        condition: service_healthy

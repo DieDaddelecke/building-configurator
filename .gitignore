@@ -6,6 +6,10 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Auslieferung auf Unraid: Protokoll der Releases bleibt auf dem Server
+deploy/unraid/releases.log
+deploy/unraid/compose.override.yaml
+
 # Claude Code: lokale Einstellungen bleiben lokal
 .claude/settings.local.json
 

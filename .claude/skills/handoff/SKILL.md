@@ -31,7 +31,7 @@ Nur handeln, wenn der Fall eingetreten ist:
 | Entscheidung getroffen | In der Entscheidungstabelle (Spezifikation 16 bzw. Umsetzungsplan 9) als entschieden markieren: Datum, Ergebnis; betroffene Kapitel anpassen |
 | Umsetzungsplan freigegeben oder Abweichungen übernommen | Status im Kopf von `UMSETZUNGSPLAN.md`, Rangfolge und Stand in `AGENTS.md` anpassen |
 | Datei neu, umbenannt oder gelöscht | Dokumententabelle in `AGENTS.md` |
-| Code-Stand geändert | Stand in `AGENTS.md`; neue Annahmen in `backend/docs/ANNAHMEN.md` (Spezifikation 0) |
+| Code-Stand geändert | Stand in `AGENTS.md`; neue Annahmen in `docs/ANNAHMEN.md` (Spezifikation 0, Ort nach Plan 4.1) |
 | Arbeitsweise geändert | `CLAUDE.md` (Claude-spezifisch) bzw. `AGENTS.md` (für alle Agenten) |
 | Punkt aus `HANDOFF.md` 4 erledigt | Dort streichen, im Protokolleintrag nennen |
 

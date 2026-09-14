@@ -1,0 +1,148 @@
+# Emprise auf Unraid: interne Einführung und Beta (Entscheidung D3, 14.09.2026)
+# Anleitung: README.md in diesem Ordner. Werte: .env (Vorlage .env.example)
+name: emprise
+
+x-backend: &backend
+  image: emprise-backend:${EMPRISE_RELEASE:-current}
+  restart: unless-stopped
+  environment: &backend-env
+    EMPRISE_ENV: production
+    EMPRISE_LOG_LEVEL: INFO
+    EMPRISE_PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?}
+    EMPRISE_SECRET_KEY: ${SECRET_KEY:?}
+    EMPRISE_DATABASE_URL: postgresql+psycopg://app:${APP_DB_PASSWORD:?}@db:5432/emprise
+    EMPRISE_MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:${MIGRATOR_DB_PASSWORD:?}@db:5432/emprise
+    EMPRISE_OIDC_ISSUER: ${OIDC_ISSUER:?}
+    EMPRISE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-emprise}
+    EMPRISE_OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
+    EMPRISE_S3_ENDPOINT_URL: http://storage:8333
+    EMPRISE_S3_REGION: us-east-1
+    EMPRISE_S3_BUCKET: emprise
+    EMPRISE_S3_ACCESS_KEY: emprise
+    EMPRISE_S3_SECRET_KEY: ${S3_SECRET_KEY:?}
+    EMPRISE_SMTP_HOST: ${SMTP_HOST:-}
+    EMPRISE_SMTP_PORT: ${SMTP_PORT:-587}
+    EMPRISE_SMTP_USERNAME: ${SMTP_USERNAME:-}
+    EMPRISE_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    EMPRISE_SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+    EMPRISE_MAIL_FROM: ${MAIL_FROM:-Emprise <no-reply@example.invalid>}
+    EMPRISE_SENTRY_DSN: ${SENTRY_DSN:-}
+    # Einzugsgebiet für G1 als JSON-Liste von INSEE-Codes (D1: bis zur Beta Treillières, ["44209"])
+    EMPRISE_CADASTRE_COMMUNES: ${CADASTRE_COMMUNES:?}
+    # Client-IP nur aus privaten Netzen übernehmen (Web-Container, Reverse Proxy)
+    FORWARDED_ALLOW_IPS: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    TZ: ${TZ:-Europe/Paris}
+
+services:
+  db:
+    image: postgis/postgis:16-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR_DB_PASSWORD:?}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      READONLY_DB_PASSWORD: ${READONLY_DB_PASSWORD:?}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/emprise}/postgres:/var/lib/postgresql/data
+      - ./postgres/20-emprise.sh:/docker-entrypoint-initdb.d/20-emprise.sh:ro
+    networks: [intern]
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d emprise"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  storage:
+    # S3-kompatibel, Versionierung und signierte URLs geprüft (docs/ANNAHMEN.md A21)
+    image: chrislusf/seaweedfs:3.97
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        printf '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
+        "$$S3_SECRET_KEY" > /tmp/s3.json &&
+        exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json
+    environment:
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?}
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/emprise}/seaweedfs:/data
+    networks: [intern]
+
+  migrate:
+    <<: *backend
+    build:
+      context: ../../backend
+      target: runtime
+      args:
+        RELEASE: ${EMPRISE_RELEASE:-current}
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli storage-init"]
+    restart: on-failure:10
+    depends_on:
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_started
+    networks: [intern]
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [intern]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.cli", "worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [intern]
+
+  web:
+    image: emprise-web:${EMPRISE_RELEASE:-current}
+    build:
+      context: ../../frontend
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: api:8000
+      TRUSTED_PROXIES: private_ranges
+    ports:
+      # Ziel für den Reverse Proxy; nicht direkt ins Internet freigeben
+      - "${WEB_PORT:-8480}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [intern, extern]
+
+  backup:
+    image: postgis/postgis:16-3.5
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: migrator
+      PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?}
+      PGDATABASE: emprise
+      BACKUP_HOUR: ${BACKUP_HOUR:-3}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ./backup/backup.sh:/backup.sh:ro
+      - ${BACKUP_DIR:-/mnt/user/backups/emprise}:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [intern]
+
+networks:
+  # Datenbank, Speicher und API ohne Weg nach außen erreichbar; nur web hat einen Port
+  intern:
+  extern:

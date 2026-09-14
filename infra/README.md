@@ -1,6 +1,6 @@
 # Infrastruktur
 
-**Stand 14.09.2026:** Die Anwendung ist anbieterunabhängig betriebsbereit (Container, PostgreSQL mit PostGIS, S3, SMTP, OIDC). Der Anbieter ist noch nicht gewählt (D3). Deshalb gibt es hier noch **keinen OpenTofu-Code** und keine Auslieferung nach Staging und Produktion. Beides entsteht im Proof of Concept (Plan 6.4).
+**Stand 14.09.2026:** Bis zur Beta läuft Emprise selbst betrieben auf Unraid, Anleitung und Stacks in [`deploy/unraid`](../deploy/unraid/README.md) (D3, D4 entschieden). Die Abschnitte unten beschreiben den späteren Wechsel zu einem verwalteten Anbieter vor dem öffentlichen Start von R1; dafür gibt es noch **keinen OpenTofu-Code**.
 
 | Ordner | Inhalt |
 |---|---|

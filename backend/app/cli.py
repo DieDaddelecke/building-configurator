@@ -4,7 +4,7 @@ worker                         Hintergrundjobs ausführen
 openapi [datei]                OpenAPI-Beschreibung schreiben (Grundlage des Frontend-Clients)
 staff-add EMAIL ROLLE [ROLLE]  Mitarbeitende freischalten oder Rollen setzen
 staff-deactivate EMAIL         Zugang sperren und Sitzungen beenden
-local-storage-init             Nur lokal: Bucket anlegen
+storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
 """
 
 import argparse
@@ -96,13 +96,15 @@ def cmd_staff_deactivate(args: argparse.Namespace) -> None:
         print(f"{email}: gesperrt")
 
 
-def cmd_local_storage_init(args: argparse.Namespace) -> None:
-    """Nur lokal: Bucket mit Versionierung anlegen. In staging/production entsteht er per OpenTofu."""
+def cmd_storage_init(args: argparse.Namespace) -> None:
+    """Bucket mit Versionierung anlegen, falls er fehlt (idempotent).
+
+    Für selbst betriebene S3-Dienste (MinIO lokal, SeaweedFS auf Unraid). Bei einem verwalteten
+    Anbieter legt OpenTofu den Bucket an; der Befehl ändert dann nichts.
+    """
     from app.platform import storage
 
     settings = get_settings()
-    if settings.env not in ("local", "test"):
-        sys.exit("local-storage-init ist nur für local und test gedacht")
     client = storage.client()
     existing = {b["Name"] for b in client.list_buckets().get("Buckets", [])}
     if settings.s3_bucket not in existing:
@@ -125,7 +127,7 @@ def main() -> None:
     p_deactivate = sub.add_parser("staff-deactivate")
     p_deactivate.add_argument("email")
     p_deactivate.set_defaults(func=cmd_staff_deactivate)
-    sub.add_parser("local-storage-init").set_defaults(func=cmd_local_storage_init)
+    sub.add_parser("storage-init").set_defaults(func=cmd_storage_init)
     args = parser.parse_args()
     args.func(args)
 
