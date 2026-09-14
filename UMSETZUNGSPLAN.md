@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P) und G1; D3 und D4 entschieden (Kapitel 9) · **Stand:** 14.09.2026
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1 und G2; D1–D4 und D11 entschieden (Kapitel 9) · **Stand:** 14.09.2026, überarbeitet für G2 als automatische Simulation ohne Eingaben des Büros (10.3)
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -9,11 +9,12 @@
 ## 1. Grundsätze
 
 1. **Jedes Release ist allein produktiv nutzbar.** Kein Modul wartet auf ein späteres, um Nutzen zu stiften.
-2. **Risiko zuerst.** Früh geprüft werden: Qualität der Katasterdaten, Aufwand der Regelerfassung je Zone, Nachfrage.
-3. **Inhalte gehören zum Release.** Ein Modul ohne erfasste Regelwerke, Typdaten oder Rechtstexte ist nicht produktiv (Kapitel 8).
+2. **Risiko zuerst.** Früh geprüft werden: Qualität der Katasterdaten, Qualität der automatischen Regelauswertung, Nachfrage.
+3. **Inhalte gehören zum Release.** Ein Modul ohne Typdaten oder Rechtstexte ist nicht produktiv (Kapitel 8). Regelwerke entstehen automatisch (3.4).
 4. **Wenige Bausteine.** Modularer Monolith, eine Datenbank, verwaltete Dienste in Frankreich.
-5. **Ausbau nach Auslösern, nicht nach Kalender.** Aufwendige Automatik (Sprachmodell, IFC) erst, wenn messbar gebraucht (Kapitel 3.11).
+5. **Ausbau nach Auslösern, nicht nach Kalender.** Aufwendige Automatik (IFC, Uploads) erst, wenn messbar gebraucht (Kapitel 3.11). Ausnahme: Die Auswertung des PLU per Sprachmodell gehört zu G2, weil G2 ohne Eingaben des Büros funktionieren muss (D11).
 6. **Einheitliche Produktionsreife** für jedes Modul (Kapitel 4).
+7. **Simulation vor Prüfung.** Grundstück, Regeln und Baurahmen entstehen vollautomatisch und sind eine unverbindliche Simulation. Das Büro prüft das Ergebnis erst, wenn der Kunde Kontakt aufnimmt (A). Kein Kundenschritt wartet auf das Büro (Annahme G21, D11).
 
 ---
 
@@ -25,18 +26,18 @@
 |---|---|---|---|
 | **P** | Plattform | Hosting, Auslieferung, Anmeldung, Rollen, Queue, Speicher, Mail, Rechtstexte, Überwachung, Büro-Rahmen | R0 |
 | **G1** | Grundstück | Aus Adresse oder Kartenklick ein bestätigtes Grundstück mit eingeordneten Kanten, Gelände, Risiken | R1 |
-| **G2** | Regelwerk | Zone, Planunterlagen, vom Architekten erfasste und freigegebene Regeln mit Zitat, Abdeckung, Planstandsprüfung | R1 |
-| **G3** | Baurahmen | Rahmenbedingungen des Grundstücks: bebaubare Fläche, Grenzwerte, Vorgaben, Hinweise; Steckbrief als PDF | R1 |
-| **A** | Anfrage | Kontakt, E-Mail-Bestätigung, Einwilligung, Snapshot, Mail an Büro, Zugangslink, Export und Löschung, Anfragenliste im Büro | R1 |
+| **G2** | Regelwerk | Zone, Planunterlagen, automatisch per Sprachmodell ausgewertete Regeln mit geprüftem Zitat, Abdeckung, Planstandsprüfung – ohne Eingaben des Büros | R1 |
+| **G3** | Baurahmen | Simulierte Rahmenbedingungen des Grundstücks: bebaubare Fläche, Grenzwerte, Vorgaben, Hinweise; Steckbrief als PDF | R1 |
+| **A** | Anfrage | Kontakt, E-Mail-Bestätigung, Einwilligung, Snapshot, Mail an Büro, Zugangslink, Export und Löschung, Anfragenliste im Büro, Prüfung der Simulation durch das Büro | R1 |
 | **H1** | Hauskatalog | Typen, Varianten, Linien, Optionen, Preise, RE2020-Bewertungen – von Hand gepflegt, versioniert | R2 |
 | **H2** | Zulässigkeit und Implantation | Welche Typen passen, Lage verschieben und drehen, Prüfung je Kante, Schnellstellungen | R2 |
 | **H3** | Konfiguration und Kosten | Linie, Optionen, Ausschlüsse, Regelprüfung der Auswahl, RE2020-Status, Kostenkorridor | R2 |
 | **V** | Vorentwurf-Übergabe | Neuprüfung beim Absenden, Snapshot, Dossier-PDF, Lageplan als DXF, Zustände, Nachrichten | R2 |
-| **X1–X5** | Ausbau | PLU-Automatik, Uploads, IFC-Typen, erweitertes Dossier, Integrationen | nach Auslöser |
+| **X2–X5** | Ausbau | Uploads, IFC-Typen, erweitertes Dossier, Integrationen (X1 ist in G2 aufgegangen) | nach Auslöser |
 
-Oberflächen für das Büro gehören jeweils zu ihrem Fachmodul (Kantenkorrektur zu G1, Regelerfassung zu G2, Katalogpflege zu H1). P stellt nur Anmeldung, Navigation und Rechte bereit.
+Oberflächen für das Büro gehören jeweils zu ihrem Fachmodul (Kantenkorrektur zu G1, Korrektur von Regeln zu G2, Katalogpflege zu H1). Das Büro nutzt sie beim Prüfen einer Anfrage (A); kein Kundenschritt setzt sie voraus. P stellt nur Anmeldung, Navigation und Rechte bereit.
 
-A funktioniert auch ohne Baurahmen: Liegt ein Grundstück außerhalb der erfassten Gemeinden oder fragt der Kunde eine Prüfung an, entsteht eine Anfrage ohne Baurahmen. Die Abhängigkeit G3 → A ist deshalb weich.
+A funktioniert auch ohne Baurahmen: Liegt ein Grundstück außerhalb des Einzugsgebiets oder konnte die Simulation nicht erstellt werden (kein PLU im GPU, Auswertung gescheitert), entsteht eine Anfrage ohne Baurahmen. Die Abhängigkeit G3 → A ist deshalb weich.
 
 ### 2.2 Abhängigkeiten
 
@@ -53,7 +54,6 @@ flowchart LR
   H2 --> H3[H3 Konfiguration<br/>und Kosten]
   H3 --> V[V Vorentwurf-Übergabe]
   A --> V
-  G2 -.-> X1[X1 PLU-Automatik]
   G1 -.-> X2[X2 Uploads]
   H1 -.-> X3[X3 IFC-Typen]
   V -.-> X4[X4 Erweitertes Dossier]
@@ -66,9 +66,9 @@ flowchart LR
 | Release | Module | Produktiver Nutzen | Größe (grob) |
 |---|---|---|---|
 | **R0 Fundament** | P | Betriebsfähige Plattform, auf die Module ohne Umbau aufsetzen | 3–5 PW |
-| **R1 Bebaubarkeitscheck** | G1, G2, G3, A | „Was darf ich auf diesem Grundstück bauen?“ mit Lageplan, Grenzwerten und Zitaten; qualifizierte Anfrage an das Büro | 14–24 PW |
+| **R1 Bebaubarkeitscheck** | G1, G2, G3, A | „Was darf ich auf diesem Grundstück bauen?“ als unverbindliche Simulation mit Lageplan, Grenzwerten und Zitaten, ohne Vorarbeit des Büros; qualifizierte Anfrage, die das Büro mit der Simulation prüft | 15–24 PW |
 | **R2 Hauskonfigurator** | H1, H2, H3, V | Vorentwurf mit Typ, Linie, Optionen, Lage und Kostenkorridor auf echtem Grundstück | 15–25 PW |
-| **R3+ Ausbau** | X1–X5 | Mehr Gemeinden, mehr Typen, mehr Büros | je Modul |
+| **R3+ Ausbau** | X2–X5 | Mehr Gemeinden, mehr Typen, mehr Büros | je Modul |
 
 Größen in Personenwochen (PW) für eine erfahrene Entwicklerperson mit Claude Code, ohne Inhaltsarbeit, Rechtstexte und Gestaltung. Grobe Größenordnung; nach R1 anhand der tatsächlichen Dauer nachkalibrieren.
 
@@ -88,11 +88,15 @@ flowchart LR
   AD[Adresse oder<br/>Kartenklick] --> G1
   G1[G1 Grundstück<br/>Umriss, Kanten,<br/>Gelände, Risiken] --> G3
   GPU[Géoportail de l'Urbanisme<br/>Zonen, Dokumente,<br/>Servituden] --> G2
-  AR[Architekt erfasst<br/>und gibt frei] --> G2
-  G2[G2 Regelwerk<br/>je Zone und Planstand] --> G3
-  G3[G3 Baurahmen<br/>bebaubare Fläche,<br/>Grenzwerte, Vorgaben] --> UI[Lageplan, Tabelle,<br/>Steckbrief-PDF]
+  LLM[Sprachmodell<br/>wertet règlement aus,<br/>Server prüft Zitate] --> G2
+  G2[G2 Regelwerk<br/>je Zone und Planstand,<br/>automatisch] --> G3
+  G3[G3 Baurahmen<br/>Simulation: bebaubare Fläche,<br/>Grenzwerte, Vorgaben] --> UI[Lageplan, Tabelle,<br/>Steckbrief-PDF]
   G3 --> H2[H2 Implantation<br/>ab R2]
+  UI --> A[A Anfrage]
+  A --> BP[Büro prüft Simulation<br/>korrigiert bei Bedarf]
 ```
+
+Die ganze Kette bis zum Steckbrief läuft ohne Eingaben des Büros. Das Büro greift erst nach der Kontaktaufnahme ein (A). Seine Korrekturen verbessern das Regelwerk der Zone für spätere Simulationen, sind aber nie Voraussetzung.
 
 ### 3.2 P – Plattform (R0)
 
@@ -138,7 +142,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 - Adresssuche mit Vorschlägen
 - Karte mit Luftbild oder Plan und Parzellen; Auswahl einer oder mehrerer zusammenhängender Parzellen
 - Grundstück bilden, Flächenvergleich, Kanten vereinfachen und einordnen (Spez. 5.1.3, 5.1.4)
-- Kantenkorrektur: Kunde einfach („Straße“ oder „Nachbar“), Architekt vollständig. Eine Korrektur durch den Kunden kann den Baurahmen vergrößern; sie wird deshalb gekennzeichnet, macht den Baurahmen nicht bindend und muss vom Architekten bestätigt werden
+- Kantenkorrektur: Kunde einfach („Straße“ oder „Nachbar“), Architekt vollständig. Eine Korrektur durch den Kunden kann den Baurahmen vergrößern; sie wird deshalb in der Simulation als unbestätigt gekennzeichnet und vom Architekten beim Prüfen einer Anfrage bestätigt
 - Gelände über den Höhendienst (Spez. 5.9.4), Risiken über Géorisques (Spez. 5.9.5)
 - Hinweis zur Katastergenauigkeit (L7)
 
@@ -165,7 +169,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Ausfallverhalten:** Parzellen kommen aus der eigenen Datenbank. Fällt die Géoplateforme aus, fehlen Adresssuche und Hintergrundkarte, die Parzellen bleiben aber sichtbar und per Klick wählbar.
 
-**Schwierige Fälle** (Pflicht in der Testmenge): Eckgrundstück; Pfeifenstielgrundstück (terrain en drapeau), bei dem die Regel aus Spez. 5.1.4 die Kanten des hinterliegenden Teils nicht eindeutig einordnen kann – die richtige Einordnung hängt vom Lexique des PLU ab, deshalb niedrige Konfidenz und Bestätigung durch den Architekten; Privatweg als eigene Parzelle; mehrere Parzellen; Flächenabweichung über 3 %.
+**Schwierige Fälle** (Pflicht in den Tests): Eckgrundstück; Pfeifenstielgrundstück (terrain en drapeau), bei dem die Regel aus Spez. 5.1.4 die Kanten des hinterliegenden Teils nicht eindeutig einordnen kann – die richtige Einordnung hängt vom Lexique des PLU ab, deshalb niedrige Konfidenz und Bestätigung durch den Architekten; Privatweg als eigene Parzelle; mehrere Parzellen; Flächenabweichung über 3 %.
 
 **Abnahme:** Jede Kante korrigierbar. Parzellensuche p95 unter 500 ms. Simulierter Ausfall der Géoplateforme: Parzellenwahl per Klick funktioniert weiter. ~~Testmenge von 40 realen Grundstücken mit von Hand bestimmten Kantenarten, mindestens 90 % automatisch richtig~~ – **entfällt (Entscheidung 14.09.2026, Annahme G21):** Die Kanten werden automatisch eingeordnet; der Architekt prüft sie erst, wenn eine Anfrage eingeht (Modul A).
 
@@ -173,38 +177,48 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 ### 3.4 G2 – Regelwerk (R1)
 
-**Zweck:** Für jede Zone der Pilotgemeinden ein freigegebenes, zitiertes Regelwerk; für alle anderen Gemeinden ein ehrlicher Status.
+**Zweck:** Für jede Zone im Einzugsgebiet automatisch ein Regelwerk mit geprüften Zitaten, das den Baurahmen als Simulation speist, **ohne Eingaben des Büros** (Entscheidung D11 vom 14.09.2026).
 
-**Warum das tragfähig ist:** Regeln gelten je Zone eines Planstands, nicht je Parzelle. Der Erfassungsaufwand wächst mit der Zahl der Zonen im Einzugsgebiet, nicht mit der Zahl der Anfragen.
+**Grundsatz:** Die Auswertung ist nicht kontraktuell, sondern eine Simulation auf Grundlage öffentlicher Planunterlagen. Kunden sehen sie sofort und deutlich als Simulation gekennzeichnet (L7). Das Büro prüft sie erst, wenn eine Anfrage eingeht (3.6). Verbindlich ist allein das Certificat d'urbanisme.
+
+**Warum das tragfähig ist:** Regeln gelten je Zone eines Planstands, nicht je Parzelle. Die Auswertung läuft einmal je Zone und Planstand, nicht je Kunde. Kosten und Laufzeit fallen beim Eingang eines Planstands an, nicht im Kundenablauf.
 
 **Umfang:**
 - Zone automatisch aus dem GPU ermitteln, einschließlich Sektoren (z. B. `UBa`) und Teilflächen bei mehreren Zonen (Spez. 5.2.1, 5.2.2)
-- Planunterlagen (règlement écrit, Zonenplan) automatisch laden und mit SHA-256 ablegen; ist ein Link defekt, lädt das Büro die Datei hoch
+- Planunterlagen (règlement écrit, Zonenplan) automatisch laden und mit SHA-256 ablegen. Ist ein Link defekt oder fehlt der Text: Status `nicht verfügbar`, Anfrage ohne Baurahmen (2.1); das Büro muss nichts hochladen
 - Überlagernde Vorgaben aus dem GPU als Hinweis, u. a. Servituden wie der Schutzbereich eines Baudenkmals (Zustimmung des Architecte des Bâtiments de France nötig)
-- **Erfassungsoberfläche** für Architekten: PDF links, Regelformular rechts; Zitat durch Markieren im PDF, Seite und Wortlaut werden übernommen; Pflichtregelarten als Checkliste (Spez. 5.2.4)
-- **Vorab-Erfassung per XLSX-Vorlage** mit Import (gleiche Felder wie die Regelschemas, Seite und Zitat von Hand). So beginnt die Inhaltsarbeit, bevor die Erfassungsoberfläche fertig ist.
-- Freigabe mit Audit (Spez. 5.2.3 Schritt 5)
-- Abdeckung je Gemeinde und Zone: `nicht erfasst`, `in Arbeit`, `freigegeben`, `veraltet`
-- Wöchentliche Prüfung auf neue Planstände (Spez. 5.2.5)
-- **Lotissement:** Viele Neubaugrundstücke liegen in einem Lotissement mit eigenen, oft strengeren Regeln, die nicht im GPU stehen. Der Kunde wird gefragt; die Unterlagen erfasst der Architekt als zusätzliches Regelwerk mit dem Umriss des Lotissement als Geltungsbereich. PLU und Lotissement gelten gemeinsam; maßgeblich ist je Regelart der strengere Wert. Bis dahin Hinweis „Regeln des Lotissement nicht berücksichtigt“.
+- **Automatische Regelauswertung** nach Spez. 5.2.3 Schritte 1–4: Text extrahieren (OCR bei Bedarf), Zonenkapitel und allgemeine Bestimmungen finden, Auswertung per Claude mit strengem JSON-Schema, Zitat serverseitig auf der angegebenen Seite prüfen. Schritt 5 (Freigabe) entfällt
+- **Automatische Schranken statt Freigabe:**
+  - Eine Regel ohne verifiziertes Zitat wirkt nicht auf den Baurahmen: Status `unknown` mit Hinweis und Link zur Seite
+  - Plausibilitätsgrenzen je Regelart (z. B. Abstände 0–50 m, Grundflächenzahl 0–1, Höhen bis 30 m); Werte außerhalb ergeben `unknown`
+  - `not_regulated` nur mit verifiziertem Zitat (z. B. „non réglementé“), sonst `unknown`. Nie ein erfundener Standardwert: Ein unbelegtes „nicht geregelt“ würde einen Abstand von 0 m bedeuten und den Baurahmen vergrößern
+  - Zwei unabhängige Auswertungsläufe je Zone; weichen die Werte ab, gilt die Regel als `unknown` mit Hinweis „Text mehrdeutig“
+- Abdeckung je Gemeinde und Zone: `nicht verfügbar`, `in Auswertung`, `simuliert`, `vom Büro geprüft`, `veraltet`
+- Wöchentliche Prüfung auf neue Planstände (Spez. 5.2.5); ein neuer Planstand löst die Auswertung automatisch aus. `veraltet` gilt nur, bis die neue Auswertung fertig ist, oder wenn sie scheitert
+- **Korrekturen durch das Büro** (freiwillig, beim Prüfen einer Anfrage): Wert oder Zitat einer Regel ändern, entweder **für die Zone** (neue Regelwerksversion mit Status `vom Büro geprüft`, gilt für spätere Simulationen) oder **nur für das Projekt** (z. B. Lotissement, Sonderfall). Formular aus demselben Schema, PDF-Seite daneben
+- **Lotissement:** Viele Neubaugrundstücke liegen in einem Lotissement mit eigenen, oft strengeren Regeln, die nicht im GPU stehen. Der Kunde wird gefragt; die Simulation zeigt dann „Regeln des Lotissement nicht berücksichtigt“. Das Büro berücksichtigt sie bei der Prüfung der Anfrage als Korrektur für das Projekt
+- Gemeinden ohne PLU (RNU, Carte communale): `rules_unavailable` wie Spez. 5.2.1, Hinweis statt simulierter Grenzwerte
 
-**Nicht in R1:** Auswertung per Sprachmodell (→ X1), Zonenpläne nur als PDF ohne GPU-Daten (→ X2).
+**Nicht in R1:** Zonenpläne nur als PDF ohne GPU-Daten (→ X2); Upload von Lotissement-Unterlagen durch Kunden mit automatischer Auswertung (→ X2).
 
-**Daten:** `land_use_plan`, `zone`, `overlay_constraint`, `rule_set`, `rule_set_version`, `rule` (Spez. 4.2); zusätzlich `source_file` für Planunterlagen und die Sicht `coverage`. Abweichend von Spez. 4.2 hat `rule_set` einen Geltungsbereich: Zone oder Umriss eines Lotissement.
+**Daten:** `land_use_plan`, `zone`, `overlay_constraint`, `rule_set`, `rule_set_version`, `rule` (Spez. 4.2); zusätzlich `source_file` für Planunterlagen, `rule_extraction_run` (Modell, Prompt-Version, Kosten, Dauer, Ergebnis je Lauf), `project_rule_override` für Korrekturen nur eines Projekts und die Sicht `coverage`. Abweichend von Spez. 4.2: `rule_set_version.status ∈ {simulated, office_reviewed, retired}` statt `draft`/`validated`; `rule.decision` entfällt, dafür `origin ∈ {extraction, office}`.
 
 **Technik:**
-- Regelarten als Pydantic-Modelle; daraus JSON-Schema; daraus erzeugt das Frontend die Formulare. Eine Quelle, keine doppelte Pflege.
-- PDF-Anzeige mit pdf.js; markierter Text wird als `citation {source_file_id, page, quote}` gespeichert.
-- Die Kunden-API liefert **nur Regeln aus freigegebenen Regelwerken**. Sonst: Status der Abdeckung, Link zum Dokument im GPU, Knopf „Prüfung anfragen“ (wird zur Anfrage in A).
-- Planstandsprüfung: Job vergleicht Dokumentkennung und Datum im GPU. Bei Änderung: Status `veraltet`, Mail an `rules_admin`, Hinweis in offenen Projekten. Veraltete Regelwerke erscheinen weiter, aber als **nicht bindend** mit Warnung „Planstand geändert, Regeln werden aktualisiert“; sie sperren ab R2 nichts (L2).
+- Regelarten als Pydantic-Modelle; daraus JSON-Schema für das Sprachmodell (strict), für die API und für das Korrekturformular des Büros. Eine Quelle, keine doppelte Pflege.
+- Auswertung als Job `rules_extract` je Zone und Planstand im Worker, nie im Kundenrequest; Zeitlimit, Wiederholung, Kostenbudget je Lauf und Monat; `input_hash` über Dokument-SHA-256, Modell und Prompt-Version.
+- Anbindung von Claude nach der Skill `claude-api` (Spez. 0 Punkt 6): Modell aus der Konfiguration, Seitenbereiche als PDF-Dokumentblock, Rückrechnung der Seitennummern (Spez. 5.2.3). Nur öffentliche Planunterlagen im Prompt, keine Kundendaten (L8). Der Dokumenttext gilt als Daten: Ausgabe nur über das Schema, danach die Schranken oben.
+- Die Kunden-API liefert je Regel `origin`, Zitat, `quote_verified` und Status; jede Antwort trägt `simulation: true` und den Hinweis nach L7.
+- PDF-Anzeige mit pdf.js: Kunde öffnet die zitierte Seite, das Büro sieht sie neben dem Korrekturformular.
+- Planstandsprüfung: Job vergleicht Dokumentkennung und Datum im GPU. Bei Änderung: neuer `land_use_plan`, neue Auswertung; offene Projekte erhalten beim nächsten Abruf die neue Simulation mit Hinweis „Planstand geändert“. Abgesendete Anfragen behalten ihren Snapshot.
+- **Referenzmenge** (Spez. 11.4) für Regressionstests: aufgezeichnete Modellantworten und von der **Entwicklung** am Text geprüfte Sollwerte für die Zonen von Treillières. Änderungen an Prompt oder Modell nur mit Vergleich gegen den letzten Bericht. Das Büro wird dafür nicht gebraucht.
 
-**Abnahme:** Alle Zonen der Pilotgemeinden erfasst und freigegeben; Planstandsänderung mit aufgezeichneter GPU-Antwort erkannt; nicht freigegebene Regeln erscheinen nie beim Kunden; Erfassungsdauer je Zone gemessen (Grundlage für X1).
+**Abnahme:** Alle Zonen von Treillières (D1) automatisch ausgewertet, ohne Eingabe des Büros. Gegen die Referenzmenge höchstens 5 % der Pflichtwerte falsch und höchstens 15 % `unknown` (Zielwerte nach der ersten Messung kalibrieren). Eine Regel ohne verifiziertes Zitat wirkt nie auf den Baurahmen (Test). Planstandsänderung mit aufgezeichneter GPU-Antwort erkannt und neu ausgewertet. Ausfall der Claude API: vorige Version bleibt oder Status `in Auswertung`, kein Fehler beim Kunden. Kosten und Dauer je Zone gemessen.
 
-**Größe:** L (6–10 PW); die Erfassungsoberfläche ist der größte Teil.
+**Größe:** L (6–9 PW): Auswertung mit Schranken, Referenzmenge, Planstandsprüfung, Korrekturformular. Die Erfassungsoberfläche mit Markieren im PDF entfällt.
 
 ### 3.5 G3 – Baurahmen (R1)
 
-**Zweck:** Aus Grundstück und Regelwerk die Rahmenbedingungen, in die ein Haus gesetzt werden kann. G3 ist die Schnittstelle zwischen Standort und Haus: H2 prüft später jede Lage gegen diesen Baurahmen.
+**Zweck:** Aus Grundstück und Regelwerk die Rahmenbedingungen, in die ein Haus gesetzt werden kann, als unverbindliche Simulation ohne Eingaben des Büros (D11). G3 ist die Schnittstelle zwischen Standort und Haus: H2 prüft später jede Lage gegen diesen Baurahmen.
 
 **Inhalt:**
 
@@ -218,17 +232,18 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 | Dach- und Fassadenvorgaben | Formen, Neigungen, Firstrichtung, Materialklassen, Farbfamilien | 5.2.4 |
 | Freifläche, Stellplätze, Nebengebäude | Mindestwerte aus den Regeln | 5.9.2 |
 | Hinweise | Eckgrundstück, Hanglage über 5 %, mehrere Zonen, Lotissement, Denkmalschutz, Risiken, L7 | – |
-| Bindung und Herkunft | je Wert: bindend oder nicht (nicht bindend bei veraltetem Planstand oder unbestätigter Kundenkorrektur einer Kante), Zitat, verwendete Versionen | L2, L3 |
+| Simulationsstatus und Herkunft | Kennzeichen „Simulation“ am ganzen Baurahmen; je Wert Herkunft (`extraction`, `office`), Zitat mit Prüfstatus, `unknown` mit Grund, verwendete Versionen; Hinweise bei veraltetem Planstand, unbestätigter Kundenkorrektur einer Kante oder nicht berücksichtigtem Lotissement | L3, L7, D11 |
 
 **Technik:**
 - Reine Funktion `derive_envelope(site, edges, terrain, rule_sets) → Envelope` in `envelope/domain`, ohne Datenbank und Netz, deterministisch, mit `input_hash` über Grundstücksrevision, Regelwerksversionen und Engine-Version.
 - Speicherung als Cache `site_envelope`; ungültig bei neuer Grundstücksrevision oder neuer Regelwerksversion; Neuberechnung beim nächsten Abruf statt in Stapelläufen.
-- Nennt der PLU nur Geschosse (`R+1+C`) und keine Meter, hinterlegt der Architekt bei der Erfassung eine Vergleichshöhe. Ohne sie zeigt die Oberfläche nur `B(0)` mit Hinweis.
+- Nennt der PLU nur Geschosse (`R+1+C`) und keine Meter, rechnet G3 mit Standard-Geschosshöhen (Konstanten, Wert in `docs/ANNAHMEN.md`) und führt die Annahme in `provenance`. Das Büro kann den Wert beim Prüfen einer Anfrage korrigieren.
+- Ist eine Abstandsregel `unknown`, rechnet G3 die bebaubare Fläche ohne diesen Abstand, markiert die betroffenen Kanten im Lageplan („Abstand nicht ermittelt“) und weist darauf hin, dass die Fläche zu groß sein kann. Ohne Grundflächenzahl oder Höhe fehlt der jeweilige Grenzwert mit Hinweis, statt geschätzt zu werden.
 - `GET /projects/{id}/envelope` liefert lokale Meter (Ursprung `site.local_origin`, Achsen Ost/Nord) und GeoJSON.
-- Oberfläche: Schritt 3 des Mockups; Lageplan als SVG mit den Mockup-Komponenten (im SVG die y-Achse umkehren, da Nord oben); Tabelle „Was darf ich bauen?“ mit Zitat je Wert.
+- Oberfläche: Schritt 3 des Mockups; Lageplan als SVG mit den Mockup-Komponenten (im SVG die y-Achse umkehren, da Nord oben); Tabelle „Was darf ich bauen?“ mit Zitat je Wert; Kennzeichnung „Simulation – unverbindlich“ an Lageplan, Tabelle und Steckbrief.
 - Steckbrief als PDF (WeasyPrint im Worker) mit derselben Grafik.
 
-**Abnahme:** Parität 14,0 × 21,0 m = 294 m² (Spez. 11.2); Rechenbeispiel D4 und aus D10 die Grenzwerte je Teilfläche (UB 200 m², N 0 m²; die Prüfung mit Haus folgt in H3) (Spez. Anhang D); Eigenschaftstests; Mehrzonenfall; Bauverbotsfläche; p95 unter 300 ms; Steckbrief für 10 reale Grundstücke vom Architekten fachlich bestätigt.
+**Abnahme:** Parität 14,0 × 21,0 m = 294 m² (Spez. 11.2); Rechenbeispiel D4 und aus D10 die Grenzwerte je Teilfläche (UB 200 m², N 0 m²; die Prüfung mit Haus folgt in H3) (Spez. Anhang D); Eigenschaftstests; Mehrzonenfall; Bauverbotsfläche; Abstandsregel `unknown` markiert die Kante und den Hinweis; p95 unter 300 ms; Steckbriefe für die realen Testgrundstücke aus G1 automatisch erzeugt, ohne Eingabe des Büros. ~~Steckbrief für 10 reale Grundstücke vom Architekten fachlich bestätigt~~ – entfällt (D11).
 
 **Größe:** M (3–5 PW).
 
@@ -240,18 +255,18 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 - Anonymes Projekt bis zur Kontaktaufnahme
 - Kontaktformular; **E-Mail-Code vor dem Absenden** (keine Anfrage mit unbestätigter Adresse, keine Verfallszustände)
 - Bestätigung „unverbindlich“ und Einwilligung zur Übermittlung an das namentlich genannte Büro, Textversion gespeichert
-- Snapshot aus Grundstück und Baurahmen mit Bindungsstatus (oder ohne Baurahmen, siehe 2.1); Vorgangsnummer aus Datenbank-Sequenz
-- Mail an das Büro mit Steckbrief, Kopie an den Kunden, Zugangslink zum Projekt
+- Snapshot aus Grundstück und Baurahmen mit Simulationsstand: Regelwerksversionen, `unknown`-Werte, unbestätigte Kundenkorrekturen (oder ohne Baurahmen, siehe 2.1); Vorgangsnummer aus Datenbank-Sequenz
+- Mail an das Büro mit Steckbrief (gekennzeichnet als Simulation), Kopie an den Kunden, Zugangslink zum Projekt
 - Anfragenliste im Büro mit Status `neu`, `in Bearbeitung`, `beantwortet`, `geschlossen`
-- Prüfung der Grundstücksgrenzen (G1) durch den Architekten beim Eingang der Anfrage: automatische Einordnung und unbestätigte Kundenkorrekturen hindern das Absenden nicht; die Büro-Prüfliste zeigt dann nur Projekte mit Anfrage (Entscheidung 14.09.2026, Annahme G21)
+- **Prüfung der Simulation durch das Büro** beim Eingang der Anfrage, erstmals hier (Entscheidungen G21 und D11 vom 14.09.2026): Das Anfrage-Detail zeigt Grundstück mit Kanten, Regeln mit Zitat und Status sowie den Baurahmen. Das Büro bestätigt oder korrigiert Kanten (G1) und Regeln für die Zone oder nur das Projekt (3.4) und sieht die Auswirkung auf den Baurahmen. Automatische Einordnung, `unknown`-Werte und unbestätigte Kundenkorrekturen hindern das Absenden nie. Die Büro-Prüfliste der Grundstücke zeigt dann nur Projekte mit Anfrage
 - Export und Löschung für Kunden (Spez. 10.2)
 - Hinweis in der Antwortvorlage des Büros: verbindliche Auskunft über ein Certificat d'urbanisme bei der Gemeinde
 
 **Technik:** Tabellen `customer`, `project`, `inquiry`, `consent`, `audit_log`; Mails und Folgeschritte als Jobs in derselben Transaktion wie die Anfrage (die Queue in PostgreSQL ersetzt die Outbox, Kapitel 6.3); Idempotenz-Schlüssel; E-Mail-Codes gehasht, 10 Minuten gültig, Versand je Adresse und IP begrenzt; Links signiert und ohne personenbezogene Daten.
 
-**Abnahme:** Doppelklick erzeugt eine Anfrage; Ausfall des Maildienstes verliert keine Anfrage; Löschung entfernt Daten und Dateien; Codeversand an fremde Adressen in Serie wird gebremst.
+**Abnahme:** Doppelklick erzeugt eine Anfrage; Ausfall des Maildienstes verliert keine Anfrage; Löschung entfernt Daten und Dateien; Codeversand an fremde Adressen in Serie wird gebremst; eine Korrektur des Büros für ein Projekt ändert die Simulation anderer Projekte nicht, eine Korrektur für die Zone gilt für spätere Simulationen, der Snapshot bleibt unverändert.
 
-**Größe:** S–M (2–4 PW).
+**Größe:** M (3–5 PW), einschließlich Prüfansicht der Simulation.
 
 ### 3.7 H1 – Hauskatalog (R2)
 
@@ -283,7 +298,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Zweck:** Welche Typen passen auf den Baurahmen, und wo steht das Haus.
 
-**Umfang:** Zulässigkeit je Typ mit allen Gründen und Vorschlägen (Spez. 5.4.6); Lage verschieben und drehen; Prüfung je Kante mit allen Verstößen (Spez. 5.3.4); Schnellstellungen (Spez. 5.3.5); Firstrichtung. Terrasse an der Gartenfassade und Carport an der Straßenkante werden automatisch gesetzt, nicht frei platziert. Der Carport muss dabei die Regeln für Nebengebäude erfüllen; findet sich keine zulässige Stelle, ist die Option mit Begründung nicht wählbar.
+**Umfang:** Zulässigkeit je Typ mit allen Gründen und Vorschlägen (Spez. 5.4.6); Lage verschieben und drehen; Prüfung je Kante mit allen Verstößen (Spez. 5.3.4); Schnellstellungen (Spez. 5.3.5); Firstrichtung. Terrasse an der Gartenfassade und Carport an der Straßenkante werden automatisch gesetzt, nicht frei platziert. Der Carport muss dabei die Regeln für Nebengebäude erfüllen; findet sich keine zulässige Stelle, ist die Option mit Begründung nicht wählbar. Alle Regeln sind simuliert (D11); wie stark sie den Konfigurator einschränken, legt D12 fest. Eine Anfrage an das Büro bleibt in jedem Fall möglich.
 
 **Technik:**
 - **Erlaubte Lagen als Fläche statt Rasterprobe.** Für eine feste Drehung ist die Menge aller zulässigen Hausursprünge eine Fläche: der Baurahmen „geschrumpft“ um den Hausumriss, je Kante mit der Bezugskontur ihrer Regel (Minkowski-Differenz, z. B. mit `pyclipper`). Daraus folgen direkt: Typ passt (Fläche nicht leer), `street_near` und `set_back` (Punkte der Fläche mit kleinstem Straßenabstand bzw. mittlerer Tiefe), exakte Vorschau im Frontend. `garden_max` hängt von der Restfläche ab und wird aus wenigen Kandidaten auf dem Rand der Fläche gewählt. Die Rastersuche aus Spez. 5.3.6 bleibt Rückfall für Abstände, die von der Höhe der jeweiligen Fassade abhängen.
@@ -309,7 +324,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Umfang:**
 - Erweitert A um Konfiguration und Auswertung im Snapshot (Spez. 5.10.4)
-- **Vollständige Neuprüfung beim Absenden:** Regelwerke, Katalog, Preise und Kantenkorrekturen können sich seit dem Speichern geändert haben. Ergebnis wird vor dem Absenden angezeigt.
+- **Vollständige Neuprüfung beim Absenden:** Regelwerke (neuer Planstand, Korrektur des Büros für die Zone), Katalog, Preise und Kantenkorrekturen können sich seit dem Speichern geändert haben. Ergebnis wird vor dem Absenden angezeigt.
 - Bestätigung „mit Abweichungen übergeben“ (Spez. 5.10.2 Punkt 6)
 - Dossier-PDF: Projektbeschreibung, Lageplan, Regelprüfung mit Zitaten, Kosten (Spez. 5.10.6, gekürzt)
 - **Lageplan als DXF** (Grundstück, Kanten, bebaubare Fläche, Hausumriss): in Lambert-93 und zusätzlich in lokalen Metern mit dokumentiertem Ursprung, weil Landeskoordinaten in Millionenhöhe in CAD-Programmen oft unhandlich sind; geringer Aufwand, direkt im Büro nutzbar
@@ -317,7 +332,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Nicht in R2:** IFC-Export, XLSX-Mengen, gestempelte Planunterlagen (→ X4).
 
-**Abnahme:** Durchlauf A des Mockups erzeugt vollständiges PDF und DXF; eine zwischen Speichern und Absenden freigegebene Regel wird erkannt; Neuübergabe setzt die vorige auf `superseded`; das Büro übernimmt den DXF-Lageplan nach beschriebenem Vorgehen lagerichtig in ArchiCAD.
+**Abnahme:** Durchlauf A des Mockups erzeugt vollständiges PDF und DXF; eine zwischen Speichern und Absenden geänderte Regelwerksversion wird erkannt; Neuübergabe setzt die vorige auf `superseded`; das Büro übernimmt den DXF-Lageplan nach beschriebenem Vorgehen lagerichtig in ArchiCAD.
 
 **Größe:** M (3–5 PW).
 
@@ -325,7 +340,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 | Modul | Inhalt | Auslöser | Infrastruktur neu |
 |---|---|---|---|
-| **X1 PLU-Automatik** | Regelvorschläge per Claude (Spez. 5.2.3), Referenzmenge (Spez. 11.4), gleiche Erfassungsoberfläche | Gemessene Erfassungsdauer × Zonen im geplanten Einzugsgebiet übersteigt die Kapazität des Büros | Ausgehender Zugang zur Claude API, AVV mit Anthropic, Kostenbudget je Lauf |
+| ~~X1 PLU-Automatik~~ | Entfällt: Die Auswertung per Claude mit Referenzmenge ist Teil von G2 (D11, 14.09.2026) | – | – |
 | **X2 Uploads und Georeferenzierung** | Kataster und Zonenpläne als Vektor oder PDF (Spez. 5.1.1 C/D, 5.1.2); nur für das Büro | Gemeinden ohne GPU-Daten oder Vermessungspläne im Einzugsgebiet | Virenscan, isolierter Worker ohne Internetzugang, GDAL |
 | **X3 Modellbasierte Typen** | IFC-Import, Mengen, `finish_delta`, SHAB/SDP (Spez. 5.4, 5.6, 5.8) | Mehr als etwa 10 Typen oder häufige Modelländerungen, und das Büro modelliert nach Spez. Anhang A | Speicherstarke Worker, lange Jobs |
 | **X4 Erweitertes Dossier** | IFC mit Lage, XLSX, gestempelte Pläne (Spez. 5.7, 5.10.5) | Büro fragt die Daten nach | IfcConvert, mehr Speicher |
@@ -353,7 +368,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 ### 4.2 Einführung
 
-1. **Intern:** Flag nur für Rolle `architect`. Büro arbeitet zwei Wochen mit echten Fällen.
+1. **Intern:** Flag nur für Rolle `architect`. Emprise-Team und Büro testen zwei Wochen mit echten Fällen; das ist ein Test, keine Voraussetzung für Inhalte (D11).
 2. **Beta:** Flag für eingeladene Projekte. Rückmeldungen gesammelt, Fehler behoben.
 3. **Öffentlich:** Flag für alle im Einzugsgebiet. Außerhalb: Hinweis und Anfrage ohne Baurahmen.
 
@@ -365,10 +380,10 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 R0  P ─────────────┐
 R1                 ├─ G1 ──┐
                    ├─ G2 ──┼─ G3 ── A ── intern ── Beta ── öffentlich
-     Inhalt: Regelwerke Pilotgemeinden erfassen (parallel ab G2-Erfassungsoberfläche)
+     Inhalt: Rechtstexte mit Kennzeichnung als Simulation; keine Regelerfassung durch das Büro
 R2  H1 ── H2 ── H3 ── V ── intern ── Beta ── öffentlich
      Inhalt: Typdatenblätter, Preise, RE2020-Bewertungen (parallel ab H1)
-R3+ X1 … X5 nach Auslöser
+R3+ X2 … X5 nach Auslöser
 ```
 
 Mit einer Entwicklerperson laufen die Module nacheinander; parallel läuft dann nur die Inhaltsarbeit. Mit zwei Personen können G1 und G2 gleichzeitig entstehen und H1 schon während der R1-Einführung beginnen.
@@ -407,6 +422,7 @@ flowchart LR
     IGN[Géoplateforme<br/>Adressen, Höhen, Karten]
     GPU[API Carto GPU]
     GR[Géorisques]
+    LLM[Claude API<br/>nur öffentliche Planunterlagen]
     MAIL[Maildienst EU]
     IDP[OIDC-Anbieter Büro]
     ERR[Fehler-Tracking EU]
@@ -427,6 +443,7 @@ flowchart LR
   WK --> IGN
   WK --> GPU
   WK --> GR
+  WK --> LLM
   WK --> MAIL
   API --> IDP
   API --> ERR
@@ -451,6 +468,7 @@ Frontend und API liegen unter **derselben Domain** (`/` und `/api`). Das erspart
 | API | Python 3.12, FastAPI, Pydantic 2, SQLAlchemy 2, GeoAlchemy2, Alembic, Shapely 2, pyproj | TypeScript-Backend | Geodaten und später IFC sind in Python am besten abgedeckt (Spez. 3.1) |
 | Jobs | **PostgreSQL-Queue** (z. B. Procrastinate, prüfen) mit periodischen Jobs | Celery + Redis (Spez. 3.1) | Job wird in derselben Transaktion wie die Fachänderung angelegt: Outbox, Dispatcher, Redis und `job`-Spiegeltabelle entfallen. Voraussetzung im Proof of Concept prüfen: Die Bibliothek kann Jobs über die Datenbankverbindung der laufenden Transaktion anlegen. Sonst eigene Jobtabelle mit `SELECT … FOR UPDATE SKIP LOCKED` |
 | PDF | WeasyPrint im Worker | – | wie Spez. |
+| Regelauswertung | Claude API (Modell aus Konfiguration, Spez. 5.2.3), PyMuPDF, OCR (`fra`) | Sprachmodell eines EU-Anbieters | Nur öffentliche Planunterlagen, keine personenbezogenen Daten (L8). Entscheidend ist die Qualität der strukturierten Ausgabe; ein Wechsel ist Konfiguration plus Vergleich gegen die Referenzmenge (3.4) |
 | Datenbank | PostgreSQL 16 + PostGIS 3, verwaltet, Point-in-Time-Recovery | selbst betrieben auf VM | Sicherung, Updates, Ausfallsicherheit vom Anbieter |
 | Dateien | S3-kompatibler Objektspeicher, privat, Versionierung an | – | Uploads, PDFs, Snapshots, Massendaten-Downloads |
 | Cache | PostgreSQL und Prozess-Cache | Redis | Erst bei mehreren API-Instanzen mit gemeinsamem Cache-Bedarf |
@@ -527,33 +545,33 @@ Der Proof of Concept stellt das Gerüst aus P bereit, installiert PostGIS, stell
 | Thema | Festlegung |
 |---|---|
 | Verfügbarkeit | Ziel 99,5 % im Monat; Betreuung an Werktagen 9–18 Uhr |
-| Kennzahlen | Antwortzeit p95 je Endpunkt, Fehlerquote, Alter des ältesten Jobs, Fehlerquote je externem Dienst, Alter der Katasterdaten |
-| Alarme | API nicht erreichbar; Fehlerquote über 2 %; wartender Job älter als 15 min; Mailversand scheitert; Katasterimport gescheitert; Sicherung fehlt |
+| Kennzahlen | Antwortzeit p95 je Endpunkt, Fehlerquote, Alter des ältesten Jobs, Fehlerquote je externem Dienst, Alter der Katasterdaten, Kosten und Anteil `unknown` der Regelauswertung |
+| Alarme | API nicht erreichbar; Fehlerquote über 2 %; wartender Job älter als 15 min; Mailversand scheitert; Katasterimport gescheitert; Regelauswertung gescheitert oder Kostenbudget erreicht; Sicherung fehlt |
 | Synthetische Prüfung | Stündlich Adresse suchen, Parzelle wählen, Baurahmen abrufen |
 | Logs | JSON mit `request_id`, `project_id`, `job_id`; keine personenbezogenen Daten; 30 Tage |
-| Betriebsanleitungen | Ausliefern und Rückrollen; Wiederherstellung; Katasterimport gescheitert; Géoplateforme oder GPU ausgefallen; Mailzustellung gestört; Löschanfrage; Sicherheitsvorfall mit Meldung an die CNIL binnen 72 h |
+| Betriebsanleitungen | Ausliefern und Rückrollen; Wiederherstellung; Katasterimport gescheitert; Regelauswertung gescheitert oder unplausibel; Géoplateforme, GPU oder Claude API ausgefallen; Mailzustellung gestört; Löschanfrage; Sicherheitsvorfall mit Meldung an die CNIL binnen 72 h |
 | Zuständigkeit | Eine benannte Betriebsverantwortung mit Vertretung (Entscheidung D5) |
 
 ### 6.9 Datenschutz und Recht
 
-- Verarbeitungsverzeichnis, AVV mit Hosting, Maildienst, Fehler-Tracking; ab X1 mit Anthropic.
+- Verarbeitungsverzeichnis, AVV mit Hosting, Maildienst, Fehler-Tracking. Die Claude API erhält nur öffentliche Planunterlagen und keine personenbezogenen Daten; Nutzungsbedingungen für den gewerblichen Einsatz vor G2 prüfen.
+- **Simulation (D11):** Vor der Beta rechtlich prüfen, wie die automatisch ausgewertete, ungeprüfte Simulation dargestellt werden muss, damit sie nicht als Bauauskunft gilt (Haftung, Wortlaut der Hinweise).
 - Rollen klären: Emprise betreibt die Plattform, das Büro erhält Daten nach Einwilligung. Ob getrennte oder gemeinsame Verantwortliche: vor R1 rechtlich festlegen (D6).
 - Nur technisch notwendige Cookies; Reichweitenmessung nur in einer von der CNIL als einwilligungsfrei anerkannten Konfiguration, sonst keine.
-- Hinweise L7 in jeder Ausgabe; im Steckbrief ausdrücklich: Orientierung, keine Bauauskunft, verbindlich ist das Certificat d'urbanisme.
+- Hinweise L7 in jeder Ausgabe; im Steckbrief ausdrücklich: Simulation aus automatisch ausgewerteten Planunterlagen, vom Büro nicht geprüft, keine Bauauskunft, verbindlich ist das Certificat d'urbanisme.
 - Erforderlichkeit einer Datenschutz-Folgenabschätzung vor R1 prüfen.
 
 ### 6.10 Kosten
 
-Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurobetrag pro Monat (kleine verwaltete Datenbank mit PITR, je zwei kleine Container, Objektspeicher, Maildienst, Fehler-Tracking). Der Proof of Concept (6.4) ersetzt diese Schätzung durch Anbieterpreise. Größere Posten entstehen erst mit X1 (Sprachmodell je Auswertung) und X3 (speicherstarke Worker).
+Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurobetrag pro Monat (kleine verwaltete Datenbank mit PITR, je zwei kleine Container, Objektspeicher, Maildienst, Fehler-Tracking). Der Proof of Concept (6.4) ersetzt diese Schätzung durch Anbieterpreise. Das Sprachmodell kostet je Zone und Planstand (zwei Läufe), nicht je Kunde; die Größenordnung wird in G2 gemessen und mit einem Monatsbudget begrenzt. Größere Posten entstehen erst mit X3 (speicherstarke Worker).
 
 ### 6.11 Infrastruktur je Release
 
 | Release | Kommt hinzu |
 |---|---|
 | R0 | Alles aus 6.2 außer externen Fachdiensten; Proof of Concept; Überwachung; Sicherung |
-| R1 | Kataster-Massendaten der Départements im Einzugsgebiet (Größenordnung wenige GB), Jobs für Import und Planstandsprüfung, Egress zu Géoplateforme, GPU, Géorisques; Maildomain mit SPF/DKIM/DMARC; WeasyPrint und Schriften im Worker-Image; synthetische Prüfung; Sicherheitstest |
+| R1 | Kataster-Massendaten der Départements im Einzugsgebiet (Größenordnung wenige GB), Jobs für Import, Regelauswertung und Planstandsprüfung, Egress zu Géoplateforme, GPU, Géorisques und Claude API mit Kostenbudget und Alarm; PyMuPDF und OCR im Worker-Image; Maildomain mit SPF/DKIM/DMARC; WeasyPrint und Schriften im Worker-Image; synthetische Prüfung; Sicherheitstest |
 | R2 | Leistungsmessung Implantation; ggf. zweite API-Instanz; Ende-zu-Ende-Tests Konfigurator |
-| X1 | Egress zur Claude API, Kostenbudget und Alarm |
 | X2 | Virenscan, Worker ohne Internetzugang mit Speicher- und CPU-Grenzen, GDAL |
 | X3, X4 | Worker mit 4–8 GB Speicher, IfcOpenShell und IfcConvert, längere Zeitlimits, Auslieferung großer Dateien über signierte URLs |
 | X5 | Webhook-Zustellung mit Signatur; bei mehreren Büros eigener Identitätsdienst mit Föderation |
@@ -566,10 +584,15 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 |---|---|---|---|
 | Reihenfolge | Meilensteine M0–M10, Übergabe zuletzt | Releases R0–R2, Ausbau nach Auslöser | Früher produktiver Nutzen, Risiko zuerst |
 | Kataster | Kataster-API bei jedem Abruf | Massendaten des Einzugsgebiets; außerhalb keine Parzellenauswahl | Schneller, unabhängig von Ausfällen und Zugriffsgrenzen, Nachbarn direkt verfügbar; außerhalb gibt es ohnehin keine Regelwerke |
-| Kantenkorrektur Kunde | wirkt wie Korrektur durch Architekt | gekennzeichnet, nicht bindend bis zur Bestätigung | Kunde könnte sonst den Baurahmen vergrößern |
+| Kantenkorrektur Kunde | wirkt wie Korrektur durch Architekt | in der Simulation als unbestätigt gekennzeichnet, Bestätigung beim Prüfen einer Anfrage | Kunde könnte sonst den Baurahmen unbemerkt vergrößern |
 | Uploads Kataster | Wege C und D für Kunden | Nur Büro, erst X2 | Passpunkte und Koordinatensysteme sind für Laien nicht bedienbar |
-| Regeln beim Kunden | Rückfall auf jüngsten Entwurf | Nur freigegebene Regelwerke; veraltete als nicht bindend | Keine ungeprüften Regeln beim Kunden |
-| Lotissement | nicht behandelt | Frage an Kunden, zusätzliches Regelwerk mit eigenem Geltungsbereich, strengerer Wert gilt | Häufiger Fall bei Neubaugrundstücken |
+| **Leitplanken L2 und L6 für Regeln** | Nur freigegebene Regelwerke sind harte Grenzen; Automatik schlägt vor, nichts wird ohne Bestätigung veröffentlicht | Automatisch ausgewertete Regeln erscheinen sofort beim Kunden, als unverbindliche Simulation gekennzeichnet; Qualität über automatische Schranken (3.4); das Büro prüft erst bei einer Anfrage | Entscheidung des Auftraggebers 14.09.2026 (D11): G2 darf nicht auf Eingaben des Büros angewiesen sein. Spezifikation 1.2, 3.4, 5.2.3 Schritt 5, 5.9.1 und 5.10.2 bei Freigabe des Plans anpassen |
+| Freigabe von Regeln | MUSS vor Wirkung (Spez. 5.2.3 Schritt 5) | Entfällt; freiwillige Korrektur beim Prüfen einer Anfrage, für die Zone oder nur das Projekt | D11 |
+| Datenmodell Regelwerk | `status` `draft`/`validated`, `rule.decision` | `status` `simulated`/`office_reviewed`/`retired`, `rule.origin`, `project_rule_override`, `rule_extraction_run` | Folge von D11 |
+| Wirkung von Prüfergebnissen | Sperren nur bei freigegebenem Regelwerk (Spez. 5.9.1, 5.10.2) | Es gibt keine freigegebenen Regelwerke mehr; Wirkung simulierter Regeln im Konfigurator nach D12; Anfrage immer möglich | Folge von D11 |
+| Planstandsänderung | Freigabe neu erforderlich, bis dahin nicht bindend | Automatische Neuauswertung; `veraltet` nur während der Auswertung oder bei Fehlschlag | Folge von D11 |
+| Lotissement | nicht behandelt | Frage an Kunden, Hinweis in der Simulation; das Büro berücksichtigt die Regeln bei der Prüfung als Korrektur für das Projekt; strengerer Wert gilt | Häufiger Fall bei Neubaugrundstücken; die Unterlagen stehen nicht im GPU |
+| Vergleichshöhe bei Geschossangaben | – | Standard-Geschosshöhen als Annahme statt Eingabe des Architekten | D11 |
 | E-Mail-Bestätigung | Nach dem Absenden, Verfall nach 7 Tagen | Vor dem Absenden | Keine zusätzlichen Zustände und Verfallsjobs |
 | Neuprüfung | „gespeicherte Konfigurationen sind immer auswahlgültig“ | Vollständige Neuprüfung beim Absenden | Regeln, Katalog und Kanten ändern sich nach dem Speichern |
 | Preisbezug | An Typversion | An Typ-Identität mit Gültigkeit | Modelländerung erzwingt keinen neuen Preiskatalog und kein neues Gutachten |
@@ -593,10 +616,10 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 |---|---|---|
 | R0 | Domain und Maildomain, Hosting-Vertrag mit AVV, Repository, Zugänge, Betriebsverantwortung benennen | Emprise |
 | R1 | Einzugsgebiet und Pilotgemeinden festlegen | Emprise und Büro |
-| R1 | Regelwerke aller Zonen der Pilotgemeinden erfassen und freigeben; Vergleichshöhen hinterlegen | Büro (`rules_admin`) |
-| R1 | 10 Steckbriefe fachlich prüfen (die Testmenge von 40 Grundstücken für G1 entfällt, Annahme G21) | Büro |
-| R1 | Rechtstexte, Einwilligungs- und Hinweistexte auf Französisch und Deutsch | Emprise mit Rechtsberatung |
-| R1 | Ablauf der Anfragebearbeitung im Büro mit Antwortfrist; Antwortvorlagen | Büro |
+| R1 | ~~Regelwerke erfassen und freigeben; 10 Steckbriefe fachlich prüfen; Testmenge 40 Grundstücke~~ – entfällt: Regeln, Grundstücke und Steckbriefe entstehen automatisch (G21, D11) | – |
+| R1 | Referenzmenge der Zonen von Treillières für die Regelauswertung (3.4) | Entwicklung |
+| R1 | Rechtstexte, Einwilligungs- und Hinweistexte auf Französisch und Deutsch, einschließlich der Kennzeichnung als Simulation (6.9) | Emprise mit Rechtsberatung |
+| R1 | Ablauf der Anfragebearbeitung im Büro mit Antwortfrist, einschließlich Prüfung der Simulation (3.6); Antwortvorlagen | Büro |
 | R2 | Typdatenblätter und DXF-Umrisse aller Typen | Büro |
 | R2 | Preiskatalog mit Spannen je Typ, Linie, Option | Emprise und Büro |
 | R2 | RE2020-Bewertungen je Typ und Linie für die Klimazone des Einzugsgebiets | Thermik-Büro (Spez. E12) |
@@ -618,8 +641,10 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 | D6 | Datenschutzrolle Emprise ↔ Büro | Vor R1 rechtlich festlegen |
 | D7 | Sprache der Oberfläche | Französisch führend, Deutsch zusätzlich |
 | D8 | Was bietet das Büro an: Honorar oder Bauleistung | Vor R2 klären; bestimmt Bedeutung und Pflege der Preisspannen |
-| D9 | Vier-Augen-Prinzip bei Regelfreigabe (Spez. E6) | Im Pilot eine Person mit Stichprobenprüfung; ab mehreren Erfassern Pflicht |
+| D9 | Vier-Augen-Prinzip bei Regelfreigabe (Spez. E6) | **Entfällt mit D11** (keine Regelfreigabe mehr) |
 | D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto |
+| D11 | Herkunft und Verbindlichkeit der Regeln | **Entschieden 14.09.2026:** G2 arbeitet vollautomatisch und ist nicht auf Eingaben des Büros angewiesen. Das Ergebnis ist eine unverbindliche Simulation, nicht kontraktuell. Das Büro prüft die fertige Simulation erst, nachdem der Kunde Kontakt aufgenommen hat (3.4, 3.6, Kapitel 7) |
+| D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden |
 
 ---
 
@@ -657,7 +682,7 @@ Nach der ersten Fassung wurde der Plan vollständig gegengelesen. Die gefundenen
 | Frage | Gewählt | Alternative | Die Alternative ist besser, wenn … |
 |---|---|---|---|
 | Erstes Release | Bebaubarkeitscheck (R1) | Konfigurator zuerst, Grundstücke und Regeln legt der Architekt je Anfrage von Hand an | das Büro bereits genug Interessenten mit Grundstück hat und vor allem Typen vorstellen will. Nachteil: jede Anfrage bleibt Handarbeit |
-| Herkunft der Regeln | Architekt erfasst von Hand | Sprachmodell (X1) oder Zukauf strukturierter PLU-Daten von einem kommerziellen Anbieter | das Einzugsgebiet schnell wachsen soll. Vor X1 eine Marktrecherche zu Anbietern, Abdeckung und Lizenz machen |
+| Herkunft der Regeln | Sprachmodell automatisch mit Schranken, als Simulation (D11) | Architekt erfasst und gibt frei (erste Fassung des Plans); Zukauf strukturierter PLU-Daten von einem kommerziellen Anbieter | Handerfassung: Kunden sollen vor dem Kontakt geprüfte Werte sehen – widerspricht D11. Zukauf: ein Anbieter deckt das Einzugsgebiet mit geprüften Daten und passender Lizenz bezahlbar ab; Marktrecherche vor einer Erweiterung des Einzugsgebiets |
 | Katasterdaten | Massendaten-Import | Kataster-API bei jedem Abruf | das Gebiet ganz Frankreich umfasst und Importe zu groß würden |
 | Lagesuche | Fläche erlaubter Ursprünge | Rastersuche (Spez. 5.3.6) | freie Drehung Pflicht ist; dann Raster mit Abbruch beim ersten Treffer |
 | Typdaten | Typdatenblatt und DXF-Umriss | IFC-Import (X3) | viele Typen oder häufige Modelländerungen |
@@ -671,3 +696,34 @@ Nach der ersten Fassung wurde der Plan vollständig gegengelesen. Die gefundenen
 | Karten | Géoplateforme | OpenStreetMap; Google Maps | Géoplateforme-Bedingungen nicht passen (OSM); Google scheidet wegen Datenübermittlung und Kosten aus |
 | PDF-Erzeugung | WeasyPrint | Headless-Chromium | komplexe Layouts nötig sind, die WeasyPrint nicht darstellt; Image wird deutlich größer |
 | Verbindliche Auskunft | Hinweis auf Certificat d'urbanisme | Emprise beantragt es für den Kunden | das Büro dies als Leistung anbietet; ergänzt, ersetzt den Baurahmen nicht |
+
+### 10.3 Überarbeitung 14.09.2026: G2 als automatische Simulation (D11)
+
+Nach der Umstellung wurde der Plan erneut gegengelesen. Die Fehler unten traten auf, wenn man nur Abschnitt 3.4 änderte; sie sind im Text behoben.
+
+| Nr. | Fehler | Folge ohne Korrektur | Behoben in |
+|---|---|---|---|
+| 21 | Leitplanken L2 und L6 der Spezifikation verlangen eine Freigabe, bevor Regeln wirken | Plan und Spezifikation widersprechen sich; eine Umsetzung nach Spezifikation bräuchte wieder das Büro | 7 (Anpassung der Spezifikation bei Freigabe des Plans) |
+| 22 | Ohne Freigabe hätte ein nicht belegter Wert des Sprachmodells direkt den Baurahmen bestimmt | Erfundene Abstände oder Höhen beim Kunden | 3.4 Schranken: nur verifizierte Zitate wirken, Plausibilitätsgrenzen, zwei Läufe |
+| 23 | `not_regulated` ohne Beleg bedeutet Abstand 0 m | Baurahmen zu groß, gerade bei Auslassungen des Modells | 3.4: `not_regulated` nur mit Zitat, sonst `unknown` |
+| 24 | Eine fehlende Abstandsregel hätte G3 entweder blockiert oder stillschweigend 0 m angesetzt | Kein Ergebnis oder überschätzte Fläche ohne Hinweis | 3.5: Fläche ohne diesen Abstand, Kante markiert, Hinweis |
+| 25 | Die Vergleichshöhe bei Geschossangaben kam vom Architekten | Höhengrenze fehlt ohne Büro | 3.5: Standard-Geschosshöhen als Annahme |
+| 26 | Eine Korrektur des Büros für einen Sonderfall (Lotissement) hätte die Zone für alle Kunden geändert | Falsche Simulation bei anderen Projekten | 3.4, 3.6: Korrektur für die Zone oder nur für das Projekt |
+| 27 | Die Auswertung im Kundenablauf hätte Minuten gedauert und je Kunde gekostet | Wartezeit, Kosten skalieren mit der Nachfrage | 3.4: Job je Zone und Planstand, vorab |
+| 28 | `veraltet` wartete nach einer Planänderung auf eine neue Freigabe | Simulation bliebe ohne Büro dauerhaft veraltet | 3.4, 7: automatische Neuauswertung |
+| 29 | Die Referenzmenge der Spezifikation (11.4) setzt von Hand bestimmte Sollwerte voraus; die Abnahmen von G2 und G3 verlangten Erfassung bzw. Bestätigung durch das Büro | Abnahme ohne Büro nicht erfüllbar | 3.4, 3.5, 8: Referenzmenge durch die Entwicklung, Abnahmen ohne Büro |
+| 30 | Sperren bei „freigegebenem Regelwerk“ in V (Spez. 5.10.2) laufen ins Leere | Unklar, ob der Konfigurator in R2 überhaupt etwas verhindert | 3.8, 7, D12 |
+| 31 | Ohne menschliche Freigabe fehlt eine Instanz gegen Anweisungen im PDF-Text (Prompt-Injection) | Manipulierte Regeln beim Kunden | 3.4: Ausgabe nur über Schema, Schranken; Wirkung bleibt Simulation mit Hinweis |
+| 32 | X1 (Sprachmodell) war Ausbau mit eigener Infrastruktur und Kosten | Infrastruktur, Datenschutz und Kosten von R1 unvollständig | 2, 3.11, 6.2, 6.3, 6.8–6.11 |
+| 33 | Die Releasegröße R1 beruhte auf der Erfassungsoberfläche | Fehlplanung | 2.3 |
+
+**Geprüfte Alternativen der Überarbeitung**
+
+| Frage | Gewählt | Alternative | Die Alternative ist besser, wenn … |
+|---|---|---|---|
+| Zeitpunkt der Auswertung | Vorab je Zone und Planstand | Beim ersten Kunden in einer Zone | das Einzugsgebiet sehr viele Zonen ohne Nachfrage hat; Nachteil: Wartezeit beim ersten Kunden |
+| Absicherung gegen Fehler des Modells | Zwei Läufe, Zitatprüfung, Plausibilitätsgrenzen | Ein Lauf | die Referenzmenge zeigt, dass der zweite Lauf keine Fehler findet; dann Kosten halbieren |
+| Fehlende Abstandsregel | Fläche ohne diesen Abstand, gekennzeichnet | Keine bebaubare Fläche anzeigen | Kunden die Kennzeichnung übersehen; in der Beta beobachten |
+| Wirkung im Konfigurator (R2) | Verifizierte Regeln wirken wie Grenzen (Vorschlag D12) | Nur Hinweise, alles speicherbar | die Simulation häufig zu streng ist; Anteil der Korrekturen des Büros messen |
+
+**Offene Risiken:** Die Qualität der Auswertung ist erst nach der Messung gegen die Referenzmenge bekannt (Abnahme 3.4). Zwei Läufe desselben Modells können denselben Fehler machen. Die rechtliche Einordnung der ungeprüften Simulation ist offen (6.9).
