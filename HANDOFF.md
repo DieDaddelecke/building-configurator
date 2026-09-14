@@ -7,12 +7,12 @@
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` mit drei Commits: `1f4b646` (R0 und Dokumente), `c606387` (R0-Nacharbeiten: Unraid, Authentik, `storage-init`), darauf G1 mit diesem Hand-off. Remote `origin`: privates Repo https://github.com/DieDaddelecke/building-configurator, `main` gepusht.
+- **Git:** `main`: `1f4b646` (R0 und Dokumente), `c606387` (R0-Nacharbeiten: Unraid, Authentik, `storage-init`), `cc48386` (G1), danach CI- und Image-Korrekturen. Remote `origin`: privates Repo https://github.com/DieDaddelecke/building-configurator, `main` gepusht.
 - **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; anbietergebundene Teile (Überwachung, Offsite-Sicherung, Mail) offen. Festlegungen [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
 - **Betrieb bis zur Beta:** [deploy/unraid/README.md](deploy/unraid/README.md) mit Emprise- und Authentik-Stack, lokal geprüft, **noch nicht auf Unraid ausgeliefert**.
 - **G1 Grundstück (Plan 3.3):** umgesetzt, getestet und committet.
   - Backend `backend/app/site` + Adapter `backend/app/integrations`, Migration `0002`; Frontend Karte (MapLibre), `/grundstueck`, Büro-Prüfliste `/buero/grundstuecke`; E2E `frontend/e2e/site.spec.ts`.
-  - Tests: Backend 109, Frontend 20, Build, ruff/mypy/ESLint/tsc grün. Der E2E-Kundenablauf lief lokal gegen den Produktions-Build; der Freischaltschritt per OIDC-Login im E2E lief nur als Code (CI nie gelaufen).
+  - Tests: Backend 109, Frontend 20, Build, ruff/mypy/ESLint/tsc grün. Der E2E-Kundenablauf lief lokal gegen den Produktions-Build; der Freischaltschritt per OIDC-Login im E2E läuft seit 14.09.2026 in der CI auf GitHub.
   - Festlegungen [docs/ANNAHMEN.md](docs/ANNAHMEN.md) G01–G21, Betrieb [docs/BETRIEB.md](docs/BETRIEB.md) Abschnitt 8.
 - **Lokaler Stack `emprise`** (Port 8080) läuft mit G1: Treillières importiert (8.753 Parzellen, 5.134 Straßenachsen), Flag `site_selection` für `architect`, Konto `ops@emprise.local` mit Rollen `architect, ops`.
 - **Umsetzungsplan:** als Ganzes Vorschlag; R0 und G1 beauftragt; D1, D2 (intern), D3, D4 entschieden (Plan 9); 3.3, 3.6 und 8 an G1-Entscheidungen angepasst.
@@ -51,7 +51,7 @@
 3. Überwachung: Uptime Kuma mit `/api/health/ready`, `/api/health/jobs` und Authentik; Frische der Sicherung (README 7).
 4. Offsite-Kopie von `BACKUP_DIR` und Appdata; erste Wiederherstellungsübung (BETRIEB 6).
 5. SMTP nach E2 eintragen; Testmail über `POST /api/v1/admin/ops/test-mail`.
-6. CI auf GitHub: Backend, Frontend und E2E grün (erster Lauf 14.09.2026); Sicherheits-Scan nach Anpassung der Images (A27) im letzten Lauf prüfen: `gh run list`. Schutz des Hauptzweigs einrichten (infra/README).
+6. CI auf GitHub vollständig grün seit 14.09.2026 (Backend, Frontend, E2E, Geheimnis- und Image-Scan). Offen: Schutz des Hauptzweigs einrichten (infra/README); Caddy-Ersetzungen beim nächsten Release prüfen (A27).
 7. Verarbeitungsverzeichnis anlegen (Plan 4.1 Kriterium 6, 6.9): Staff-E-Mail, Job-Nutzlast mit Mailadresse (A12), IP-HMAC (A7), Geokodierungs-Cache als HMAC (G13), IP an IGN beim Kartenaufruf (G15).
 8. Optional: lokal und in CI SeaweedFS statt MinIO (A16, A22).
 
