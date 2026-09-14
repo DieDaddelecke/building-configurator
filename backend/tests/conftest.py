@@ -45,6 +45,18 @@ $$
 """
 
 CLEAN_TABLES = [
+    "project_rule_override",
+    "rule",
+    "rule_set_version",
+    "rule_set",
+    "rule_extraction_run",
+    "regulation_chapter",
+    "overlay_constraint",
+    "zone",
+    "source_page",
+    "source_file",
+    "rules_commune",
+    "land_use_plan",
     "site_risk",
     "terrain",
     "site_edge",

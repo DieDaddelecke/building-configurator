@@ -12,6 +12,7 @@ from app.platform.jobs import api as jobs_api
 from app.platform.logging import configure_logging
 from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
 from app.platform.problems import install_problem_handlers
+from app.rules import api as rules_api
 from app.site import api as site_api
 
 API_V1 = "/api/v1"
@@ -43,7 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_problem_handlers(app)
 
     v1 = APIRouter(prefix=API_V1)
-    for module in (staff, projects, flags, legal, ops, jobs_api, site_api):
+    for module in (staff, projects, flags, legal, ops, jobs_api, site_api, rules_api):
         v1.include_router(module.router)
     app.include_router(v1)
     app.include_router(health.router, prefix="/api")

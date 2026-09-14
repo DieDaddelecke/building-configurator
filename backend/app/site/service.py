@@ -636,6 +636,33 @@ def _rings(geometry: BaseGeometry, origin: tuple[float, float]) -> list[LocalRin
     return rings
 
 
+@dataclass(frozen=True)
+class SiteFootprint:
+    """Für andere Module (Plan 3.2): Umriss in Lambert-93 als WKB, Fläche, Gemeinden, Revision."""
+
+    site_id: uuid.UUID
+    wkb: bytes
+    area_m2: float
+    commune_insees: list[str]
+    revision: int
+
+
+def site_footprint(db: Session, project_id: uuid.UUID) -> SiteFootprint | None:
+    row = db.execute(
+        text("SELECT id, ST_AsBinary(geometry) AS wkb, area_m2, revision FROM site WHERE project_id = :p"),
+        {"p": project_id},
+    ).first()
+    if row is None:
+        return None
+    communes = db.execute(
+        select(SiteParcel.commune_insee)
+        .where(SiteParcel.site_id == row.id)
+        .distinct()
+        .order_by(SiteParcel.commune_insee)
+    ).scalars()
+    return SiteFootprint(row.id, bytes(row.wkb), float(row.area_m2), list(communes), int(row.revision))
+
+
 def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
     site = db.execute(select(Site).where(Site.project_id == project_id)).scalar_one_or_none()
     if site is None:

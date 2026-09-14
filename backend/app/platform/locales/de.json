@@ -22,6 +22,8 @@
   "problem.edge_confirmed_by_architect": "Diese Kante hat der Architekt bestätigt",
   "problem.revision_conflict": "Das Grundstück wurde inzwischen geändert, bitte neu laden",
   "problem.invalid_if_match": "Ungültiger If-Match-Kopf",
+  "problem.rule_params_invalid": "Die Angaben zur Regel sind unvollständig oder unplausibel",
+  "problem.rule_duplicate": "Eine Regelart ist für dieselbe Gebäudeart doppelt angegeben",
   "mail.platform_test.subject": "Emprise – Testmail",
   "mail.platform_test.body": "Guten Tag,\n\ndiese Mail bestätigt, dass der Versand aus der Plattform Emprise funktioniert.\nUmgebung: {env}\n\nEmprise"
 }

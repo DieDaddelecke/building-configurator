@@ -82,6 +82,185 @@
         "title": "ArchitectEdgeIn",
         "type": "object"
       },
+      "ChapterCoverageOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "first_page": {
+            "title": "First Page",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Model"
+          },
+          "last_page": {
+            "title": "Last Page",
+            "type": "integer"
+          },
+          "rule_set_ids": {
+            "additionalProperties": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rule Set Ids",
+            "type": "object"
+          },
+          "rule_sets": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VersionOut"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Rule Sets",
+            "type": "object"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "extracting",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "title",
+          "first_page",
+          "last_page",
+          "sectors",
+          "status",
+          "error",
+          "updated_at",
+          "runs",
+          "cost_usd",
+          "last_model",
+          "rule_sets",
+          "rule_set_ids"
+        ],
+        "title": "ChapterCoverageOut",
+        "type": "object"
+      },
+      "CommuneCoverageOut": {
+        "properties": {
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/ChapterCoverageOut"
+            },
+            "title": "Chapters",
+            "type": "array"
+          },
+          "checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At"
+          },
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commune_insee",
+          "status",
+          "error",
+          "checked_at",
+          "plan",
+          "chapters"
+        ],
+        "title": "CommuneCoverageOut",
+        "type": "object"
+      },
       "CommuneOut": {
         "properties": {
           "bbox": {
@@ -167,6 +346,42 @@
           "buildings"
         ],
         "title": "ContextOut",
+        "type": "object"
+      },
+      "CoverageOut": {
+        "properties": {
+          "budget_month_usd": {
+            "title": "Budget Month Usd",
+            "type": "number"
+          },
+          "communes": {
+            "items": {
+              "$ref": "#/components/schemas/CommuneCoverageOut"
+            },
+            "title": "Communes",
+            "type": "array"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "month_cost_usd": {
+            "title": "Month Cost Usd",
+            "type": "number"
+          }
+        },
+        "required": [
+          "configured",
+          "model",
+          "month_cost_usd",
+          "budget_month_usd",
+          "communes"
+        ],
+        "title": "CoverageOut",
         "type": "object"
       },
       "CustomerEdgeIn": {
@@ -314,6 +529,17 @@
         "title": "EdgeOut",
         "type": "object"
       },
+      "ExtractIn": {
+        "properties": {
+          "force": {
+            "default": true,
+            "title": "Force",
+            "type": "boolean"
+          }
+        },
+        "title": "ExtractIn",
+        "type": "object"
+      },
       "FlagIn": {
         "properties": {
           "description": {
@@ -412,6 +638,24 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IgnoredZoneOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "area_m2"
+        ],
+        "title": "IgnoredZoneOut",
         "type": "object"
       },
       "ImportRequestIn": {
@@ -815,6 +1059,46 @@
         "title": "OpsStatus",
         "type": "object"
       },
+      "OverlayOut": {
+        "properties": {
+          "category": {
+            "enum": [
+              "prescription",
+              "information",
+              "servitude"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "type_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Code"
+          }
+        },
+        "required": [
+          "category",
+          "type_code",
+          "label",
+          "endpoint"
+        ],
+        "title": "OverlayOut",
+        "type": "object"
+      },
       "ParcelOut": {
         "properties": {
           "accuracy_class": {
@@ -931,6 +1215,59 @@
         "title": "ParcelSummary",
         "type": "object"
       },
+      "PlanOut": {
+        "properties": {
+          "du_type": {
+            "title": "Du Type",
+            "type": "string"
+          },
+          "gpu_doc_id": {
+            "title": "Gpu Doc Id",
+            "type": "string"
+          },
+          "gpu_update_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gpu Update Date"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "regulation_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regulation Url"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "du_type",
+          "gpu_doc_id",
+          "gpu_update_date",
+          "regulation_url"
+        ],
+        "title": "PlanOut",
+        "type": "object"
+      },
       "ProjectOut": {
         "properties": {
           "created_at": {
@@ -954,6 +1291,253 @@
           "created_at"
         ],
         "title": "ProjectOut",
+        "type": "object"
+      },
+      "ProjectOverrideIn": {
+        "description": "Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement).",
+        "properties": {
+          "building_kind": {
+            "default": "main",
+            "enum": [
+              "main",
+              "annex",
+              "pool",
+              "any"
+            ],
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "setback_street",
+              "setback_side",
+              "setback_rear",
+              "setback_between_buildings",
+              "max_footprint_ratio",
+              "max_height",
+              "roof",
+              "facade",
+              "unsealed_min",
+              "parking",
+              "annex",
+              "planting",
+              "fence",
+              "text_only"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "zone_code": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "kind",
+          "status",
+          "note"
+        ],
+        "title": "ProjectOverrideIn",
+        "type": "object"
+      },
+      "ProjectOverrideOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "zone_code",
+          "kind",
+          "building_kind",
+          "status",
+          "params",
+          "note",
+          "updated_at",
+          "updated_by"
+        ],
+        "title": "ProjectOverrideOut",
+        "type": "object"
+      },
+      "ProjectRulesOut": {
+        "properties": {
+          "commune_insee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commune Insee"
+          },
+          "ignored_zones": {
+            "items": {
+              "$ref": "#/components/schemas/IgnoredZoneOut"
+            },
+            "title": "Ignored Zones",
+            "type": "array"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "overlays": {
+            "items": {
+              "$ref": "#/components/schemas/OverlayOut"
+            },
+            "title": "Overlays",
+            "type": "array"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "simulation": {
+            "const": true,
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "in_progress",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/ZoneRulesOut"
+            },
+            "title": "Zones",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "commune_insee",
+          "plan",
+          "zones",
+          "ignored_zones",
+          "overlays",
+          "warnings",
+          "notices"
+        ],
+        "title": "ProjectRulesOut",
         "type": "object"
       },
       "RiskOut": {
@@ -1030,6 +1614,455 @@
         ],
         "title": "Role",
         "type": "string"
+      },
+      "RuleDetailOut": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "origin": {
+            "enum": [
+              "extraction",
+              "office",
+              "project"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "quote_verified": {
+            "title": "Quote Verified",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "similarity": {
+            "title": "Similarity",
+            "type": "number"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "status",
+          "reason",
+          "params",
+          "page",
+          "quote",
+          "quote_verified",
+          "source_url",
+          "confidence",
+          "notes",
+          "origin",
+          "detail",
+          "alternatives",
+          "similarity"
+        ],
+        "title": "RuleDetailOut",
+        "type": "object"
+      },
+      "RuleIn": {
+        "properties": {
+          "building_kind": {
+            "default": "main",
+            "enum": [
+              "main",
+              "annex",
+              "pool",
+              "any"
+            ],
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "setback_street",
+              "setback_side",
+              "setback_rear",
+              "setback_between_buildings",
+              "max_footprint_ratio",
+              "max_height",
+              "roof",
+              "facade",
+              "unsealed_min",
+              "parking",
+              "annex",
+              "planting",
+              "fence",
+              "text_only"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "status"
+        ],
+        "title": "RuleIn",
+        "type": "object"
+      },
+      "RuleOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "origin": {
+            "enum": [
+              "extraction",
+              "office",
+              "project"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "quote_verified": {
+            "title": "Quote Verified",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "status",
+          "reason",
+          "params",
+          "page",
+          "quote",
+          "quote_verified",
+          "source_url",
+          "confidence",
+          "notes",
+          "origin"
+        ],
+        "title": "RuleOut",
+        "type": "object"
+      },
+      "RuleSetOut": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleDetailOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "zone_code",
+          "plan",
+          "current",
+          "versions",
+          "rules"
+        ],
+        "title": "RuleSetOut",
+        "type": "object"
+      },
+      "RuleSetVersionIn": {
+        "description": "Korrektur für die Zone: vollständige Liste der Regeln; ergibt eine neue Version `office_reviewed`.",
+        "properties": {
+          "note": {
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleIn"
+            },
+            "maxItems": 200,
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rules",
+          "note"
+        ],
+        "title": "RuleSetVersionIn",
+        "type": "object"
+      },
+      "RulesImportIn": {
+        "properties": {
+          "communes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Communes"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          }
+        },
+        "title": "RulesImportIn",
+        "type": "object"
       },
       "SessionInfo": {
         "properties": {
@@ -1426,6 +2459,204 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VersionOut": {
+        "properties": {
+          "coverage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Coverage",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "origin": {
+            "enum": [
+              "extraction",
+              "office"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "simulated",
+              "office_reviewed",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status",
+          "origin",
+          "model",
+          "created_at",
+          "created_by",
+          "note",
+          "coverage"
+        ],
+        "title": "VersionOut",
+        "type": "object"
+      },
+      "ZoneRulesOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "chapter_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Code"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rule_set_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Set Id"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "share": {
+            "title": "Share",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "simulated",
+              "office_reviewed",
+              "in_progress",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "chapter_code",
+          "area_m2",
+          "share",
+          "status",
+          "reason",
+          "rule_set_id",
+          "version",
+          "rules",
+          "hints"
+        ],
+        "title": "ZoneRulesOut",
+        "type": "object"
       }
     }
   },
@@ -1731,6 +2962,209 @@
         ]
       }
     },
+    "/api/v1/admin/projects/{project_id}/rule-overrides": {
+      "get": {
+        "operationId": "get_project_overrides_api_v1_admin_projects__project_id__rule_overrides_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response Get Project Overrides Api V1 Admin Projects  Project Id  Rule Overrides Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Project Overrides",
+        "tags": [
+          "rules"
+        ]
+      },
+      "put": {
+        "description": "Korrektur nur für dieses Projekt (z. B. Lotissement); andere Projekte der Zone bleiben unverändert.",
+        "operationId": "put_project_override_api_v1_admin_projects__project_id__rule_overrides_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectOverrideIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response Put Project Override Api V1 Admin Projects  Project Id  Rule Overrides Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Project Override",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/rule-overrides/{override_id}": {
+      "delete": {
+        "operationId": "delete_project_override_api_v1_admin_projects__project_id__rule_overrides__override_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "override_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Override Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response Delete Project Override Api V1 Admin Projects  Project Id  Rule Overrides  Override Id  Delete",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Project Override",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/rules": {
+      "get": {
+        "operationId": "get_project_rules_staff_api_v1_admin_projects__project_id__rules_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRulesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Project Rules Staff",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
     "/api/v1/admin/projects/{project_id}/site": {
       "get": {
         "operationId": "get_site_staff_api_v1_admin_projects__project_id__site_get",
@@ -1908,6 +3342,230 @@
         "summary": "Patch Edge Architect",
         "tags": [
           "site"
+        ]
+      }
+    },
+    "/api/v1/admin/rule-sets/{rule_set_id}": {
+      "get": {
+        "operationId": "get_rule_set_api_v1_admin_rule_sets__rule_set_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_set_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Rule Set Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Rule Set",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rule-sets/{rule_set_id}/versions": {
+      "post": {
+        "description": "Korrektur für die Zone; gilt für spätere Simulationen aller Projekte in dieser Zone.",
+        "operationId": "create_rule_set_version_api_v1_admin_rule_sets__rule_set_id__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_set_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Rule Set Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleSetVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleSetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Rule Set Version",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rules/chapters/{chapter_id}/extract": {
+      "post": {
+        "description": "Kapitel erneut auswerten (z. B. nach neuer Prompt-Version oder gescheitertem Lauf); kostet Token.",
+        "operationId": "start_chapter_extraction_api_v1_admin_rules_chapters__chapter_id__extract_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chapter_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chapter Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": "Response Start Chapter Extraction Api V1 Admin Rules Chapters  Chapter Id  Extract Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Chapter Extraction",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rules/coverage": {
+      "get": {
+        "description": "Abdeckung je Gemeinde und Kapitel mit Status, Läufen, Kosten und Monatsbudget (Plan 3.4, 6.8).",
+        "operationId": "rules_coverage_api_v1_admin_rules_coverage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Rules Coverage",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rules/imports": {
+      "post": {
+        "operationId": "start_rules_import_api_v1_admin_rules_imports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulesImportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": "Response Start Rules Import Api V1 Admin Rules Imports Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Rules Import",
+        "tags": [
+          "rules"
         ]
       }
     },
@@ -2413,6 +4071,50 @@
         "summary": "Lookup Parcels",
         "tags": [
           "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/rules": {
+      "get": {
+        "description": "Zonen, Regeln mit Zitat und Status, Vorgaben und Hinweise – als Simulation (Plan 3.4, D11).",
+        "operationId": "get_project_rules_api_v1_projects__project_id__rules_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRulesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Project Rules",
+        "tags": [
+          "rules"
         ]
       }
     },

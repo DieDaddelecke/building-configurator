@@ -97,3 +97,29 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 - Gelände oder Risiken `unavailable`: Hinweis „nicht abgefragt“ beim Grundstück. Sobald der Dienst wieder antwortet: `POST /api/v1/admin/sites/enrich-retry` (Rolle `ops`) stößt alle betroffenen Grundstücke erneut an.
 
 **Prüfliste im Büro:** `/buero/grundstuecke` zeigt Grundstücke mit unbestätigten Kundenkorrekturen zuerst. Solange eine Kundenkorrektur unbestätigt ist, ist der Baurahmen nicht bindend.
+
+## 9. Regelwerk (Modul G2)
+
+**Einrichten und Freischalten**
+
+1. Schlüssel der Claude API und Monatsbudget setzen: `EMPRISE_ANTHROPIC_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). An die API gehen nur öffentliche Planunterlagen (L8).
+2. Planstände importiert der Worker beim ersten Start und danach wöchentlich (`plu_import`); sofort: `python -m app.cli plu-import` (ohne Internet: `--from-dir`). Jedes Zonenkapitel wird danach als Job `rules_extract` ausgewertet.
+3. Freischalten über `rules_simulation`: intern `python -m app.cli flag-set rules_simulation --role architect`, später Beta und `--all` (Plan 4.2).
+4. Ausgehender Zugang für API und Worker zusätzlich: `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `data.geopf.fr`, `api.anthropic.com`.
+
+**Stand prüfen:** `/buero/regeln` bzw. `GET /api/v1/admin/rules/coverage`: je Gemeinde Planstand und Status, je Kapitel Sektoren, Status mit Grund, Läufe, Kosten, offene Pflichtwerte je Sektor; oben Monatskosten und Budget.
+
+**Kosten (Schätzung, nach der ersten echten Auswertung ersetzen):** je Kapitel zwei Läufe mit rund 50–60 PDF-Seiten, allgemeine Seiten aus dem Cache; Größenordnung 1–2 $ je Kapitel, für Treillières (12 Kapitel) 10–25 $ je Planstand. Neue Planstände erscheinen etwa ein- bis zweimal im Jahr.
+
+**Kapitel gescheitert** (Status `failed`, Grund in der Abdeckung, Log `rules_extract_failed`)
+
+- `not_configured`: Schlüssel fehlt. Eintragen, Dienste neu starten, dann `python -m app.cli rules-extract --pending`.
+- `budget_exceeded`: Monatsbudget erreicht. Budget prüfen und anheben oder den Monatswechsel abwarten; danach `rules-extract --pending`.
+- `auth`, `model_not_found`, `bad_request:…`: Konfiguration prüfen (Schlüssel, `EMPRISE_RULES_MODEL`); `bad_request` mit Größenangabe: Kapitel zu lang, der Entwicklung melden.
+- `refusal`: Das Modell hat abgelehnt, auch der Rückfall. Kapitel einmal neu auswerten („Neu auswerten“); bleibt es dabei, sehen Kunden „nicht verfügbar“, das Büro prüft bei Anfrage.
+- `max_tokens`: Ausgabe zu lang (sehr viele Sektoren). Der Entwicklung melden; bis dahin „nicht verfügbar“.
+- `rate_limited`, `http_5xx`, `transport:*`: wiederholt sich selbst (3 Versuche); danach „Neu auswerten“.
+
+**Import gescheitert** (Job `plu_import` endgültig `failed`, Gemeinde `failed`): meist GPU nicht erreichbar oder Antwort abgeschnitten (`truncated`). Der vorige Planstand bleibt aktiv. Später `python -m app.cli plu-import --commune <insee>`. Status `no_regulation` oder `no_chapters`: Planunterlagen fehlen oder sind nicht lesbar; Kunden sehen den Grund, das Büro prüft bei Anfrage.
+
+**Viele `unknown`-Werte in einem Kapitel:** Regelwerk im Büro öffnen (Zitat, Grund, Alternativen beider Läufe). Liegt es an der Auswertung, nach Prompt- oder Modelländerung neu auswerten; liegt es am Planwerk (Werte im Zonenplan), bleibt es bei `unknown`. Korrekturen des Büros sind freiwillig (D11).

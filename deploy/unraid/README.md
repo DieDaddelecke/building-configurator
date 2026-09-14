@@ -142,3 +142,11 @@ Die Frische der Sicherung prüft ein User Script: Alarm, wenn `last-success` äl
 - Speicher: grob 10–20 MB in PostGIS je Gemeinde in der Größe von Treillières (≈ 8.800 Parzellen).
 - Géorisques-Token nur, falls die Schnittstelle v1 abgeschaltet wird: dann in `compose.override.yaml` bei `api` und `worker` `EMPRISE_GEORISQUES_TOKEN` setzen. Nicht leer übergeben.
 - Weitere Einstellungen (Zeitlimits, Rate-Limits, Basis-URLs) haben Standardwerte in `backend/app/config.py`; Details in `docs/ANNAHMEN.md`, Abschnitt G1.
+
+## 10. Hinweise für R1 (Modul G2)
+
+- Ausgehender Zugang zusätzlich zu `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr` und `api.anthropic.com`.
+- In `.env` `ANTHROPIC_API_KEY` und `RULES_BUDGET_MONTH_USD` setzen. Ohne Schlüssel importiert der Worker die Planstände trotzdem; die Kapitel stehen dann auf „gescheitert: not_configured“ und werden nach dem Eintragen mit `docker compose exec api python -m app.cli rules-extract --pending` ausgewertet (kostet Token, Größenordnung in BETRIEB 9).
+- Planstände prüft der Worker wöchentlich; sofort: `docker compose exec api python -m app.cli plu-import`.
+- Freischaltung über `rules_simulation`, zuerst intern: `docker compose exec api python -m app.cli flag-set rules_simulation --role architect`.
+- Speicher: das règlement écrit liegt im Objektspeicher (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben in PostGIS (wenige MB je Planstand).

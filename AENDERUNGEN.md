@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 14.09.2026 – G2 Regelwerk als automatische Simulation (Session `building-configurator-a7`, Fortsetzung)
+
+**Neu**
+- `backend/app/rules/` – Modul G2: `domain/` (Regelarten mit Plausibilitätsgrenzen, Zitat- und Zahlenprüfung, Kapitelsuche, Prompt und Ausgabeschema, Schranken und Abgleich zweier Läufe), `pdf.py` (pypdf), `plan_import.py`, `extract.py`, `service.py`, `api.py`, `jobs.py` (`plu_import` wöchentlich, `rules_extract`), `models.py`.
+- `backend/app/integrations/gpu.py` (API Carto GPU, Dokumente, Dateien), `backend/app/integrations/claude.py` (Claude API, Streaming, strukturierte Ausgabe, Kosten).
+- `backend/migrations/versions/0003_rules.py` – Planstände, Planunterlagen, Seiten, Zonen, Vorgaben, Kapitel, Läufe, Regelwerke, Regeln (UPDATE gesperrt), Projektkorrekturen.
+- `backend/tests/` – `unit/test_rules_domain.py`, `unit/test_rules_integrations.py`, `integration/test_rules.py`, `rules_support.py`, `e2e_seed_rules.py`, `fixtures/rules/` (GPU-Antworten, Textschicht des règlement, README).
+- `frontend/src/api/rules.ts`, `frontend/src/rules/` (Anzeige als Simulation, Formatierung, Tests, Fixture), `frontend/src/pages/buero/Regeln.tsx`, `frontend/e2e/rules.spec.ts`.
+
+**Geändert**
+- `UMSETZUNGSPLAN.md` – G2 vollautomatisch als Simulation (D11): Grundsatz 7, 2.1–2.3, 3.1, 3.4 neu, 3.5, 3.6, 3.8, 3.10, 3.11 (X1 entfällt), 4.2, 5, 6.2–6.11, 7, 8, 9 (D9 entfällt, D11 entschieden, D12 neu), Prüfprotokoll 10.3; Status: G2 beauftragt.
+- `backend/app/config.py` (GPU, Claude API, Budget, leere Schlüssel = nicht gesetzt), `cli.py` (`plu-import`, `rules-extract`), `main.py`, `registry.py`, `migrations/env.py`, `integrations/http.py` (POST, Zeitlimit je Aufruf), `site/service.py` (`site_footprint` für andere Module), `platform/locales/*.json`, `pyproject.toml`/`uv.lock` (anthropic, pypdf), `openapi.json`, `tests/conftest.py`.
+- `frontend/` – `App.tsx`, `GrundstueckSeite.tsx`, `Grundstuecke.tsx` (Regeln und Korrektur je Projekt), `BueroLayout.tsx`, `BueroStart.tsx`, `GrundstueckPruefen.tsx` (`useNotices` exportiert), `i18n/*.json`, `schema.d.ts`.
+- `compose.yaml`, `deploy/unraid/compose.yaml`, `deploy/unraid/.env.example`, `deploy/unraid/README.md` (Abschnitt 10), `.github/workflows/ci.yml` (E2E spielt Planstand und Auswertung ein).
+- `docs/ANNAHMEN.md` (RW01–RW18), `docs/BETRIEB.md` (Abschnitt 9), `README.md`, `AGENTS.md`, `HANDOFF.md`.
+
+**Entschieden**
+- D11 – G2 darf nicht auf Eingaben des Büros angewiesen sein; das Ergebnis ist eine nicht kontraktuelle Simulation; das Büro prüft erst nach der Kontaktaufnahme.
+
+**Ohne Dateiänderung**
+- GPU live geprüft: Treillières gehört zum PLUi Erdre et Gesvres (`DU_244400503`); am Gemeinderand kommen Zonen von Nantes Métropole mit; Dateien unter `data.geopf.fr/annexes/gpu/documents`; `urlfic` verweist teils auf ältere Stände (RW01, RW02).
+- Zitatprüfung am echten Text: Ähnlichkeit allein ließ einen falschen Zahlenwert als belegt durch; Zahlenprüfung ergänzt (RW07).
+- Live-Import ohne Schlüssel und Browserprüfung (Kundenseite, Abdeckung, Regelwerk, Korrektur je Projekt); gefundene Anzeigefehler behoben (zentrierte Zeilenköpfe, feste Seitenabkürzung, Reihenfolge, überholter Hinweistext, Beschriftung „wirksam“).
+- Selbstprüfung: doppelte Auswertung eines laufenden Kapitels, Wiederholung nach Absturz, Hinweise auf Englisch; behoben (RW08, RW12).
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (Anpassung an D11 als S14 offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+
+**Memory:** `feedback-pruefung-erst-bei-anfrage` um D11 erweitert.
+
+**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: Commit-Entscheidung (Nutzer: nach dem Hand-off committen und pushen), G2 umsetzen. Neu offen: Schlüssel der Claude API, Referenzmenge (HANDOFF 4.1), G2 auf Unraid, Anpassung der Spezifikation S14.
+
+---
+
 ## 14.09.2026 – G1 Grundstück (Session `building-configurator-a7`, parallel zu R0/Unraid)
 
 **Neu**
@@ -19,7 +52,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 - `frontend/` – `App.tsx`, `Start.tsx` (Einstieg hinter Flag), `BueroLayout.tsx`, `BueroStart.tsx`, `PlanSvg.tsx`, `index.css` (`.field`), `i18n/*.json`, `vite.config.ts` (`EMPRISE_API_URL`), `package.json`/`pnpm-lock.yaml` (maplibre-gl, @types/geojson), `schema.d.ts`, `Caddyfile` (CSP: `data.geopf.fr`, `worker-src 'self'`).
 - `.github/workflows/ci.yml` – E2E importiert Kataster-Ausschnitt.
 - `docs/ANNAHMEN.md` – Abschnitt G1 (G01–G21). `docs/BETRIEB.md` – Abschnitt 8. `README.md` – G1 lokal starten, E2E-Voraussetzung. `deploy/unraid/README.md` – `flag-set` in Abschnitt 9.
-- `UMSETZUNGSPLAN.md` – 3.3 Abnahme ohne Testmenge, 3.6 Grenzprüfung bei Anfrage, 8 Testmenge gestrichen, 9 D1 und D2 entschieden.
+- `UMSETZUNGSPLAN.md` – 3.3 Abnahme ohne Testmenge, 3.6 Grenzprüfung bei Anfrage, 8 Testmenge gestrichen, 9 D1 und D2 entschieden. Danach **G2 überarbeitet (D11):** Grundsatz 7 „Simulation vor Prüfung“, 3.4 vollautomatische Regelauswertung per Claude mit Schranken statt Freigabe, 3.5 Standard-Geschosshöhen und `unknown`-Abstände, 3.6 Prüfung der Simulation bei Anfrage, X1 entfällt, Infrastruktur 6.x, Abweichungen 7 (Leitplanken L2/L6), Inhalte 8, D9 entfällt, D12 neu, Prüfprotokoll 10.3.
 - `AGENTS.md` – Stand G1 und Entscheidungen.
 
 **Entschieden**
@@ -27,6 +60,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 - D2 – G1 intern für die Rolle `architect` freigeschaltet; Beta und öffentlich offen.
 - Einordnung von Lotissement-Straßen (eigene Parzelle = Straße), Eck- und Pfeifenstielgrundstücken bestätigt.
 - Keine Abnahme-Testmenge von 40 Grundstücken; der Architekt prüft die Grenzen erst beim Eingang einer Anfrage (Modul A).
+- D11 – G2 darf nicht auf Eingaben des Büros angewiesen sein; Regeln entstehen automatisch, das Ergebnis ist eine nicht kontraktuelle Simulation; das Büro prüft erst nach der Kontaktaufnahme.
 - Commits getrennt nach R0-Nacharbeiten (`c606387`) und G1 (`cc48386`).
 - Repository: privates GitHub-Repo `DieDaddelecke/building-configurator` als `origin`, `main` gepusht.
 - Erster CI-Lauf: Backend (111 Tests), Frontend und E2E grün nach Korrektur von `ci.yml` (pnpm-Version, Trivy-Action per SHA). Trivy fand HIGH-Lücken in den Basis-Images → `backend/Dockerfile` mit Debian-Updates, `frontend/Dockerfile` mit selbst gebautem Caddy (ANNAHMEN A27). Danach alle CI-Jobs grün.
@@ -41,7 +75,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 **Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
 
-**Memory:** `feedback-pruefung-erst-bei-anfrage` angelegt.
+**Memory:** `feedback-pruefung-erst-bei-anfrage` angelegt und um D11 erweitert; `project-hosting-unraid` um GitHub als Repository ergänzt.
 
 **Hand-off:** HANDOFF.md auf Basis der Fassung der R0-Session neu geschrieben; erledigt aus der vorigen Fassung: D1, G1 abschließen, Prüfung der Kartendienst-Bedingungen (HANDOFF 4.4 Punkt 2).
 

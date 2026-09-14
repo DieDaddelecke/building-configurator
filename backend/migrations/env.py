@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 import app.platform.models  # alle Modelle laden, damit Alembic sie vergleicht
+import app.rules.models
 import app.site.models  # noqa: F401
 from app.config import get_settings
 from app.platform.db import Base

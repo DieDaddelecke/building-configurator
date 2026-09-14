@@ -7,6 +7,8 @@ staff-deactivate EMAIL         Zugang sperren und Sitzungen beenden
 storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
+plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
+rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
 """
 
 import argparse
@@ -183,6 +185,60 @@ def cmd_flag_set(args: argparse.Namespace) -> None:
         print(f"{args.key}: alle={flag.enabled_for_all} rollen={', '.join(roles) or '–'}")
 
 
+def cmd_plu_import(args: argparse.Namespace) -> None:
+    """Planstand je Gemeinde importieren; die Auswertung der Kapitel übernimmt danach der Worker."""
+    from app.integrations.http import new_client
+    from app.rules.plan_import import ApiGpu, DirectoryGpu, GpuSource, import_commune
+
+    settings = get_settings()
+    communes = args.commune or settings.cadastre_communes
+    with new_client(settings) as client, get_sessionmaker()() as session:
+        source: GpuSource = DirectoryGpu(Path(args.from_dir)) if args.from_dir else ApiGpu(client, settings)
+        for commune in communes:
+            result = import_commune(session, source, settings, commune, force=args.force)
+            notes = "; ".join(result.notes)
+            print(f"{commune}: {result.status} Kapitel={result.chapters} Zonen={result.zones} {notes}")
+
+
+def cmd_rules_extract(args: argparse.Namespace) -> None:
+    """Kapitel synchron auswerten (Betrieb, Referenzmenge), ohne Worker. Die Ausgabe nennt die Kosten."""
+    import uuid
+    from contextlib import contextmanager
+
+    from sqlalchemy import select
+
+    from app.integrations.claude import ClaudeExtractor
+    from app.rules.extract import extract_chapter
+    from app.rules.models import RegulationChapter
+
+    settings = get_settings()
+
+    @contextmanager
+    def sessions():  # type: ignore[no-untyped-def]
+        session = get_sessionmaker()()
+        try:
+            yield session
+        finally:
+            session.rollback()
+            session.close()
+
+    with get_sessionmaker()() as session:
+        if args.chapter:
+            ids = [uuid.UUID(args.chapter)]
+        else:
+            ids = list(
+                session.execute(
+                    select(RegulationChapter.id).where(RegulationChapter.status.in_(["pending", "failed"]))
+                ).scalars()
+            )
+    for chapter_id in ids:
+        outcome = extract_chapter(
+            sessions, settings, chapter_id, lambda: ClaudeExtractor(settings), force=args.force
+        )
+        detail = outcome.detail or ""
+        print(f"{chapter_id}: {outcome.status} {detail} ${outcome.cost_usd:.2f} {outcome.counts or ''}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -211,6 +267,19 @@ def main() -> None:
     p_flag.add_argument("--off", action="store_true", help="ganz abschalten")
     p_flag.add_argument("--description")
     p_flag.set_defaults(func=cmd_flag_set)
+    p_plu = sub.add_parser("plu-import")
+    p_plu.add_argument("--commune", action="append", help="INSEE-Code, mehrfach möglich")
+    p_plu.add_argument("--force", action="store_true", help="Planstand neu laden, auch wenn unverändert")
+    p_plu.add_argument("--from-dir", help="Ordner mit aufgezeichneten GPU-Antworten und Planunterlagen")
+    p_plu.set_defaults(func=cmd_plu_import)
+    p_extract = sub.add_parser("rules-extract")
+    target = p_extract.add_mutually_exclusive_group(required=True)
+    target.add_argument("--chapter", help="ID des Zonenkapitels (Büro: Abdeckung)")
+    target.add_argument("--pending", action="store_true", help="alle offenen oder gescheiterten Kapitel")
+    p_extract.add_argument(
+        "--force", action="store_true", help="auch bei unveränderter Eingabe neu auswerten"
+    )
+    p_extract.set_defaults(func=cmd_rules_extract)
     args = parser.parse_args()
     args.func(args)
 

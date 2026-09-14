@@ -7,6 +7,7 @@ import { BueroLayout } from "./pages/buero/BueroLayout";
 import { BueroStart } from "./pages/buero/BueroStart";
 import { GrundstueckBuero, Grundstuecke } from "./pages/buero/Grundstuecke";
 import { KeinZugang } from "./pages/buero/KeinZugang";
+import { Regeln, Regelwerk } from "./pages/buero/Regeln";
 import { GrundstueckSeite } from "./pages/grundstueck/GrundstueckSeite";
 import { Start } from "./pages/Start";
 
@@ -35,6 +36,8 @@ export const routes: RouteObject[] = [
       { index: true, element: <BueroStart /> },
       { path: "grundstuecke", element: <Grundstuecke /> },
       { path: "grundstuecke/:projectId", element: <GrundstueckBuero /> },
+      { path: "regeln", element: <Regeln /> },
+      { path: "regeln/:ruleSetId", element: <Regelwerk /> },
     ],
   },
   ...(import.meta.env.DEV

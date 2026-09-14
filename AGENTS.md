@@ -7,11 +7,11 @@ Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben
 Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 - Mockup und Fachdokumentation des Mockups: fertig.
-- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P) und G1 wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3 und D4 sind entschieden (Plan Kapitel 9).
-- R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet (`backend/`, `frontend/`, `compose.yaml`, CI-Datei). Git-Repository mit erstem Commit.
-- Betrieb bis zur Beta auf Unraid mit Authentik: Stacks und Anleitung in `deploy/unraid/`, lokal geprüft, auf dem Server noch nicht ausgeliefert.
-- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite im Frontend), lokal intern freigeschaltet; committet und auf GitHub (privat) gepusht, auf Unraid noch nicht ausgeliefert.
-- Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 noch nicht eingearbeitet.
+- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1 und G2 wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4 und D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) sind entschieden (Plan Kapitel 9).
+- R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
+- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite), lokal intern freigeschaltet, gepusht.
+- G2 Regelwerk: umgesetzt und getestet (`backend/app/rules`, Regeln als Simulation auf der Grundstücksseite, Büro `/buero/regeln`), lokal intern freigeschaltet, gepusht; ohne Schlüssel der Claude API noch keine echte Auswertung.
+- Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
 
 ## Dokumente
 
@@ -39,7 +39,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 3. `Hauskonfigurator.jsx` für Verhalten und Aussehen der Oberfläche
 4. `Dokumentation.html` – beschreibt den Stand des Mockups und wird nicht automatisch nachgezogen
 
-Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
+Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1, G2) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
 
 Die Leitplanken L1–L8 (Spezifikation 1.2) gelten auch für Änderungen am Frontend.
 

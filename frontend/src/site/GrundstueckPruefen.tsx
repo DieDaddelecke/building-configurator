@@ -32,7 +32,7 @@ function Zeile({ k, v }: { k: string; v: ReactNode }) {
   );
 }
 
-function useNotices(keys: readonly string[]) {
+export function useNotices(keys: readonly string[]) {
   const { i18n } = useTranslation();
   return useQuery({
     queryKey: ["legal-notices", i18n.resolvedLanguage, ...keys],

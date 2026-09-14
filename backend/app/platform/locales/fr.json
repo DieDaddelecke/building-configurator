@@ -22,6 +22,8 @@
   "problem.edge_confirmed_by_architect": "Cette limite a été confirmée par l'architecte",
   "problem.revision_conflict": "Le terrain a été modifié entre-temps, veuillez recharger",
   "problem.invalid_if_match": "En-tête If-Match invalide",
+  "problem.rule_params_invalid": "Les valeurs de la règle sont incomplètes ou peu plausibles",
+  "problem.rule_duplicate": "Un type de règle est indiqué deux fois pour le même type de construction",
   "mail.platform_test.subject": "Emprise – e-mail de test",
   "mail.platform_test.body": "Bonjour,\n\nCet e-mail confirme que l'envoi depuis la plateforme Emprise fonctionne.\nEnvironnement : {env}\n\nEmprise"
 }

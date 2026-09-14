@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -71,6 +71,21 @@ class Settings(BaseSettings):
     cadastre_limit_per_minute: int = 120
     site_write_limit_per_hour: int = 120
 
+    # Regelwerk (G2, Plan 3.4): GPU-Endpunkte am 14.09.2026 geprüft; Auswertung per Claude API (D11)
+    apicarto_base_url: str = "https://apicarto.ign.fr/api"
+    gpu_api_base_url: str = "https://www.geoportail-urbanisme.gouv.fr/api"
+    gpu_files_base_url: str = "https://data.geopf.fr/annexes/gpu/documents"
+    anthropic_api_key: SecretStr | None = None
+    rules_model: str = "claude-opus-5"
+    rules_effort: Literal["low", "medium", "high", "xhigh", "max"] = "high"
+    rules_runs: int = Field(default=2, ge=1, le=3)
+    rules_request_timeout_seconds: float = 900.0
+    rules_budget_month_usd: float = 150.0
+    """Obergrenze der Auswertungskosten je Kalendermonat; darüber startet keine neue Auswertung (Alarm)."""
+    rules_price_input_per_mtok: float = 5.0
+    rules_price_output_per_mtok: float = 25.0
+    rules_limit_per_minute: int = 60
+
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15
@@ -78,6 +93,12 @@ class Settings(BaseSettings):
     # Worker
     worker_queues: list[str] = Field(default_factory=lambda: ["default"])
     worker_poll_seconds: float = 1.0
+
+    @field_validator("anthropic_api_key", "georisques_token", mode="before")
+    @classmethod
+    def _empty_secret_is_unset(cls, value: object) -> object:
+        """Compose übergibt nicht gesetzte Variablen als leere Zeichenkette: „nicht eingerichtet“."""
+        return None if isinstance(value, str) and not value.strip() else value
 
     @property
     def cookie_secure(self) -> bool:

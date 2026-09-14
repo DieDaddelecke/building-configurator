@@ -6,7 +6,7 @@ Hauskonfigurator für Bauinteressenten in Frankreich. Projektbeschreibung, Dokum
 
 | Ordner | Inhalt |
 |---|---|
-| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), `app/site` (G1 Grundstück), Adapter externer Dienste in `app/integrations`; je Fachmodul ein Paket (Plan 3.2) |
+| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), `app/site` (G1 Grundstück), `app/rules` (G2 Regelwerk), Adapter externer Dienste in `app/integrations`; je Fachmodul ein Paket (Plan 3.2) |
 | `frontend/` | Vite, React, TypeScript, Tailwind, MapLibre; Web-Container mit Caddy |
 | `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anforderungen an einen späteren verwalteten Anbieter |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
@@ -31,7 +31,13 @@ Grundstückswahl (G1): Der Worker importiert das Kataster von Treillières beim 
 docker compose exec api python -m app.cli flag-set site_selection --role architect
 ```
 
-Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080/grundstueck öffnen.
+Regelwerk (G2): Der Worker importiert auch den Planstand von Treillières aus dem Géoportail de l’Urbanisme selbst. Ausgewertet werden die Zonenkapitel nur mit Schlüssel der Claude API (`EMPRISE_ANTHROPIC_API_KEY` in der Shell oder in einer `.env` neben `compose.yaml`; Budget `EMPRISE_RULES_BUDGET_MONTH_USD`, lokal standardmäßig 20 $). Freischalten intern:
+
+```bash
+docker compose exec api python -m app.cli flag-set rules_simulation --role architect
+```
+
+Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080/grundstueck öffnen; Abdeckung und Kosten der Regelwerke unter `/buero/regeln`.
 
 | Adresse | Zweck |
 |---|---|
@@ -61,7 +67,7 @@ Frontend:
 cd frontend && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test
 ```
 
-Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann):
+Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann; für G2 zusätzlich `docker compose cp backend/tests api:/tmp/tests` und `docker compose exec -T -e EMPRISE_ANTHROPIC_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules`):
 
 ```bash
 cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e2e

@@ -170,6 +170,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/projects/{project_id}/rule-overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Project Overrides */
+        get: operations["get_project_overrides_api_v1_admin_projects__project_id__rule_overrides_get"];
+        /**
+         * Put Project Override
+         * @description Korrektur nur für dieses Projekt (z. B. Lotissement); andere Projekte der Zone bleiben unverändert.
+         */
+        put: operations["put_project_override_api_v1_admin_projects__project_id__rule_overrides_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/rule-overrides/{override_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Project Override */
+        delete: operations["delete_project_override_api_v1_admin_projects__project_id__rule_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Project Rules Staff */
+        get: operations["get_project_rules_staff_api_v1_admin_projects__project_id__rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/projects/{project_id}/site": {
         parameters: {
             query?: never;
@@ -219,6 +274,100 @@ export interface paths {
         head?: never;
         /** Patch Edge Architect */
         patch: operations["patch_edge_architect_api_v1_admin_projects__project_id__site_edges__seq__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/rule-sets/{rule_set_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Rule Set */
+        get: operations["get_rule_set_api_v1_admin_rule_sets__rule_set_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-sets/{rule_set_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Rule Set Version
+         * @description Korrektur für die Zone; gilt für spätere Simulationen aller Projekte in dieser Zone.
+         */
+        post: operations["create_rule_set_version_api_v1_admin_rule_sets__rule_set_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rules/chapters/{chapter_id}/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Chapter Extraction
+         * @description Kapitel erneut auswerten (z. B. nach neuer Prompt-Version oder gescheitertem Lauf); kostet Token.
+         */
+        post: operations["start_chapter_extraction_api_v1_admin_rules_chapters__chapter_id__extract_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rules/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rules Coverage
+         * @description Abdeckung je Gemeinde und Kapitel mit Status, Läufen, Kosten und Monatsbudget (Plan 3.4, 6.8).
+         */
+        get: operations["rules_coverage_api_v1_admin_rules_coverage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rules/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Rules Import */
+        post: operations["start_rules_import_api_v1_admin_rules_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/sites/enrich-retry": {
@@ -463,6 +612,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Project Rules
+         * @description Zonen, Regeln mit Zitat und Status, Vorgaben und Hinweise – als Simulation (Plan 3.4, D11).
+         */
+        get: operations["get_project_rules_api_v1_projects__project_id__rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/site": {
         parameters: {
             query?: never;
@@ -552,6 +721,64 @@ export interface components {
             /** Kind */
             kind: ("street" | "side" | "rear" | "other") | null;
         };
+        /** ChapterCoverageOut */
+        ChapterCoverageOut: {
+            /** Code */
+            code: string;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Error */
+            error: string | null;
+            /** First Page */
+            first_page: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Model */
+            last_model: string | null;
+            /** Last Page */
+            last_page: number;
+            /** Rule Set Ids */
+            rule_set_ids: {
+                [key: string]: string;
+            };
+            /** Rule Sets */
+            rule_sets: {
+                [key: string]: components["schemas"]["VersionOut"] | null;
+            };
+            /** Runs */
+            runs: number;
+            /** Sectors */
+            sectors: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "extracting" | "succeeded" | "failed";
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** CommuneCoverageOut */
+        CommuneCoverageOut: {
+            /** Chapters */
+            chapters: components["schemas"]["ChapterCoverageOut"][];
+            /** Checked At */
+            checked_at: string | null;
+            /** Commune Insee */
+            commune_insee: string;
+            /** Error */
+            error: string | null;
+            plan: components["schemas"]["PlanOut"] | null;
+            /** Status */
+            status: string;
+        };
         /** CommuneOut */
         CommuneOut: {
             /** Bbox */
@@ -582,6 +809,19 @@ export interface components {
             buildings: number[][][];
             /** Parcels */
             parcels: number[][][];
+        };
+        /** CoverageOut */
+        CoverageOut: {
+            /** Budget Month Usd */
+            budget_month_usd: number;
+            /** Communes */
+            communes: components["schemas"]["CommuneCoverageOut"][];
+            /** Configured */
+            configured: boolean;
+            /** Model */
+            model: string;
+            /** Month Cost Usd */
+            month_cost_usd: number;
         };
         /**
          * CustomerEdgeIn
@@ -628,6 +868,14 @@ export interface components {
             seq: number;
             /** Street Name */
             street_name: string | null;
+        };
+        /** ExtractIn */
+        ExtractIn: {
+            /**
+             * Force
+             * @default true
+             */
+            force: boolean;
         };
         /** FlagIn */
         FlagIn: {
@@ -676,6 +924,13 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IgnoredZoneOut */
+        IgnoredZoneOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Code */
+            code: string;
         };
         /** ImportRequestIn */
         ImportRequestIn: {
@@ -829,6 +1084,20 @@ export interface components {
             /** Storage Ok */
             storage_ok: boolean;
         };
+        /** OverlayOut */
+        OverlayOut: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "prescription" | "information" | "servitude";
+            /** Endpoint */
+            endpoint: string;
+            /** Label */
+            label: string;
+            /** Type Code */
+            type_code: string | null;
+        };
         /** ParcelOut */
         ParcelOut: {
             /** Accuracy Class */
@@ -871,6 +1140,24 @@ export interface components {
             /** Section */
             section: string;
         };
+        /** PlanOut */
+        PlanOut: {
+            /** Du Type */
+            du_type: string;
+            /** Gpu Doc Id */
+            gpu_doc_id: string;
+            /** Gpu Update Date */
+            gpu_update_date: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Regulation Url */
+            regulation_url: string | null;
+            /** Title */
+            title: string;
+        };
         /** ProjectOut */
         ProjectOut: {
             /**
@@ -885,6 +1172,97 @@ export interface components {
             id: string;
             /** Status */
             status: string;
+        };
+        /**
+         * ProjectOverrideIn
+         * @description Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement).
+         */
+        ProjectOverrideIn: {
+            /**
+             * Building Kind
+             * @default main
+             * @enum {string}
+             */
+            building_kind: "main" | "annex" | "pool" | "any";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only";
+            /** Note */
+            note: string;
+            /** Params */
+            params?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only";
+            /** Zone Code */
+            zone_code: string;
+        };
+        /** ProjectOverrideOut */
+        ProjectOverrideOut: {
+            /** Building Kind */
+            building_kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+            /** Zone Code */
+            zone_code: string;
+        };
+        /** ProjectRulesOut */
+        ProjectRulesOut: {
+            /** Commune Insee */
+            commune_insee: string | null;
+            /** Ignored Zones */
+            ignored_zones: components["schemas"]["IgnoredZoneOut"][];
+            /** Notices */
+            notices: string[];
+            /** Overlays */
+            overlays: components["schemas"]["OverlayOut"][];
+            plan: components["schemas"]["PlanOut"] | null;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Simulation
+             * @default true
+             * @constant
+             */
+            simulation: true;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "partial" | "in_progress" | "unavailable";
+            /** Warnings */
+            warnings: string[];
+            /** Zones */
+            zones: components["schemas"]["ZoneRulesOut"][];
         };
         /** RiskOut */
         RiskOut: {
@@ -918,6 +1296,149 @@ export interface components {
          * @enum {string}
          */
         Role: "architect" | "rules_admin" | "catalog_admin" | "ops";
+        /** RuleDetailOut */
+        RuleDetailOut: {
+            /** Alternatives */
+            alternatives: {
+                [key: string]: unknown;
+            }[];
+            /** Building Kind */
+            building_kind: string;
+            /** Confidence */
+            confidence: number;
+            /** Detail */
+            detail: string | null;
+            /** Kind */
+            kind: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "extraction" | "office" | "project";
+            /** Page */
+            page: number | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Quote */
+            quote: string | null;
+            /** Quote Verified */
+            quote_verified: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Similarity */
+            similarity: number;
+            /** Source Url */
+            source_url: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only";
+        };
+        /** RuleIn */
+        RuleIn: {
+            /**
+             * Building Kind
+             * @default main
+             * @enum {string}
+             */
+            building_kind: "main" | "annex" | "pool" | "any";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only";
+            /** Notes */
+            notes?: string | null;
+            /** Page */
+            page?: number | null;
+            /** Params */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** Quote */
+            quote?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only";
+        };
+        /** RuleOut */
+        RuleOut: {
+            /** Building Kind */
+            building_kind: string;
+            /** Confidence */
+            confidence: number;
+            /** Kind */
+            kind: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "extraction" | "office" | "project";
+            /** Page */
+            page: number | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Quote */
+            quote: string | null;
+            /** Quote Verified */
+            quote_verified: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Source Url */
+            source_url: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only";
+        };
+        /** RuleSetOut */
+        RuleSetOut: {
+            current: components["schemas"]["VersionOut"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            plan: components["schemas"]["PlanOut"];
+            /** Rules */
+            rules: components["schemas"]["RuleDetailOut"][];
+            /** Versions */
+            versions: components["schemas"]["VersionOut"][];
+            /** Zone Code */
+            zone_code: string;
+        };
+        /**
+         * RuleSetVersionIn
+         * @description Korrektur für die Zone: vollständige Liste der Regeln; ergibt eine neue Version `office_reviewed`.
+         */
+        RuleSetVersionIn: {
+            /** Note */
+            note: string;
+            /** Rules */
+            rules: components["schemas"]["RuleIn"][];
+        };
+        /** RulesImportIn */
+        RulesImportIn: {
+            /** Communes */
+            communes?: string[] | null;
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+        };
         /** SessionInfo */
         SessionInfo: {
             /** Project Id */
@@ -1041,6 +1562,68 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VersionOut */
+        VersionOut: {
+            /** Coverage */
+            coverage: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model */
+            model: string | null;
+            /** Note */
+            note: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "extraction" | "office";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "simulated" | "office_reviewed" | "retired";
+            /** Version */
+            version: number;
+        };
+        /** ZoneRulesOut */
+        ZoneRulesOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Chapter Code */
+            chapter_code: string | null;
+            /** Code */
+            code: string;
+            /** Hints */
+            hints: components["schemas"]["RuleOut"][];
+            /** Label */
+            label: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Rule Set Id */
+            rule_set_id: string | null;
+            /** Rules */
+            rules: components["schemas"]["RuleOut"][];
+            /** Share */
+            share: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "simulated" | "office_reviewed" | "in_progress" | "unavailable";
+            version: components["schemas"]["VersionOut"] | null;
         };
     };
     responses: never;
@@ -1296,6 +1879,135 @@ export interface operations {
             };
         };
     };
+    get_project_overrides_api_v1_admin_projects__project_id__rule_overrides_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_project_override_api_v1_admin_projects__project_id__rule_overrides_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectOverrideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_project_override_api_v1_admin_projects__project_id__rule_overrides__override_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                override_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_project_rules_staff_api_v1_admin_projects__project_id__rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRulesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_site_staff_api_v1_admin_projects__project_id__site_get: {
         parameters: {
             query?: never;
@@ -1385,6 +2097,164 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rule_set_api_v1_admin_rule_sets__rule_set_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_set_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleSetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_rule_set_version_api_v1_admin_rule_sets__rule_set_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_set_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleSetVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleSetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_chapter_extraction_api_v1_admin_rules_chapters__chapter_id__extract_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExtractIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rules_coverage_api_v1_admin_rules_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoverageOut"];
+                };
+            };
+        };
+    };
+    start_rules_import_api_v1_admin_rules_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulesImportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -1742,6 +2612,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LookupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_project_rules_api_v1_projects__project_id__rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRulesOut"];
                 };
             };
             /** @description Validation Error */

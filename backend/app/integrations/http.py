@@ -51,13 +51,49 @@ def get(
     params: Mapping[str, str | int | float] | None = None,
     headers: Mapping[str, str] | None = None,
     attempts: int = 2,
+    timeout: float | None = None,
 ) -> httpx2.Response:
     """GET mit Wiederholung bei Zeitüberschreitung, Verbindungsfehler und 5xx. 4xx wird nicht wiederholt."""
+    return _request(
+        client, service, "GET", url, params=params, headers=headers, attempts=attempts, timeout=timeout
+    )
+
+
+def post_json(
+    client: httpx2.Client,
+    service: str,
+    url: str,
+    body: Any,
+    *,
+    attempts: int = 2,
+    timeout: float | None = None,
+) -> Any:
+    """POST mit JSON-Körper (z. B. Geometrien, die für eine URL zu lang sind); Antwort als JSON."""
+    response = _request(client, service, "POST", url, json=body, attempts=attempts, timeout=timeout)
+    try:
+        return response.json()
+    except ValueError as exc:
+        raise ExternalServiceError(service, "invalid_json") from exc
+
+
+def _request(
+    client: httpx2.Client,
+    service: str,
+    method: str,
+    url: str,
+    *,
+    params: Mapping[str, str | int | float] | None = None,
+    headers: Mapping[str, str] | None = None,
+    json: Any = None,
+    attempts: int = 2,
+    timeout: float | None = None,
+) -> httpx2.Response:
     last_reason = "no_attempt"
+    extra: dict[str, Any] = {} if timeout is None else {"timeout": timeout}
     for attempt in range(1, attempts + 1):
         started = time.perf_counter()
         try:
-            response = client.get(url, params=params, headers=headers)
+            response = client.request(method, url, params=params, headers=headers, json=json, **extra)
         except httpx2.TimeoutException:
             last_reason = "timeout"
         except httpx2.TransportError as exc:

@@ -2,4 +2,5 @@
 
 import app.platform.mail
 import app.platform.tasks
+import app.rules.jobs
 import app.site.jobs  # noqa: F401

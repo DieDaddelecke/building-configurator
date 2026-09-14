@@ -29,6 +29,9 @@ x-backend: &backend
     EMPRISE_SENTRY_DSN: ${SENTRY_DSN:-}
     # Einzugsgebiet für G1 als JSON-Liste von INSEE-Codes (D1: bis zur Beta Treillières, ["44209"])
     EMPRISE_CADASTRE_COMMUNES: ${CADASTRE_COMMUNES:?}
+    # Regelauswertung per Claude API (G2, Plan 3.4); leer = keine Auswertung, Kunden sehen „nicht verfügbar“
+    EMPRISE_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    EMPRISE_RULES_BUDGET_MONTH_USD: ${RULES_BUDGET_MONTH_USD:-150}
     # Client-IP nur aus privaten Netzen übernehmen (Web-Container, Reverse Proxy)
     FORWARDED_ALLOW_IPS: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     TZ: ${TZ:-Europe/Paris}

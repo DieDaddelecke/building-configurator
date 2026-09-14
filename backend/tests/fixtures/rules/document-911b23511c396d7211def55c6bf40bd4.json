@@ -1,0 +1,332 @@
+{
+ "id": "911b23511c396d7211def55c6bf40bd4",
+ "status": "document.production",
+ "documentSource": "UPLOAD",
+ "uploadDate": "03/04/2026 16:23:52",
+ "updateDate": "07/04/2026 00:08:31",
+ "legalStatus": "APPROVED",
+ "effectiveStatus": "EN_VIGUEUR",
+ "originalName": "244400503_PLUi_20260304",
+ "type": "PLUi",
+ "supCategory": null,
+ "name": "DU_244400503",
+ "legalControlStatus": 102,
+ "title": "Plan Local d'Urbanisme intercommunal (PLUi) D'ERDRE ET GESVRES",
+ "projectionCode": "EPSG:2154",
+ "typeref": "01",
+ "fileIdentifier": "GPU-911b23511c396d7211def55c6bf40bd4",
+ "protected": false,
+ "grid": {
+  "name": "244400503",
+  "title": "PLUI D'ERDRE ET GESVRES",
+  "type": "epci",
+  "rnu": false
+ },
+ "publicationDate": "07/04/2026 00:08:31",
+ "bbox": [
+  -1.8825267,
+  47.2726943,
+  -1.3535667,
+  47.5033346
+ ],
+ "statusDate": "07/04/2026 00:08:31",
+ "files": [
+  {
+   "name": "244400503_procedure_20260304.pdf",
+   "title": "Procédure",
+   "path": "Procédures"
+  },
+  {
+   "name": "244400503_rapport_1_20191218.pdf",
+   "title": "Partie 1",
+   "path": "Rapport de présentation"
+  },
+  {
+   "name": "244400503_rapport_2_20220223.pdf",
+   "title": "Partie 2",
+   "path": "Rapport de présentation"
+  },
+  {
+   "name": "244400503_rapport_3_20191218.pdf",
+   "title": "Partie 3",
+   "path": "Rapport de présentation"
+  },
+  {
+   "name": "244400503_rapport_4_20191218.pdf",
+   "title": "Partie 4",
+   "path": "Rapport de présentation"
+  },
+  {
+   "name": "244400503_rapport_5_20191218.pdf",
+   "title": "Partie 5",
+   "path": "Rapport de présentation"
+  },
+  {
+   "name": "244400503_padd_20191218.pdf",
+   "title": "Projet d’aménagement et de développement durables",
+   "path": null
+  },
+  {
+   "name": "244400503_reglement_20260304.pdf",
+   "title": "Règlement écrit",
+   "path": "Règlements"
+  },
+  {
+   "name": "244400503_annexe_sanitaire_20191218.pdf",
+   "title": "Annexe sanitaire",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_convention_PUP_GDF_20191218.pdf",
+   "title": "Convention PUP GDF",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_droit_preemption_FDC_NSE_20191218.pdf",
+   "title": "Droit preemption FDC NSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_droit_preemption_FDC_TRE_20191218.pdf",
+   "title": "Droit preemption FDC TRE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_liste_lotissements_20191218.pdf",
+   "title": "Liste lotissements",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_liste_sup_20191218.pdf",
+   "title": "Liste sup",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_PUP_Bois_Briand_20191218.pdf",
+   "title": "Perimetre PUP Bois Briand",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_PUP_doussiniere_SSE_20191218.pdf",
+   "title": "Perimetre PUP doussiniere SSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_PUP_pancarte_NSE_20191218.pdf",
+   "title": "Perimetre PUP pancarte NSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_G_Sand_20191218.pdf",
+   "title": "Perimetre etude G Sand",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_abord_CTM_20191218.pdf",
+   "title": "Perimetre etude abord CTM",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_forum_20191218.pdf",
+   "title": "Perimetre etude forum",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_route_Mazures_20191218.pdf",
+   "title": "Perimetre etude route Mazures",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_rue_Frenouelles_20191218.pdf",
+   "title": "Perimetre etude rue Frenouelles",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_rue_des_bois_20191218.pdf",
+   "title": "Perimetre etude rue des bois",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_rue_levee_dons_20191218.pdf",
+   "title": "Perimetre etude rue levee dons",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_perimetre_etude_rue_stade_20191218.pdf",
+   "title": "Perimetre etude rue stade",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_CASS_20191218.pdf",
+   "title": "Plan DPU CASS",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_FDB_20191218.pdf",
+   "title": "Plan DPU FDB",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_GDF_20191218.pdf",
+   "title": "Plan DPU GDF",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_HER_20191218.pdf",
+   "title": "Plan DPU HER",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_LesTouches_20191218.pdf",
+   "title": "Plan DPU LesTouches",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_NDDL_20191218.pdf",
+   "title": "Plan DPU NDDL",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_NSE_20191218.pdf",
+   "title": "Plan DPU NSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_PetitMars_20191218.pdf",
+   "title": "Plan DPU PetitMars",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_SSE_20191218.pdf",
+   "title": "Plan DPU SSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_StMarsDuDesert_20191218.pdf",
+   "title": "Plan DPU StMarsDuDesert",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_TRE_20191218.pdf",
+   "title": "Plan DPU TRE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_DPU_VDB_20191218.pdf",
+   "title": "Plan DPU VDB",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_pean_20191218.pdf",
+   "title": "Plan pean",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_plan_perimetre_preemption_M2_20191218.pdf",
+   "title": "Plan perimetre preemption M2",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_secteurs_bruit_20191218.pdf",
+   "title": "Secteurs bruit",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_secteurs_informations_sols_20191218.pdf",
+   "title": "Secteurs informations sols",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_Gergauderie_FDB.pdf",
+   "title": "Zac Gergauderie",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_VIRELOUP_TRE_20191218.pdf",
+   "title": "Zac VIRELOUP TRE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_belle_etoile_20191218.pdf",
+   "title": "Zac belle etoile",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_centre_ville_SSE_20191218.pdf",
+   "title": "Zac centre ville SSE",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_erette_grande_haie_20191218.pdf",
+   "title": "Zac erette grande haie",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_pancarte2_LT_20191218.pdf",
+   "title": "Zac pancarte2 LT",
+   "path": "Annexes"
+  },
+  {
+   "name": "244400503_zac_tanerettes_NDDL_20191218.pdf",
+   "title": "Zac tanerettes NDDL",
+   "path": "Annexes"
+  }
+ ],
+ "metadata": "fr-244400503-plu20260304",
+ "producer": "Communauté de Communes Erdre & Gesvres",
+ "acteSupCount": null,
+ "writingMaterials": {
+  "244400503_procedure_20260304.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_procedure_20260304.pdf",
+  "244400503_rapport_1_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_rapport_1_20191218.pdf",
+  "244400503_rapport_2_20220223.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_rapport_2_20220223.pdf",
+  "244400503_rapport_3_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_rapport_3_20191218.pdf",
+  "244400503_rapport_4_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_rapport_4_20191218.pdf",
+  "244400503_rapport_5_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_rapport_5_20191218.pdf",
+  "244400503_padd_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_padd_20191218.pdf",
+  "244400503_reglement_20260304.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_reglement_20260304.pdf",
+  "244400503_annexe_sanitaire_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_annexe_sanitaire_20191218.pdf",
+  "244400503_convention_PUP_GDF_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_convention_PUP_GDF_20191218.pdf",
+  "244400503_droit_preemption_FDC_NSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_droit_preemption_FDC_NSE_20191218.pdf",
+  "244400503_droit_preemption_FDC_TRE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_droit_preemption_FDC_TRE_20191218.pdf",
+  "244400503_liste_lotissements_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_liste_lotissements_20191218.pdf",
+  "244400503_liste_sup_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_liste_sup_20191218.pdf",
+  "244400503_perimetre_PUP_Bois_Briand_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_PUP_Bois_Briand_20191218.pdf",
+  "244400503_perimetre_PUP_doussiniere_SSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_PUP_doussiniere_SSE_20191218.pdf",
+  "244400503_perimetre_PUP_pancarte_NSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_PUP_pancarte_NSE_20191218.pdf",
+  "244400503_perimetre_etude_G_Sand_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_G_Sand_20191218.pdf",
+  "244400503_perimetre_etude_abord_CTM_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_abord_CTM_20191218.pdf",
+  "244400503_perimetre_etude_forum_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_forum_20191218.pdf",
+  "244400503_perimetre_etude_route_Mazures_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_route_Mazures_20191218.pdf",
+  "244400503_perimetre_etude_rue_Frenouelles_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_rue_Frenouelles_20191218.pdf",
+  "244400503_perimetre_etude_rue_des_bois_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_rue_des_bois_20191218.pdf",
+  "244400503_perimetre_etude_rue_levee_dons_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_rue_levee_dons_20191218.pdf",
+  "244400503_perimetre_etude_rue_stade_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_perimetre_etude_rue_stade_20191218.pdf",
+  "244400503_plan_DPU_CASS_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_CASS_20191218.pdf",
+  "244400503_plan_DPU_FDB_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_FDB_20191218.pdf",
+  "244400503_plan_DPU_GDF_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_GDF_20191218.pdf",
+  "244400503_plan_DPU_HER_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_HER_20191218.pdf",
+  "244400503_plan_DPU_LesTouches_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_LesTouches_20191218.pdf",
+  "244400503_plan_DPU_NDDL_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_NDDL_20191218.pdf",
+  "244400503_plan_DPU_NSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_NSE_20191218.pdf",
+  "244400503_plan_DPU_PetitMars_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_PetitMars_20191218.pdf",
+  "244400503_plan_DPU_SSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_SSE_20191218.pdf",
+  "244400503_plan_DPU_StMarsDuDesert_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_StMarsDuDesert_20191218.pdf",
+  "244400503_plan_DPU_TRE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_TRE_20191218.pdf",
+  "244400503_plan_DPU_VDB_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_DPU_VDB_20191218.pdf",
+  "244400503_plan_pean_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_pean_20191218.pdf",
+  "244400503_plan_perimetre_preemption_M2_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_plan_perimetre_preemption_M2_20191218.pdf",
+  "244400503_secteurs_bruit_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_secteurs_bruit_20191218.pdf",
+  "244400503_secteurs_informations_sols_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_secteurs_informations_sols_20191218.pdf",
+  "244400503_zac_Gergauderie_FDB.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_Gergauderie_FDB.pdf",
+  "244400503_zac_VIRELOUP_TRE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_VIRELOUP_TRE_20191218.pdf",
+  "244400503_zac_belle_etoile_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_belle_etoile_20191218.pdf",
+  "244400503_zac_centre_ville_SSE_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_centre_ville_SSE_20191218.pdf",
+  "244400503_zac_erette_grande_haie_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_erette_grande_haie_20191218.pdf",
+  "244400503_zac_pancarte2_LT_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_pancarte2_LT_20191218.pdf",
+  "244400503_zac_tanerettes_NDDL_20191218.pdf": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/files/244400503_zac_tanerettes_NDDL_20191218.pdf"
+ },
+ "archiveUrl": "https://www.geoportail-urbanisme.gouv.fr/api/document/911b23511c396d7211def55c6bf40bd4/download/244400503_PLUi_20260304.zip",
+ "typeproc": null,
+ "typeproc_title": null,
+ "notEnforceable": null
+}

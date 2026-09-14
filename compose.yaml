@@ -19,6 +19,9 @@ x-backend-env: &backend-env
   EMPRISE_S3_BUCKET: emprise-local
   EMPRISE_SMTP_HOST: mailpit
   EMPRISE_SMTP_PORT: "1025"
+  # Regelauswertung (G2): Schlüssel aus der Shell oder einer .env neben compose.yaml; ohne Schlüssel keine Auswertung
+  EMPRISE_ANTHROPIC_API_KEY: ${EMPRISE_ANTHROPIC_API_KEY:-}
+  EMPRISE_RULES_BUDGET_MONTH_USD: ${EMPRISE_RULES_BUDGET_MONTH_USD:-20}
   FORWARDED_ALLOW_IPS: "*"
 
 services:
