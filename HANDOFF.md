@@ -7,7 +7,7 @@
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat). Commits: R0 (`1f4b646`, `c606387`), G1 (`cc48386`), CI und Images (`50c6bc7`, `dcef07a`, `e00f2a6`), danach Plan D11 und G2 (siehe `git log`). CI mit Backend, Frontend, E2E, Geheimnis- und Image-Scan; Ergebnis des Laufs für G2 in `gh run list` prüfen.
+- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat). Commits: R0 (`1f4b646`, `c606387`), G1 (`cc48386`), CI und Images (`50c6bc7`, `dcef07a`, `e00f2a6`), Plan D11 (`a59911d`), G2 (`91e84f6`). CI für G2 vollständig grün (Backend, Frontend, E2E mit Büro-Anmeldung und eingespieltem Regelwerk, Geheimnis- und Image-Scan).
 - **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; Überwachung, Offsite-Sicherung, Mail offen. Festlegungen [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
 - **Betrieb bis zur Beta:** [deploy/unraid/README.md](deploy/unraid/README.md) (Emprise, Authentik, G1 Abschnitt 9, G2 Abschnitt 10), lokal geprüft, **noch nicht auf Unraid ausgeliefert**.
 - **G1 Grundstück (Plan 3.3):** fertig, lokal intern freigeschaltet. ANNAHMEN G01–G21, [docs/BETRIEB.md](docs/BETRIEB.md) 8.
@@ -85,10 +85,9 @@ Prüfung vom 13.09.2026 (Lösung im Plan in Klammern): S1 Winkeltoleranz (Plan 3
 
 ## 5. Empfohlener nächster Schritt
 
-1. CI-Lauf des G2-Commits prüfen (`gh run list`); bei Fehlern zuerst beheben.
-2. Nutzer trägt den Schlüssel der Claude API ein → 4.1 Punkt 1–2 (echte Auswertung, Referenzmenge, Kosten).
-3. Priorität 1 aus Abschnitt 3 (Authentik-Hostname, E2) → Unraid nach 4.2 Punkt 1–2.
-4. Danach nächstes Modul nach Plan 5: **G3 Baurahmen** (Plan 3.5; Spezifikation 5.3 und 5.9 vor Code vollständig lesen).
+1. Nutzer trägt den Schlüssel der Claude API ein → 4.1 Punkt 1–2 (echte Auswertung, Referenzmenge, Kosten).
+2. Priorität 1 aus Abschnitt 3 (Authentik-Hostname, E2) → Unraid nach 4.2 Punkt 1–2.
+3. Danach nächstes Modul nach Plan 5: **G3 Baurahmen** (Plan 3.5; Spezifikation 5.3 und 5.9 vor Code vollständig lesen).
 
 ## 6. Hinweise und Stolperstellen
 

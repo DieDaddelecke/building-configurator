@@ -33,7 +33,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 **Memory:** `feedback-pruefung-erst-bei-anfrage` um D11 erweitert.
 
-**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: Commit-Entscheidung (Nutzer: nach dem Hand-off committen und pushen), G2 umsetzen. Neu offen: Schlüssel der Claude API, Referenzmenge (HANDOFF 4.1), G2 auf Unraid, Anpassung der Spezifikation S14.
+**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: Commit-Entscheidung (Nutzer: nach dem Hand-off committen und pushen; Commits `a59911d` Plan D11, `91e84f6` G2, CI grün), G2 umsetzen. Neu offen: Schlüssel der Claude API, Referenzmenge (HANDOFF 4.1), G2 auf Unraid, Anpassung der Spezifikation S14.
 
 ---
 
