@@ -1,6 +1,319 @@
 {
   "components": {
     "schemas": {
+      "AddressOut": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "citycode": {
+            "title": "Citycode",
+            "type": "string"
+          },
+          "in_service_area": {
+            "title": "In Service Area",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "postcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postcode"
+          }
+        },
+        "required": [
+          "label",
+          "kind",
+          "lon",
+          "lat",
+          "citycode",
+          "postcode",
+          "city",
+          "in_service_area"
+        ],
+        "title": "AddressOut",
+        "type": "object"
+      },
+      "ArchitectEdgeIn": {
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "street",
+                  "side",
+                  "rear",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ArchitectEdgeIn",
+        "type": "object"
+      },
+      "CommuneOut": {
+        "properties": {
+          "bbox": {
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Bbox",
+            "type": "array"
+          },
+          "imported_at": {
+            "format": "date-time",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "insee": {
+            "title": "Insee",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "release": {
+            "title": "Release",
+            "type": "string"
+          }
+        },
+        "required": [
+          "insee",
+          "name",
+          "bbox",
+          "release",
+          "imported_at"
+        ],
+        "title": "CommuneOut",
+        "type": "object"
+      },
+      "ContextOut": {
+        "description": "Umgebung für den Lageplan: Nachbarparzellen und Gebäude im Umkreis.",
+        "properties": {
+          "buildings": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Buildings",
+            "type": "array"
+          },
+          "parcels": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Parcels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "parcels",
+          "buildings"
+        ],
+        "title": "ContextOut",
+        "type": "object"
+      },
+      "CustomerEdgeIn": {
+        "description": "Kunde: nur Straße oder Nachbar; `null` setzt auf die automatische Einordnung zurück.",
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "street",
+                  "neighbour"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "CustomerEdgeIn",
+        "type": "object"
+      },
+      "EdgeOut": {
+        "properties": {
+          "adjacent": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Adjacent",
+            "type": "array"
+          },
+          "classification_source": {
+            "enum": [
+              "auto",
+              "customer",
+              "architect"
+            ],
+            "title": "Classification Source",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "coords_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Coords Local",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "street",
+              "side",
+              "rear",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kind_auto": {
+            "enum": [
+              "street",
+              "side",
+              "rear",
+              "other"
+            ],
+            "title": "Kind Auto",
+            "type": "string"
+          },
+          "length_m": {
+            "title": "Length M",
+            "type": "number"
+          },
+          "normal_azimuth_deg": {
+            "title": "Normal Azimuth Deg",
+            "type": "number"
+          },
+          "override_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Kind"
+          },
+          "ring": {
+            "title": "Ring",
+            "type": "integer"
+          },
+          "road_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Road Share"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "street_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Street Name"
+          }
+        },
+        "required": [
+          "seq",
+          "ring",
+          "kind",
+          "kind_auto",
+          "override_kind",
+          "classification_source",
+          "confidence",
+          "length_m",
+          "normal_azimuth_deg",
+          "adjacent",
+          "street_name",
+          "road_share",
+          "coords_local"
+        ],
+        "title": "EdgeOut",
+        "type": "object"
+      },
       "FlagIn": {
         "properties": {
           "description": {
@@ -99,6 +412,86 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ImportRequestIn": {
+        "properties": {
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          }
+        },
+        "title": "ImportRequestIn",
+        "type": "object"
+      },
+      "ImportStatusOut": {
+        "properties": {
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "commune_insee",
+          "status",
+          "release",
+          "counts",
+          "error",
+          "created_at",
+          "finished_at"
+        ],
+        "title": "ImportStatusOut",
         "type": "object"
       },
       "JobCreated": {
@@ -248,6 +641,132 @@
         "title": "LegalTextOut",
         "type": "object"
       },
+      "LocalOrigin": {
+        "properties": {
+          "crs": {
+            "const": "EPSG:2154",
+            "default": "EPSG:2154",
+            "title": "Crs",
+            "type": "string"
+          },
+          "e": {
+            "title": "E",
+            "type": "number"
+          },
+          "n": {
+            "title": "N",
+            "type": "number"
+          }
+        },
+        "required": [
+          "e",
+          "n"
+        ],
+        "title": "LocalOrigin",
+        "type": "object"
+      },
+      "LookupIn": {
+        "description": "Genau eine Angabe: Punkt in WGS84, Punkt in Lambert-93 (aus der Adresssuche) oder Parzellennummer.",
+        "properties": {
+          "commune_insee": {
+            "anyOf": [
+              {
+                "pattern": "^(?:\\d{2}|2[AB])\\d{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commune Insee"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "maximum": 51.5,
+                "minimum": 41.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": -5.5,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{1,4}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9A-Za-z]{1,2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "title": "LookupIn",
+        "type": "object"
+      },
+      "LookupOut": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ParcelSummary"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "contained_idu": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contained Idu"
+          },
+          "in_service_area": {
+            "title": "In Service Area",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "in_service_area",
+          "contained_idu",
+          "candidates"
+        ],
+        "title": "LookupOut",
+        "type": "object"
+      },
       "OpsStatus": {
         "properties": {
           "env": {
@@ -296,6 +815,122 @@
         "title": "OpsStatus",
         "type": "object"
       },
+      "ParcelOut": {
+        "properties": {
+          "accuracy_class": {
+            "title": "Accuracy Class",
+            "type": "string"
+          },
+          "area_geometric_m2": {
+            "title": "Area Geometric M2",
+            "type": "number"
+          },
+          "area_official_m2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Official M2"
+          },
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "idu": {
+            "title": "Idu",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "release": {
+            "title": "Release",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idu",
+          "commune_insee",
+          "prefix",
+          "section",
+          "number",
+          "area_official_m2",
+          "area_geometric_m2",
+          "release",
+          "accuracy_class"
+        ],
+        "title": "ParcelOut",
+        "type": "object"
+      },
+      "ParcelSummary": {
+        "properties": {
+          "area_official_m2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Official M2"
+          },
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          },
+          "geometry_geojson": {
+            "additionalProperties": true,
+            "title": "Geometry Geojson",
+            "type": "object"
+          },
+          "idu": {
+            "title": "Idu",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idu",
+          "commune_insee",
+          "prefix",
+          "section",
+          "number",
+          "area_official_m2",
+          "distance_m",
+          "geometry_geojson"
+        ],
+        "title": "ParcelSummary",
+        "type": "object"
+      },
       "ProjectOut": {
         "properties": {
           "created_at": {
@@ -319,6 +954,71 @@
           "created_at"
         ],
         "title": "ProjectOut",
+        "type": "object"
+      },
+      "RiskOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "low",
+              "moderate",
+              "high",
+              "present",
+              "unknown"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "address",
+              "commune"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "level",
+          "scope",
+          "label"
+        ],
+        "title": "RiskOut",
+        "type": "object"
+      },
+      "RisksOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RiskOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "items"
+        ],
+        "title": "RisksOut",
         "type": "object"
       },
       "Role": {
@@ -362,6 +1062,226 @@
         "title": "SessionInfo",
         "type": "object"
       },
+      "SiteIn": {
+        "properties": {
+          "parcel_idus": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Parcel Idus",
+            "type": "array"
+          }
+        },
+        "required": [
+          "parcel_idus"
+        ],
+        "title": "SiteIn",
+        "type": "object"
+      },
+      "SiteOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "area_official_m2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Official M2"
+          },
+          "binding": {
+            "title": "Binding",
+            "type": "boolean"
+          },
+          "context": {
+            "$ref": "#/components/schemas/ContextOut"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeOut"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "garden_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Garden Azimuth Deg"
+          },
+          "local_origin": {
+            "$ref": "#/components/schemas/LocalOrigin"
+          },
+          "main_street_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Street Seq"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "outline_geojson": {
+            "additionalProperties": true,
+            "title": "Outline Geojson",
+            "type": "object"
+          },
+          "outline_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Outline Local",
+            "type": "array"
+          },
+          "parcels": {
+            "items": {
+              "$ref": "#/components/schemas/ParcelOut"
+            },
+            "title": "Parcels",
+            "type": "array"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "risks": {
+            "$ref": "#/components/schemas/RisksOut"
+          },
+          "street_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Street Azimuth Deg"
+          },
+          "terrain": {
+            "$ref": "#/components/schemas/TerrainOut"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "engine_version",
+          "updated_at",
+          "area_m2",
+          "area_official_m2",
+          "local_origin",
+          "outline_local",
+          "outline_geojson",
+          "parcels",
+          "edges",
+          "main_street_seq",
+          "street_azimuth_deg",
+          "garden_azimuth_deg",
+          "binding",
+          "warnings",
+          "notices",
+          "terrain",
+          "risks",
+          "context"
+        ],
+        "title": "SiteOut",
+        "type": "object"
+      },
+      "SiteReviewItem": {
+        "properties": {
+          "customer_corrections": {
+            "title": "Customer Corrections",
+            "type": "integer"
+          },
+          "parcel_idus": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Parcel Idus",
+            "type": "array"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "parcel_idus",
+          "revision",
+          "warnings",
+          "customer_corrections",
+          "updated_at"
+        ],
+        "title": "SiteReviewItem",
+        "type": "object"
+      },
       "StaffInfo": {
         "properties": {
           "display_name": {
@@ -398,6 +1318,73 @@
           "roles"
         ],
         "title": "StaffInfo",
+        "type": "object"
+      },
+      "TerrainOut": {
+        "properties": {
+          "flat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flat"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "reference_altitude_ngf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Altitude Ngf"
+          },
+          "samples": {
+            "default": 0,
+            "title": "Samples",
+            "type": "integer"
+          },
+          "slope_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slope Percent"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "TerrainOut",
         "type": "object"
       },
       "ValidationError": {
@@ -510,6 +1497,76 @@
         "summary": "Ready",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/admin/cadastre/imports": {
+      "get": {
+        "description": "Letzter Import je Gemeinde: Stand, Anzahl, Fehler (Plan 6.8 „Alter der Katasterdaten“).",
+        "operationId": "cadastre_imports_api_v1_admin_cadastre_imports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportStatusOut"
+                  },
+                  "title": "Response Cadastre Imports Api V1 Admin Cadastre Imports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cadastre Imports",
+        "tags": [
+          "site"
+        ]
+      },
+      "post": {
+        "operationId": "start_cadastre_import_api_v1_admin_cadastre_imports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": "Response Start Cadastre Import Api V1 Admin Cadastre Imports Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Cadastre Import",
+        "tags": [
+          "site"
         ]
       }
     },
@@ -674,6 +1731,264 @@
         ]
       }
     },
+    "/api/v1/admin/projects/{project_id}/site": {
+      "get": {
+        "operationId": "get_site_staff_api_v1_admin_projects__project_id__site_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Site Staff",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/site/edges/confirm": {
+      "post": {
+        "operationId": "confirm_edges_api_v1_admin_projects__project_id__site_edges_confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Edges",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/site/edges/{seq}": {
+      "patch": {
+        "operationId": "patch_edge_architect_api_v1_admin_projects__project_id__site_edges__seq__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "title": "Seq",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchitectEdgeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Edge Architect",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/admin/sites/enrich-retry": {
+      "post": {
+        "description": "Nach einem Ausfall von Höhendienst oder Géorisques: nicht abgefragte Grundstücke erneut anstoßen.",
+        "operationId": "retry_site_enrichment_api_v1_admin_sites_enrich_retry_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Retry Site Enrichment Api V1 Admin Sites Enrich Retry Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Retry Site Enrichment",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/admin/sites/review": {
+      "get": {
+        "description": "Unbestätigte Kundenkorrekturen; mit `scope=all` zusätzlich unsichere Einordnungen und Sonderfälle.",
+        "operationId": "site_review_queue_api_v1_admin_sites_review_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "corrections",
+              "enum": [
+                "corrections",
+                "all"
+              ],
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SiteReviewItem"
+                  },
+                  "title": "Response Site Review Queue Api V1 Admin Sites Review Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Site Review Queue",
+        "tags": [
+          "site"
+        ]
+      }
+    },
     "/api/v1/auth/staff/login": {
       "get": {
         "operationId": "staff_login_api_v1_auth_staff_login_get",
@@ -735,6 +2050,80 @@
         ]
       }
     },
+    "/api/v1/cadastre/parcels": {
+      "get": {
+        "description": "Parzellen im Kartenausschnitt als GeoJSON (WGS84), höchstens 4000.",
+        "operationId": "cadastre_parcels_api_v1_cadastre_parcels_get",
+        "parameters": [
+          {
+            "description": "min_lon,min_lat,max_lon,max_lat",
+            "in": "query",
+            "name": "bbox",
+            "required": true,
+            "schema": {
+              "description": "min_lon,min_lat,max_lon,max_lat",
+              "pattern": "^-?\\d+(\\.\\d+)?(,-?\\d+(\\.\\d+)?){3}$",
+              "title": "Bbox",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cadastre Parcels Api V1 Cadastre Parcels Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cadastre Parcels",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/cadastre/service-area": {
+      "get": {
+        "description": "Gemeinden mit importiertem Kataster; außerhalb gibt es keine Parzellenwahl (Plan 3.3).",
+        "operationId": "cadastre_service_area_api_v1_cadastre_service_area_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommuneOut"
+                  },
+                  "title": "Response Cadastre Service Area Api V1 Cadastre Service Area Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cadastre Service Area",
+        "tags": [
+          "site"
+        ]
+      }
+    },
     "/api/v1/flags": {
       "get": {
         "description": "Nur die für die anfragende Person eingeschalteten Flags; ausgeschaltete bleiben unsichtbar.",
@@ -758,6 +2147,55 @@
         "summary": "My Flags",
         "tags": [
           "flags"
+        ]
+      }
+    },
+    "/api/v1/geocode": {
+      "get": {
+        "description": "Adressvorschläge der Géoplateforme mit Cache (Plan 3.3 Schritt 1).",
+        "operationId": "geocode_api_v1_geocode_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 3,
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AddressOut"
+                  },
+                  "title": "Response Geocode Api V1 Geocode Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Geocode",
+        "tags": [
+          "site"
         ]
       }
     },
@@ -922,6 +2360,233 @@
         "summary": "Get Project",
         "tags": [
           "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/parcels/lookup": {
+      "post": {
+        "operationId": "lookup_parcels_api_v1_projects__project_id__parcels_lookup_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lookup Parcels",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/site": {
+      "get": {
+        "operationId": "get_site_api_v1_projects__project_id__site_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Site",
+        "tags": [
+          "site"
+        ]
+      },
+      "put": {
+        "description": "Grundstück aus einer oder mehreren zusammenhängenden Parzellen bilden (Spez. 5.1.3).",
+        "operationId": "put_site_api_v1_projects__project_id__site_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Site",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/site/edges/{seq}": {
+      "patch": {
+        "description": "Kunde ordnet eine Kante als Straße oder Nachbar ein; nicht bindend bis zur Bestätigung (Plan 3.3).",
+        "operationId": "patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seq",
+            "required": true,
+            "schema": {
+              "title": "Seq",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerEdgeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Edge Customer",
+        "tags": [
+          "site"
         ]
       }
     },

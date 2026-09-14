@@ -3,13 +3,13 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// Entwicklung: API und Web-Container laufen per docker compose; /api geht an die API
+// Entwicklung: API und Web-Container laufen per docker compose; /api geht an die API (EMPRISE_API_URL überschreibt)
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    port: Number(process.env.PORT ?? 5173),
     proxy: {
-      "/api": { target: "http://localhost:8000", xfwd: true },
+      "/api": { target: process.env.EMPRISE_API_URL ?? "http://localhost:8000", xfwd: true },
     },
   },
   build: {

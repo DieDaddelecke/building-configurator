@@ -82,3 +82,24 @@ def test_append_only_tables_reject_update_and_delete(
         with pytest.raises(DBAPIError):
             db_session.execute(text(statement))
         db_session.rollback()
+
+
+def test_cli_flag_set_for_role_with_audit(db_session: Any) -> None:
+    """Freischaltung ohne Büro-Anmeldung, z. B. auf Unraid (Plan 4.2, BETRIEB.md 8)."""
+    import argparse
+
+    from app.cli import cmd_flag_set
+    from app.platform.models import AuditLog, FeatureFlag
+
+    cmd_flag_set(
+        argparse.Namespace(key="site_selection", role=["architect"], all=False, off=False, description="G1")
+    )
+    db_session.expire_all()
+    flag = db_session.get(FeatureFlag, "site_selection")
+    assert (flag.enabled_for_all, flag.enabled_roles, flag.description) == (False, ["architect"], "G1")
+    cmd_flag_set(argparse.Namespace(key="site_selection", role=None, all=False, off=True, description=None))
+    db_session.expire_all()
+    flag = db_session.get(FeatureFlag, "site_selection")
+    assert (flag.enabled_for_all, flag.enabled_roles) == (False, [])
+    actions = [a.action for a in db_session.query(AuditLog).filter(AuditLog.entity_id == "site_selection")]
+    assert actions == ["feature_flag.put", "feature_flag.put"]

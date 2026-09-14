@@ -88,6 +88,10 @@ jobs:
           docker compose logs --no-color --tail 100; exit 1
       - name: Testkonto freischalten
         run: docker compose exec -T api python -m app.cli staff-add ops@emprise.local ops
+      - name: Kataster-Ausschnitt importieren (G1)
+        run: |
+          docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures
+          docker compose exec -T api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:

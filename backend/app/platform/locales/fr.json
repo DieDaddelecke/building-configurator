@@ -11,6 +11,17 @@
   "problem.service_unavailable": "Service temporairement indisponible",
   "problem.unknown_flag": "Fonctionnalité inconnue",
   "problem.oidc_not_configured": "Connexion du bureau non configurée",
+  "problem.feature_disabled": "Cette fonctionnalité n'est pas encore disponible",
+  "problem.bbox_too_large": "Zone de carte trop grande, veuillez zoomer",
+  "problem.geocoding_unavailable": "Recherche d'adresse momentanément indisponible, sélectionnez la parcelle sur la carte",
+  "problem.parcel_not_found": "Parcelle introuvable dans le cadastre importé",
+  "problem.site_not_contiguous": "Les parcelles choisies ne sont pas contiguës",
+  "problem.site_not_found": "Aucun terrain constitué pour ce projet",
+  "problem.edge_not_found": "Limite introuvable",
+  "problem.edge_not_correctable": "Cette limite ne peut pas être modifiée ici",
+  "problem.edge_confirmed_by_architect": "Cette limite a été confirmée par l'architecte",
+  "problem.revision_conflict": "Le terrain a été modifié entre-temps, veuillez recharger",
+  "problem.invalid_if_match": "En-tête If-Match invalide",
   "mail.platform_test.subject": "Emprise – e-mail de test",
   "mail.platform_test.body": "Bonjour,\n\nCet e-mail confirme que l'envoi depuis la plateforme Emprise fonctionne.\nEnvironnement : {env}\n\nEmprise"
 }

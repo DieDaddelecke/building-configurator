@@ -56,6 +56,14 @@ export function BueroLayout() {
                   {t("office.nav.home")}
                 </NavLink>
               </li>
+              <li>
+                <NavLink
+                  to="/buero/grundstuecke"
+                  className={({ isActive }) => `block px-3 py-2 border-l-2 ${isActive ? "bd-accent t-ink font-medium" : "border-transparent t-mute"}`}
+                >
+                  {t("office.nav.sites")}
+                </NavLink>
+              </li>
             </ul>
           </nav>
           <main className="anim-seite">

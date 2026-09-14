@@ -4,6 +4,47 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 14.09.2026 – G1 Grundstück (Session `building-configurator-a7`, parallel zu R0/Unraid)
+
+**Neu**
+- `backend/app/site/` – Modul G1: Fachlogik (`domain/`: Grundstück bilden, Kanten zerlegen und einordnen mit Nachbarparzellen und BD-TOPO-Straßenachsen, Gelände), Modelle, Import je Gemeinde mit Plausibilitätsprüfung (`cadastre_import.py`), Anwendungsfälle, API, Jobs `site_enrich`, `cadastre_import` (wöchentlich), `site_housekeeping`.
+- `backend/app/integrations/` – `http.py`, `geoplateforme.py` (Geokodierung, Höhen), `georisques.py`, `etalab_cadastre.py`, `ign_bdtopo.py`.
+- `backend/migrations/versions/0002_site.py` – `ref_*`, `site`, `parcel`, `site_edge`, `terrain`, `site_risk`, `geocode_cache`.
+- `backend/tests/` – `unit/test_site_domain.py`, `unit/test_site_integrations.py`, `integration/test_site.py`, `fixtures/site/` (echte Daten Treillières mit README).
+- `frontend/src/components/karte/Katasterkarte.tsx` (MapLibre 6), `frontend/src/site/` (Lageplan, Kantenliste, Parzellenwahl, Prüfansicht), `frontend/src/api/site.ts`, `frontend/src/pages/grundstueck/`, `frontend/src/pages/buero/Grundstuecke.tsx`, Tests; `frontend/e2e/site.spec.ts`.
+
+**Geändert**
+- `backend/app/cli.py` – Befehle `cadastre-import`, `flag-set`.
+- `backend/app/config.py`, `main.py`, `registry.py`, `platform/locales/*.json`, `platform/logging.py` (HTTP-Bibliotheken ohne URL-Logs), `migrations/env.py`, `pyproject.toml`/`uv.lock` (shapely, hypothesis), `openapi.json`, `tests/conftest.py`, `tests/integration/test_access_policies.py`, `test_flags_legal_audit.py`.
+- `frontend/` – `App.tsx`, `Start.tsx` (Einstieg hinter Flag), `BueroLayout.tsx`, `BueroStart.tsx`, `PlanSvg.tsx`, `index.css` (`.field`), `i18n/*.json`, `vite.config.ts` (`EMPRISE_API_URL`), `package.json`/`pnpm-lock.yaml` (maplibre-gl, @types/geojson), `schema.d.ts`, `Caddyfile` (CSP: `data.geopf.fr`, `worker-src 'self'`).
+- `.github/workflows/ci.yml` – E2E importiert Kataster-Ausschnitt.
+- `docs/ANNAHMEN.md` – Abschnitt G1 (G01–G21). `docs/BETRIEB.md` – Abschnitt 8. `README.md` – G1 lokal starten, E2E-Voraussetzung. `deploy/unraid/README.md` – `flag-set` in Abschnitt 9.
+- `UMSETZUNGSPLAN.md` – 3.3 Abnahme ohne Testmenge, 3.6 Grenzprüfung bei Anfrage, 8 Testmenge gestrichen, 9 D1 und D2 entschieden.
+- `AGENTS.md` – Stand G1 und Entscheidungen.
+
+**Entschieden**
+- D1 – Bis zur Beta nur Treillières (44209).
+- D2 – G1 intern für die Rolle `architect` freigeschaltet; Beta und öffentlich offen.
+- Einordnung von Lotissement-Straßen (eigene Parzelle = Straße), Eck- und Pfeifenstielgrundstücken bestätigt.
+- Keine Abnahme-Testmenge von 40 Grundstücken; der Architekt prüft die Grenzen erst beim Eingang einer Anfrage (Modul A).
+- Commits getrennt nach R0-Nacharbeiten (`c606387`) und G1; Push offen, weil noch kein Remote existiert.
+
+**Ohne Dateiänderung**
+- Externe Dienste am 14.09.2026 live geprüft: Géoplateforme (Geokodierung, Höhen, WMTS, WFS BD TOPO), Etalab je Gemeinde (Stand 2026-06-01), Géorisques v1 ohne Token, v2 mit Token (ANNAHMEN G-Einleitung, G12, G13).
+- Echte Daten: Regel ohne Straßenachsen versagt bei Lotissements; Stichprobe 300 Parzellen: Eckgrundstücke 38 % → 17 % nach neuer Regel, zwei Zeichnungsraster durchgesehen (G04, G05).
+- Leistung lokal: Parzelle am Punkt p95 17 ms, Grundstück bilden p95 98 ms, Import Treillières 12 s (G20).
+- Browsertest und E2E fanden Fehler: Parzellenwahl verlor Eingaben bei Projektanlage, leere Umgebungsringe im Lageplan, Koordinaten in HTTP-Logs; behoben. Selbstprüfung: Doppelklick beim ersten Grundstück, unbegrenzter Adress-Cache, verrauschte Büro-Prüfliste; behoben.
+- Lizenzen und Abfragegrenzen der Géoplateforme (G13, G17).
+- Lokaler Stack `emprise` mit G1 neu gebaut, Treillières importiert, `site_selection` für `architect` gesetzt, im Browser geprüft.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+
+**Memory:** `feedback-pruefung-erst-bei-anfrage` angelegt.
+
+**Hand-off:** HANDOFF.md auf Basis der Fassung der R0-Session neu geschrieben; erledigt aus der vorigen Fassung: D1, G1 abschließen, Prüfung der Kartendienst-Bedingungen (HANDOFF 4.4 Punkt 2).
+
+---
+
 ## 14.09.2026 – R0 Plattform, Betrieb auf Unraid mit Authentik
 
 **Neu**

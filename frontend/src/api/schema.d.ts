@@ -61,6 +61,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/cadastre/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cadastre Imports
+         * @description Letzter Import je Gemeinde: Stand, Anzahl, Fehler (Plan 6.8 „Alter der Katasterdaten“).
+         */
+        get: operations["cadastre_imports_api_v1_admin_cadastre_imports_get"];
+        put?: never;
+        /** Start Cadastre Import */
+        post: operations["start_cadastre_import_api_v1_admin_cadastre_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/flags": {
         parameters: {
             query?: never;
@@ -149,6 +170,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/projects/{project_id}/site": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Site Staff */
+        get: operations["get_site_staff_api_v1_admin_projects__project_id__site_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/site/edges/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Edges */
+        post: operations["confirm_edges_api_v1_admin_projects__project_id__site_edges_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/site/edges/{seq}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Edge Architect */
+        patch: operations["patch_edge_architect_api_v1_admin_projects__project_id__site_edges__seq__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/sites/enrich-retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry Site Enrichment
+         * @description Nach einem Ausfall von Höhendienst oder Géorisques: nicht abgefragte Grundstücke erneut anstoßen.
+         */
+        post: operations["retry_site_enrichment_api_v1_admin_sites_enrich_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/sites/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Site Review Queue
+         * @description Unbestätigte Kundenkorrekturen; mit `scope=all` zusätzlich unsichere Einordnungen und Sonderfälle.
+         */
+        get: operations["site_review_queue_api_v1_admin_sites_review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/staff/login": {
         parameters: {
             query?: never;
@@ -183,6 +295,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cadastre/parcels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cadastre Parcels
+         * @description Parzellen im Kartenausschnitt als GeoJSON (WGS84), höchstens 4000.
+         */
+        get: operations["cadastre_parcels_api_v1_cadastre_parcels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cadastre/service-area": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cadastre Service Area
+         * @description Gemeinden mit importiertem Kataster; außerhalb gibt es keine Parzellenwahl (Plan 3.3).
+         */
+        get: operations["cadastre_service_area_api_v1_cadastre_service_area_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flags": {
         parameters: {
             query?: never;
@@ -195,6 +347,26 @@ export interface paths {
          * @description Nur die für die anfragende Person eingeschalteten Flags; ausgeschaltete bleiben unsichtbar.
          */
         get: operations["my_flags_api_v1_flags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/geocode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Geocode
+         * @description Adressvorschläge der Géoplateforme mit Cache (Plan 3.3 Schritt 1).
+         */
+        get: operations["geocode_api_v1_geocode_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -274,6 +446,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/parcels/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lookup Parcels */
+        post: operations["lookup_parcels_api_v1_projects__project_id__parcels_lookup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/site": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Site */
+        get: operations["get_site_api_v1_projects__project_id__site_get"];
+        /**
+         * Put Site
+         * @description Grundstück aus einer oder mehreren zusammenhängenden Parzellen bilden (Spez. 5.1.3).
+         */
+        put: operations["put_site_api_v1_projects__project_id__site_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/site/edges/{seq}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Edge Customer
+         * @description Kunde ordnet eine Kante als Straße oder Nachbar ein; nicht bindend bis zur Bestätigung (Plan 3.3).
+         */
+        patch: operations["patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch"];
+        trace?: never;
+    };
     "/api/v1/session": {
         parameters: {
             query?: never;
@@ -298,6 +528,107 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AddressOut */
+        AddressOut: {
+            /** City */
+            city: string;
+            /** Citycode */
+            citycode: string;
+            /** In Service Area */
+            in_service_area: boolean;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Postcode */
+            postcode: string | null;
+        };
+        /** ArchitectEdgeIn */
+        ArchitectEdgeIn: {
+            /** Kind */
+            kind: ("street" | "side" | "rear" | "other") | null;
+        };
+        /** CommuneOut */
+        CommuneOut: {
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Insee */
+            insee: string;
+            /** Name */
+            name: string;
+            /** Release */
+            release: string;
+        };
+        /**
+         * ContextOut
+         * @description Umgebung für den Lageplan: Nachbarparzellen und Gebäude im Umkreis.
+         */
+        ContextOut: {
+            /** Buildings */
+            buildings: number[][][];
+            /** Parcels */
+            parcels: number[][][];
+        };
+        /**
+         * CustomerEdgeIn
+         * @description Kunde: nur Straße oder Nachbar; `null` setzt auf die automatische Einordnung zurück.
+         */
+        CustomerEdgeIn: {
+            /** Kind */
+            kind: ("street" | "neighbour") | null;
+        };
+        /** EdgeOut */
+        EdgeOut: {
+            /** Adjacent */
+            adjacent: string[];
+            /**
+             * Classification Source
+             * @enum {string}
+             */
+            classification_source: "auto" | "customer" | "architect";
+            /** Confidence */
+            confidence: number;
+            /** Coords Local */
+            coords_local: number[][];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "street" | "side" | "rear" | "other";
+            /**
+             * Kind Auto
+             * @enum {string}
+             */
+            kind_auto: "street" | "side" | "rear" | "other";
+            /** Length M */
+            length_m: number;
+            /** Normal Azimuth Deg */
+            normal_azimuth_deg: number;
+            /** Override Kind */
+            override_kind: string | null;
+            /** Ring */
+            ring: number;
+            /** Road Share */
+            road_share: number | null;
+            /** Seq */
+            seq: number;
+            /** Street Name */
+            street_name: string | null;
+        };
         /** FlagIn */
         FlagIn: {
             /**
@@ -345,6 +676,36 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImportRequestIn */
+        ImportRequestIn: {
+            /**
+             * Force
+             * @default false
+             */
+            force: boolean;
+        };
+        /** ImportStatusOut */
+        ImportStatusOut: {
+            /** Commune Insee */
+            commune_insee: string;
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error */
+            error: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Release */
+            release: string | null;
+            /** Status */
+            status: string;
         };
         /** JobCreated */
         JobCreated: {
@@ -413,6 +774,44 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** LocalOrigin */
+        LocalOrigin: {
+            /**
+             * Crs
+             * @default EPSG:2154
+             * @constant
+             */
+            crs: "EPSG:2154";
+            /** E */
+            e: number;
+            /** N */
+            n: number;
+        };
+        /**
+         * LookupIn
+         * @description Genau eine Angabe: Punkt in WGS84, Punkt in Lambert-93 (aus der Adresssuche) oder Parzellennummer.
+         */
+        LookupIn: {
+            /** Commune Insee */
+            commune_insee?: string | null;
+            /** Lat */
+            lat?: number | null;
+            /** Lon */
+            lon?: number | null;
+            /** Number */
+            number?: string | null;
+            /** Section */
+            section?: string | null;
+        };
+        /** LookupOut */
+        LookupOut: {
+            /** Candidates */
+            candidates: components["schemas"]["ParcelSummary"][];
+            /** Contained Idu */
+            contained_idu: string | null;
+            /** In Service Area */
+            in_service_area: boolean;
+        };
         /** OpsStatus */
         OpsStatus: {
             /** Env */
@@ -430,6 +829,48 @@ export interface components {
             /** Storage Ok */
             storage_ok: boolean;
         };
+        /** ParcelOut */
+        ParcelOut: {
+            /** Accuracy Class */
+            accuracy_class: string;
+            /** Area Geometric M2 */
+            area_geometric_m2: number;
+            /** Area Official M2 */
+            area_official_m2: number | null;
+            /** Commune Insee */
+            commune_insee: string;
+            /** Idu */
+            idu: string;
+            /** Number */
+            number: string;
+            /** Prefix */
+            prefix: string;
+            /** Release */
+            release: string;
+            /** Section */
+            section: string;
+        };
+        /** ParcelSummary */
+        ParcelSummary: {
+            /** Area Official M2 */
+            area_official_m2: number | null;
+            /** Commune Insee */
+            commune_insee: string;
+            /** Distance M */
+            distance_m: number;
+            /** Geometry Geojson */
+            geometry_geojson: {
+                [key: string]: unknown;
+            };
+            /** Idu */
+            idu: string;
+            /** Number */
+            number: string;
+            /** Prefix */
+            prefix: string;
+            /** Section */
+            section: string;
+        };
         /** ProjectOut */
         ProjectOut: {
             /**
@@ -445,6 +886,33 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** RiskOut */
+        RiskOut: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "low" | "moderate" | "high" | "present" | "unknown";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "address" | "commune";
+        };
+        /** RisksOut */
+        RisksOut: {
+            /** Items */
+            items: components["schemas"]["RiskOut"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ok" | "unavailable";
+        };
         /**
          * Role
          * @enum {string}
@@ -456,6 +924,79 @@ export interface components {
             project_id: string | null;
             staff: components["schemas"]["StaffInfo"] | null;
         };
+        /** SiteIn */
+        SiteIn: {
+            /** Parcel Idus */
+            parcel_idus: string[];
+        };
+        /** SiteOut */
+        SiteOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Area Official M2 */
+            area_official_m2: number | null;
+            /** Binding */
+            binding: boolean;
+            context: components["schemas"]["ContextOut"];
+            /** Edges */
+            edges: components["schemas"]["EdgeOut"][];
+            /** Engine Version */
+            engine_version: string;
+            /** Garden Azimuth Deg */
+            garden_azimuth_deg: number | null;
+            local_origin: components["schemas"]["LocalOrigin"];
+            /** Main Street Seq */
+            main_street_seq: number | null;
+            /** Notices */
+            notices: string[];
+            /** Outline Geojson */
+            outline_geojson: {
+                [key: string]: unknown;
+            };
+            /** Outline Local */
+            outline_local: number[][][];
+            /** Parcels */
+            parcels: components["schemas"]["ParcelOut"][];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Revision */
+            revision: number;
+            risks: components["schemas"]["RisksOut"];
+            /** Street Azimuth Deg */
+            street_azimuth_deg: number | null;
+            terrain: components["schemas"]["TerrainOut"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** SiteReviewItem */
+        SiteReviewItem: {
+            /** Customer Corrections */
+            customer_corrections: number;
+            /** Parcel Idus */
+            parcel_idus: string[];
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Warnings */
+            warnings: string[];
+        };
         /** StaffInfo */
         StaffInfo: {
             /** Display Name */
@@ -466,6 +1007,27 @@ export interface components {
             id: string;
             /** Roles */
             roles: string[];
+        };
+        /** TerrainOut */
+        TerrainOut: {
+            /** Flat */
+            flat?: boolean | null;
+            /** Method */
+            method?: string | null;
+            /** Reference Altitude Ngf */
+            reference_altitude_ngf?: number | null;
+            /**
+             * Samples
+             * @default 0
+             */
+            samples: number;
+            /** Slope Percent */
+            slope_percent?: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "ok" | "unavailable";
         };
         /** ValidationError */
         ValidationError: {
@@ -547,6 +1109,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    cadastre_imports_api_v1_admin_cadastre_imports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportStatusOut"][];
+                };
+            };
+        };
+    };
+    start_cadastre_import_api_v1_admin_cadastre_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -679,6 +1296,161 @@ export interface operations {
             };
         };
     };
+    get_site_staff_api_v1_admin_projects__project_id__site_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_edges_api_v1_admin_projects__project_id__site_edges_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_edge_architect_api_v1_admin_projects__project_id__site_edges__seq__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
+            path: {
+                project_id: string;
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchitectEdgeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_site_enrichment_api_v1_admin_sites_enrich_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+        };
+    };
+    site_review_queue_api_v1_admin_sites_review_get: {
+        parameters: {
+            query?: {
+                scope?: "corrections" | "all";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteReviewItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     staff_login_api_v1_auth_staff_login_get: {
         parameters: {
             query?: {
@@ -728,6 +1500,60 @@ export interface operations {
             };
         };
     };
+    cadastre_parcels_api_v1_cadastre_parcels_get: {
+        parameters: {
+            query: {
+                /** @description min_lon,min_lat,max_lon,max_lat */
+                bbox: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cadastre_service_area_api_v1_cadastre_service_area_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommuneOut"][];
+                };
+            };
+        };
+    };
     my_flags_api_v1_flags_get: {
         parameters: {
             query?: never;
@@ -746,6 +1572,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: boolean;
                     };
+                };
+            };
+        };
+    };
+    geocode_api_v1_geocode_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -850,6 +1707,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_parcels_api_v1_projects__project_id__parcels_lookup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LookupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LookupOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_site_api_v1_projects__project_id__site_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_site_api_v1_projects__project_id__site_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SiteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
+            path: {
+                seq: number;
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerEdgeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
                 };
             };
             /** @description Validation Error */

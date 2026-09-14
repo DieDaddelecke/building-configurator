@@ -52,6 +52,10 @@ body { background: var(--paper); margin: 0; }
 .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-tint); }
 .link { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .karte { border: 1px solid var(--line); background: var(--sheet); }
+.field { width: 100%; background: var(--sheet); border: 1px solid var(--line-strong); color: var(--ink); padding: .65rem .8rem; font-size: 15px; }
+.field:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 1px var(--accent); }
+.field[aria-invalid="true"] { border-color: var(--alert); }
+.field:disabled { color: var(--faint); background: var(--paper); }
 .emp :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes einblenden { from { opacity: 0 } to { opacity: 1 } }
 .anim-seite { animation: einblenden .35s ease-out both; }

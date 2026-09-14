@@ -167,7 +167,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Schwierige Fälle** (Pflicht in der Testmenge): Eckgrundstück; Pfeifenstielgrundstück (terrain en drapeau), bei dem die Regel aus Spez. 5.1.4 die Kanten des hinterliegenden Teils nicht eindeutig einordnen kann – die richtige Einordnung hängt vom Lexique des PLU ab, deshalb niedrige Konfidenz und Bestätigung durch den Architekten; Privatweg als eigene Parzelle; mehrere Parzellen; Flächenabweichung über 3 %.
 
-**Abnahme:** Testmenge von 40 realen Grundstücken aus dem Einzugsgebiet mit von Hand bestimmten Kantenarten: mindestens 90 % der Kanten automatisch richtig, jede Kante korrigierbar. Parzellensuche p95 unter 500 ms. Simulierter Ausfall der Géoplateforme: Parzellenwahl per Klick funktioniert weiter.
+**Abnahme:** Jede Kante korrigierbar. Parzellensuche p95 unter 500 ms. Simulierter Ausfall der Géoplateforme: Parzellenwahl per Klick funktioniert weiter. ~~Testmenge von 40 realen Grundstücken mit von Hand bestimmten Kantenarten, mindestens 90 % automatisch richtig~~ – **entfällt (Entscheidung 14.09.2026, Annahme G21):** Die Kanten werden automatisch eingeordnet; der Architekt prüft sie erst, wenn eine Anfrage eingeht (Modul A).
 
 **Größe:** M (3–5 PW).
 
@@ -243,6 +243,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 - Snapshot aus Grundstück und Baurahmen mit Bindungsstatus (oder ohne Baurahmen, siehe 2.1); Vorgangsnummer aus Datenbank-Sequenz
 - Mail an das Büro mit Steckbrief, Kopie an den Kunden, Zugangslink zum Projekt
 - Anfragenliste im Büro mit Status `neu`, `in Bearbeitung`, `beantwortet`, `geschlossen`
+- Prüfung der Grundstücksgrenzen (G1) durch den Architekten beim Eingang der Anfrage: automatische Einordnung und unbestätigte Kundenkorrekturen hindern das Absenden nicht; die Büro-Prüfliste zeigt dann nur Projekte mit Anfrage (Entscheidung 14.09.2026, Annahme G21)
 - Export und Löschung für Kunden (Spez. 10.2)
 - Hinweis in der Antwortvorlage des Büros: verbindliche Auskunft über ein Certificat d'urbanisme bei der Gemeinde
 
@@ -593,7 +594,7 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | R0 | Domain und Maildomain, Hosting-Vertrag mit AVV, Repository, Zugänge, Betriebsverantwortung benennen | Emprise |
 | R1 | Einzugsgebiet und Pilotgemeinden festlegen | Emprise und Büro |
 | R1 | Regelwerke aller Zonen der Pilotgemeinden erfassen und freigeben; Vergleichshöhen hinterlegen | Büro (`rules_admin`) |
-| R1 | Testmenge 40 Grundstücke mit Kantenarten; 10 Steckbriefe fachlich prüfen | Büro |
+| R1 | 10 Steckbriefe fachlich prüfen (die Testmenge von 40 Grundstücken für G1 entfällt, Annahme G21) | Büro |
 | R1 | Rechtstexte, Einwilligungs- und Hinweistexte auf Französisch und Deutsch | Emprise mit Rechtsberatung |
 | R1 | Ablauf der Anfragebearbeitung im Büro mit Antwortfrist; Antwortvorlagen | Büro |
 | R2 | Typdatenblätter und DXF-Umrisse aller Typen | Büro |
@@ -609,8 +610,8 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 
 | Nr. | Frage | Vorschlag |
 |---|---|---|
-| D1 | Einzugsgebiet und Pilotgemeinden | Gemeinden um Treillières innerhalb einer Klimazone (Loire-Atlantique: H2b) |
-| D2 | R1 öffentlich oder nur intern | Erst intern, dann Beta, dann öffentlich (4.2) |
+| D1 | Einzugsgebiet und Pilotgemeinden | Gemeinden um Treillières innerhalb einer Klimazone (Loire-Atlantique: H2b). **Entschieden 14.09.2026:** bis zur Beta nur Treillières (44209); weitere Gemeinden vor der Beta neu entscheiden (Annahme G03) |
+| D2 | R1 öffentlich oder nur intern | Erst intern, dann Beta, dann öffentlich (4.2). **Entschieden 14.09.2026:** G1 intern für die Rolle `architect` freigeschaltet; Beta und öffentlich offen |
 | D3 | Hosting-Anbieter (Spez. E1) | Option A nach Proof of Concept (6.4). **Entschieden 14.09.2026:** bis zur Beta selbst betrieben auf Unraid (`deploy/unraid`, Annahme A21); vor dem öffentlichen Start von R1 neu entscheiden |
 | D4 | Anmeldung für Büro und Emprise-Team | Identitätsdienst mit Föderation; solange Emprise und Büro ein Team sind, deren vorhandenes Microsoft- oder Google-Konto. **Entschieden 14.09.2026:** eigener Dienst, kein Microsoft, Google oder Vergleichbares; Authentik auf Unraid (Annahme A23) |
 | D5 | Wer betreibt die Plattform | Emprise mit benannter Betriebsverantwortung und Vertretung |

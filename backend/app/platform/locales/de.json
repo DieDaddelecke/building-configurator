@@ -11,6 +11,17 @@
   "problem.service_unavailable": "Dienst vorübergehend nicht verfügbar",
   "problem.unknown_flag": "Unbekannte Funktion",
   "problem.oidc_not_configured": "Anmeldung für das Büro nicht eingerichtet",
+  "problem.feature_disabled": "Diese Funktion ist noch nicht freigeschaltet",
+  "problem.bbox_too_large": "Kartenausschnitt zu groß, bitte näher heranzoomen",
+  "problem.geocoding_unavailable": "Adresssuche vorübergehend nicht verfügbar, Parzelle bitte auf der Karte wählen",
+  "problem.parcel_not_found": "Parzelle im importierten Kataster nicht gefunden",
+  "problem.site_not_contiguous": "Die gewählten Parzellen hängen nicht zusammen",
+  "problem.site_not_found": "Für dieses Projekt ist noch kein Grundstück gebildet",
+  "problem.edge_not_found": "Kante nicht gefunden",
+  "problem.edge_not_correctable": "Diese Kante kann hier nicht geändert werden",
+  "problem.edge_confirmed_by_architect": "Diese Kante hat der Architekt bestätigt",
+  "problem.revision_conflict": "Das Grundstück wurde inzwischen geändert, bitte neu laden",
+  "problem.invalid_if_match": "Ungültiger If-Match-Kopf",
   "mail.platform_test.subject": "Emprise – Testmail",
   "mail.platform_test.body": "Guten Tag,\n\ndiese Mail bestätigt, dass der Versand aus der Plattform Emprise funktioniert.\nUmgebung: {env}\n\nEmprise"
 }

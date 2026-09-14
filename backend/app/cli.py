@@ -5,6 +5,8 @@ openapi [datei]                OpenAPI-Beschreibung schreiben (Grundlage des Fro
 staff-add EMAIL ROLLE [ROLLE]  Mitarbeitende freischalten oder Rollen setzen
 staff-deactivate EMAIL         Zugang sperren und Sitzungen beenden
 storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
+cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
+flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 """
 
 import argparse
@@ -113,6 +115,74 @@ def cmd_storage_init(args: argparse.Namespace) -> None:
     print(f"bucket {settings.s3_bucket}: bereit")
 
 
+def cmd_cadastre_import(args: argparse.Namespace) -> None:
+    """Kataster des Einzugsgebiets sofort importieren (G1). Ohne Angabe: EMPRISE_CADASTRE_COMMUNES."""
+    from app.integrations.etalab_cadastre import CadastreSource, DirectoryCadastre, EtalabCadastre
+    from app.integrations.http import new_client
+    from app.integrations.ign_bdtopo import DirectoryRoads, GeoplateformeRoads, RoadSource
+    from app.site.cadastre_import import import_commune
+
+    settings = get_settings()
+    communes = args.commune or settings.cadastre_communes
+    failed = False
+    with new_client(settings) as client, get_sessionmaker()() as session:
+        source: CadastreSource = (
+            DirectoryCadastre(Path(args.from_dir), args.release)
+            if args.from_dir
+            else EtalabCadastre(client, settings)
+        )
+        roads: RoadSource = (
+            DirectoryRoads(Path(args.from_dir)) if args.from_dir else GeoplateformeRoads(client, settings)
+        )
+        for commune in communes:
+            result = import_commune(session, source, settings, commune, force=args.force, roads=roads)
+            failed = failed or result.status == "failed"
+            print(f"{commune}: {result.status} {result.release or ''} {result.counts or result.error or ''}")
+    if failed:
+        sys.exit(1)
+
+
+def cmd_flag_set(args: argparse.Namespace) -> None:
+    """Feature-Flag setzen (Einführung intern → Beta → öffentlich, Plan 4.2), mit Audit wie die Admin-API."""
+    from app.platform.flags import FLAG_KEY
+    from app.platform.models import FeatureFlag
+
+    if not FLAG_KEY.match(args.key):
+        sys.exit(f"{args.key}: ungültiger Schlüssel")
+    with get_sessionmaker()() as session:
+        flag = session.get(FeatureFlag, args.key)
+        before = (
+            {"enabled_for_all": flag.enabled_for_all, "enabled_roles": list(flag.enabled_roles)}
+            if flag
+            else None
+        )
+        if flag is None:
+            flag = FeatureFlag(key=args.key, created_by="cli")
+            session.add(flag)
+        if args.description is not None:
+            flag.description = args.description
+        flag.enabled_for_all = bool(args.all) and not args.off
+        flag.enabled_roles = [] if args.off else sorted({Role(r).value for r in args.role or []})
+        if args.off:
+            flag.enabled_project_ids = []
+        flag.updated_at = utcnow()
+        flag.updated_by = "cli"
+        roles = list(flag.enabled_roles)
+        after = {"enabled_for_all": flag.enabled_for_all, "enabled_roles": roles}
+        audit.record(
+            session,
+            actor_type="system",
+            actor_id="cli",
+            action="feature_flag.put",
+            entity_type="feature_flag",
+            entity_id=args.key,
+            before=before,
+            after=after,
+        )
+        session.commit()
+        print(f"{args.key}: alle={flag.enabled_for_all} rollen={', '.join(roles) or '–'}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -128,6 +198,19 @@ def main() -> None:
     p_deactivate.add_argument("email")
     p_deactivate.set_defaults(func=cmd_staff_deactivate)
     sub.add_parser("storage-init").set_defaults(func=cmd_storage_init)
+    p_import = sub.add_parser("cadastre-import")
+    p_import.add_argument("--commune", action="append", help="INSEE-Code, mehrfach möglich")
+    p_import.add_argument("--force", action="store_true", help="Stand erneut importieren, Mengenprüfung aus")
+    p_import.add_argument("--from-dir", help="Ordner mit cadastre-<insee>-<datensatz>.json.gz statt Download")
+    p_import.add_argument("--release", default="local", help="Standbezeichnung bei --from-dir")
+    p_import.set_defaults(func=cmd_cadastre_import)
+    p_flag = sub.add_parser("flag-set")
+    p_flag.add_argument("key")
+    p_flag.add_argument("--role", action="append", choices=[r.value for r in Role], help="mehrfach möglich")
+    p_flag.add_argument("--all", action="store_true", help="für alle freischalten")
+    p_flag.add_argument("--off", action="store_true", help="ganz abschalten")
+    p_flag.add_argument("--description")
+    p_flag.set_defaults(func=cmd_flag_set)
     args = parser.parse_args()
     args.func(args)
 

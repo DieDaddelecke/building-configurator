@@ -7,7 +7,57 @@
     "title": "Was Sie auf Ihrem Grundstück bauen dürfen",
     "intro": "Emprise macht die Vorgaben des Bebauungsplans für Ihr Grundstück zu klaren Grenzen und erstellt einen unverbindlichen Vorentwurf, den ein Architekturbüro prüft.",
     "notices": "Wichtige Hinweise",
-    "noNotices": "Die rechtlichen Hinweise werden vor dem Start veröffentlicht."
+    "noNotices": "Die rechtlichen Hinweise werden vor dem Start veröffentlicht.",
+    "cta": "Grundstück wählen"
+  },
+  "site": {
+    "disabled": { "eyebrow": "Demnächst verfügbar", "title": "Die Grundstückswahl ist noch nicht freigeschaltet", "text": "Emprise startet zunächst in ausgewählten Gemeinden." },
+    "select": { "eyebrow": "Schritt 1 · Grundstück", "title": "Wählen Sie Ihre Parzelle", "intro": "Suchen Sie die Adresse oder die Parzellennummer. Auf der Karte können Sie eine oder mehrere zusammenhängende Parzellen wählen." },
+    "review": { "eyebrow": "Schritt 1 · Grundstück prüfen", "title": "Ihr Grundstück", "intro": "Prüfen Sie, welche Grenzen an der Straße und welche am Nachbarn liegen. Davon hängen die Abstände ab, die der Bebauungsplan vorschreibt." },
+    "search": { "label": "Adresse des Grundstücks", "placeholder": "Straße, Postleitzahl, Ort", "hint": "Vorschläge erscheinen ab drei Zeichen.", "results": "Adressvorschläge", "outside": "Gemeinde noch nicht verfügbar" },
+    "reference": { "toggle": "Parzellennummer eingeben", "commune": "Gemeinde: {{commune}}", "section": "Sektion", "number": "Nummer", "submit": "Parzelle suchen" },
+    "outside": "Für diese Gemeinde ist Emprise noch nicht verfügbar. Das Architekturbüro kann Ihr Grundstück trotzdem prüfen; die Anfrage dafür folgt in Kürze.",
+    "candidates": { "contained": "Parzelle an der Adresse", "near": "Parzellen in der Nähe der Adresse", "none": "An dieser Stelle wurde keine Parzelle gefunden. Bitte auf der Karte wählen." },
+    "selection": { "title": "Gewählte Parzellen ({{count}})", "empty": "Noch keine Parzelle gewählt. Klicken Sie auf der Karte auf Ihre Parzelle.", "remove": "Parzelle {{parcel}} entfernen", "submit": "Grundstück übernehmen", "cancel": "Abbrechen" },
+    "map": { "label": "Karte mit Parzellen", "zoomIn": "Zum Anzeigen der Parzellen näher heranzoomen.", "loadError": "Parzellen konnten nicht geladen werden.", "basemap": "Kartenhintergrund", "plan": "Plan", "photo": "Luftbild", "zoomInButton": "Vergrößern", "zoomOutButton": "Verkleinern", "attribution": "Quellenangaben ein- oder ausblenden" },
+    "plan": { "title": "Lageplan · Grundstück", "label": "Lageplan des Grundstücks {{idus}}", "dashed": "gestrichelt: Ihre Angabe, noch nicht bestätigt" },
+    "facts": { "area": "Fläche (Kataster)", "officialArea": "Amtliche Fläche", "streetSide": "Straßenseite", "gardenSide": "Gartenseite", "parcels": "Parzellen", "revision": "Stand" },
+    "kind": { "street": "Straße", "side": "Seitliche Grenze", "rear": "Hintere Grenze", "other": "Sonstige Grenze" },
+    "source": { "auto": "automatisch erkannt", "customer": "Ihre Angabe", "architect": "vom Architekten bestätigt" },
+    "correction": { "auto": "Automatisch", "street": "Straße", "neighbour": "Nachbar", "side": "Seitlich", "rear": "Hinten", "other": "Sonstige" },
+    "compass": { "n": "Norden", "ne": "Nordosten", "e": "Osten", "se": "Südosten", "s": "Süden", "sw": "Südwesten", "w": "Westen", "nw": "Nordwesten" },
+    "edges": { "caption": "Grenzen des Grundstücks", "seq": "Nr.", "kind": "Art", "facing": "Richtung", "length": "Länge", "adjacent": "Angrenzend", "correction": "Korrektur", "correctionFor": "Korrektur für Grenze {{seq}}", "uncertain": "bitte prüfen", "confirmed": "bestätigt" },
+    "binding": { "customer": "Sie haben Grenzen geändert. Das Architekturbüro bestätigt diese Angaben; bis dahin sind die abgeleiteten Grenzwerte nicht verbindlich.", "architect": "Kundenkorrekturen warten auf Bestätigung. Bis dahin ist der Baurahmen nicht bindend." },
+    "warnings": {
+      "title": "Hinweise zum Grundstück",
+      "corner_lot": "Eckgrundstück: Die Abstände zu mehreren Straßen prüft das Architekturbüro.",
+      "flag_lot": "Grundstück mit schmaler Zufahrt: Die Einordnung der Grenzen prüft das Architekturbüro.",
+      "no_street_edge": "Keine Grenze an einer Straße erkannt. Bitte geben Sie an, welche Grenze an der Straße liegt.",
+      "no_neighbour_data": "Für die Umgebung fehlen Katasterdaten. Bitte die Grenzen selbst einordnen.",
+      "neighbour_data_incomplete": "Das Grundstück liegt am Rand des erfassten Gebiets; Grenzen zum Nachbarort sind unsicher.",
+      "area_mismatch": "Die Katastergeometrie weicht mehr als 3 % von der amtlichen Fläche ab.",
+      "customer_corrections_unconfirmed": "Geänderte Grenzen sind noch nicht vom Architekturbüro bestätigt.",
+      "edges_need_review": "Mindestens eine Grenze ist unsicher eingeordnet."
+    },
+    "pending": "Wird abgefragt …",
+    "terrain": { "title": "Gelände", "unavailable": "Nicht abgefragt: Der Höhendienst war nicht erreichbar.", "flat": "Weitgehend eben ({{slope}} % Neigung), Höhe etwa {{altitude}} m NGF.", "sloped": "Hanglage mit {{slope}} % Neigung (Höhe etwa {{altitude}} m NGF). Höhen prüft das Architekturbüro." },
+    "risks": {
+      "title": "Standortrisiken",
+      "unavailable": "Nicht abgefragt: Géorisques war nicht erreichbar.",
+      "none": "Keine Risiken gemeldet.",
+      "commune": "Gemeinde",
+      "level": { "low": "gering", "moderate": "mittel", "high": "hoch", "present": "vorhanden", "unknown": "unbekannt" },
+      "kind": {
+        "flood": "Hochwasser", "groundwater_rise": "Grundwasseranstieg", "coastal": "Küstenrisiken", "seismic": "Erdbeben", "ground_movement": "Bodenbewegungen", "coastal_erosion": "Küstenerosion", "clay_shrink_swell": "Schrumpfen und Quellen toniger Böden", "avalanche": "Lawinen", "forest_fire": "Waldbrand", "volcanic": "Vulkanismus", "storm": "Sturm", "radon": "Radon", "industrial": "Industrieanlagen", "nuclear": "Kerntechnik", "hazardous_pipeline": "Gefahrstoffleitungen", "soil_pollution": "Bodenbelastung", "dam_failure": "Dammbruch", "mining": "Bergbau"
+      }
+    },
+    "notices": {
+      "title": "Grenzen der Aussage",
+      "cadastre_accuracy": "Katastergrenzen sind nicht vermessungsgenau. Verbindliche Grenzen ermittelt ein Géomètre-expert.",
+      "risks_public_data": "Standortrisiken sind Hinweise aus öffentlichen Daten und ersetzen kein Gutachten."
+    },
+    "next": "Als Nächstes zeigt Emprise, welche Regeln des Bebauungsplans für dieses Grundstück gelten.",
+    "changeParcels": "Andere Parzellen wählen"
   },
   "office": {
     "area": "Büro",
@@ -15,9 +65,23 @@
     "loginIntro": "Nur für Mitarbeitende des Architekturbüros und des Emprise-Teams. Die Anmeldung verlangt einen zweiten Faktor.",
     "login": "Anmelden",
     "logout": "Abmelden",
-    "nav": { "home": "Start" },
+    "nav": { "home": "Start", "sites": "Grundstücke" },
+    "sites": {
+      "title": "Grundstücke prüfen",
+      "intro": "Kundenkorrekturen warten auf Ihre Bestätigung. Unter „Alle Prüffälle“ stehen zusätzlich unsichere Einordnungen, Eckgrundstücke und Grundstücke ohne erkannte Straße, auch ohne Anfrage.",
+      "scope": "Auswahl",
+      "scopes": { "corrections": "Kundenkorrekturen", "all": "Alle Prüffälle" },
+      "empty": "Keine Grundstücke mit Prüfbedarf.",
+      "corrections": "Kundenkorrekturen",
+      "updated": "Geändert",
+      "confirm": "Kundenkorrekturen bestätigen",
+      "back": "Zurück zur Liste",
+      "detailTitle": "Grundstück eines Projekts",
+      "forbidden": "Diese Ansicht verlangt die Rolle Architekt."
+    },
     "homeTitle": "Willkommen",
-    "homeEmpty": "Noch keine Module freigeschaltet. Funktionen erscheinen hier, sobald sie in Betrieb gehen.",
+    "homeIntro": "Module in Betrieb. Weitere erscheinen hier, sobald sie freigeschaltet sind.",
+    "modules": { "sites": "Grundstücke der Kunden: Grenzen prüfen und Kundenkorrekturen bestätigen (G1). Die Grundstückswahl ist intern für die Rolle Architekt freigeschaltet unter /grundstueck." },
     "roles": "Rollen",
     "noAccessTitle": "Kein Zugang",
     "noAccess": {

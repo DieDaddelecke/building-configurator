@@ -7,7 +7,57 @@
     "title": "Ce que vous pouvez construire sur votre parcelle",
     "intro": "Emprise traduit les règles d'urbanisme de votre parcelle en limites claires et prépare un avant-projet non contractuel, vérifié par un cabinet d'architecture.",
     "notices": "Informations importantes",
-    "noNotices": "Les mentions légales seront publiées avant l'ouverture."
+    "noNotices": "Les mentions légales seront publiées avant l'ouverture.",
+    "cta": "Choisir mon terrain"
+  },
+  "site": {
+    "disabled": { "eyebrow": "Bientôt disponible", "title": "Le choix du terrain n'est pas encore ouvert", "text": "Emprise démarre d'abord dans quelques communes." },
+    "select": { "eyebrow": "Étape 1 · Terrain", "title": "Choisissez votre parcelle", "intro": "Recherchez l'adresse ou la référence cadastrale. Sur la carte, vous pouvez sélectionner une ou plusieurs parcelles contiguës." },
+    "review": { "eyebrow": "Étape 1 · Vérifier le terrain", "title": "Votre terrain", "intro": "Vérifiez quelles limites donnent sur la voie et lesquelles sont mitoyennes. Les reculs imposés par le PLU en dépendent." },
+    "search": { "label": "Adresse du terrain", "placeholder": "Rue, code postal, commune", "hint": "Les suggestions apparaissent à partir de trois caractères.", "results": "Suggestions d'adresse", "outside": "Commune pas encore disponible" },
+    "reference": { "toggle": "Saisir la référence cadastrale", "commune": "Commune : {{commune}}", "section": "Section", "number": "Numéro", "submit": "Rechercher la parcelle" },
+    "outside": "Emprise n'est pas encore disponible dans cette commune. Le cabinet d'architecture peut tout de même étudier votre terrain ; la demande correspondante arrive prochainement.",
+    "candidates": { "contained": "Parcelle à l'adresse", "near": "Parcelles proches de l'adresse", "none": "Aucune parcelle trouvée à cet endroit. Sélectionnez-la sur la carte." },
+    "selection": { "title": "Parcelles sélectionnées ({{count}})", "empty": "Aucune parcelle sélectionnée. Cliquez sur votre parcelle sur la carte.", "remove": "Retirer la parcelle {{parcel}}", "submit": "Valider le terrain", "cancel": "Annuler" },
+    "map": { "label": "Carte des parcelles", "zoomIn": "Zoomez pour afficher les parcelles.", "loadError": "Les parcelles n'ont pas pu être chargées.", "basemap": "Fond de carte", "plan": "Plan", "photo": "Photo aérienne", "zoomInButton": "Zoomer", "zoomOutButton": "Dézoomer", "attribution": "Afficher ou masquer les sources" },
+    "plan": { "title": "Plan de situation · Terrain", "label": "Plan de situation du terrain {{idus}}", "dashed": "en pointillés : votre indication, non confirmée" },
+    "facts": { "area": "Surface (cadastre)", "officialArea": "Contenance", "streetSide": "Côté voie", "gardenSide": "Côté jardin", "parcels": "Parcelles", "revision": "Version" },
+    "kind": { "street": "Limite sur voie", "side": "Limite séparative latérale", "rear": "Limite de fond de parcelle", "other": "Autre limite" },
+    "source": { "auto": "détectée automatiquement", "customer": "votre indication", "architect": "confirmée par l'architecte" },
+    "correction": { "auto": "Automatique", "street": "Voie", "neighbour": "Voisin", "side": "Latérale", "rear": "Fond", "other": "Autre" },
+    "compass": { "n": "Nord", "ne": "Nord-est", "e": "Est", "se": "Sud-est", "s": "Sud", "sw": "Sud-ouest", "w": "Ouest", "nw": "Nord-ouest" },
+    "edges": { "caption": "Limites du terrain", "seq": "N°", "kind": "Type", "facing": "Orientation", "length": "Longueur", "adjacent": "Contigu", "correction": "Correction", "correctionFor": "Correction de la limite {{seq}}", "uncertain": "à vérifier", "confirmed": "confirmée" },
+    "binding": { "customer": "Vous avez modifié des limites. Le cabinet d'architecture confirmera ces indications ; d'ici là, les valeurs qui en découlent ne sont pas définitives.", "architect": "Des corrections du client attendent votre confirmation. D'ici là, le cadre constructible n'est pas opposable." },
+    "warnings": {
+      "title": "Remarques sur le terrain",
+      "corner_lot": "Terrain d'angle : le cabinet d'architecture vérifie les reculs par rapport à plusieurs voies.",
+      "flag_lot": "Terrain en drapeau : le cabinet d'architecture vérifie le classement des limites.",
+      "no_street_edge": "Aucune limite sur voie détectée. Indiquez quelle limite donne sur la voie.",
+      "no_neighbour_data": "Les données cadastrales des environs manquent. Classez les limites vous-même.",
+      "neighbour_data_incomplete": "Le terrain se situe en bordure de la zone couverte ; les limites vers la commune voisine sont incertaines.",
+      "area_mismatch": "La géométrie cadastrale s'écarte de plus de 3 % de la contenance.",
+      "customer_corrections_unconfirmed": "Les limites modifiées ne sont pas encore confirmées par le cabinet d'architecture.",
+      "edges_need_review": "Au moins une limite est classée avec incertitude."
+    },
+    "pending": "Interrogation en cours…",
+    "terrain": { "title": "Terrain naturel", "unavailable": "Non interrogé : le service altimétrique n'était pas joignable.", "flat": "Terrain quasiment plat (pente de {{slope}} %), altitude d'environ {{altitude}} m NGF.", "sloped": "Terrain en pente de {{slope}} % (altitude d'environ {{altitude}} m NGF). Les hauteurs seront vérifiées par le cabinet d'architecture." },
+    "risks": {
+      "title": "Risques",
+      "unavailable": "Non interrogé : Géorisques n'était pas joignable.",
+      "none": "Aucun risque signalé.",
+      "commune": "commune",
+      "level": { "low": "faible", "moderate": "modéré", "high": "important", "present": "existant", "unknown": "inconnu" },
+      "kind": {
+        "flood": "Inondation", "groundwater_rise": "Remontée de nappe", "coastal": "Risques côtiers", "seismic": "Séisme", "ground_movement": "Mouvements de terrain", "coastal_erosion": "Recul du trait de côte", "clay_shrink_swell": "Retrait-gonflement des argiles", "avalanche": "Avalanche", "forest_fire": "Feu de forêt", "volcanic": "Volcanisme", "storm": "Vent violent", "radon": "Radon", "industrial": "Installations classées", "nuclear": "Nucléaire", "hazardous_pipeline": "Canalisations de matières dangereuses", "soil_pollution": "Pollution des sols", "dam_failure": "Rupture de barrage", "mining": "Risque minier"
+      }
+    },
+    "notices": {
+      "title": "Limites de l'information",
+      "cadastre_accuracy": "Les limites cadastrales ne sont pas des limites de bornage. Seul un géomètre-expert établit des limites opposables.",
+      "risks_public_data": "Les risques sont des indications issues de données publiques et ne remplacent pas une étude."
+    },
+    "next": "Emprise affichera ensuite les règles du PLU applicables à ce terrain.",
+    "changeParcels": "Choisir d'autres parcelles"
   },
   "office": {
     "area": "Espace bureau",
@@ -15,9 +65,23 @@
     "loginIntro": "Réservé aux collaborateurs du cabinet et de l'équipe Emprise. La connexion exige une authentification à deux facteurs.",
     "login": "Se connecter",
     "logout": "Se déconnecter",
-    "nav": { "home": "Accueil" },
+    "nav": { "home": "Accueil", "sites": "Terrains" },
+    "sites": {
+      "title": "Terrains à vérifier",
+      "intro": "Les corrections des clients attendent votre confirmation. « Tous les cas » ajoute les classements incertains, les terrains d'angle et les terrains sans voie détectée, même sans demande.",
+      "scope": "Sélection",
+      "scopes": { "corrections": "Corrections du client", "all": "Tous les cas" },
+      "empty": "Aucun terrain à vérifier.",
+      "corrections": "Corrections du client",
+      "updated": "Modifié",
+      "confirm": "Confirmer les corrections du client",
+      "back": "Retour à la liste",
+      "detailTitle": "Terrain d'un projet",
+      "forbidden": "Cette vue exige le rôle architecte."
+    },
     "homeTitle": "Bienvenue",
-    "homeEmpty": "Aucun module n'est encore activé. Les fonctions apparaîtront ici dès leur mise en service.",
+    "homeIntro": "Modules en service. Les suivants apparaîtront ici dès leur activation.",
+    "modules": { "sites": "Terrains des clients : vérifier les limites et confirmer les corrections (G1). Le choix du terrain est ouvert en interne au rôle architecte sous /grundstueck." },
     "roles": "Rôles",
     "noAccessTitle": "Accès refusé",
     "noAccess": {

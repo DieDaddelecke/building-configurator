@@ -5,7 +5,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
-import app.platform.models  # noqa: F401  alle Modelle laden
+import app.platform.models  # alle Modelle laden, damit Alembic sie vergleicht
+import app.site.models  # noqa: F401
 from app.config import get_settings
 from app.platform.db import Base
 

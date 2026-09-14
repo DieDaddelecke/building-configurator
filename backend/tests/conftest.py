@@ -45,6 +45,19 @@ $$
 """
 
 CLEAN_TABLES = [
+    "site_risk",
+    "terrain",
+    "site_edge",
+    "parcel",
+    "site",
+    "geocode_cache",
+    "ref_parcel_staging",
+    "ref_building_staging",
+    "ref_parcel",
+    "ref_building",
+    "ref_road",
+    "ref_commune",
+    "ref_import",
     "staff_session",
     "staff_user",
     "job",

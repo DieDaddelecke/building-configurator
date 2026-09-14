@@ -29,6 +29,9 @@ def configure_logging(level: str = "INFO", json: bool = True) -> None:
     # Bibliotheken (uvicorn, sqlalchemy) über die Standardbibliothek, ohne Zugriffslogs mit IP-Adressen
     logging.basicConfig(level=level, stream=sys.stdout, format="%(message)s")
     logging.getLogger("uvicorn.access").disabled = True
+    # HTTP-Clients loggen vollständige URLs; Abfragen an externe Dienste enthalten Koordinaten der Grundstücke
+    for name in ("httpx", "httpx2", "httpcore", "httpcore2"):
+        logging.getLogger(name).setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:

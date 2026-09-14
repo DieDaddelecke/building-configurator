@@ -70,3 +70,30 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 3. Umfang klären: `audit_log`, Logs (ohne personenbezogene Daten), Fehler-Tracking.
 4. Sind personenbezogene Daten betroffen: **Meldung an die CNIL binnen 72 Stunden** (Art. 33 DSGVO), bei hohem Risiko Benachrichtigung der Betroffenen (Art. 34).
 5. Nachbereitung mit Ursache und Maßnahmen; Annahmen in `docs/ANNAHMEN.md` anpassen.
+
+## 8. Kataster und Grundstück (Modul G1)
+
+**Einrichten und Freischalten**
+
+1. Einzugsgebiet setzen: `EMPRISE_CADASTRE_COMMUNES='["44209"]'` (INSEE-Codes; Entscheidung D1).
+2. Erstimport: `python -m app.cli cadastre-import` (ohne Internet: `--from-dir <ordner> --release <stand>`). Danach prüft der Worker wöchentlich auf neue Stände.
+3. Freischalten über das Flag `site_selection`: intern `python -m app.cli flag-set site_selection --role architect`, später Beta für Projekte (Admin-API) und öffentlich `flag-set site_selection --all`; abschalten mit `--off` (Plan 4.2). Jede Änderung steht im `audit_log`.
+4. Ausgehender Zugang für API und Worker: `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`. Browser der Besucher laden Kartenkacheln von `data.geopf.fr`.
+
+**Stand prüfen:** `GET /api/v1/admin/cadastre/imports` (Rolle `ops`): letzter Import je Gemeinde mit Stand, Anzahl Parzellen, Gebäude, Straßenachsen (`roads = -1`: Achsen fehlen, siehe unten) und Fehler.
+
+**Katasterimport gescheitert** (Job `cadastre_import` endgültig `failed`, Meldung im Fehler-Tracking)
+
+1. `error` des letzten Imports lesen. Der bisherige Stand bleibt in jedem Fall erhalten.
+2. `parcel_count_change:<alt>-><neu>`: Parzellenzahl weicht mehr als max(2 %, 50) ab. Stichprobe im Kartenausschnitt der Gemeinde ansehen; ist der neue Stand plausibel (z. B. Flurneuordnung), `python -m app.cli cadastre-import --commune <insee> --force`.
+3. `too_many_unusable_parcels`: Quelldaten fehlerhaft. Nächsten Stand abwarten; nicht erzwingen.
+4. `transport:*`, `http_5xx`: Etalab nicht erreichbar. Der Job wiederholt sich; sonst am nächsten Tag von Hand starten (`POST /api/v1/admin/cadastre/imports`).
+5. `roads = -1` bei erfolgreichem Import: der WFS der Géoplateforme war nicht erreichbar. Die Kanten werden ohne Straßenachsen unsicherer eingeordnet (mehr Prüffälle im Büro). Der nächste wöchentliche Lauf holt die Achsen nach; eilig: `cadastre-import --commune <insee>`.
+
+**Géoplateforme oder Géorisques ausgefallen**
+
+- Adresssuche meldet `geocoding_unavailable`: Kunden wählen die Parzelle über Karte oder Parzellennummer; Parzellen kommen aus der eigenen Datenbank.
+- Kartenkacheln fehlen: Parzellen sind trotzdem sichtbar und wählbar; Parzellennummer funktioniert immer.
+- Gelände oder Risiken `unavailable`: Hinweis „nicht abgefragt“ beim Grundstück. Sobald der Dienst wieder antwortet: `POST /api/v1/admin/sites/enrich-retry` (Rolle `ops`) stößt alle betroffenen Grundstücke erneut an.
+
+**Prüfliste im Büro:** `/buero/grundstuecke` zeigt Grundstücke mit unbestätigten Kundenkorrekturen zuerst. Solange eine Kundenkorrektur unbestätigt ist, ist der Baurahmen nicht bindend.

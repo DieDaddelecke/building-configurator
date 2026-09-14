@@ -11,6 +11,7 @@ export type LocalPoint = readonly [east: number, north: number];
 export const toSvg = ([east, north]: LocalPoint): [number, number] => [east, -north];
 
 export function ringPath(ring: readonly LocalPoint[]): string {
+  if (ring.length < 3) return "";
   return (
     ring
       .map((point, i) => {

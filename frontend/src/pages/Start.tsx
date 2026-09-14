@@ -1,15 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { Link } from "react-router";
+
 import { api, unwrap } from "../api/client";
 import { useSession } from "../api/session";
+import { SITE_FLAG, useFlags } from "../api/site";
 import { Kopf } from "../components/Kopf";
 import { Kopfzeile } from "../components/Kopfzeile";
 
-/** Öffentliche Startseite in R0: Marke, Sprache, rechtliche Hinweise. Der Bebaubarkeitscheck folgt in R1. */
+/** Öffentliche Startseite: Marke, Sprache, rechtliche Hinweise; Einstieg in die Grundstückswahl hinter Flag. */
 export function Start() {
   const { t, i18n } = useTranslation();
   useSession();
+  const flags = useFlags();
   const notices = useQuery({
     queryKey: ["legal-notices", i18n.resolvedLanguage],
     queryFn: async () => unwrap(await api.GET("/api/v1/legal/notices")),
@@ -21,6 +25,11 @@ export function Start() {
       <main className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-20 grid gap-12 lg:grid-cols-[3fr_2fr] anim-seite">
         <Kopf eyebrow={t("start.eyebrow")} titel={t("start.title")} gross>
           <p>{t("start.intro")}</p>
+          {flags.data?.[SITE_FLAG] && (
+            <Link className="btn btn-primary mt-4" to="/grundstueck">
+              {t("start.cta")}
+            </Link>
+          )}
         </Kopf>
         <section aria-labelledby="hinweise" className="karte p-5 self-start">
           <h2 id="hinweise" className="eyebrow mb-3">

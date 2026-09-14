@@ -54,6 +54,23 @@ class Settings(BaseSettings):
     smtp_ssl: bool = False
     mail_from: str = "Emprise <no-reply@emprise.local>"
 
+    # Externe Dienste (Spez. 9; Endpunkte am 14.09.2026 geprüft, Plan 3.3)
+    external_timeout_seconds: float = 8.0
+    http_user_agent: str = "Emprise-Plattform/0.1"
+    geoplateforme_base_url: str = "https://data.geopf.fr"
+    georisques_base_url: str = "https://georisques.gouv.fr/api/v1"
+    georisques_token: SecretStr | None = None
+    cadastre_base_url: str = "https://cadastre.data.gouv.fr/data/etalab-cadastre"
+
+    # Grundstück (G1). Einzugsgebiet als INSEE-Codes; Entscheidung D1 offen, Vorschlag: um Treillières
+    cadastre_communes: list[str] = Field(default_factory=lambda: ["44209"])
+    cadastre_max_count_change_ratio: float = 0.02
+    cadastre_max_count_change_absolute: int = 50
+    geocode_cache_hours: int = 24
+    geocode_limit_per_minute: int = 60
+    cadastre_limit_per_minute: int = 120
+    site_write_limit_per_hour: int = 120
+
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15

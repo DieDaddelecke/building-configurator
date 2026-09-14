@@ -6,8 +6,8 @@ Hauskonfigurator für Bauinteressenten in Frankreich. Projektbeschreibung, Dokum
 
 | Ordner | Inhalt |
 |---|---|
-| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), später je Fachmodul ein Paket (Plan 3.2) |
-| `frontend/` | Vite, React, TypeScript, Tailwind; Web-Container mit Caddy |
+| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), `app/site` (G1 Grundstück), Adapter externer Dienste in `app/integrations`; je Fachmodul ein Paket (Plan 3.2) |
+| `frontend/` | Vite, React, TypeScript, Tailwind, MapLibre; Web-Container mit Caddy |
 | `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anforderungen an einen späteren verwalteten Anbieter |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
 | `docs/` | [ANNAHMEN.md](docs/ANNAHMEN.md), [BETRIEB.md](docs/BETRIEB.md) |
@@ -22,8 +22,16 @@ docker compose up --build
 ```
 
 ```bash
-docker compose exec api python -m app.cli staff-add ops@emprise.local ops
+docker compose exec api python -m app.cli staff-add ops@emprise.local ops architect
 ```
+
+Grundstückswahl (G1): Der Worker importiert das Kataster von Treillières beim ersten Start selbst (Internetzugang nötig; von Hand: `cadastre-import`). Freischalten intern für Architekten:
+
+```bash
+docker compose exec api python -m app.cli flag-set site_selection --role architect
+```
+
+Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080/grundstueck öffnen.
 
 | Adresse | Zweck |
 |---|---|
@@ -53,7 +61,7 @@ Frontend:
 cd frontend && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test
 ```
 
-Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet):
+Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann):
 
 ```bash
 cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e2e

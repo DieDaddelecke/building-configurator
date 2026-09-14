@@ -21,6 +21,10 @@ PUBLIC_ROUTES = {
     ("GET", "/api/v1/auth/staff/login"),
     ("GET", "/api/v1/auth/staff/callback"),
     ("POST", "/api/v1/auth/staff/logout"),
+    # G1 hinter Feature-Flag `site_selection`, mit Rate-Limit
+    ("GET", "/api/v1/geocode"),
+    ("GET", "/api/v1/cadastre/service-area"),
+    ("GET", "/api/v1/cadastre/parcels"),
 }
 
 

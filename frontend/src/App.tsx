@@ -5,7 +5,9 @@ import { createBrowserRouter, Link, RouterProvider, type RouteObject } from "rea
 
 import { BueroLayout } from "./pages/buero/BueroLayout";
 import { BueroStart } from "./pages/buero/BueroStart";
+import { GrundstueckBuero, Grundstuecke } from "./pages/buero/Grundstuecke";
 import { KeinZugang } from "./pages/buero/KeinZugang";
+import { GrundstueckSeite } from "./pages/grundstueck/GrundstueckSeite";
 import { Start } from "./pages/Start";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
@@ -24,8 +26,17 @@ function NichtGefunden() {
 
 export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },
+  { path: "/grundstueck", element: <GrundstueckSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
-  { path: "/buero", element: <BueroLayout />, children: [{ index: true, element: <BueroStart /> }] },
+  {
+    path: "/buero",
+    element: <BueroLayout />,
+    children: [
+      { index: true, element: <BueroStart /> },
+      { path: "grundstuecke", element: <Grundstuecke /> },
+      { path: "grundstuecke/:projectId", element: <GrundstueckBuero /> },
+    ],
+  },
   ...(import.meta.env.DEV
     ? [{ path: "/dev/plan", element: <Suspense><PlanVorschau /></Suspense> }]
     : []),
