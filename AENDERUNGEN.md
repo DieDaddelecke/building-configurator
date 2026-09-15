@@ -4,6 +4,43 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 14.09.2026 – Prüfung von G1 und G2 und Behebung aller 23 Befunde
+
+**Neu**
+- `backend/migrations/versions/0004_rules_robustness.py` – nur neue Spalten: Rückfall-Planstand je Gemeinde, Version der Schranken je Kapitel, Teil je Aufruf; Status `multiple_regulations`.
+
+**Geändert**
+- `backend/app/rules/domain/text.py` – Zitatprüfung: Zahl nach Auslassung, Reihenfolge der Abschnitte, Verneinungswörter, Formeln für „nicht geregelt“, Prozent/Kehrwert nur je Parameterart (RW24, RW25).
+- `backend/app/rules/domain/assess.py` – Sektor-Zuordnung über Satzteile, `not_regulated` nur mit Formel, Gegenprüfung (`claim_for`, `verify`) statt Abgleich zweier gleicher Läufe (RW19).
+- `backend/app/rules/domain/extraction.py`, `kinds.py`, `chapters.py`, `__init__.py` – Schema und Aufgabe der Gegenprüfung, Prüfsumme über Prompts, Bauband bei Mindestabstand mit Obergrenze, Kapitelende trotz Artikeleinträgen, `ENGINE_VERSION g2-1.1.0`, `PROMPT_VERSION g2-prompt-2`.
+- `backend/app/rules/extract.py` – Aufrufe in Teilen mit Wiederverwendung, Aufteilung bei `max_tokens`, Budget vor jedem Aufruf, Zeitbudget des Jobs, Neubewertung ohne Aufruf, kein Hängenbleiben auf `extracting` (RW22, RW26).
+- `backend/app/rules/plan_import.py` – Planstand am Ort aktualisieren statt löschen (`--force`, geändertes Datum), Rückfall auf den vorigen Planstand, mehrere Reglement-Dateien nicht auswerten, `chapter_too_long` ohne Aufruf (RW20, RW21, RW23).
+- `backend/app/rules/service.py`, `jobs.py`, `schemas.py`, `models.py` – Kunden sehen vorigen Planstand als `outdated`, Warnung `zone_coverage_incomplete` mit `uncovered_share`, Projektkorrektur spezifisch vor allgemein, Büro-Auswertung ohne Doppeljob, Job `rules_housekeeping` (stündlich), `rules_extract` bis 5 Versuche, `ExtractIn.force` Standard `false`.
+- `backend/app/integrations/claude.py` (Gegenprüfung, SDK ohne Wiederholung), `gpu.py` (`regulation_files`), `georisques.py` (unerwartete Antwort als Dienstfehler).
+- `backend/app/site/domain/edges.py`, `domain/__init__.py`, `service.py` – Hauptstraße nach Sicherheit, dann Länge; `ENGINE_VERSION g1-1.1.0` (G23).
+- `backend/app/site/jobs.py`, `cadastre_import.py`, `api.py` – `site_enrich` endet nie auf `pending`, `site_housekeeping` räumt hängende Abfragen auf, unplausibel wenige Straßenachsen behalten die bisherigen, Adress-Cache nur im Arbeitsspeicher (G22, G24, G25).
+- `backend/app/cli.py` (Hilfetexte), `backend/openapi.json`.
+- `backend/tests/` – `unit/test_rules_domain.py` (neu gegliedert, Fälle A1–A4, E15, E19, F22), `unit/test_rules_integrations.py`, `unit/test_site_domain.py`, `unit/test_site_integrations.py`, `integration/test_rules.py` (Planstand erneuern, Rückfall, Aufteilung, Neubewertung, Abbruch, Zeitbudget, Wiederaufnahme, Abdeckung, Korrekturvorrang), `integration/test_site.py`, `rules_support.py` (`FakeExtractor` bildet Gegenprüfungen). Backend 196 Tests.
+- `frontend/src/rules/format.ts` (jeder Parameter, nie leerer Wert), `RegelnSimulation.tsx` (Status „veraltet“, Warnungen mit Anteil), `pages/buero/Regeln.tsx` („Erneut versuchen“ ohne `force`, „Neu auswerten“ mit Rückfrage, Rückfall-Planstand), `api/rules.ts`, `api/site.ts` (alte Regeln nach Parzellenwechsel verwerfen), `i18n/*.json`, `api/schema.d.ts`, `rules/regeln.test.tsx`. Frontend 26 Tests.
+- `docs/ANNAHMEN.md` – G22–G25, RW19–RW27, Verweise in G13, G21, RW06–RW08, RW11, RW12, RW18.
+- `docs/BETRIEB.md` – Abschnitte 8 und 9 (Wiederaufnahme, Fehlergründe, Planstand erneuern, Rückfall).
+- `deploy/unraid/README.md` – Abschnitt 10: Auswertung nach Eintragen des Schlüssels automatisch.
+- `AGENTS.md`, `HANDOFF.md`.
+
+**Entschieden**
+- Nutzer: alle 23 Befunde der Prüfung mit den vorgeschlagenen Lösungsansätzen umsetzen. Daraus die Abweichung vom Plan 3.4: Gegenprüfung statt zweitem gleichem Lauf (RW19).
+
+**Ohne Dateiänderung**
+- Prüfung von G1 und G2 mit 23 Befunden in sechs Gruppen (A Zitatprüfung, B Datenverlust/hängende Zustände, C Kanten, D Kosten, E Anzeige/Planerkennung, F Kleines); stehen jetzt je als Annahme (G22–G25, RW19–RW27) und als Test.
+- Im API-Container nachgestellt (vor der Behebung): „… 2 m“ belegte 2 m gegen Text 5 m; Zitat ohne „ne … pas“ Ähnlichkeit 0,961 und `allow_on_boundary` wirksam; `not_regulated` mit beliebigem Satz; Wert des Sektors Uba für Ub belegt; `min_m 0,5` über „H/2“; Hauptstraße = 20-m-Kante mit Sicherheit 0,55 statt 12-m-Front mit 0,95. Verworfen: Verdacht, schmale Grundstücke bekämen zu wenige Geländestichproben (nachgestellt, trifft nicht zu).
+- Lokaler Stack neu gebaut, Migration 0004 auf den Daten von Treillières: Abdeckung und Regeln vorhandener Grundstücke fehlerfrei, Kapitelgrenzen mit der neuen Inhaltsverzeichnis-Logik unverändert (12 Kapitel), `rules_housekeeping` läuft.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `UMSETZUNGSPLAN.md` (Abweichung RW19 steht in ANNAHMEN), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `frontend/e2e/`.
+
+**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts aus Abschnitt 4 (die Punkte hängen am API-Schlüssel und an Unraid). 4.1 Punkt 1 vereinfacht: Kapitel werden nach Eintragen des Schlüssels automatisch ausgewertet.
+
+---
+
 ## 14.09.2026 – G2 Regelwerk als automatische Simulation (Session `building-configurator-a7`, Fortsetzung)
 
 **Neu**

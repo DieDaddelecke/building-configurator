@@ -9,8 +9,8 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 - Mockup und Fachdokumentation des Mockups: fertig.
 - Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1 und G2 wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4 und D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) sind entschieden (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
-- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite), lokal intern freigeschaltet, gepusht.
-- G2 Regelwerk: umgesetzt und getestet (`backend/app/rules`, Regeln als Simulation auf der Grundstücksseite, Büro `/buero/regeln`), lokal intern freigeschaltet, gepusht; ohne Schlüssel der Claude API noch keine echte Auswertung.
+- G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite), lokal intern freigeschaltet, gepusht; Befunde der Prüfung vom 14.09.2026 behoben (ANNAHMEN G22–G25).
+- G2 Regelwerk: umgesetzt und getestet (`backend/app/rules`, Regeln als Simulation mit Gegenprüfung auf der Grundstücksseite, Büro `/buero/regeln`), lokal intern freigeschaltet, gepusht; Befunde der Prüfung behoben (RW19–RW27); ohne Schlüssel der Claude API noch keine echte Auswertung.
 - Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
 
 ## Dokumente
