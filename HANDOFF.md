@@ -7,7 +7,7 @@
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat). Letzte Commits: G2 (`91e84f6`), danach Nacharbeiten G1/G2 und Hand-off dieser Session. CI-Ergebnis der Nacharbeiten beim Start mit `gh run list` prüfen.
+- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat). Letzte Commits: G2 (`91e84f6`), Nacharbeiten G1/G2 (`13092f9`), Hand-off (`b2545db`). CI für die Nacharbeiten am 15.09.2026 vollständig grün (Backend, Frontend, E2E, Security).
 - **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; Überwachung, Offsite-Sicherung, Mail offen. [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
 - **Betrieb bis zur Beta:** [deploy/unraid/README.md](deploy/unraid/README.md) (G1 Abschnitt 9, G2 Abschnitt 10), lokal geprüft, **noch nicht auf Unraid ausgeliefert**.
 - **G1 Grundstück (Plan 3.3):** fertig, lokal intern freigeschaltet. ANNAHMEN G01–G25, [docs/BETRIEB.md](docs/BETRIEB.md) 8. Neu: Hauptstraße nach Sicherheit (G23), keine hängenden Gelände-/Risikoabfragen (G24), Straßenachsen-Plausibilität (G25), Adress-Cache nur im Arbeitsspeicher (G22).
@@ -84,10 +84,9 @@ Prüfung vom 13.09.2026 (Lösung im Plan in Klammern): S1 Winkeltoleranz (Plan 3
 
 ## 5. Empfohlener nächster Schritt
 
-1. CI der Nacharbeiten prüfen (`gh run list`), bei Fehlern beheben.
-2. Nutzer trägt den Schlüssel der Claude API ein → 4.1 Punkt 1–2 (echte Auswertung, Referenzmenge, Wirkung der neuen Schranken).
-3. Priorität 1 aus Abschnitt 3 (Authentik-Hostname, E2) → Unraid nach 4.2 Punkt 1–2.
-4. Danach nächstes Modul nach Plan 5: **G3 Baurahmen** (Plan 3.5; Spezifikation 5.3 und 5.9 vor Code vollständig lesen).
+1. Nutzer trägt den Schlüssel der Claude API ein → 4.1 Punkt 1–2 (echte Auswertung, Referenzmenge, Wirkung der neuen Schranken).
+2. Priorität 1 aus Abschnitt 3 (Authentik-Hostname, E2) → Unraid nach 4.2 Punkt 1–2.
+3. Danach nächstes Modul nach Plan 5: **G3 Baurahmen** (Plan 3.5; Spezifikation 5.3 und 5.9 vor Code vollständig lesen).
 
 ## 6. Hinweise und Stolperstellen
 
@@ -97,6 +96,7 @@ Prüfung vom 13.09.2026 (Lösung im Plan in Klammern): S1 Winkeltoleranz (Plan 3
 - **Formatierer:** `ruff format` ändert Dateien; danach vor dem Edit-Werkzeug neu lesen. Das `# type: ignore[arg-type]` an `messages=` in `claude.py` ist nötig, auch wenn mypy es einmal als unbenutzt meldet.
 - **E2E lokal unter Windows:** Chromium von Playwright löst `oidc.localhost` nicht auf; Tests mit Büro-Anmeldung laufen nur in der CI. Lokal Flags per `flag-set … --all`, `corepack pnpm exec playwright test -g Kunde`, danach zurücksetzen. G2-Seed: `docker compose cp backend/tests api:/tmp/tests` und `python -m tests.e2e_seed_rules` (README).
 - **Tests G2:** `FakeExtractor` bildet aus einer Auswertungsantwort die Gegenprüfung; `[uh_output(), uh_output(footprint=0.3)]` heißt „Gegenprüfung liest bei der Grundfläche anders“. Das Original-PDF (6,8 MB) liegt nicht im Repository; `rules_support.py` setzt es aus der Textschicht.
+- **CI:** Der Security-Job baut Caddy mit `xcaddy`; ein Netzfehler zu `sum.golang.org` ließ den Lauf des Hand-off-Commits `8cf8a27` scheitern (kein Codefehler). Bei gleichem Fehler den Lauf wiederholen: `gh run rerun <id> --failed`.
 - **Jobarten registrieren:** `enqueue` braucht die Jobart; `app/rules` importiert `app.rules.jobs` lokal in den Funktionen (sonst Importzyklus).
 - **Kosten der Claude API:** Aufrufe mit Schlüssel kosten; `--force` und „Neu auswerten“ werten vollständig neu aus. Ohne `force` werden gespeicherte Teile genutzt. Budget in der Abdeckung.
 - **Parallele Sessions im selben Ordner:** Dateien vor jeder Änderung neu einlesen; `docker compose up --build` baut den Arbeitsstand mit.

@@ -37,7 +37,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 **Unverändert:** `BACKEND_SPEZIFIKATION.md`, `UMSETZUNGSPLAN.md` (Abweichung RW19 steht in ANNAHMEN), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `frontend/e2e/`.
 
-**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts aus Abschnitt 4 (die Punkte hängen am API-Schlüssel und an Unraid). 4.1 Punkt 1 vereinfacht: Kapitel werden nach Eintragen des Schlüssels automatisch ausgewertet.
+**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts aus Abschnitt 4 (die Punkte hängen am API-Schlüssel und an Unraid). 4.1 Punkt 1 vereinfacht: Kapitel werden nach Eintragen des Schlüssels automatisch ausgewertet. Auf Wunsch des Nutzers committet und gepusht (`13092f9` Nacharbeiten, `b2545db` Hand-off); CI am 15.09.2026 vollständig grün. Der rote Lauf des vorigen Hand-off-Commits `8cf8a27` war ein Netzfehler beim Caddy-Bau im Security-Job (HANDOFF 6).
 
 ---
 
