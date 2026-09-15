@@ -87,6 +87,9 @@ export function Regeln() {
                 </span>
               </h2>
               {commune.error && <p className="text-sm t-warn m-0 f-mono">{commune.error}</p>}
+              {commune.fallback_plan && (
+                <p className="text-sm t-warn m-0">{t("office.rules.fallbackPlan", { title: commune.fallback_plan.title })}</p>
+              )}
               {commune.chapters.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
@@ -139,9 +142,22 @@ export function Regeln() {
                             {chapter.runs} · {usd(chapter.cost_usd)}
                           </td>
                           <td className="py-2 text-right">
-                            {operator && (
-                              <button type="button" className="btn btn-ghost" onClick={() => extract.mutate(chapter.id)} disabled={extract.isPending}>
-                                {t("office.rules.extract")}
+                            {operator && chapter.status !== "extracting" && chapter.sectors.length > 0 && (
+                              <button
+                                type="button"
+                                className="btn btn-ghost"
+                                disabled={extract.isPending}
+                                onClick={() => {
+                                  // Gescheitert oder wartend: gespeicherte Teile weiterverwenden. Ausgewertet: nur
+                                  // bewusst und mit Kostenhinweis vollständig neu
+                                  const force = chapter.status === "succeeded";
+                                  if (force && !window.confirm(t("office.rules.confirmExtract", { code: chapter.code, cost: usd(chapter.cost_usd) }))) {
+                                    return;
+                                  }
+                                  extract.mutate({ chapterId: chapter.id, force });
+                                }}
+                              >
+                                {t(chapter.status === "succeeded" ? "office.rules.extract" : "office.rules.retry")}
                               </button>
                             )}
                           </td>

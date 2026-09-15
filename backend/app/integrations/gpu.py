@@ -131,20 +131,26 @@ def document(client: httpx2.Client, settings: Settings, gpu_doc_id: str) -> GpuD
     )
 
 
-def regulation_file(doc: GpuDocument) -> GpuFile | None:
-    """Das règlement écrit: Titel „Règlement écrit“, sonst Dateiname mit `_reglement_` ohne „graphique“."""
-    for file in doc.files:
-        title = file.title.lower()
-        if "règlement écrit" in title or "reglement ecrit" in title:
-            return file
-    candidates = [
+def regulation_files(doc: GpuDocument) -> list[GpuFile]:
+    """Dateien des règlement écrit: Titel „Règlement écrit“, sonst Dateiname mit `_reglement_`, ohne Pläne.
+
+    Mehr als eine Datei (Bände, gesonderte Annexes) wertet `plan_import` nicht aus, statt still die erste zu
+    nehmen und Kapitel in anderen Bänden zu übersehen (docs/ANNAHMEN.md RW23)."""
+    titled = [
+        f
+        for f in doc.files
+        if ("règlement écrit" in f.title.lower() or "reglement ecrit" in f.title.lower())
+        and "graph" not in f.title.lower()
+    ]
+    if titled:
+        return titled
+    return [
         f
         for f in doc.files
         if "_reglement_" in f.name.lower()
         and "graph" not in f.name.lower()
         and f.name.lower().endswith(".pdf")
     ]
-    return candidates[0] if len(candidates) == 1 else None
 
 
 def file_url(settings: Settings, doc: GpuDocument, name: str) -> str:

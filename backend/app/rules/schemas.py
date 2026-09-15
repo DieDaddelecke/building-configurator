@@ -13,7 +13,8 @@ from pydantic import BaseModel, Field
 from app.rules.domain.kinds import BuildingKind, RuleKind
 
 RuleStatus = Literal["effective", "unknown", "not_regulated", "text_only"]
-ZoneStatus = Literal["simulated", "office_reviewed", "in_progress", "unavailable"]
+ZoneStatus = Literal["simulated", "office_reviewed", "outdated", "in_progress", "unavailable"]
+"""`outdated`: Regeln des vorigen Planstands, solange der neue nicht ausgewertet oder nicht lesbar ist."""
 
 
 class RuleOut(BaseModel):
@@ -93,6 +94,8 @@ class ProjectRulesOut(BaseModel):
     plan: PlanOut | None
     zones: list[ZoneRulesOut]
     ignored_zones: list[IgnoredZoneOut]
+    uncovered_share: float = 0.0
+    """Anteil des Grundstücks ohne Zone des Planwerks (z. B. Teil in einem Nachbarplan); ab 1 % Warnung."""
     overlays: list[OverlayOut]
     warnings: list[str]
     notices: list[str]
@@ -121,6 +124,8 @@ class CommuneCoverageOut(BaseModel):
     error: str | None
     checked_at: datetime | None
     plan: PlanOut | None
+    fallback_plan: PlanOut | None = None
+    """Voriger Planstand, den Kunden als „veraltet“ sehen, bis `plan` ausgewertet ist."""
     chapters: list[ChapterCoverageOut]
 
 
@@ -188,4 +193,5 @@ class RulesImportIn(BaseModel):
 
 
 class ExtractIn(BaseModel):
-    force: bool = True
+    force: bool = False
+    """Ohne `force` werden gespeicherte Aufrufe derselben Eingabe genutzt; mit `force` kostet es erneut."""

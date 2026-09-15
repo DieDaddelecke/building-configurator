@@ -472,6 +472,7 @@ def _store(
     if "area_mismatch" in site.warnings:
         warnings.append("area_mismatch")
     _apply_classification(site, classification, warnings)
+    site.engine_version = ENGINE_VERSION  # vollständig neu eingeordnet
     site.revision += 1
     site.updated_at = _db_now(db)
     site.updated_by = actor.id

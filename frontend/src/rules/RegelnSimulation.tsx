@@ -62,7 +62,8 @@ function Zone({ zone, extra }: { zone: ZoneRulesOut; extra?: (zone: ZoneRulesOut
           {zone.label ? <span className="t-mute font-normal"> · {zone.label.replace(`${zone.code} : `, "")}</span> : null}
         </h3>
         <span className="text-xs t-mute">
-          {t("rules.share", { share: Math.round(zone.share * 100) })} · {t(`rules.zoneStatus.${zone.status}`)}
+          {t("rules.share", { share: Math.round(zone.share * 100) })} ·{" "}
+          <span className={zone.status === "outdated" ? "t-warn" : undefined}>{t(`rules.zoneStatus.${zone.status}`)}</span>
         </span>
       </div>
       {zone.status === "in_progress" && <p className="t-mute text-sm m-0">{t("rules.inProgress")}</p>}
@@ -155,7 +156,9 @@ export function RegelnSimulation({ rules, zoneExtra }: RegelnSimulationProps) {
       {rules.warnings.length > 0 && (
         <ul className="m-0 pl-5 flex flex-col gap-1 text-sm">
           {rules.warnings.map((w) => (
-            <li key={w}>{t(`rules.warning.${w}`, { defaultValue: w })}</li>
+            <li key={w} className={w === "rules_outdated" || w === "plan_update_failed" || w === "zone_coverage_incomplete" ? "t-warn" : undefined}>
+              {t(`rules.warning.${w}`, { defaultValue: w, share: Math.round((rules.uncovered_share ?? 0) * 100) })}
+            </li>
           ))}
         </ul>
       )}

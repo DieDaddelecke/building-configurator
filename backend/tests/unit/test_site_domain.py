@@ -318,6 +318,19 @@ def test_open_edge_without_road_is_uncertain() -> None:
     assert north.confidence < 0.65 and "edges_need_review" in result.warnings
 
 
+def test_main_street_prefers_confirmed_edge_over_longer_uncertain_one() -> None:
+    """Kurze Front mit Straßenachse (12 m) gegen lange offene Kante hinten ohne Achse (20 m): Hauptstraße ist
+    die Front, sonst wären Straßen- und Gartenseite vertauscht."""
+    parcel = Polygon([(E0 + x, N0 + y) for x, y in ((0, 0), (12, 0), (20, 40), (0, 40))])
+    east = Polygon([(E0 + x, N0 + y) for x, y in ((12, 0), (40, 0), (40, 40), (20, 40))])
+    neighbours = [neighbour("W", rect(-20, 0, 0, 40)), neighbour("E", east)]
+    result = run_with_roads(parcel, neighbours, [road("Rue", (-30, -6), (50, -6))])
+    main = next(e for e in result.edges if e.geometry.seq == result.main_street_seq)
+    assert main.confidence >= 0.65 and round(main.geometry.length_m) == 12
+    assert result.street_azimuth_deg == pytest.approx(180, abs=1)
+    assert "edges_need_review" in result.warnings  # die lange offene Kante bleibt zur Prüfung markiert
+
+
 def test_narrow_unbuilt_strip_without_road_axis_is_uncertain_neighbour() -> None:
     """Mit Straßendaten: schmaler Streifen ohne Achse ist Zufahrt oder Grün, keine Straße und kein Eck."""
     neighbours = [*MOCKUP_NEIGHBOURS, neighbour("STRIP", rect(-20, 31, 40, 35), building=False)]

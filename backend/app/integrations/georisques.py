@@ -70,11 +70,13 @@ def parse_report(payload: Any) -> list[RiskItem]:
         groups = [payload["risquesNaturels"], payload["risquesTechnologiques"]]
     except (TypeError, KeyError) as exc:
         raise ExternalServiceError(SERVICE, "unexpected_payload") from exc
+    if not all(isinstance(group, dict) for group in groups):
+        raise ExternalServiceError(SERVICE, "unexpected_payload")
     items: list[RiskItem] = []
     for group in groups:
         for key, entry in group.items():
             kind = REPORT_KINDS.get(key)
-            if kind is None or not entry or not entry.get("present"):
+            if kind is None or not isinstance(entry, dict) or not entry.get("present"):
                 continue
             address = level_from_status(entry.get("libelleStatutAdresse"))
             commune = level_from_status(entry.get("libelleStatutCommune"))

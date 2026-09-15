@@ -13,6 +13,7 @@ HEADING_LINES = 12
 OFFSET_SEARCH = range(-3, 11)
 GENERAL_MAX_PAGES = 40
 CHAPTER_MAX_PAGES = 150
+"""Kapitel und allgemeine Seiten zusammen; längere Kapitel werden nicht ausgewertet (`chapter_too_long`)."""
 
 _TOC_LINE = re.compile(r"^(?P<title>\S.*?)\s*(?:\.{2,}|…+|\s{2,}|\s(?=\d+\s*$))\s*(?P<page>\d{1,4})\s*$")
 _ZONE_TITLE = re.compile(r"\bZONES?\s+(?P<code>.+)$", re.IGNORECASE)
@@ -21,6 +22,11 @@ _HEADING = re.compile(
     r"^(?:CHAPITRE\s*\d+\s*[:\-–]?\s*)?(?:DISPOSITIONS\s+APPLICABLES\s+(?:A|À)\s+)?(?:LA\s+)?ZONES?\s+(?P<code>.+)$",
     re.IGNORECASE,
 )
+
+_SUB_ENTRY = re.compile(
+    r"^\s*(?:ARTICLE|ART\.|SECTION|SOUS[-\s]SECTION|PARAGRAPHE|§|\d+\.\d+)", re.IGNORECASE
+)
+"""Einträge unterhalb eines Kapitels im Inhaltsverzeichnis („Article Ub 7“, „Section 2“, „2.3“)."""
 
 GENERAL_KEYWORDS: tuple[tuple[str, int], ...] = (
     ("DEFINITION", 0),
@@ -169,15 +175,18 @@ def detect_structure(pages: dict[int, str]) -> Structure:
             {(e.printed_page + offset, e.title) for e in entries if 1 <= e.printed_page + offset <= last_page}
         )
         ranges: list[tuple[str, int, int]] = []
+        chapters: list[Chapter] = []
         for index, (first, title) in enumerate(starts):
             following = [p for p, _ in starts[index + 1 :] if p > first]
             end = (following[0] - 1) if following else last_page
             ranges.append((title, first, end))
-        chapters: list[Chapter] = []
-        for title, first, last in ranges:
             code = _zone_code_of_title(title)
             if code and not any(c.code == code for c in chapters):
-                chapters.append(Chapter(code, title, first, last))
+                # Artikel und Abschnitte im Verzeichnis beenden das Zonenkapitel nicht
+                chapter_end = [p for p, t in starts[index + 1 :] if p > first and not _SUB_ENTRY.match(t)]
+                chapters.append(
+                    Chapter(code, title, first, (chapter_end[0] - 1) if chapter_end else last_page)
+                )
         if chapters:
             return Structure(chapters, _general_pages(ranges), "toc")
     return _structure_from_headings(pages, last_page)

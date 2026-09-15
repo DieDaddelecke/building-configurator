@@ -57,12 +57,38 @@ def _wgs84(session: Any, points: list[tuple[float, float]]) -> list[tuple[float,
 
 @job("site_enrich", max_attempts=3, timeout_seconds=60)
 def site_enrich(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
+    final_attempt = ctx.attempt >= get_job_spec("site_enrich").max_attempts
+    site_id = uuid.UUID(payload["site_id"])
+    try:
+        return _site_enrich(ctx, site_id, payload["outline_hash"], final_attempt)
+    except ExternalServiceError:
+        raise
+    except Exception:
+        # Zeitlimit, unerwartete Antwort, Datenbank: nach dem letzten Versuch nicht auf „wird abgefragt“
+        # stehen bleiben, sonst wartet die Seite ewig und `enrich-retry` findet das Grundstück nicht
+        if final_attempt:
+            mark_enrichment_unavailable(ctx, site_id, payload["outline_hash"])
+        raise
+
+
+def mark_enrichment_unavailable(ctx: JobContext, site_id: uuid.UUID, outline_hash: str) -> None:
+    with ctx.session() as session:
+        site = session.execute(select(Site).where(Site.id == site_id).with_for_update()).scalar_one_or_none()
+        if site is None or site.outline_hash != outline_hash:
+            return  # neuer Umriss: dessen eigener Job fragt ab
+        if site.terrain_status == "pending":
+            site.terrain_status = "unavailable"
+        if site.risks_status == "pending":
+            site.risks_status = "unavailable"
+        session.commit()
+
+
+def _site_enrich(
+    ctx: JobContext, site_id: uuid.UUID, outline_hash: str, final_attempt: bool
+) -> dict[str, Any]:
     from geoalchemy2.shape import to_shape
 
     settings = get_settings()
-    final_attempt = ctx.attempt >= get_job_spec("site_enrich").max_attempts
-    site_id = uuid.UUID(payload["site_id"])
-    outline_hash = payload["outline_hash"]
 
     # 1. Lesen, dann Transaktion schließen: externe Aufrufe halten keine Verbindung offen
     with ctx.session() as session:
@@ -141,7 +167,8 @@ def site_enrich(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
                 site.risks_status = results["risks"] = "unavailable"
         session.commit()
     if errors and not final_attempt:
-        # Teilergebnisse sind gespeichert; die Wiederholung fragt nur ab, was noch fehlt
+        # Teilergebnisse sind gespeichert; die Wiederholung fragt nur ab, was noch fehlt. Beim letzten Versuch
+        # stehen fehlende Teile oben schon auf `unavailable`.
         raise ExternalServiceError("site_enrich", "; ".join(errors))
     if errors:
         log.warning("site_enrich_unavailable", errors=errors)
@@ -197,15 +224,38 @@ periodic("cadastre_import", kind="cadastre_import", every=timedelta(days=7))
 
 @job("site_housekeeping", max_attempts=1, timeout_seconds=300)
 def site_housekeeping(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
-    """Abgelaufene Einträge des Adress-Caches entfernen (Aufbewahrung, Plan 6.6)."""
+    """Abgelaufene Einträge des Adress-Caches entfernen (Aufbewahrung, Plan 6.6). Gelände und Risiken, die
+    ohne wartenden Job auf „wird abgefragt“ stehen (z. B. Worker während der Abfrage verloren), auf
+    `unavailable` setzen; `enrich-retry` fragt sie dann erneut ab."""
     hours = get_settings().geocode_cache_hours
     with ctx.session() as session:
         deleted = session.execute(
             text("DELETE FROM geocode_cache WHERE fetched_at < now() - make_interval(hours => :hours)"),
             {"hours": hours},
         ).rowcount  # type: ignore[attr-defined]
+        stuck = session.execute(
+            text(
+                """
+                UPDATE site s
+                SET terrain_status = CASE WHEN terrain_status = 'pending'
+                                          THEN 'unavailable' ELSE terrain_status END,
+                    risks_status = CASE WHEN risks_status = 'pending' THEN 'unavailable' ELSE risks_status END
+                WHERE (terrain_status = 'pending' OR risks_status = 'pending')
+                  AND updated_at < now() - make_interval(mins => :minutes)
+                  AND NOT EXISTS (
+                      SELECT 1 FROM job j
+                      WHERE j.kind = 'site_enrich' AND j.status IN ('queued', 'running')
+                        AND j.payload->>'site_id' = s.id::text
+                  )
+                """
+            ),
+            {"minutes": ENRICH_PENDING_STALE_MINUTES},
+        ).rowcount  # type: ignore[attr-defined]
         session.commit()
-    return {"geocode_cache_deleted": deleted}
+    return {"geocode_cache_deleted": deleted, "enrichment_marked_unavailable": stuck}
+
+
+ENRICH_PENDING_STALE_MINUTES = 30
 
 
 periodic("site_housekeeping", kind="site_housekeeping", every=timedelta(hours=6))

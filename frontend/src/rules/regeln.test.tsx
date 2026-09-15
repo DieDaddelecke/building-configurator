@@ -86,4 +86,29 @@ describe("Regeln als Simulation", () => {
     expect(ruleValue(rule({ kind: "parking", params: { spaces_per_m2_sdp: 0.02 } }), t, "fr")).toBe("1 pour 50 m² de surface de plancher");
     expect(ruleValue(rule({ status: "not_regulated" }), t, "fr")).toBe("non réglementé");
   });
+
+  it("zeigt jeden Parameter einer wirksamen Regel und nie einen leeren Wert", () => {
+    const t = i18n.t.bind(i18n);
+    expect(ruleValue(rule({ kind: "facade", params: { materials_forbidden: ["metal"] } }), t, "de")).toBe("nicht Metall");
+    expect(ruleValue(rule({ kind: "roof", params: { ridge_orientation: "parallel_to_street" } }), t, "de")).toBe("First parallel zur Straße");
+    expect(ruleValue(rule({ kind: "roof", params: { materials_allowed: ["slate"] } }), t, "de")).toBe("Deckung: Schiefer");
+    expect(
+      ruleValue(rule({ kind: "setback_side", params: { min_m: 3, allow_on_boundary: true, on_boundary_max_height_m: 3.5 } }), t, "de"),
+    ).toBe("auf der Grenze oder ≥ 3 m · auf der Grenze höchstens 3,5 m hoch");
+    expect(ruleValue(rule({ kind: "max_height", params: { ridge_m: 9, reference: "street_level" } }), t, "de")).toBe(
+      "First ≤ 9 m · ab Straßenniveau",
+    );
+    expect(ruleValue(rule({ kind: "fence", params: { max_height_m: 1.5, materials: ["wood"] } }), t, "de")).toBe("≤ 1,5 m · Holz");
+    expect(ruleValue(rule({ kind: "annex", params: {} }), t, "de")).toBe("wirksam");
+  });
+
+  it("kennzeichnet Regeln eines vorigen Planstands und nicht erfasste Teilflächen", () => {
+    const [first] = rules.zones;
+    if (!first) throw new Error("Fixture ohne Zone");
+    const zone = { ...first, status: "outdated" as const };
+    renderRegeln({ ...rules, zones: [zone], uncovered_share: 0.3, warnings: ["rules_outdated", "zone_coverage_incomplete"] });
+    expect(screen.getByText("veraltet (voriger Planstand)")).toBeInTheDocument();
+    expect(screen.getByText(/Regeln des vorigen Planstands/)).toBeInTheDocument();
+    expect(screen.getByText(/Ein Teil des Grundstücks \(30 %\)/)).toBeInTheDocument();
+  });
 });

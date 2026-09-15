@@ -88,13 +88,14 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 2. `parcel_count_change:<alt>-><neu>`: Parzellenzahl weicht mehr als max(2 %, 50) ab. Stichprobe im Kartenausschnitt der Gemeinde ansehen; ist der neue Stand plausibel (z. B. Flurneuordnung), `python -m app.cli cadastre-import --commune <insee> --force`.
 3. `too_many_unusable_parcels`: Quelldaten fehlerhaft. Nächsten Stand abwarten; nicht erzwingen.
 4. `transport:*`, `http_5xx`: Etalab nicht erreichbar. Der Job wiederholt sich; sonst am nächsten Tag von Hand starten (`POST /api/v1/admin/cadastre/imports`).
-5. `roads = -1` bei erfolgreichem Import: der WFS der Géoplateforme war nicht erreichbar. Die Kanten werden ohne Straßenachsen unsicherer eingeordnet (mehr Prüffälle im Büro). Der nächste wöchentliche Lauf holt die Achsen nach; eilig: `cadastre-import --commune <insee>`.
+5. `roads = -1` bei erfolgreichem Import: der WFS der Géoplateforme war nicht erreichbar oder lieferte weniger als die Hälfte der bisherigen Straßenachsen (Log `road_import_implausible`). Die bisherigen Achsen bleiben; ohne jede Achse werden Kanten unsicherer eingeordnet. Der nächste wöchentliche Lauf holt die Achsen nach; eilig: `cadastre-import --commune <insee>` (mit `--force` auch bei weniger Achsen).
 
 **Géoplateforme oder Géorisques ausgefallen**
 
 - Adresssuche meldet `geocoding_unavailable`: Kunden wählen die Parzelle über Karte oder Parzellennummer; Parzellen kommen aus der eigenen Datenbank.
 - Kartenkacheln fehlen: Parzellen sind trotzdem sichtbar und wählbar; Parzellennummer funktioniert immer.
-- Gelände oder Risiken `unavailable`: Hinweis „nicht abgefragt“ beim Grundstück. Sobald der Dienst wieder antwortet: `POST /api/v1/admin/sites/enrich-retry` (Rolle `ops`) stößt alle betroffenen Grundstücke erneut an.
+- Gelände oder Risiken `unavailable`: Hinweis „nicht abgefragt“ beim Grundstück. Sobald der Dienst wieder antwortet: `POST /api/v1/admin/sites/enrich-retry` (Rolle `ops`) stößt alle betroffenen Grundstücke erneut an. Auch unerwartete Antworten und ein Zeitlimit enden nach dem letzten Versuch als `unavailable`; bleibt eine Abfrage ohne wartenden Job auf „wird abgefragt“ stehen (Worker verloren), setzt `site_housekeeping` (alle 6 h) sie nach 30 Minuten auf `unavailable`.
+- Adressvorschläge liegen 24 h im Arbeitsspeicher des API-Prozesses, nicht in der Datenbank (Annahme G22); nach einem Neustart fragt die API die Géoplateforme erneut.
 
 **Prüfliste im Büro:** `/buero/grundstuecke` zeigt Grundstücke mit unbestätigten Kundenkorrekturen zuerst. Solange eine Kundenkorrektur unbestätigt ist, ist der Baurahmen nicht bindend.
 
@@ -109,17 +110,25 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 
 **Stand prüfen:** `/buero/regeln` bzw. `GET /api/v1/admin/rules/coverage`: je Gemeinde Planstand und Status, je Kapitel Sektoren, Status mit Grund, Läufe, Kosten, offene Pflichtwerte je Sektor; oben Monatskosten und Budget.
 
-**Kosten (Schätzung, nach der ersten echten Auswertung ersetzen):** je Kapitel zwei Läufe mit rund 50–60 PDF-Seiten, allgemeine Seiten aus dem Cache; Größenordnung 1–2 $ je Kapitel, für Treillières (12 Kapitel) 10–25 $ je Planstand. Neue Planstände erscheinen etwa ein- bis zweimal im Jahr.
+**Kosten (Schätzung, nach der ersten echten Auswertung ersetzen):** je Kapitel eine Auswertung mit rund 50–60 PDF-Seiten und eine Gegenprüfung der gefundenen Regeln (Dokumente aus dem Cache, kurze Antwort); Größenordnung 1–2 $ je Kapitel, für Treillières (12 Kapitel) 10–25 $ je Planstand. Neue Planstände erscheinen etwa ein- bis zweimal im Jahr. Das Budget wird vor jedem Aufruf geprüft.
+
+**Automatische Wiederaufnahme:** Der Job `rules_housekeeping` (stündlich) nimmt Kapitel ohne Eingriff wieder auf (Annahme RW22): `pending` ohne wartenden Job nach 30 Minuten; `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded`, sobald das Budget wieder reicht (Monatswechsel, höheres Budget); vorübergehende Fehler (`rate_limited`, `http_5xx`, `transport:*`, `interrupted:*`) nach 24 h, höchstens bei 6 gescheiterten Aufrufen je Woche; ausgewertete Kapitel nach einer neuen Version der Schranken (Neubewertung aus gespeicherten Antworten, ohne Kosten). `extracting` länger als 70 Minuten wird `interrupted:stale`.
 
 **Kapitel gescheitert** (Status `failed`, Grund in der Abdeckung, Log `rules_extract_failed`)
 
-- `not_configured`: Schlüssel fehlt. Eintragen, Dienste neu starten, dann `python -m app.cli rules-extract --pending`.
-- `budget_exceeded`: Monatsbudget erreicht. Budget prüfen und anheben oder den Monatswechsel abwarten; danach `rules-extract --pending`.
-- `auth`, `model_not_found`, `bad_request:…`: Konfiguration prüfen (Schlüssel, `EMPRISE_RULES_MODEL`); `bad_request` mit Größenangabe: Kapitel zu lang, der Entwicklung melden.
-- `refusal`: Das Modell hat abgelehnt, auch der Rückfall. Kapitel einmal neu auswerten („Neu auswerten“); bleibt es dabei, sehen Kunden „nicht verfügbar“, das Büro prüft bei Anfrage.
-- `max_tokens`: Ausgabe zu lang (sehr viele Sektoren). Der Entwicklung melden; bis dahin „nicht verfügbar“.
-- `rate_limited`, `http_5xx`, `transport:*`: wiederholt sich selbst (3 Versuche); danach „Neu auswerten“.
+- `not_configured`, `budget_exceeded`, `rate_limited`, `http_5xx`, `transport:*`, `interrupted:*`: siehe Wiederaufnahme; eilig im Büro „Erneut versuchen“ oder `python -m app.cli rules-extract --pending`. Beides nutzt gespeicherte Teile und kostet nur für fehlende.
+- `auth`, `model_not_found`, `bad_request:…`: Konfiguration prüfen (Schlüssel, `EMPRISE_RULES_MODEL`); danach „Erneut versuchen“.
+- `refusal`: Das Modell hat abgelehnt, auch der Rückfall. Einmal „Erneut versuchen“; bleibt es dabei, sehen Kunden „nicht verfügbar“, das Büro prüft bei Anfrage.
+- `max_tokens`: Sektoren werden automatisch auf mehrere Aufrufe verteilt; der Grund bleibt nur, wenn schon ein einzelner Sektor zu lang ist. Der Entwicklung melden.
+- `chapter_too_long`: Kapitel und allgemeine Seiten über 150 Seiten, meist falsch erkannte Kapitelgrenzen. Kein Aufruf; der Entwicklung melden.
+- `chapter_not_detected`: Das Kapitel kommt im aktuellen Planstand nicht mehr vor.
 
-**Import gescheitert** (Job `plu_import` endgültig `failed`, Gemeinde `failed`): meist GPU nicht erreichbar oder Antwort abgeschnitten (`truncated`). Der vorige Planstand bleibt aktiv. Später `python -m app.cli plu-import --commune <insee>`. Status `no_regulation` oder `no_chapters`: Planunterlagen fehlen oder sind nicht lesbar; Kunden sehen den Grund, das Büro prüft bei Anfrage.
+**„Neu auswerten“** (nur bei ausgewerteten Kapiteln, mit Rückfrage) wertet vollständig neu aus und kostet erneut. Ein zweiter Klick legt keinen zweiten Job an, solange einer wartet oder läuft.
 
-**Viele `unknown`-Werte in einem Kapitel:** Regelwerk im Büro öffnen (Zitat, Grund, Alternativen beider Läufe). Liegt es an der Auswertung, nach Prompt- oder Modelländerung neu auswerten; liegt es am Planwerk (Werte im Zonenplan), bleibt es bei `unknown`. Korrekturen des Büros sind freiwillig (D11).
+**Import gescheitert** (Job `plu_import` endgültig `failed`): meist GPU nicht erreichbar oder Antwort abgeschnitten (`truncated`). Ein vorhandener Planstand bleibt aktiv, die Gemeinde behält ihn (Fehler `check_failed:…` in der Abdeckung). Später `python -m app.cli plu-import --commune <insee>`.
+
+**Planstand erneuern:** `plu-import --force` aktualisiert den Planstand an Ort und Stelle (Annahme RW20): Korrekturen des Büros, gespeicherte Aufrufe und Kosten bleiben, unveränderte Kapitel werden nicht neu ausgewertet. Ein geändertes Datum im GPU löst dasselbe beim wöchentlichen Lauf aus.
+
+**Neuer Planstand:** Bis alle Kapitel ausgewertet sind, sehen Kunden die Regeln des vorigen Planstands als „veraltet“; die Abdeckung nennt ihn (Annahme RW21). Ist der neue Stand nicht lesbar (`no_regulation`, `multiple_regulations`, `no_chapters`), bleibt der vorige als „veraltet“ sichtbar. `multiple_regulations`: Das règlement écrit besteht aus mehreren Dateien (Bände); das wird noch nicht ausgewertet (RW23), das Büro prüft bei Anfrage.
+
+**Viele `unknown`-Werte in einem Kapitel:** Regelwerk im Büro öffnen (Zitat, Grund, Alternativen aus Auswertung und Gegenprüfung). Liegt es an der Auswertung, nach Prompt- oder Modelländerung neu auswerten; liegt es am Planwerk (Werte im Zonenplan), bleibt es bei `unknown`. Korrekturen des Büros sind freiwillig (D11).

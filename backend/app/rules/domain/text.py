@@ -6,14 +6,19 @@ Bindestriche. Verglichen wird deshalb ohne Leerraum, klein geschrieben, mit vere
 
 import re
 import unicodedata
+from collections.abc import Mapping
 from dataclasses import dataclass
 from difflib import SequenceMatcher
+
+from app.rules.domain.kinds import PERCENT_PARAMS, RECIPROCAL_PARAMS
 
 QUOTE_SIMILARITY_MIN = 0.9
 """Mindestähnlichkeit zwischen Zitat und Seitentext (Spez. 5.2.3 Schritt 4)."""
 QUOTE_MIN_CHARS = 12
 """Kürzere Zitate (normalisiert) belegen nichts: „3 mètres“ steht auf vielen Seiten."""
 SEGMENT_MIN_CHARS = 8
+ELLIPSIS_MAX_GAP_CHARS = 600
+"""Abschnitte eines Zitats mit Auslassung müssen in dieser Reihenfolge und nah beieinander stehen."""
 
 _TRANSLATE = str.maketrans(
     {
@@ -37,11 +42,54 @@ _TRANSLATE = str.maketrans(
 _SPACE = re.compile(r"\s+")
 _ELLIPSIS = re.compile(r"\.\.\.+|…|\[\.\.\.\]|\(\.\.\.\)")
 
+MEANING_MARKERS: tuple[str, ...] = (
+    "pas",
+    "n'",
+    "non",
+    "aucun",
+    "jamais",
+    "interdi",
+    "sauf",
+    "except",
+    "uniquement",
+    "seul",
+)
+"""Wörter, die eine Aussage umkehren oder einschränken. Die Ähnlichkeit allein ließe ein fehlendes „ne … pas“
+durch („sont autorisées“ gegen „ne sont pas autorisées“: 0,96). Ihre Anzahl muss im Zitat und an der
+Fundstelle gleich sein. Verglichen wird in der Vergleichsform ohne Leerraum; Teilwörter („dépasser“)
+zählen auf beiden Seiten gleich."""
+
+NOT_REGULATED_MARKERS: tuple[str, ...] = (
+    "nonregle",
+    "pasreglement",
+    "sansobjet",
+    "pasderegle",
+    "aucuneregle",
+    "pasdeprescription",
+    "aucuneprescription",
+    "sansprescription",
+    "nonfixe",
+    "pasfixe",
+    "nonimpose",
+    "pasimpose",
+    "nonlimite",
+    "paslimite",
+    "nonsoumis",
+    "passoumis",
+)
+"""Formeln für „nicht geregelt“ in der Vergleichsform ohne Akzente („non réglementé“, „sans objet“,
+„il n'est pas fixé de règle“). Ohne eine davon belegt ein Zitat kein `not_regulated`."""
+
 
 def normalize(value: str) -> str:
     """Vergleichsform: NFKC, klein, einheitliche Zeichen, ohne Leerraum und ohne Anführungszeichen."""
     text = unicodedata.normalize("NFKC", value).translate(_TRANSLATE).lower()
     return _SPACE.sub("", text).replace('"', "")
+
+
+def _without_accents(value: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", value)
+    return "".join(c for c in decomposed if not unicodedata.combining(c))
 
 
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
@@ -96,6 +144,17 @@ def _numbers_match(quote_segment: str, window: str) -> bool:
     return True
 
 
+def _markers(value: str) -> list[int]:
+    return [value.count(marker) for marker in MEANING_MARKERS]
+
+
+def _meaning_matches(segment: str, window: str, margin: str) -> bool:
+    """Gleich viele umkehrende oder einschränkende Wörter im Zitat und an der Fundstelle. Der Rand fängt
+    Wörter ab, die die Grenze des gleich langen Ausschnitts gerade durchschneidet."""
+    expected = _markers(segment)
+    return expected == _markers(window) or expected == _markers(margin)
+
+
 @dataclass(frozen=True)
 class QuoteCheck:
     verified: bool
@@ -107,35 +166,73 @@ class QuoteCheck:
 
 def _quote_similarity(quote: str, page_text: str) -> float:
     """Zitate mit Auslassungen („…“) werden je Abschnitt geprüft; maßgeblich ist der schwächste Abschnitt.
-    Stimmt eine Zahl nicht mit der gefundenen Stelle überein, ist die Ähnlichkeit 0."""
-    segments = [normalize(s) for s in _ELLIPSIS.split(quote)]
-    segments = [s for s in segments if len(s) >= SEGMENT_MIN_CHARS]
+
+    Ähnlichkeit 0, wenn eine Zahl nicht an der Fundstelle steht, ein zu kurzer Abschnitt eine Zahl enthält
+    (sonst ließe „… 2 m“ jede Zahl zu), die Abschnitte nicht in Reihenfolge und nah beieinander stehen oder
+    sich die Anzahl verneinender Wörter unterscheidet."""
+    segments: list[str] = []
+    for raw in _ELLIPSIS.split(quote):
+        segment = normalize(raw)
+        if len(segment) >= SEGMENT_MIN_CHARS:
+            segments.append(segment)
+        elif _NUMBER.search(segment):
+            return 0.0
     if not segments:
         return 0.0
     haystack = normalize(page_text)
     weakest = 1.0
+    previous_end: int | None = None
     for segment in segments:
         similarity, window = partial_match(segment, haystack)
-        start = haystack.find(window)
+        start = haystack.find(window, previous_end or 0)
+        if start < 0:
+            start = haystack.find(window)
+        if previous_end is not None and (
+            start < previous_end or start - previous_end > ELLIPSIS_MAX_GAP_CHARS
+        ):
+            return 0.0
         margin = haystack[max(0, start - 6) : start + len(window) + 6] if start >= 0 else window
-        if not _numbers_match(segment, margin):
+        if not _numbers_match(segment, margin) or not _meaning_matches(segment, window, margin):
             return 0.0
         weakest = min(weakest, similarity)
+        previous_end = start + len(window) if start >= 0 else previous_end
     return weakest
 
 
-def values_in_quote(values: list[float], quote: str) -> list[float]:
-    """Zahlenwerte einer Regel, die das Zitat nicht enthält. Erlaubt sind der Wert selbst, der Wert in Prozent
-    (0,4 ↔ 40 %) und der Kehrwert (0,5 ↔ H/2, 0,02 ↔ 1 place pour 50 m²)."""
-    found = numbers(quote)
-    missing: list[float] = []
-    for value in values:
-        forms = [value, value * 100]
-        if value > 0:
-            forms.append(1 / value)
-        if not any(abs(form - n) <= max(NUMBER_TOLERANCE, abs(n) * 0.001) for form in forms for n in found):
-            missing.append(value)
-    return missing
+def _value_forms(name: str, value: float) -> list[float]:
+    """Schreibweisen eines Werts im Text: der Wert selbst; bei Anteilen auch in Prozent (0,4 ↔ 40 %); bei
+    Faktoren und Dichten auch der Kehrwert (0,5 ↔ H/2, 0,02 ↔ 1 place pour 50 m²)."""
+    forms = [value]
+    if name in PERCENT_PARAMS:
+        forms.append(value * 100)
+    if name in RECIPROCAL_PARAMS and value > 0:
+        forms.append(1 / value)
+    return forms
+
+
+def _form_matches(form: float, number: float) -> bool:
+    return abs(form - number) <= max(NUMBER_TOLERANCE, abs(number) * 0.001)
+
+
+def value_positions(name: str, value: float, quote: str) -> list[tuple[int, int]]:
+    """Stellen im Zitat, an denen der Wert eines Parameters in einer zulässigen Schreibweise steht."""
+    forms = _value_forms(name, value)
+    return [
+        (match.start(), match.end())
+        for match in _NUMBER.finditer(quote)
+        if any(_form_matches(form, float(match.group().replace(",", "."))) for form in forms)
+    ]
+
+
+def values_in_quote(values: Mapping[str, float], quote: str) -> list[str]:
+    """Namen der Parameter, deren Zahlenwert das Zitat in keiner zulässigen Schreibweise enthält."""
+    return [name for name, value in values.items() if not value_positions(name, value, quote)]
+
+
+def states_not_regulated(quote: str) -> bool:
+    """Sagt das Zitat ausdrücklich, dass nichts geregelt ist?"""
+    plain = _without_accents(normalize(quote))
+    return any(marker in plain for marker in NOT_REGULATED_MARKERS)
 
 
 def verify_quote(quote: str, pages: dict[int, str], page: int) -> QuoteCheck:

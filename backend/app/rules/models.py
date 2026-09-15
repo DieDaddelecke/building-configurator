@@ -47,12 +47,19 @@ class RulesCommune(Base):
     land_use_plan_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("land_use_plan.id", ondelete="SET NULL")
     )
+    fallback_land_use_plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("land_use_plan.id", ondelete="SET NULL")
+    )
+    """Zuletzt vollständig ausgewerteter Planstand. Kunden sehen ihn als „veraltet“, solange der neue Stand
+    nicht vollständig ausgewertet ist oder nicht importiert werden konnte (Plan 3.4)."""
     error: Mapped[str | None] = mapped_column(Text)
     checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('ok','rnu','no_document','no_regulation','no_chapters','failed')", name="status_known"
+            "status IN ('ok','rnu','no_document','no_regulation','multiple_regulations','no_chapters',"
+            "'failed')",
+            name="status_known",
         ),
     )
 
@@ -175,6 +182,9 @@ class RegulationChapter(UuidPk, Created, Base):
     detection: Mapped[str] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20), server_default=text("'pending'"))
     input_hash: Mapped[str | None] = mapped_column(String(64))
+    engine_version: Mapped[str | None] = mapped_column(String(20))
+    """Stand der Schranken bei der letzten Bewertung. Weicht er ab, wird aus gespeicherten Läufen neu
+    bewertet."""
     error: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -186,12 +196,16 @@ class RegulationChapter(UuidPk, Created, Base):
 
 
 class RuleExtractionRun(UuidPk, Created, Base):
-    """Ein Aufruf des Sprachmodells: Modell, Prompt, Kosten, Rohantwort (Plan 3.4, 6.8)."""
+    """Ein Aufruf des Sprachmodells: Modell, Prompt, Kosten, Rohantwort (Plan 3.4, 6.8). Wird nie gelöscht,
+    solange das Kapitel besteht: Die Monatskosten werden daraus berechnet."""
 
     __tablename__ = "rule_extraction_run"
 
     chapter_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("regulation_chapter.id", ondelete="CASCADE"))
     run_no: Mapped[int] = mapped_column(Integer)
+    """1 = Auswertung, 2 = Gegenprüfung."""
+    part: Mapped[str] = mapped_column(String(200), server_default=text("''"))
+    """Teil des Laufs: `sectors:Ub,Uba` oder `verify:<Prüfsumme der Regeln>`; Wiederverwendung je Teil."""
     input_hash: Mapped[str] = mapped_column(String(64))
     model: Mapped[str] = mapped_column(String(60))
     prompt_version: Mapped[str] = mapped_column(String(30))

@@ -28,6 +28,8 @@ log = get_logger("cadastre_import")
 SOURCE = "etalab_cadastre"
 BATCH = 500
 MAX_INVALID_RATIO = 0.005
+ROAD_MIN_SHARE = 0.5
+"""Liefert der WFS weniger als die Hälfte der bisherigen Straßenachsen, gilt die Antwort als unvollständig."""
 
 
 class ImportRejected(Exception):
@@ -146,12 +148,14 @@ def import_commune(
     _cleanup_stale(session)
     release = source.latest_release(commune)
     already = session.execute(
-        select(RefImport.counts).where(
+        select(RefImport.counts)
+        .where(
             RefImport.source == SOURCE,
             RefImport.commune_insee == commune,
             RefImport.release == release,
             RefImport.status == "succeeded",
         )
+        .order_by(RefImport.created_at.desc())
     ).first()
     roads_missing = already is not None and roads is not None and int(already.counts.get("roads", -1)) < 0
     if already and not force and not roads_missing:
@@ -252,6 +256,17 @@ def _run(
     )
     if previous and abs(staged.n - previous) > allowed and not force:
         raise ImportRejected(f"parcel_count_change:{previous}->{staged.n}")
+    if roads is not None and not force:
+        previous_roads = session.execute(
+            text("SELECT count(*) FROM ref_road WHERE commune_insee = :commune"), {"commune": commune}
+        ).scalar_one()
+        if previous_roads and len(roads) < ROAD_MIN_SHARE * previous_roads:
+            # Leere oder abgeschnittene Antwort des WFS: die bisherigen Achsen bleiben, der nächste Lauf holt
+            # sie nach (counts.roads = -1). Ohne Achsen würden Lotissement-Straßen nicht mehr erkannt (G04)
+            log.warning(
+                "road_import_implausible", commune=commune, previous=previous_roads, fetched=len(roads)
+            )
+            roads = None
 
     counts = {
         "parcels": int(staged.n),

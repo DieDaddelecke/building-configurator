@@ -47,6 +47,13 @@ def test_georisques_report_levels_and_scope() -> None:
     assert georisques.parse_rga({"codeExposition": "0"}) is None
 
 
+def test_georisques_unexpected_report_shape_is_a_service_error() -> None:
+    """Sonst bräche der Job mit einer beliebigen Ausnahme ab statt „nicht abgefragt“ zu melden."""
+    with pytest.raises(ExternalServiceError):
+        georisques.parse_report({"risquesNaturels": None, "risquesTechnologiques": {}})
+    assert georisques.parse_report({"risquesNaturels": {"radon": None}, "risquesTechnologiques": {}}) == []
+
+
 @pytest.mark.parametrize(
     ("status", "level"),
     [

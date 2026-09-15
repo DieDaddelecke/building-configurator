@@ -124,6 +124,16 @@ BOUNDS: dict[str, tuple[float, float]] = {
 }
 """Plausibilitätsgrenzen (Plan 3.4). Werte außerhalb sind eher Lesefehler als echte Festsetzungen."""
 
+PERCENT_PARAMS = frozenset({"ratio", "full_soil_ratio", "min_green_ratio", "height_factor"})
+"""Anteile: Im Text darf der Wert auch in Prozent stehen (0,4 ↔ 40 %)."""
+RECIPROCAL_PARAMS = frozenset({"height_factor", "spaces_per_m2_sdp", "trees_per_m2"})
+"""Faktoren und Dichten: Im Text darf der Kehrwert stehen (H/2, 1 place pour 50 m², 1 arbre pour 100 m²).
+Für Längen gilt das nicht, sonst belegte „H/2“ einen Mindestabstand von 0,5 m."""
+BUILDING_SPECIFIC_KINDS = frozenset(
+    {"setback_street", "setback_side", "setback_rear", "max_height", "roof", "facade"}
+)
+"""Regelarten, die je Baukörper verschieden sein können. Die übrigen gelten für das Grundstück als Ganzes."""
+
 
 class _Params(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -135,10 +145,20 @@ class SetbackStreet(_Params):
     mode: Literal["min", "fixed", "range", "alignment"] = "min"
     measured_from: Literal["facade", "roof_edge", "any_projection"] = "facade"
 
+    @model_validator(mode="before")
+    @classmethod
+    def _band_is_range(cls, data: Any) -> Any:
+        """Mindestabstand mit Obergrenze ist ein Bauband (`range`); sonst ginge die Obergrenze verloren."""
+        if isinstance(data, dict) and data.get("mode", "min") == "min" and data.get("max_m") is not None:
+            return {**data, "mode": "range"}
+        return data
+
     @model_validator(mode="after")
     def _consistent(self) -> "SetbackStreet":
         if self.mode in ("min", "fixed") and self.min_m is None:
             raise ValueError("min_m_required")
+        if self.mode in ("fixed", "alignment") and self.max_m is not None:
+            raise ValueError("max_m_requires_range")
         if self.mode == "range" and (self.min_m is None or self.max_m is None or self.min_m > self.max_m):
             raise ValueError("range_invalid")
         return self

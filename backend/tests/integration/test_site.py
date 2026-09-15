@@ -107,6 +107,22 @@ def test_implausible_count_change_keeps_previous_data(db_session: Any, imported:
     assert staging == 0
 
 
+def test_implausibly_few_roads_keep_previous_axes(db_session: Any, imported: Any, tmp_path: Path) -> None:
+    data = json.loads(gzip.decompress((FIXTURES / "bdtopo-44209-troncons.json.gz").read_bytes()))
+    data["features"] = data["features"][:3]
+    (tmp_path / "bdtopo-44209-troncons.json.gz").write_bytes(gzip.compress(json.dumps(data).encode()))
+    before = db_session.execute(text("SELECT count(*) FROM ref_road")).scalar_one()
+    result = import_commune(
+        db_session,
+        DirectoryCadastre(FIXTURES, "2026-09-01"),
+        get_settings(),
+        "44209",
+        roads=DirectoryRoads(tmp_path),
+    )
+    assert result.status == "succeeded" and result.counts["roads"] == -1  # nächster Lauf holt nach
+    assert db_session.execute(text("SELECT count(*) FROM ref_road")).scalar_one() == before
+
+
 def test_missing_roads_do_not_block_import_and_are_retried(db_session: Any, tmp_path: Path) -> None:
     source = DirectoryCadastre(FIXTURES, RELEASE)
     first = import_commune(db_session, source, get_settings(), "44209", roads=DirectoryRoads(tmp_path))
@@ -159,7 +175,7 @@ def test_lookup_by_point_reference_and_outside_area(client: Any, project: str) -
 
 
 def test_geocode_uses_cache_and_marks_service_area(
-    client: Any, app: Any, imported: Any, enabled: None
+    client: Any, app: Any, imported: Any, enabled: None, db_session: Any
 ) -> None:
     from app.integrations.http import new_client, shared_client
 
@@ -177,6 +193,8 @@ def test_geocode_uses_cache_and_marks_service_area(
     assert first.status_code == 200 and second.json() == first.json()
     assert len(calls) == 1
     assert first.json()[0]["in_service_area"] is True
+    # Treffer nennen die gesuchte Adresse: nur im Arbeitsspeicher, nicht in der Datenbank (G13)
+    assert db_session.execute(text("SELECT count(*) FROM geocode_cache")).scalar_one() == 0
 
 
 def test_geocode_failure_is_explicit(client: Any, app: Any, imported: Any, enabled: None) -> None:
@@ -392,6 +410,39 @@ def test_site_enrich_marks_unavailable_after_last_attempt(
     assert (site.terrain_status, site.risks_status) == ("unavailable", "unavailable")
     assert db_session.execute(select(Job.status).where(Job.kind == "site_enrich")).scalar_one() == "succeeded"
     assert db_session.execute(select(func.count()).select_from(Terrain)).scalar_one() == 0
+
+
+def test_site_enrich_unexpected_error_ends_as_unavailable(
+    client: Any, project: str, db_session: Any, external: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.integrations import georisques
+
+    def broken(*args: Any) -> Any:
+        raise KeyError("unexpected")
+
+    monkeypatch.setattr(georisques, "site_risks", broken)
+    client.put(f"/api/v1/projects/{project}/site", json={"parcel_idus": [REGULAR]})
+    for _ in range(3):
+        _run_enrich(db_session)
+        db_session.execute(text("UPDATE job SET run_after = now() WHERE status = 'queued'"))
+        db_session.commit()
+    site = db_session.execute(select(Site)).scalar_one()
+    assert (site.terrain_status, site.risks_status) == ("unavailable", "unavailable")
+    assert db_session.execute(select(Job.status).where(Job.kind == "site_enrich")).scalar_one() == "failed"
+
+
+def test_housekeeping_releases_enrichment_without_job(client: Any, project: str, db_session: Any) -> None:
+    from app.platform.jobs import enqueue
+
+    client.put(f"/api/v1/projects/{project}/site", json={"parcel_idus": [REGULAR]})
+    db_session.execute(text("UPDATE job SET status = 'failed' WHERE kind = 'site_enrich'"))
+    db_session.execute(text("UPDATE site SET updated_at = now() - interval '1 hour'"))
+    enqueue(db_session, "site_housekeeping")
+    db_session.commit()
+    run_one("w1", ["default"])
+    db_session.expire_all()
+    site = db_session.execute(select(Site)).scalar_one()
+    assert (site.terrain_status, site.risks_status) == ("unavailable", "unavailable")
 
 
 def test_site_enrich_skips_outdated_outline(

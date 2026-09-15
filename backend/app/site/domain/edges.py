@@ -465,7 +465,16 @@ def _classify(
             street_conf[edge.seq] = tol.PRIVATE_ROAD_STREET_CONFIDENCE
 
     streets = [by_seq[s][0] for s in sorted(street_conf)]
-    main = max(streets, key=lambda e: (round(e.length_m, 3), -e.seq)) if streets else None
+    # Hauptstraße: erst die sicheren Straßenkanten, dann die längste. Sonst würde eine lange unsichere Kante
+    # (Grünfläche hinter dem Grundstück) Hauptstraße, und Straßen- und Gartenseite wären vertauscht
+    main = (
+        max(
+            streets,
+            key=lambda e: (street_conf[e.seq] >= tol.REVIEW_CONFIDENCE_BELOW, round(e.length_m, 3), -e.seq),
+        )
+        if streets
+        else None
+    )
     frontage = sum(e.length_m for e in streets)
     flag_lot = (
         bool(streets) and frontage < tol.FLAG_LOT_MAX_FRONTAGE_M and site_area_m2 > tol.FLAG_LOT_MIN_AREA_M2

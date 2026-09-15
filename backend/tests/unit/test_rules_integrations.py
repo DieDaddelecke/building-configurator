@@ -1,6 +1,7 @@
 """Adapter G2 mit aufgezeichneten Antworten: GPU (Treillières, 14.09.2026), Claude API (simulierter Strom)."""
 
 import json
+from dataclasses import replace
 from typing import Any
 
 import anthropic
@@ -32,8 +33,14 @@ def test_regulation_file_and_partition_choice() -> None:
         update_date=details["updateDate"],
         files=[gpu.GpuFile(f["name"], f["title"], f.get("path")) for f in details["files"]],
     )
-    regulation = gpu.regulation_file(doc)
-    assert regulation is not None and regulation.name == "244400503_reglement_20260304.pdf"
+    assert [f.name for f in gpu.regulation_files(doc)] == ["244400503_reglement_20260304.pdf"]
+    volumes = gpu.GpuDocument(
+        **{
+            **doc.__dict__,
+            "files": [*doc.files, gpu.GpuFile("x_reglement_tome2.pdf", "Règlement écrit – Tome 2", None)],
+        }
+    )
+    assert len(gpu.regulation_files(volumes)) == 2  # plan_import wertet mehrere Bände nicht aus
     zones = [
         gpu.GpuFeature("zone-urba", f["properties"], f["geometry"])
         for f in fixture_json("zone-urba-44209.json")["features"]
@@ -130,6 +137,35 @@ def test_claude_request_shape_and_response() -> None:
     assert response.usage["cache_creation_input_tokens"] == 90000 and response.usage["output_tokens"] == 4000
     # 1.200 × 5 $ + 4.000 × 25 $ + 90.000 × 10 $ (Cache 1 h) je Million
     assert response.cost_usd == pytest.approx(1.006, abs=0.001)
+
+
+def test_verification_request_sends_claims_without_values() -> None:
+    seen: dict[str, Any] = {}
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        seen["body"] = json.loads(request.content)
+        answer = {"checks": [{"claim": 1, "status": "regulated", "params": [], "notes": ""}], "remarks": ""}
+        return httpx2.Response(
+            200, content=_stream(json.dumps(answer)), headers={"content-type": "text/event-stream"}
+        )
+
+    claims = [
+        {
+            "claim": 1,
+            "sector": "Uh",
+            "kind": "setback_street",
+            "building_kind": "main",
+            "document": "chapter",
+            "page": 6,
+            "quote": "Les constructions principales … entre 5 m et 20m",
+        }
+    ]
+    response = _extractor(handler).extract(replace(REQUEST, claims=claims))
+    body = seen["body"]
+    assert body["output_config"]["format"]["schema"]["required"] == ["checks", "remarks"]
+    text = body["messages"][0]["content"][-1]["text"]
+    assert text.startswith("Verification task") and "Claim 1: sector Uh, kind setback_street" in text
+    assert response.output["checks"][0]["claim"] == 1
 
 
 @pytest.mark.parametrize(

@@ -6,8 +6,8 @@ strukturierte Ausgabe über JSON-Schema, serverseitiger Rückfall bei Ablehnung 
 Gesendet werden nur öffentliche Planunterlagen, keine Kundendaten (L8).
 
 Zwischenspeicher: System-Prompt, allgemeine Bestimmungen und Zonenkapitel tragen je eine Cache-Marke (1 h).
-Die allgemeinen Bestimmungen sind für alle Kapitel eines Plans gleich; der zweite Lauf eines Kapitels liest
-fast alles aus dem Cache.
+Die allgemeinen Bestimmungen sind für alle Kapitel eines Plans gleich; die Gegenprüfung eines Kapitels liest
+die Dokumente aus dem Cache.
 """
 
 import base64
@@ -20,7 +20,13 @@ import anthropic
 
 from app.config import Settings
 from app.platform.logging import get_logger
-from app.rules.domain.extraction import OUTPUT_SCHEMA, SYSTEM_PROMPT, user_instruction
+from app.rules.domain.extraction import (
+    OUTPUT_SCHEMA,
+    SYSTEM_PROMPT,
+    VERIFICATION_SCHEMA,
+    user_instruction,
+    verification_instruction,
+)
 
 SERVICE = "claude"
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
@@ -37,6 +43,9 @@ class ExtractionRequest:
     chapter_pages: list[int]
     general_pdf: bytes | None
     general_pages: list[int]
+    claims: list[dict[str, Any]] | None = None
+    """Gegenprüfung: nummerierte Regeln ohne Werte (Sektor, Art, Baukörper, Seite, Zitat).
+    None: Auswertung."""
 
 
 @dataclass(frozen=True)
@@ -112,14 +121,15 @@ def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
     if request.general_pdf is not None:
         content.append(_document(request.general_pdf, "general provisions and definitions"))
     content.append(_document(request.chapter_pdf, f"zone chapter {request.chapter_code}"))
-    content.append(
-        {
-            "type": "text",
-            "text": user_instruction(
-                request.sectors, request.chapter_code, request.general_pages, request.chapter_pages
-            ),
-        }
-    )
+    if request.claims is None:
+        instruction = user_instruction(
+            request.sectors, request.chapter_code, request.general_pages, request.chapter_pages
+        )
+    else:
+        instruction = verification_instruction(
+            request.claims, request.chapter_code, request.general_pages, request.chapter_pages
+        )
+    content.append({"type": "text", "text": instruction})
     return [{"role": "user", "content": content}]
 
 
@@ -146,7 +156,9 @@ class ClaudeExtractor:
             self.client = anthropic.Anthropic(
                 api_key=key.get_secret_value(),
                 timeout=anthropic.Timeout(self.settings.rules_request_timeout_seconds, connect=15.0),
-                max_retries=2,
+                # Wiederholung über den Job: erfolgreiche Teile werden dort wiederverwendet, und ein Aufruf
+                # bleibt kürzer als das Zeitlimit des Jobs
+                max_retries=0,
             )
 
     def extract(self, request: ExtractionRequest) -> ExtractionResponse:
@@ -167,7 +179,10 @@ class ClaudeExtractor:
                 thinking={"type": "adaptive"},
                 output_config={
                     "effort": self.settings.rules_effort,
-                    "format": {"type": "json_schema", "schema": OUTPUT_SCHEMA},
+                    "format": {
+                        "type": "json_schema",
+                        "schema": OUTPUT_SCHEMA if request.claims is None else VERIFICATION_SCHEMA,
+                    },
                 },
                 betas=[FALLBACK_BETA],
                 fallbacks="default",

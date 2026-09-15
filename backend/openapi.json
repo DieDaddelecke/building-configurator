@@ -235,6 +235,16 @@
             ],
             "title": "Error"
           },
+          "fallback_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "plan": {
             "anyOf": [
               {
@@ -532,7 +542,7 @@
       "ExtractIn": {
         "properties": {
           "force": {
-            "default": true,
+            "default": false,
             "title": "Force",
             "type": "boolean"
           }
@@ -1510,6 +1520,11 @@
             ],
             "title": "Status",
             "type": "string"
+          },
+          "uncovered_share": {
+            "default": 0.0,
+            "title": "Uncovered Share",
+            "type": "number"
           },
           "warnings": {
             "items": {
@@ -2625,6 +2640,7 @@
             "enum": [
               "simulated",
               "office_reviewed",
+              "outdated",
               "in_progress",
               "unavailable"
             ],

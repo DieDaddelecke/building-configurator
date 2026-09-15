@@ -4,14 +4,15 @@ Kundenendpunkte laufen hinter dem Feature-Flag `site_selection` (Plan 4.2). Bür
 Rolle `architect` (Kanten) bzw. `ops` (Katasterimport).
 """
 
+import threading
 import uuid
+from collections import OrderedDict
 from dataclasses import asdict
-from datetime import timedelta
-from typing import Annotated, Any, Literal
+from datetime import datetime, timedelta
+from typing import Annotated, Any, Literal, cast
 
 import httpx2
 from fastapi import APIRouter, Depends, Header, Query, Request
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -34,7 +35,6 @@ from app.platform.problems import Problem
 from app.site import service
 from app.site.domain.edges import OverrideKind
 from app.site.jobs import latest_imports
-from app.site.models import GeocodeCache
 from app.site.schemas import (
     AddressOut,
     ArchitectEdgeIn,
@@ -69,6 +69,49 @@ def _if_match(value: str | None) -> int | None:
 
 Feature = Depends(require_site_feature)
 
+GEOCODE_CACHE_MAX_ENTRIES = 5000
+
+
+class TtlCache:
+    """Adressvorschläge nur im Arbeitsspeicher des API-Prozesses (Annahme G13): Die Treffer nennen die
+    gesuchte Adresse im Klartext und gehören deshalb nicht in die Datenbank. Nach einem Neustart leer."""
+
+    def __init__(self, max_entries: int, ttl: timedelta) -> None:
+        self.max_entries = max_entries
+        self.ttl = ttl
+        self._items: OrderedDict[str, tuple[datetime, list[dict[str, Any]]]] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def get(self, key: str) -> list[dict[str, Any]] | None:
+        with self._lock:
+            item = self._items.get(key)
+            if item is None:
+                return None
+            if utcnow() - item[0] >= self.ttl:
+                del self._items[key]
+                return None
+            self._items.move_to_end(key)
+            return item[1]
+
+    def put(self, key: str, value: list[dict[str, Any]]) -> None:
+        with self._lock:
+            self._items[key] = (utcnow(), value)
+            self._items.move_to_end(key)
+            while len(self._items) > self.max_entries:
+                self._items.popitem(last=False)
+
+
+_CACHE_LOCK = threading.Lock()
+
+
+def _geocode_cache(request: Request, hours: int) -> TtlCache:
+    with _CACHE_LOCK:
+        cache = getattr(request.app.state, "geocode_cache", None)
+        if cache is None:
+            cache = TtlCache(GEOCODE_CACHE_MAX_ENTRIES, timedelta(hours=hours))
+            request.app.state.geocode_cache = cache
+        return cast(TtlCache, cache)
+
 
 # ---------------------------------------------------------------------------
 # Öffentlich (hinter Flag)
@@ -87,21 +130,15 @@ def geocode(
     rate_limit.check(request, "geocode", settings.geocode_limit_per_minute, 60)
     normalized = " ".join(q.lower().split())
     key = keyed_digest(settings.secret_key.get_secret_value(), f"geocode:{normalized}")
-    cached = db.get(GeocodeCache, key)
-    if cached is not None and utcnow() - cached.fetched_at < timedelta(hours=settings.geocode_cache_hours):
-        raw = cached.response
-    else:
+    cache = _geocode_cache(request, settings.geocode_cache_hours)
+    raw = cache.get(key)
+    if raw is None:
         try:
             candidates = geoplateforme.search_addresses(client, settings, normalized, limit=5)
         except ExternalServiceError:
             raise Problem(503, "geocoding_unavailable") from None
         raw = [asdict(c) for c in candidates]
-        db.execute(
-            insert(GeocodeCache)
-            .values(key=key, response=raw, fetched_at=utcnow())
-            .on_conflict_do_update(index_elements=["key"], set_={"response": raw, "fetched_at": utcnow()})
-        )
-        db.commit()
+        cache.put(key, raw)
     served = service.communes_in_service_area(db, {item["citycode"] for item in raw})
     return [
         AddressOut(

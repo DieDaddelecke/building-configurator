@@ -182,9 +182,44 @@ def uh_output(*, footprint: float = 0.25) -> dict[str, Any]:
     }
 
 
+def verification_output(output: dict[str, Any], claims: list[dict[str, Any]]) -> dict[str, Any]:
+    """Gegenprüfung, wie sie ein Modell liefern würde, das den Text so liest wie in `output`: je Frage Status
+    und Werte der passenden Regel, sonst `not_supported`."""
+
+    def building(value: str) -> str:
+        return "main" if value == "any" else value
+
+    checks = []
+    for claim in claims:
+        match = next(
+            (
+                r
+                for r in output["rules"]
+                if r["sector"] == claim["sector"]
+                and r["kind"] == claim["kind"]
+                and building(r["building_kind"]) == building(claim["building_kind"])
+                and r["status"] in ("regulated", "not_regulated")
+            ),
+            None,
+        )
+        checks.append(
+            {
+                "claim": claim["claim"],
+                "status": match["status"] if match else "not_supported",
+                "params": match["params"] if match else [],
+                "notes": "",
+            }
+        )
+    return {"checks": checks, "remarks": ""}
+
+
 @dataclass
 class FakeExtractor:
-    """Liefert je Aufruf die nächste Antwort; eine `ExtractionError` in der Liste wird geworfen."""
+    """Liefert je Aufruf die nächste Antwort; eine `ExtractionError` in der Liste wird geworfen.
+
+    Fragt die Anfrage eine Gegenprüfung ab und ist die Antwort eine Auswertung (`rules`), wird daraus die
+    Gegenprüfung gebildet. So beschreibt `[uh_output(), uh_output(footprint=0.3)]` eine Gegenprüfung, die bei
+    der Grundfläche einen anderen Wert liest."""
 
     responses: list[dict[str, Any] | ExtractionError]
     requests: list[ExtractionRequest] = field(default_factory=list)
@@ -194,6 +229,8 @@ class FakeExtractor:
         item = self.responses[min(len(self.requests) - 1, len(self.responses) - 1)]
         if isinstance(item, ExtractionError):
             raise item
+        if request.claims is not None and "checks" not in item:
+            item = verification_output(item, request.claims)
         return ExtractionResponse(
             output=item,
             model="claude-opus-5",

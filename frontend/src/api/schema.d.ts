@@ -775,6 +775,7 @@ export interface components {
             commune_insee: string;
             /** Error */
             error: string | null;
+            fallback_plan?: components["schemas"]["PlanOut"] | null;
             plan: components["schemas"]["PlanOut"] | null;
             /** Status */
             status: string;
@@ -873,7 +874,7 @@ export interface components {
         ExtractIn: {
             /**
              * Force
-             * @default true
+             * @default false
              */
             force: boolean;
         };
@@ -1259,6 +1260,11 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "partial" | "in_progress" | "unavailable";
+            /**
+             * Uncovered Share
+             * @default 0
+             */
+            uncovered_share: number;
             /** Warnings */
             warnings: string[];
             /** Zones */
@@ -1622,7 +1628,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "simulated" | "office_reviewed" | "in_progress" | "unavailable";
+            status: "simulated" | "office_reviewed" | "outdated" | "in_progress" | "unavailable";
             version: components["schemas"]["VersionOut"] | null;
         };
     };

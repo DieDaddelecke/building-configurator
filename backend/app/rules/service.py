@@ -6,6 +6,7 @@ freiwillig: für die Zone (neue Version `office_reviewed`) oder nur für ein Pro
 
 import uuid
 from collections import defaultdict
+from datetime import timedelta
 from typing import Any
 
 from sqlalchemy import func, select, text
@@ -15,11 +16,12 @@ from app.config import Settings
 from app.platform import audit
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
+from app.platform.logging import get_logger
 from app.platform.problems import Problem
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
-from app.rules.domain.kinds import ParamProblem, validate_params
-from app.rules.extract import month_cost
+from app.rules.domain.kinds import BUILDING_SPECIFIC_KINDS, ParamProblem, validate_params
+from app.rules.extract import RUNNING_STALE_AFTER, month_cost
 from app.rules.models import (
     LandUsePlan,
     ProjectRuleOverride,
@@ -49,14 +51,28 @@ from app.rules.schemas import (
     ZoneRulesOut,
 )
 from app.site import service as site_service
+from app.site.service import SiteFootprint
 
+log = get_logger("rules_service")
 FEATURE_FLAG = "rules_simulation"
 SLIVER_MIN_M2 = 1.0
 SLIVER_MIN_SHARE = 0.01
 """Teilflächen unter 1 m² oder 1 % der Grundstücksfläche werden ignoriert (Spez. 5.2.2)."""
+UNCOVERED_WARNING_SHARE = 0.01
+"""Liegt mehr als dieser Anteil des Grundstücks in keiner Zone des Planwerks, erscheint eine Warnung."""
 LINE_OVERLAY_DISTANCE_M = 1.0
 """Linienhafte Vorgaben (z. B. Baulinie) liegen oft genau auf der Grenze; bis 1 m gelten sie als betroffen."""
 NOTICES = ["notice.rules_simulation", "notice.rules_lotissement"]
+RESULT_STATUSES = {"simulated", "office_reviewed"}
+SPECIFIC_BUILDING_KINDS = ("main", "annex", "pool")
+
+# Wiederaufnahme (rules_housekeeping)
+PENDING_WITHOUT_JOB_AFTER = timedelta(minutes=30)
+RETRY_TRANSIENT_AFTER = timedelta(hours=24)
+RETRY_TRANSIENT_MAX_FAILED_RUNS_WEEK = 6
+TRANSIENT_ERRORS = ("rate_limited", "http_5", "transport:", "interrupted:")
+"""Gründe, die sich von selbst erledigen können. `refusal`, `max_tokens` eines einzelnen Sektors,
+`bad_request`, `auth`, `chapter_too_long` brauchen eine Änderung und bleiben für den Betrieb stehen."""
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +81,15 @@ NOTICES = ["notice.rules_simulation", "notice.rules_lotissement"]
 
 
 def _plan_out(db: Session, plan: LandUsePlan) -> PlanOut:
-    source = db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)).scalars().first()
+    source = (
+        db.execute(
+            select(SourceFile)
+            .where(SourceFile.land_use_plan_id == plan.id)
+            .order_by(SourceFile.created_at.desc())
+        )
+        .scalars()
+        .first()
+    )
     return PlanOut(
         id=plan.id,
         title=plan.title,
@@ -130,6 +154,34 @@ def _override_out(override: ProjectRuleOverride) -> RuleOut:
     )
 
 
+def apply_override(rules: list[RuleOut], override: ProjectRuleOverride) -> list[RuleOut]:
+    """Korrektur für ein Projekt einsetzen. Die spezifischere Regel geht vor:
+
+    - `any` ersetzt alle Regeln dieser Art.
+    - `main`, `annex` oder `pool` ersetzt die Regel dieses Baukörpers. Eine automatische Regel für `any`
+      gilt dann nur noch für die übrigen Baukörper und erscheint für diese einzeln; bei Regelarten, die das
+      Grundstück als Ganzes betreffen (Grundfläche, Stellplätze …), ersetzt die Korrektur sie ganz.
+    """
+    specific = override.building_kind
+    present = {(r.kind, r.building_kind) for r in rules}
+    result: list[RuleOut] = []
+    for rule in rules:
+        if rule.kind != override.kind:
+            result.append(rule)
+        elif specific == "any" or rule.building_kind == specific:
+            continue
+        elif rule.building_kind == "any":
+            if override.kind in BUILDING_SPECIFIC_KINDS:
+                result.extend(
+                    rule.model_copy(update={"building_kind": other})
+                    for other in SPECIFIC_BUILDING_KINDS
+                    if other != specific and (rule.kind, other) not in present
+                )
+        else:
+            result.append(rule)
+    return [*result, _override_out(override)]
+
+
 def _validated(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]:
     if status == "effective" or kind == "text_only":
         try:
@@ -144,7 +196,23 @@ def _validated(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]
 # ---------------------------------------------------------------------------
 
 
+def _unavailable(commune: str | None, reason: str, warnings: list[str]) -> ProjectRulesOut:
+    return ProjectRulesOut(
+        status="unavailable",
+        reason=reason,
+        commune_insee=commune,
+        plan=None,
+        zones=[],
+        ignored_zones=[],
+        overlays=[],
+        warnings=sorted(set(warnings)),
+        notices=NOTICES,
+    )
+
+
 def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
+    """Simulation für das Grundstück. Ist der aktuelle Planstand für dieses Grundstück nicht vollständig
+    ausgewertet oder nicht lesbar, zeigt sie den vorigen Planstand als „veraltet“ (Plan 3.4, RW21)."""
     footprint = site_service.site_footprint(db, project_id)
     if footprint is None:
         raise Problem(404, "site_not_found")
@@ -154,20 +222,46 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
         warnings.append("multiple_communes")
     state = db.get(RulesCommune, commune) if commune else None
     plan = db.get(LandUsePlan, state.land_use_plan_id) if state and state.land_use_plan_id else None
-    if state is None or state.status != "ok" or plan is None or plan.status != "active":
-        unavailable = state.status if state is not None and state.status != "ok" else "not_imported"
-        return ProjectRulesOut(
-            status="unavailable",
-            reason=unavailable,
-            commune_insee=commune,
-            plan=None,
-            zones=[],
-            ignored_zones=[],
-            overlays=[],
-            warnings=warnings,
-            notices=NOTICES,
-        )
+    usable = state is not None and state.status == "ok" and plan is not None and plan.status == "active"
+    current = _plan_rules(db, project_id, footprint, commune, plan, warnings) if usable and plan else None
+    if current is not None and current.status == "ok":
+        return current
 
+    fallback = (
+        db.get(LandUsePlan, state.fallback_land_use_plan_id)
+        if state is not None and state.fallback_land_use_plan_id
+        else None
+    )
+    if fallback is not None:
+        older = _plan_rules(
+            db,
+            project_id,
+            footprint,
+            commune,
+            fallback,
+            [*warnings, "rules_outdated" if usable else "plan_update_failed"],
+        )
+        current_has_rules = current is not None and current.status == "partial"
+        if older.status == "ok" or (older.status == "partial" and not current_has_rules):
+            for zone in older.zones:
+                if zone.status in RESULT_STATUSES:
+                    zone.status = "outdated"
+            return older
+    if current is not None:
+        return current
+    unavailable = state.status if state is not None and state.status != "ok" else "not_imported"
+    return _unavailable(commune, unavailable, warnings)
+
+
+def _plan_rules(
+    db: Session,
+    project_id: uuid.UUID,
+    footprint: SiteFootprint,
+    commune: str | None,
+    plan: LandUsePlan,
+    base_warnings: list[str],
+) -> ProjectRulesOut:
+    warnings = list(base_warnings)
     rows = db.execute(
         text(
             """
@@ -189,6 +283,9 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
     ]
     if len(relevant) > 1:
         warnings.append("multiple_zones")
+    uncovered = max(0.0, 1.0 - sum(float(r.area) for r in rows) / site_area)
+    if rows and uncovered >= UNCOVERED_WARNING_SHARE:
+        warnings.append("zone_coverage_incomplete")
 
     codes = [r.code for r in relevant]
     rule_sets = {
@@ -222,7 +319,9 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
     }
     overrides: dict[str, list[ProjectRuleOverride]] = defaultdict(list)
     for override in db.execute(
-        select(ProjectRuleOverride).where(ProjectRuleOverride.project_id == project_id)
+        select(ProjectRuleOverride)
+        .where(ProjectRuleOverride.project_id == project_id)
+        .order_by(ProjectRuleOverride.building_kind)
     ).scalars():
         overrides[override.zone_code].append(override)
     urls = {
@@ -250,13 +349,9 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
         else:
             status, reason = "unavailable", chapter.error or chapter.status
         rules = [_rule_out(r, urls) for r in rules_by_version.get(version.id, [])] if version else []
-        for override in overrides.get(row.code, []):
-            rules = [
-                r
-                for r in rules
-                if not (r.kind == override.kind and r.building_kind == override.building_kind)
-            ]
-            rules.append(_override_out(override))
+        # „any“ zuerst, damit eine spezifische Korrektur danach die allgemeine einschränkt
+        for override in sorted(overrides.get(row.code, []), key=lambda o: o.building_kind != "any"):
+            rules = apply_override(rules, override)
         zones.append(
             ZoneRulesOut(
                 code=row.code,
@@ -290,11 +385,11 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
     statuses = {z.status for z in zones}
     if not zones:
         overall, overall_reason = "unavailable", "no_zone"
-    elif statuses <= {"simulated", "office_reviewed"}:
+    elif statuses <= RESULT_STATUSES:
         overall, overall_reason = "ok", None
-    elif "in_progress" in statuses and not statuses & {"simulated", "office_reviewed"}:
+    elif "in_progress" in statuses and not statuses & RESULT_STATUSES:
         overall, overall_reason = "in_progress", None
-    elif statuses & {"simulated", "office_reviewed"}:
+    elif statuses & RESULT_STATUSES:
         overall, overall_reason = "partial", None
     else:
         overall, overall_reason = "unavailable", zones[0].reason
@@ -305,6 +400,7 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
         plan=_plan_out(db, plan),
         zones=zones,
         ignored_zones=ignored,
+        uncovered_share=round(uncovered, 4) if rows else 0.0,
         overlays=[
             OverlayOut(category=r.category, type_code=r.type_code, label=r.label, endpoint=r.endpoint)
             for r in overlay_rows
@@ -325,6 +421,11 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
     for insee in sorted(set(settings.cadastre_communes) | set(states)):
         state = states.get(insee)
         plan = db.get(LandUsePlan, state.land_use_plan_id) if state and state.land_use_plan_id else None
+        fallback = (
+            db.get(LandUsePlan, state.fallback_land_use_plan_id)
+            if state and state.fallback_land_use_plan_id
+            else None
+        )
         chapters_out: list[ChapterCoverageOut] = []
         if plan is not None:
             chapters = list(
@@ -393,6 +494,7 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
                 error=state.error if state else None,
                 checked_at=state.checked_at if state else None,
                 plan=_plan_out(db, plan) if plan else None,
+                fallback_plan=_plan_out(db, fallback) if fallback else None,
                 chapters=chapters_out,
             )
         )
@@ -464,7 +566,11 @@ def create_office_version(
         raise Problem(422, "rule_duplicate")
     current = db.get(RuleSetVersion, rule_set.current_version_id) if rule_set.current_version_id else None
     source = (
-        db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == rule_set.land_use_plan_id))
+        db.execute(
+            select(SourceFile)
+            .where(SourceFile.land_use_plan_id == rule_set.land_use_plan_id)
+            .order_by(SourceFile.created_at.desc())
+        )
         .scalars()
         .first()
     )
@@ -629,13 +735,29 @@ def enqueue_import(db: Session, communes: list[str] | None, force: bool, actor_i
     return job_id
 
 
+_ACTIVE_EXTRACT_JOB = text(
+    "SELECT id FROM job WHERE kind = 'rules_extract' AND status IN ('queued', 'running') "
+    "AND payload->>'chapter_id' = :chapter ORDER BY created_at LIMIT 1"
+)
+
+
+def _active_extract_job(db: Session, chapter_id: uuid.UUID) -> uuid.UUID | None:
+    return db.execute(_ACTIVE_EXTRACT_JOB, {"chapter": str(chapter_id)}).scalar()
+
+
 def enqueue_extract(db: Session, chapter_id: uuid.UUID, force: bool, actor_id: str) -> uuid.UUID:
+    """Kapitel auswerten. Wartet oder läuft schon ein Job für das Kapitel, bleibt es bei diesem: ein zweiter
+    Klick kostet nicht noch einmal."""
     import app.rules.jobs  # noqa: F401
 
     chapter = db.get(RegulationChapter, chapter_id)
     if chapter is None:
         raise Problem(404, "not_found")
-    chapter.status, chapter.updated_at = "pending", utcnow()
+    active = _active_extract_job(db, chapter_id)
+    if active is not None:
+        return active
+    if chapter.status != "extracting":
+        chapter.status, chapter.updated_at = "pending", utcnow()
     job_id = enqueue(
         db, "rules_extract", {"chapter_id": str(chapter_id), "force": force}, created_by=actor_id
     )
@@ -650,3 +772,76 @@ def enqueue_extract(db: Session, chapter_id: uuid.UUID, force: bool, actor_id: s
     )
     db.commit()
     return job_id
+
+
+def housekeeping(db: Session, settings: Settings) -> dict[str, Any]:
+    """Liegengebliebene und aus behebbarem Grund gescheiterte Kapitel wieder aufnehmen (stündlich, D11).
+
+    - `extracting` länger als das Zeitlimit: abgebrochen (`interrupted:stale`).
+    - `pending` ohne wartenden Job: neu einplanen.
+    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded`, sobald das Budget wieder
+      reicht (neuer Monat, höheres Budget); vorübergehende Fehler nach 24 h, höchstens 6 gescheiterte Aufrufe
+      je Woche.
+    - Ausgewertet mit älterer Version der Schranken: neu bewerten (ohne Aufruf, wenn die Antworten vorliegen).
+    """
+    import app.rules.jobs  # noqa: F401
+
+    now = utcnow()
+    chapters = list(
+        db.execute(
+            select(RegulationChapter)
+            .join(LandUsePlan, LandUsePlan.id == RegulationChapter.land_use_plan_id)
+            .where(LandUsePlan.status == "active", func.cardinality(RegulationChapter.sectors) > 0)
+            .with_for_update(of=RegulationChapter, skip_locked=True)
+        ).scalars()
+    )
+    budget_left = month_cost(db) < settings.rules_budget_month_usd
+    counts: dict[str, int] = defaultdict(int)
+    for chapter in chapters:
+        if chapter.status == "extracting" and now - chapter.updated_at > RUNNING_STALE_AFTER:
+            chapter.status, chapter.error, chapter.updated_at = "failed", "interrupted:stale", now
+            counts["stale"] += 1
+        reason = _restart_reason(db, settings, chapter, now, budget_left)
+        if reason is None or _active_extract_job(db, chapter.id) is not None:
+            continue
+        chapter.status, chapter.updated_at = "pending", now
+        enqueue(
+            db,
+            "rules_extract",
+            {"chapter_id": str(chapter.id)},
+            idempotency_key=f"rules_housekeeping:{chapter.id}:{reason}:{now:%Y%m%d%H}",
+            created_by=f"system:rules_housekeeping:{reason}",
+        )
+        counts[reason] += 1
+    db.commit()
+    if counts:
+        log.info("rules_housekeeping", **counts)
+    return dict(counts)
+
+
+def _restart_reason(
+    db: Session, settings: Settings, chapter: RegulationChapter, now: Any, budget_left: bool
+) -> str | None:
+    if chapter.status == "pending":
+        return "pending" if now - chapter.updated_at > PENDING_WITHOUT_JOB_AFTER else None
+    if chapter.status == "succeeded":
+        stale_engine = chapter.engine_version is not None and chapter.engine_version != ENGINE_VERSION
+        return "engine_changed" if stale_engine else None
+    if chapter.status != "failed" or chapter.error is None:
+        return None
+    if chapter.error == "not_configured":
+        return "configured" if settings.anthropic_api_key is not None else None
+    if chapter.error == "budget_exceeded":
+        return "budget" if budget_left else None
+    if chapter.error.startswith(TRANSIENT_ERRORS) and now - chapter.updated_at > RETRY_TRANSIENT_AFTER:
+        failed_week = db.execute(
+            select(func.count())
+            .select_from(RuleExtractionRun)
+            .where(
+                RuleExtractionRun.chapter_id == chapter.id,
+                RuleExtractionRun.status == "failed",
+                RuleExtractionRun.created_at > now - timedelta(days=7),
+            )
+        ).scalar_one()
+        return "transient" if failed_week < RETRY_TRANSIENT_MAX_FAILED_RUNS_WEEK else None
+    return None

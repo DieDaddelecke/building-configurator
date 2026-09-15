@@ -2,8 +2,13 @@
 
 Ablauf: Gemeinde → Zonen → Planwerk mit größter Fläche in der Gemeinde → Dokument → règlement écrit laden,
 Text je Seite, Kapitel erkennen → in einer Transaktion speichern → Auswertung je Kapitel als Job.
-Ein unveränderter Planstand wird nicht erneut geladen. Ein neuer Stand ersetzt den alten für die Gemeinde;
-abgesendete Anfragen behalten ihren Snapshot, offene Projekte sehen beim nächsten Abruf den neuen Stand.
+
+- Ein unveränderter Planstand (Dokument, Datum, Zeitstempel der Zonen) wird nicht erneut geladen.
+- Ein geändertes Datum desselben Dokuments oder `force` aktualisiert den Planstand an Ort und Stelle:
+  Regelwerke, Korrekturen des Büros und gespeicherte Aufrufe bleiben erhalten, unveränderte Kapitel werden
+  nicht neu ausgewertet (docs/ANNAHMEN.md RW20). Nichts wird gelöscht, bevor der neue Stand lesbar ist.
+- Ein neues Dokument ist ein neuer Planstand. Bis er ausgewertet ist oder wenn er nicht lesbar ist, sehen
+  Kunden den vorigen als „veraltet“ (`rules_commune.fallback_land_use_plan_id`, RW21).
 """
 
 import hashlib
@@ -15,7 +20,7 @@ from typing import Any, Protocol
 import httpx2
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
-from sqlalchemy import delete, insert, select, text
+from sqlalchemy import delete, exists, insert, select, text
 from sqlalchemy.orm import Session
 
 from app.config import Settings
@@ -26,13 +31,23 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
-from app.rules.domain.chapters import CHAPTER_MAX_PAGES, chapter_for_zone, detect_structure
+from app.rules.domain.chapters import (
+    CHAPTER_MAX_PAGES,
+    Chapter,
+    Structure,
+    chapter_for_zone,
+    detect_structure,
+)
+from app.rules.extract import input_hash
 from app.rules.models import (
     LandUsePlan,
+    OverlayConstraint,
     RegulationChapter,
     RulesCommune,
+    RuleSet,
     SourceFile,
     SourcePage,
+    Zone,
 )
 
 log = get_logger("rules_import")
@@ -124,7 +139,8 @@ class DirectoryGpu:
 class ImportResult:
     commune_insee: str
     status: str
-    """`imported`, `unchanged`, `extended`, `rnu`, `no_document`, `no_regulation`, `no_chapters`."""
+    """`imported`, `refreshed`, `unchanged`, `extended`, `rnu`, `no_document`, `no_regulation`,
+    `multiple_regulations`, `no_chapters`."""
     land_use_plan_id: str | None = None
     chapters: int = 0
     zones: int = 0
@@ -165,17 +181,46 @@ def choose_partition(commune: dict[str, Any], zones: list[gpu.GpuFeature]) -> tu
     return partition, latest[partition][1]
 
 
+def plan_has_results(session: Session, plan_id: Any) -> bool:
+    return bool(
+        session.execute(
+            select(
+                exists().where(RuleSet.land_use_plan_id == plan_id, RuleSet.current_version_id.is_not(None))
+            )
+        ).scalar()
+    )
+
+
 def _set_commune(
     session: Session, insee: str, status: str, plan_id: Any = None, error: str | None = None
 ) -> None:
+    """Stand der Gemeinde setzen. Wechselt der Planstand, bleibt der vorige mit Ergebnissen als Rückfall."""
     row = session.get(RulesCommune, insee)
     if row is None:
         row = RulesCommune(commune_insee=insee, status=status)
         session.add(row)
+    previous = row.land_use_plan_id
+    if status == "rnu":
+        row.fallback_land_use_plan_id = None  # Ohne Bebauungsplan gelten die alten Regeln nicht mehr
+    elif previous is not None and previous != plan_id and plan_has_results(session, previous):
+        row.fallback_land_use_plan_id = previous
+    if plan_id is not None and row.fallback_land_use_plan_id == plan_id:
+        row.fallback_land_use_plan_id = None
     row.status = status
     row.land_use_plan_id = plan_id
     row.error = error
     row.checked_at = utcnow()
+
+
+def record_check_failed(session: Session, insee: str, error: str) -> None:
+    """Prüfung im GPU nach allen Versuchen gescheitert (Netz, Dienst). Ein vorhandener Planstand bleibt
+    gültig; Kunden verlieren ihre Simulation nicht, weil der GPU kurz nicht erreichbar war."""
+    row = session.get(RulesCommune, insee)
+    if row is not None and row.land_use_plan_id is not None:
+        row.error = f"check_failed:{error}"[:2000]
+        row.checked_at = utcnow()
+        return
+    _set_commune(session, insee, "failed", error=error)
 
 
 _INSERT_ZONE = text(
@@ -216,19 +261,24 @@ def _store_zones_and_overlays(
     chapter_codes: dict[str, str | None],
     notes: list[str],
 ) -> int:
+    """Zonen und Vorgaben der Gemeinde für diesen Planstand; ein früherer Stand derselben Gemeinde wird
+    ersetzt (nichts verweist auf diese Zeilen)."""
+    session.execute(delete(Zone).where(Zone.land_use_plan_id == plan.id, Zone.commune_insee == insee))
     count = 0
     for feature in zones:
         if feature.properties.get("partition") != plan.partition:
             continue
         code = str(feature.properties.get("libelle") or "").strip()
-        if not code:
+        gid = feature.properties.get("gid")
+        if not code or gid is None:
+            notes.append(f"zone_without_code_or_gid:{code or '?'}")
             continue
         session.execute(
             _INSERT_ZONE,
             {
                 "actor": ACTOR,
                 "plan": plan.id,
-                "gid": int(feature.properties.get("gid") or 0),
+                "gid": int(gid),
                 "code": code[:20],
                 "label": (feature.properties.get("libelong") or None),
                 "zone_type": feature.properties.get("typezone"),
@@ -244,6 +294,13 @@ def _store_zones_and_overlays(
         except ExternalServiceError as exc:
             notes.append(f"overlays_unavailable:{endpoint}:{exc.reason}")
             continue
+        session.execute(
+            delete(OverlayConstraint).where(
+                OverlayConstraint.land_use_plan_id == plan.id,
+                OverlayConstraint.commune_insee == insee,
+                OverlayConstraint.endpoint == endpoint,
+            )
+        )
         for feature in overlays:
             partition = feature.properties.get("partition")
             if category != "servitude" and partition != plan.partition:
@@ -272,16 +329,35 @@ def _store_zones_and_overlays(
     return count
 
 
-def _enqueue_extraction(session: Session, chapter: RegulationChapter, reason: str) -> None:
+def _enqueue_extraction(
+    session: Session, settings: Settings, chapter: RegulationChapter, source_sha256: str, reason: str
+) -> None:
     import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
 
+    # Schlüssel über die Eingabe: geänderte Seiten oder Sektoren ergeben einen neuen Job, gleiche keinen
     enqueue(
         session,
         "rules_extract",
         {"chapter_id": str(chapter.id)},
-        idempotency_key=f"rules_extract:{chapter.id}:{','.join(sorted(chapter.sectors))}",
+        idempotency_key=f"rules_extract:{chapter.id}:{input_hash(settings, source_sha256, chapter)}",
         created_by=f"{ACTOR}:{reason}",
     )
+
+
+def _zone_stamp(plan_zones: list[gpu.GpuFeature]) -> str | None:
+    stamps = [str(z.properties.get("gpu_timestamp") or "") for z in plan_zones]
+    return max(stamps, default="") or None
+
+
+@dataclass
+class _Regulation:
+    doc: gpu.GpuDocument
+    url: str
+    filename: str
+    data: bytes
+    sha256: str
+    reader: pdf.PdfText
+    structure: Structure
 
 
 def import_commune(
@@ -295,18 +371,19 @@ def import_commune(
     zones = source.features("zone-urba", municipality.geometry)
     chosen = choose_partition(municipality.geometry, zones)
     if chosen is None:
-        _set_commune(session, insee, "no_document")
-        session.commit()
-        return ImportResult(insee, "no_document")
+        return _unusable(session, insee, None, "no_document", None)
     partition, doc_id = chosen
     plan_zones = [z for z in zones if z.properties.get("partition") == partition]
     zone_codes = sorted({str(z.properties.get("libelle") or "").strip() for z in plan_zones} - {""})
+    stamp = _zone_stamp(plan_zones)
 
     existing = session.execute(
         select(LandUsePlan).where(LandUsePlan.gpu_doc_id == doc_id)
     ).scalar_one_or_none()
+    doc = source.document(doc_id)
     if existing is not None and existing.status == "active" and not force:
-        if insee in existing.communes:
+        unchanged = existing.gpu_update_date == doc.update_date and existing.gpu_timestamp == stamp
+        if unchanged and insee in existing.communes:
             row = session.get(RulesCommune, insee)
             previous_error = row.error if row is not None else None
             _set_commune(session, insee, "ok", existing.id, previous_error)
@@ -314,45 +391,54 @@ def import_commune(
             return ImportResult(
                 insee, "unchanged", str(existing.id), notes=[previous_error] if previous_error else []
             )
-        return _extend_plan(session, source, existing, insee, municipality.geometry, plan_zones, zone_codes)
-    if existing is not None:
-        # Abgebrochener oder erzwungener Import desselben Dokuments: neu aufbauen
-        session.execute(delete(LandUsePlan).where(LandUsePlan.id == existing.id))
-        session.flush()
+        if unchanged:
+            return _extend_plan(
+                session, source, settings, existing, insee, municipality.geometry, plan_zones, zone_codes
+            )
 
-    doc = source.document(doc_id)
-    regulation = gpu.regulation_file(doc)
-    if regulation is None:
-        _set_commune(session, insee, "no_regulation", error=f"document:{doc_id}")
-        session.commit()
-        return ImportResult(insee, "no_regulation")
-    url = source.file_url(doc, regulation.name)
+    regulations = gpu.regulation_files(doc)
+    if len(regulations) != 1:
+        status = "no_regulation" if not regulations else "multiple_regulations"
+        detail = f"document:{doc_id}" + (
+            "" if not regulations else ":" + ",".join(f.name for f in regulations)
+        )
+        return _unusable(session, insee, existing, status, detail)
+    url = source.file_url(doc, regulations[0].name)
     data = source.download(url)
-    sha256 = hashlib.sha256(data).hexdigest()
     reader = pdf.read_text(data)
-    structure = detect_structure(reader.pages)
-    chapters_by_code = {c.code: c for c in structure.chapters}
-    chapter_codes: dict[str, str | None] = {}
-    sectors: dict[str, list[str]] = {}
-    for code in zone_codes:
-        found_chapter = chapter_for_zone(code, structure.chapters)
-        chapter_codes[code] = found_chapter.code if found_chapter else None
-        if found_chapter is not None:
-            sectors.setdefault(found_chapter.code, []).append(code)
-    if not sectors:
-        _set_commune(session, insee, "no_chapters", error=f"detection:{structure.method}")
-        session.commit()
-        return ImportResult(insee, "no_chapters")
+    regulation = _Regulation(
+        doc,
+        url,
+        regulations[0].name,
+        data,
+        hashlib.sha256(data).hexdigest(),
+        reader,
+        detect_structure(reader.pages),
+    )
+    chapter_codes = {code: _chapter_code(code, regulation.structure) for code in zone_codes}
+    if not any(chapter_codes.values()):
+        return _unusable(session, insee, existing, "no_chapters", f"detection:{regulation.structure.method}")
 
-    storage_key = f"rules/{doc.partition}/{doc.id}/{sha256}.pdf"
-    storage.put_bytes(storage_key, data, "application/pdf")
+    if existing is not None:
+        return _refresh_plan(
+            session,
+            source,
+            settings,
+            existing,
+            insee,
+            municipality.geometry,
+            plan_zones,
+            chapter_codes,
+            regulation,
+            stamp,
+        )
 
     plan = LandUsePlan(
         gpu_doc_id=doc.id,
         partition=doc.partition or partition,
         du_type=doc.du_type,
         title=doc.title,
-        gpu_timestamp=str(plan_zones[0].properties.get("gpu_timestamp") or "") or None,
+        gpu_timestamp=stamp,
         gpu_update_date=doc.update_date,
         communes=[insee],
         status="importing",
@@ -360,16 +446,72 @@ def import_commune(
     )
     session.add(plan)
     session.flush()
+    source_file = _store_source(session, plan, regulation)
+    notes: list[str] = []
+    stored_zones = _store_zones_and_overlays(
+        session, source, plan, insee, municipality.geometry, plan_zones, chapter_codes, notes
+    )
+    chapters = _sync_chapters(session, settings, plan, source_file, regulation.structure, notes)
+    _activate(session, plan, insee)
+    unmatched = sorted(code for code, chapter_code in chapter_codes.items() if chapter_code is None)
+    if unmatched:
+        notes.append("zones_without_chapter:" + ",".join(unmatched))
+    _set_commune(session, insee, "ok", plan.id, "; ".join(notes) or None)
+    session.commit()
+    log.info(
+        "plu_imported", commune=insee, plan=doc.id, chapters=len(chapters), zones=stored_zones, notes=notes
+    )
+    return ImportResult(insee, "imported", str(plan.id), len(chapters), stored_zones, notes)
+
+
+def _chapter_code(zone_code: str, structure: Structure) -> str | None:
+    found = chapter_for_zone(zone_code, structure.chapters)
+    return found.code if found else None
+
+
+def _unusable(
+    session: Session, insee: str, existing: LandUsePlan | None, status: str, error: str | None
+) -> ImportResult:
+    """Neuer Stand nicht lesbar. Aktualisierung desselben Planstands: der bisherige Stand bleibt unverändert.
+    Neues Dokument oder kein Plan: Status der Gemeinde, der bisherige Stand bleibt als Rückfall."""
+    row = session.get(RulesCommune, insee)
+    if existing is not None and row is not None and row.land_use_plan_id == existing.id:
+        row.error = f"{status}:{error}" if error else status
+        row.checked_at = utcnow()
+        log.warning("plu_refresh_unusable", commune=insee, status=status, error=error)
+        session.commit()
+        return ImportResult(insee, status, str(existing.id), notes=[row.error])
+    _set_commune(session, insee, status, error=error)
+    session.commit()
+    return ImportResult(insee, status)
+
+
+def _store_source(session: Session, plan: LandUsePlan, regulation: _Regulation) -> SourceFile:
+    """Planunterlage im Objektspeicher und ihre Seitentexte; eine Datei mit gleicher Prüfsumme wird
+    wiederverwendet. Frühere Dateien bleiben: Regeln verweisen auf sie."""
+    existing = (
+        session.execute(
+            select(SourceFile)
+            .where(SourceFile.land_use_plan_id == plan.id, SourceFile.sha256 == regulation.sha256)
+            .order_by(SourceFile.created_at.desc())
+        )
+        .scalars()
+        .first()
+    )
+    if existing is not None:
+        return existing
+    storage_key = f"rules/{regulation.doc.partition}/{regulation.doc.id}/{regulation.sha256}.pdf"
+    storage.put_bytes(storage_key, regulation.data, "application/pdf")
     source_file = SourceFile(
         land_use_plan_id=plan.id,
         kind="regulation_pdf",
-        filename=regulation.name,
-        url=url,
-        sha256=sha256,
+        filename=regulation.filename,
+        url=regulation.url,
+        sha256=regulation.sha256,
         storage_key=storage_key,
-        size_bytes=len(data),
-        page_count=len(reader.pages),
-        empty_pages=reader.empty_pages,
+        size_bytes=len(regulation.data),
+        page_count=len(regulation.reader.pages),
+        empty_pages=regulation.reader.empty_pages,
         created_by=ACTOR,
     )
     session.add(source_file)
@@ -378,35 +520,94 @@ def import_commune(
         insert(SourcePage),
         [
             {"source_file_id": source_file.id, "page": n, "text": t.replace("\x00", "")}
-            for n, t in reader.pages.items()
+            for n, t in regulation.reader.pages.items()
         ],
     )
-    notes: list[str] = []
-    stored_zones = _store_zones_and_overlays(
-        session, source, plan, insee, municipality.geometry, plan_zones, chapter_codes, notes
-    )
-    chapters: list[RegulationChapter] = []
-    for code, codes in sorted(sectors.items()):
-        found = chapters_by_code[code]
+    return source_file
+
+
+def _sync_chapters(
+    session: Session,
+    settings: Settings,
+    plan: LandUsePlan,
+    source_file: SourceFile,
+    structure: Structure,
+    notes: list[str],
+) -> list[RegulationChapter]:
+    """Kapitel des Planstands an die erkannte Struktur und die Zonen aller Gemeinden angleichen.
+
+    Unveränderte Kapitel behalten Status und Läufe. Geänderte werden `pending` und neu eingeplant; die
+    Wiederverwendung gespeicherter Aufrufe hängt an der Eingabe, nicht an der Kapitelzeile."""
+    session.flush()
+    zone_rows = session.execute(
+        select(Zone.code).where(Zone.land_use_plan_id == plan.id).distinct()
+    ).scalars()
+    sectors: dict[str, set[str]] = {}
+    for code in zone_rows:
+        found = chapter_for_zone(code, structure.chapters)
+        if found is not None:
+            sectors.setdefault(found.code, set()).add(code)
+    if sectors:
+        # Zonen anderer Gemeinden folgen einer geänderten Kapitelstruktur
+        session.execute(
+            text(
+                "UPDATE zone SET chapter_code = :chapter WHERE land_use_plan_id = :plan AND code = :code "
+                "AND chapter_code IS DISTINCT FROM :chapter"
+            ),
+            [
+                {"plan": plan.id, "code": code, "chapter": chapter}
+                for chapter, codes in sectors.items()
+                for code in codes
+            ],
+        )
+    existing = {
+        c.code: c
+        for c in session.execute(
+            select(RegulationChapter).where(RegulationChapter.land_use_plan_id == plan.id)
+        ).scalars()
+    }
+    detected: dict[str, Chapter] = {c.code: c for c in structure.chapters}
+    result: list[RegulationChapter] = []
+    for code in sorted(set(existing) | set(sectors)):
+        chapter = existing.get(code)
+        found = detected.get(code)
+        if found is None or code not in sectors:
+            if chapter is not None and chapter.sectors:
+                chapter.sectors = []
+                chapter.status, chapter.error, chapter.updated_at = "failed", "chapter_not_detected", utcnow()
+            continue
+        values = {
+            "source_file_id": source_file.id,
+            "title": found.title[:300],
+            "first_page": found.first_page,
+            "last_page": found.last_page,
+            "general_pages": structure.general_pages,
+            "sectors": sorted(sectors[code]),
+            "detection": structure.method,
+        }
+        if chapter is None:
+            chapter = RegulationChapter(land_use_plan_id=plan.id, code=code, created_by=ACTOR, **values)
+            session.add(chapter)
+            changed = True
+        else:
+            changed = any(getattr(chapter, key) != value for key, value in values.items())
+            for key, value in values.items():
+                setattr(chapter, key, value)
+        session.flush()
+        result.append(chapter)
         if len(found.pages) + len(structure.general_pages) > CHAPTER_MAX_PAGES:
             notes.append(f"chapter_too_long:{code}")
-        chapter = RegulationChapter(
-            land_use_plan_id=plan.id,
-            source_file_id=source_file.id,
-            code=code,
-            title=found.title[:300],
-            first_page=found.first_page,
-            last_page=found.last_page,
-            general_pages=structure.general_pages,
-            sectors=sorted(codes),
-            detection=structure.method,
-            created_by=ACTOR,
-        )
-        session.add(chapter)
-        chapters.append(chapter)
-    session.flush()
+            chapter.status, chapter.error, chapter.updated_at = "failed", "chapter_too_long", utcnow()
+            continue
+        if changed or chapter.status == "pending":
+            if chapter.status != "extracting":
+                chapter.status, chapter.error, chapter.updated_at = "pending", None, utcnow()
+            _enqueue_extraction(session, settings, chapter, source_file.sha256, "import")
+    return result
 
-    # Frühere Planstände dieser Gemeinde ablösen
+
+def _activate(session: Session, plan: LandUsePlan, insee: str) -> None:
+    """Planstand für die Gemeinde aktivieren und frühere Planstände dieser Gemeinde ablösen."""
     previous = session.execute(
         select(LandUsePlan).where(
             LandUsePlan.status == "active",
@@ -419,24 +620,50 @@ def import_commune(
         if not old.communes:
             old.status = "superseded"
             old.superseded_by = plan.id
+    plan.communes = sorted({*plan.communes, insee})
     plan.status = "active"
-    plan.activated_at = utcnow()
+    plan.activated_at = plan.activated_at or utcnow()
+
+
+def _refresh_plan(
+    session: Session,
+    source: GpuSource,
+    settings: Settings,
+    plan: LandUsePlan,
+    insee: str,
+    commune_geom: dict[str, Any],
+    plan_zones: list[gpu.GpuFeature],
+    chapter_codes: dict[str, str | None],
+    regulation: _Regulation,
+    stamp: str | None,
+) -> ImportResult:
+    """Denselben Planstand an Ort und Stelle aktualisieren (geändertes Datum, `force`, wieder aktiv)."""
+    plan.partition = regulation.doc.partition or plan.partition
+    plan.du_type = regulation.doc.du_type
+    plan.title = regulation.doc.title
+    plan.gpu_update_date = regulation.doc.update_date
+    plan.gpu_timestamp = stamp
+    plan.error = None
+    source_file = _store_source(session, plan, regulation)
+    notes: list[str] = []
+    stored = _store_zones_and_overlays(
+        session, source, plan, insee, commune_geom, plan_zones, chapter_codes, notes
+    )
+    chapters = _sync_chapters(session, settings, plan, source_file, regulation.structure, notes)
+    _activate(session, plan, insee)
     unmatched = sorted(code for code, chapter_code in chapter_codes.items() if chapter_code is None)
     if unmatched:
         notes.append("zones_without_chapter:" + ",".join(unmatched))
     _set_commune(session, insee, "ok", plan.id, "; ".join(notes) or None)
-    for chapter in chapters:
-        _enqueue_extraction(session, chapter, "import")
     session.commit()
-    log.info(
-        "plu_imported", commune=insee, plan=doc.id, chapters=len(chapters), zones=stored_zones, notes=notes
-    )
-    return ImportResult(insee, "imported", str(plan.id), len(chapters), stored_zones, notes)
+    log.info("plu_refreshed", commune=insee, plan=plan.gpu_doc_id, chapters=len(chapters), notes=notes)
+    return ImportResult(insee, "refreshed", str(plan.id), len(chapters), stored, notes)
 
 
 def _extend_plan(
     session: Session,
     source: GpuSource,
+    settings: Settings,
     plan: LandUsePlan,
     insee: str,
     commune_geom: dict[str, Any],
@@ -444,14 +671,16 @@ def _extend_plan(
     zone_codes: list[str],
 ) -> ImportResult:
     """Weitere Gemeinde desselben Planwerks (z. B. PLUi): Zonen ergänzen, Kapitel um Sektoren erweitern."""
-    chapters = list(
+    source_file = (
         session.execute(
-            select(RegulationChapter).where(RegulationChapter.land_use_plan_id == plan.id)
-        ).scalars()
+            select(SourceFile)
+            .where(SourceFile.land_use_plan_id == plan.id)
+            .order_by(SourceFile.created_at.desc())
+        )
+        .scalars()
+        .first()
     )
-    source_file = session.execute(
-        select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)
-    ).scalar_one()
+    assert source_file is not None
     pages = {
         p.page: p.text
         for p in session.execute(
@@ -459,41 +688,13 @@ def _extend_plan(
         ).scalars()
     }
     structure = detect_structure(pages)
-    chapter_codes: dict[str, str | None] = {}
-    by_code = {c.code: c for c in chapters}
-    for code in zone_codes:
-        found = chapter_for_zone(code, structure.chapters)
-        chapter_codes[code] = found.code if found else None
-        if found is None:
-            continue
-        chapter = by_code.get(found.code)
-        if chapter is None:
-            chapter = RegulationChapter(
-                land_use_plan_id=plan.id,
-                source_file_id=source_file.id,
-                code=found.code,
-                title=found.title[:300],
-                first_page=found.first_page,
-                last_page=found.last_page,
-                general_pages=structure.general_pages,
-                sectors=[],
-                detection=structure.method,
-                created_by=ACTOR,
-            )
-            session.add(chapter)
-            by_code[found.code] = chapter
-        if code not in chapter.sectors:
-            chapter.sectors = sorted({*chapter.sectors, code})
-            chapter.status = "pending"
+    chapter_codes = {code: _chapter_code(code, structure) for code in zone_codes}
     notes: list[str] = []
     stored = _store_zones_and_overlays(
         session, source, plan, insee, commune_geom, plan_zones, chapter_codes, notes
     )
-    plan.communes = sorted({*plan.communes, insee})
-    session.flush()
-    for chapter in by_code.values():
-        if chapter.status == "pending":
-            _enqueue_extraction(session, chapter, "extend")
+    chapters = _sync_chapters(session, settings, plan, source_file, structure, notes)
+    _activate(session, plan, insee)
     _set_commune(session, insee, "ok", plan.id, "; ".join(notes) or None)
     session.commit()
-    return ImportResult(insee, "extended", str(plan.id), len(by_code), stored, notes)
+    return ImportResult(insee, "extended", str(plan.id), len(chapters), stored, notes)

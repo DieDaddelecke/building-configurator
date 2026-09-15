@@ -121,7 +121,11 @@ export function useFormSite() {
           body: { parcel_idus: idus },
         }),
       ),
-    onSuccess: (site) => client.setQueryData(siteKey(site.project_id), site),
+    onSuccess: (site) => {
+      client.setQueryData(siteKey(site.project_id), site);
+      // Neue Parzellen, neue Zonen: die Regeln des vorigen Grundstücks nicht kurz weiter zeigen
+      client.removeQueries({ queryKey: ["rules", site.project_id] });
+    },
   });
 }
 

@@ -269,7 +269,9 @@ def main() -> None:
     p_flag.set_defaults(func=cmd_flag_set)
     p_plu = sub.add_parser("plu-import")
     p_plu.add_argument("--commune", action="append", help="INSEE-Code, mehrfach möglich")
-    p_plu.add_argument("--force", action="store_true", help="Planstand neu laden, auch wenn unverändert")
+    p_plu.add_argument(
+        "--force", action="store_true", help="neu laden, am Ort aktualisieren; Korrekturen bleiben"
+    )
     p_plu.add_argument("--from-dir", help="Ordner mit aufgezeichneten GPU-Antworten und Planunterlagen")
     p_plu.set_defaults(func=cmd_plu_import)
     p_extract = sub.add_parser("rules-extract")

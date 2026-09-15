@@ -6,6 +6,8 @@ Der Dokumenttext gilt als Daten: Das Modell kann nur über dieses Schema antwort
 danach durch die Schranken in `assess`.
 """
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -153,6 +155,41 @@ null or empty.
 did not receive."""
 
 
+VERIFICATION_STATUSES: tuple[str, ...] = (*EXTRACTED_STATUSES, "not_supported")
+
+VERIFICATION_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "checks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "claim": {"type": "integer"},
+                    "status": {"type": "string", "enum": list(VERIFICATION_STATUSES)},
+                    "params": OUTPUT_SCHEMA["properties"]["rules"]["items"]["properties"]["params"],
+                    "notes": {"type": "string"},
+                },
+                "required": ["claim", "status", "params", "notes"],
+                "additionalProperties": False,
+            },
+        },
+        "remarks": {"type": "string"},
+    },
+    "required": ["checks", "remarks"],
+    "additionalProperties": False,
+}
+
+VERIFICATION_TASK = """Verification task. Do not extract new rules. The numbered claims below name a \
+sector, a rule kind, a building_kind and a quoted passage, but deliberately not its values. For each \
+claim, find the passage on the given page, read it in the context of the surrounding text and of the general \
+provisions, and \
+state what it prescribes for exactly that sector, kind and building_kind: status and params, following the \
+same conventions as for extraction. Answer `not_supported` if the passage does not set a rule of that kind \
+for that sector and building_kind, for example because it concerns another sector, another type of building \
+or a special case. Return one check per claim with its number."""
+
+
 def user_instruction(
     sectors: list[str], chapter_code: str, general_pages: list[int], chapter_pages: list[int]
 ) -> str:
@@ -161,6 +198,35 @@ def user_instruction(
         f"The first PDF contains pages {_ranges(general_pages)} of the regulation, the second PDF pages "
         f"{_ranges(chapter_pages)}. Extract the rules as specified."
     )
+
+
+def verification_instruction(
+    claims: list[dict[str, Any]], chapter_code: str, general_pages: list[int], chapter_pages: list[int]
+) -> str:
+    lines = [
+        VERIFICATION_TASK,
+        f"Zone chapter: {chapter_code}. The first PDF contains pages {_ranges(general_pages)} of the "
+        f"regulation, the second PDF pages {_ranges(chapter_pages)}.",
+        "",
+    ]
+    for claim in claims:
+        lines.append(
+            f"Claim {claim['claim']}: sector {claim['sector']}, kind {claim['kind']}, building_kind "
+            f"{claim['building_kind']}, document {claim['document']}, page {claim['page']}."
+        )
+        lines.append(f"Quote: {json.dumps(claim['quote'], ensure_ascii=False)}")
+    return "\n".join(lines)
+
+
+def prompt_fingerprint() -> str:
+    """Prüfsumme über Prompts und Ausgabeschemata: Jede Änderung daran führt zu einer neuen Auswertung, auch
+    wenn `PROMPT_VERSION` nicht erhöht wurde."""
+    payload = json.dumps(
+        [SYSTEM_PROMPT, OUTPUT_SCHEMA, VERIFICATION_TASK, VERIFICATION_SCHEMA],
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 def _ranges(pages: list[int]) -> str:
@@ -210,17 +276,7 @@ def parse_output(data: Any) -> list[ExtractedRule]:
                 or document not in ("general", "chapter")
             ):
                 continue
-            params: dict[str, Any] = {}
-            duplicates: list[str] = []
-            for entry in item.get("params") or []:
-                name = str(entry["name"])
-                value = _param_value(name, entry)
-                if value is None:
-                    continue
-                if name in params:
-                    duplicates.append(name)
-                    continue
-                params[name] = value
+            params, duplicates = _params(item.get("params") or [])
             rules.append(
                 ExtractedRule(
                     sector=str(item["sector"]).strip(),
@@ -239,6 +295,50 @@ def parse_output(data: Any) -> list[ExtractedRule]:
         except (KeyError, TypeError, ValueError):
             continue
     return rules
+
+
+@dataclass(frozen=True)
+class VerificationCheck:
+    claim: int
+    status: str
+    params: dict[str, Any]
+    notes: str
+    duplicate_params: list[str] = field(default_factory=list)
+
+
+def parse_verification(data: Any) -> dict[int, list[VerificationCheck]]:
+    """Antwort der Gegenprüfung je Nummer. Einträge, die dem Schema nicht entsprechen, fallen weg."""
+    if not isinstance(data, dict) or not isinstance(data.get("checks"), list):
+        raise ValueError("output_without_checks")
+    checks: dict[int, list[VerificationCheck]] = {}
+    for item in data["checks"]:
+        try:
+            status = str(item["status"])
+            if status not in VERIFICATION_STATUSES:
+                continue
+            params, duplicates = _params(item.get("params") or [])
+            check = VerificationCheck(
+                int(item["claim"]), status, params, str(item.get("notes") or ""), duplicates
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+        checks.setdefault(check.claim, []).append(check)
+    return checks
+
+
+def _params(entries: list[Any]) -> tuple[dict[str, Any], list[str]]:
+    params: dict[str, Any] = {}
+    duplicates: list[str] = []
+    for entry in entries:
+        name = str(entry["name"])
+        value = _param_value(name, entry)
+        if value is None:
+            continue
+        if name in params:
+            duplicates.append(name)
+            continue
+        params[name] = value
+    return params, duplicates
 
 
 def _param_value(name: str, entry: dict[str, Any]) -> Any:

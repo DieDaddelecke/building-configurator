@@ -20,7 +20,9 @@ const projectRulesKey = (projectId: string) => ["rules", projectId] as const;
 
 /** Fragt nach, solange Kapitel noch ausgewertet werden (höchstens rund 10 Minuten). */
 function refetchWhileRunning(data: ProjectRulesOut | undefined, updates: number): number | false {
-  const running = data && (data.status === "in_progress" || data.warnings.includes("rules_updating"));
+  const running =
+    data &&
+    (data.status === "in_progress" || data.warnings.includes("rules_updating") || data.warnings.includes("rules_outdated"));
   return running && updates < 60 ? 10_000 : false;
 }
 
@@ -53,14 +55,15 @@ export function useStartRulesImport() {
   });
 }
 
+/** Kapitel auswerten. Ohne `force` nutzt der Server gespeicherte Aufrufe derselben Eingabe (kostenlos). */
 export function useStartExtraction() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (chapterId: string) =>
+    mutationFn: async ({ chapterId, force }: { chapterId: string; force: boolean }) =>
       unwrap(
         await api.POST("/api/v1/admin/rules/chapters/{chapter_id}/extract", {
           params: { path: { chapter_id: chapterId } },
-          body: { force: true },
+          body: { force },
         }),
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: ["admin", "rules-coverage"] }),
