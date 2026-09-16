@@ -170,6 +170,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/projects/{project_id}/envelope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Envelope Staff
+         * @description Baurahmen für die Prüfung einer Anfrage (Modul A); ohne Feature-Flag, nur mit Rolle.
+         */
+        get: operations["get_envelope_staff_api_v1_admin_projects__project_id__envelope_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/projects/{project_id}/rule-overrides": {
         parameters: {
             query?: never;
@@ -595,6 +615,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/envelope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Envelope
+         * @description Bebaubare Fläche, Grenzwerte, Abstände und Hinweise – als Simulation (Plan 3.5, D11).
+         */
+        get: operations["get_envelope_api_v1_projects__project_id__envelope_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/envelope/sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Sheet
+         * @description Fertiger Steckbrief zum aktuellen Eingabestand; sonst 409 mit dem Auftrag als Hinweis.
+         */
+        get: operations["download_sheet_api_v1_projects__project_id__envelope_sheet_get"];
+        put?: never;
+        /**
+         * Create Sheet
+         * @description Steckbrief als PDF anfordern. Liegt er für diesen Eingabestand vor, kommt er sofort (`ready`).
+         */
+        post: operations["create_sheet_api_v1_projects__project_id__envelope_sheet_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/parcels/lookup": {
         parameters: {
             query?: never;
@@ -721,6 +785,28 @@ export interface components {
             /** Kind */
             kind: ("street" | "side" | "rear" | "other") | null;
         };
+        /**
+         * BandOut
+         * @description Bauband an einer Straßenkante (`setback_street` mit Band, Plan G3 3.3).
+         */
+        BandOut: {
+            /** Band */
+            band?: ("building" | "facade") | null;
+            /** Edge Seq */
+            edge_seq: number;
+            /** Limits Area */
+            limits_area: {
+                [key: string]: boolean;
+            };
+            /** Max M */
+            max_m: number;
+            /** Min M */
+            min_m: number;
+            /** Rings Local */
+            rings_local: number[][][];
+            /** Zone Code */
+            zone_code: string;
+        };
         /** ChapterCoverageOut */
         ChapterCoverageOut: {
             /** Code */
@@ -765,6 +851,29 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * CitationOut
+         * @description Herkunft eines Werts (L3): Seite und Zitat der Planunterlage, Prüfstatus, Link mit Seitensprung.
+         */
+        CitationOut: {
+            /** Confidence */
+            confidence: number;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "extraction" | "office" | "project";
+            /** Page */
+            page?: number | null;
+            /** Quote */
+            quote?: string | null;
+            /** Quote Verified */
+            quote_verified: boolean;
+            /** Source Url */
+            source_url?: string | null;
+        };
         /** CommuneCoverageOut */
         CommuneCoverageOut: {
             /** Chapters */
@@ -801,6 +910,31 @@ export interface components {
             /** Release */
             release: string;
         };
+        /** ConstraintOut */
+        ConstraintOut: {
+            /** Area M2 */
+            area_m2: number;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "prescription" | "information" | "servitude";
+            /**
+             * Effect
+             * @enum {string}
+             */
+            effect: "no_build" | "restricts" | "info";
+            /** Endpoint */
+            endpoint: string;
+            /** Label */
+            label: string;
+            /** Lines Local */
+            lines_local: number[][][];
+            /** Rings Local */
+            rings_local: number[][][];
+            /** Type Code */
+            type_code?: string | null;
+        };
         /**
          * ContextOut
          * @description Umgebung für den Lageplan: Nachbarparzellen und Gebäude im Umkreis.
@@ -810,6 +944,21 @@ export interface components {
             buildings: number[][][];
             /** Parcels */
             parcels: number[][][];
+        };
+        /** ContourOut */
+        ContourOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Complete */
+            complete: boolean;
+            /** Geojson */
+            geojson?: {
+                [key: string]: unknown;
+            } | null;
+            /** Incomplete Reasons */
+            incomplete_reasons: string[];
+            /** Rings Local */
+            rings_local: number[][][];
         };
         /** CoverageOut */
         CoverageOut: {
@@ -870,6 +1019,90 @@ export interface components {
             /** Street Name */
             street_name: string | null;
         };
+        /** EnvelopeEdgeOut */
+        EnvelopeEdgeOut: {
+            /**
+             * Classification Source
+             * @enum {string}
+             */
+            classification_source: "auto" | "customer" | "architect";
+            /** Confidence */
+            confidence: number;
+            /** Coords Local */
+            coords_local: number[][];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "street" | "side" | "rear" | "other";
+            /** Length M */
+            length_m: number;
+            /** Lenient M */
+            lenient_m?: number | null;
+            /** Markers */
+            markers: string[];
+            /** Normal Azimuth Deg */
+            normal_azimuth_deg: number;
+            /** Ring */
+            ring: number;
+            /** Seq */
+            seq: number;
+            /** Setbacks */
+            setbacks: components["schemas"]["SetbackOut"][];
+            /** Street Name */
+            street_name?: string | null;
+            /** Strict M */
+            strict_m?: number | null;
+        };
+        /** EnvelopeOut */
+        EnvelopeOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Bands */
+            bands: components["schemas"]["BandOut"][];
+            /** Constraints */
+            constraints: components["schemas"]["ConstraintOut"][];
+            /** Contours */
+            contours: {
+                [key: string]: components["schemas"]["ContourOut"];
+            };
+            /** Edges */
+            edges: components["schemas"]["EnvelopeEdgeOut"][];
+            /** Engine Version */
+            engine_version: string;
+            /** Input Hash */
+            input_hash: string;
+            local_origin: components["schemas"]["LocalOrigin"];
+            /** Notices */
+            notices: string[];
+            /** Outline Local */
+            outline_local: number[][][];
+            /** Parcels */
+            parcels: string[];
+            /** Parts */
+            parts: components["schemas"]["PartOut"][];
+            provenance: components["schemas"]["ProvenanceOut"];
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Simulation
+             * @default true
+             * @constant
+             */
+            simulation: true;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "partial" | "in_progress" | "unavailable";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Warnings */
+            warnings: string[];
+        };
         /** ExtractIn */
         ExtractIn: {
             /**
@@ -925,6 +1158,23 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HeightsOut */
+        HeightsOut: {
+            /** Assumptions */
+            assumptions: string[];
+            /** Eave M */
+            eave_m?: number | null;
+            /** Measured At */
+            measured_at: string;
+            /** Parapet M */
+            parapet_m?: number | null;
+            /** Reference */
+            reference: string;
+            /** Ridge M */
+            ridge_m?: number | null;
+            /** Storeys */
+            storeys?: string | null;
         };
         /** IgnoredZoneOut */
         IgnoredZoneOut: {
@@ -1029,6 +1279,31 @@ export interface components {
             title: string;
             /** Version */
             version: number;
+        };
+        /** LimitOut */
+        LimitOut: {
+            /** Building Kind */
+            building_kind: string;
+            citation?: components["schemas"]["CitationOut"] | null;
+            /** Derived From */
+            derived_from?: string | null;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only" | "missing";
+            /** Value */
+            value?: number | null;
         };
         /** LocalOrigin */
         LocalOrigin: {
@@ -1140,6 +1415,28 @@ export interface components {
             prefix: string;
             /** Section */
             section: string;
+        };
+        /** PartOut */
+        PartOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Excluded */
+            excluded?: string | null;
+            heights: components["schemas"]["HeightsOut"];
+            /** Hints */
+            hints: components["schemas"]["LimitOut"][];
+            /** Limits */
+            limits: components["schemas"]["LimitOut"][];
+            /** Reason */
+            reason?: string | null;
+            /** Rings Local */
+            rings_local: number[][][];
+            /** Share */
+            share: number;
+            /** Zone Code */
+            zone_code: string;
+            /** Zone Status */
+            zone_status: string;
         };
         /** PlanOut */
         PlanOut: {
@@ -1269,6 +1566,31 @@ export interface components {
             warnings: string[];
             /** Zones */
             zones: components["schemas"]["ZoneRulesOut"][];
+        };
+        /** ProvenanceOut */
+        ProvenanceOut: {
+            /** Assumptions */
+            assumptions: string[];
+            /** Plan Id */
+            plan_id?: string | null;
+            /** Plan Title */
+            plan_title?: string | null;
+            /** Project Overrides */
+            project_overrides: number;
+            /** Rule Set Version Ids */
+            rule_set_version_ids: string[];
+            /** Rules Engine Version */
+            rules_engine_version: string;
+            /** Site Engine Version */
+            site_engine_version: string;
+            /** Site Revision */
+            site_revision: number;
+            /** Terrain Reference Altitude Ngf */
+            terrain_reference_altitude_ngf?: number | null;
+            /** Terrain Slope Percent */
+            terrain_slope_percent?: number | null;
+            /** Terrain Status */
+            terrain_status: string;
         };
         /** RiskOut */
         RiskOut: {
@@ -1450,6 +1772,50 @@ export interface components {
             /** Project Id */
             project_id: string | null;
             staff: components["schemas"]["StaffInfo"] | null;
+        };
+        /** SetbackOut */
+        SetbackOut: {
+            /** Building Kind */
+            building_kind: string;
+            citation?: components["schemas"]["CitationOut"] | null;
+            /** Kind */
+            kind: string;
+            /** Lenient M */
+            lenient_m?: number | null;
+            /** Markers */
+            markers: string[];
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "effective" | "unknown" | "not_regulated" | "text_only" | "missing";
+            /** Strict M */
+            strict_m?: number | null;
+            /** Zone Code */
+            zone_code: string;
+        };
+        /**
+         * SheetOut
+         * @description Steckbrief als PDF: fertig (`ready`) oder in Arbeit (`job_id`).
+         */
+        SheetOut: {
+            /** Created At */
+            created_at?: string | null;
+            /** Input Hash */
+            input_hash: string;
+            /** Job Id */
+            job_id?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "pending";
         };
         /** SiteIn */
         SiteIn: {
@@ -1881,6 +2247,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobCreated"];
+                };
+            };
+        };
+    };
+    get_envelope_staff_api_v1_admin_projects__project_id__envelope_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvelopeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2583,6 +2980,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_envelope_api_v1_projects__project_id__envelope_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvelopeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_sheet_api_v1_projects__project_id__envelope_sheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_sheet_api_v1_projects__project_id__envelope_sheet_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SheetOut"];
                 };
             };
             /** @description Validation Error */

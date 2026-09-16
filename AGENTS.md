@@ -10,6 +10,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 - Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1 und G2 wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4 und D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) sind entschieden (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
 - G1 Grundstück: umgesetzt und getestet (`backend/app/site`, Karte und Grundstücksseite), lokal intern freigeschaltet, gepusht; Befunde der Prüfung vom 14.09.2026 behoben (ANNAHMEN G22–G25).
+- G3 Baurahmen: umgesetzt und getestet (`backend/app/envelope`, Baurahmen mit zwei Auslegungen auf der Grundstücksseite, Steckbrief als PDF), lokal intern freigeschaltet; Messung über 200 Parzellen ohne Fehler (ANNAHMEN BR01–BR15).
 - G2 Regelwerk: umgesetzt und getestet (`backend/app/rules`, Regeln als Simulation mit Gegenprüfung auf der Grundstücksseite, Büro `/buero/regeln`), lokal intern freigeschaltet, gepusht; Befunde der Prüfung behoben (RW19–RW27); ohne Schlüssel der Claude API noch keine echte Auswertung.
 - Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
 
@@ -22,6 +23,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 | [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen, Prüfprotokoll | vor jeder Backend-Arbeit; Kapitel 0 regelt die Arbeitsweise |
 | [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, technische Umsetzung je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), offene Entscheidungen D1–D10, Prüfprotokoll | vor Planung oder Beginn eines Moduls; welche Spezifikationskapitel ein Modul braucht, steht im Modulabschnitt |
 | [README.md](README.md) | Aufbau des Repositorys, lokal starten, Prüfbefehle, Regeln für API-Änderungen | vor Code-Arbeit |
+| [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md) | Plan des Moduls G3: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Baurahmen |
 | [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen in der Umsetzung (Spez. 0 Punkt 7), je Modul ein Abschnitt | vor Code-Arbeit; neue Annahmen hier eintragen |
 | [docs/BETRIEB.md](docs/BETRIEB.md) | Betriebsanleitung: Ausliefern, Rückrollen, Zugang, Jobs, Mail, Wiederherstellung, Sicherheitsvorfall | Betrieb, Störungen |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung | Auslieferung, Arbeit an `deploy/unraid` |

@@ -1,7 +1,11 @@
 {
   "brand": "Emprise",
   "tagline": "Avant-projet sur votre parcelle",
-  "language": { "label": "Langue", "fr": "Français", "de": "Deutsch" },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "de": "Deutsch"
+  },
   "start": {
     "eyebrow": "Bientôt disponible",
     "title": "Ce que vous pouvez construire sur votre parcelle",
@@ -11,23 +15,117 @@
     "cta": "Choisir mon terrain"
   },
   "site": {
-    "disabled": { "eyebrow": "Bientôt disponible", "title": "Le choix du terrain n'est pas encore ouvert", "text": "Emprise démarre d'abord dans quelques communes." },
-    "select": { "eyebrow": "Étape 1 · Terrain", "title": "Choisissez votre parcelle", "intro": "Recherchez l'adresse ou la référence cadastrale. Sur la carte, vous pouvez sélectionner une ou plusieurs parcelles contiguës." },
-    "review": { "eyebrow": "Étape 1 · Vérifier le terrain", "title": "Votre terrain", "intro": "Vérifiez quelles limites donnent sur la voie et lesquelles sont mitoyennes. Les reculs imposés par le PLU en dépendent." },
-    "search": { "label": "Adresse du terrain", "placeholder": "Rue, code postal, commune", "hint": "Les suggestions apparaissent à partir de trois caractères.", "results": "Suggestions d'adresse", "outside": "Commune pas encore disponible" },
-    "reference": { "toggle": "Saisir la référence cadastrale", "commune": "Commune : {{commune}}", "section": "Section", "number": "Numéro", "submit": "Rechercher la parcelle" },
+    "disabled": {
+      "eyebrow": "Bientôt disponible",
+      "title": "Le choix du terrain n'est pas encore ouvert",
+      "text": "Emprise démarre d'abord dans quelques communes."
+    },
+    "select": {
+      "eyebrow": "Étape 1 · Terrain",
+      "title": "Choisissez votre parcelle",
+      "intro": "Recherchez l'adresse ou la référence cadastrale. Sur la carte, vous pouvez sélectionner une ou plusieurs parcelles contiguës."
+    },
+    "review": {
+      "eyebrow": "Étape 1 · Vérifier le terrain",
+      "title": "Votre terrain",
+      "intro": "Vérifiez quelles limites donnent sur la voie et lesquelles sont mitoyennes. Les reculs imposés par le PLU en dépendent."
+    },
+    "search": {
+      "label": "Adresse du terrain",
+      "placeholder": "Rue, code postal, commune",
+      "hint": "Les suggestions apparaissent à partir de trois caractères.",
+      "results": "Suggestions d'adresse",
+      "outside": "Commune pas encore disponible"
+    },
+    "reference": {
+      "toggle": "Saisir la référence cadastrale",
+      "commune": "Commune : {{commune}}",
+      "section": "Section",
+      "number": "Numéro",
+      "submit": "Rechercher la parcelle"
+    },
     "outside": "Emprise n'est pas encore disponible dans cette commune. Le cabinet d'architecture peut tout de même étudier votre terrain ; la demande correspondante arrive prochainement.",
-    "candidates": { "contained": "Parcelle à l'adresse", "near": "Parcelles proches de l'adresse", "none": "Aucune parcelle trouvée à cet endroit. Sélectionnez-la sur la carte." },
-    "selection": { "title": "Parcelles sélectionnées ({{count}})", "empty": "Aucune parcelle sélectionnée. Cliquez sur votre parcelle sur la carte.", "remove": "Retirer la parcelle {{parcel}}", "submit": "Valider le terrain", "cancel": "Annuler" },
-    "map": { "label": "Carte des parcelles", "zoomIn": "Zoomez pour afficher les parcelles.", "loadError": "Les parcelles n'ont pas pu être chargées.", "basemap": "Fond de carte", "plan": "Plan", "photo": "Photo aérienne", "zoomInButton": "Zoomer", "zoomOutButton": "Dézoomer", "attribution": "Afficher ou masquer les sources" },
-    "plan": { "title": "Plan de situation · Terrain", "label": "Plan de situation du terrain {{idus}}", "dashed": "en pointillés : votre indication, non confirmée" },
-    "facts": { "area": "Surface (cadastre)", "officialArea": "Contenance", "streetSide": "Côté voie", "gardenSide": "Côté jardin", "parcels": "Parcelles", "revision": "Version" },
-    "kind": { "street": "Limite sur voie", "side": "Limite séparative latérale", "rear": "Limite de fond de parcelle", "other": "Autre limite" },
-    "source": { "auto": "détectée automatiquement", "customer": "votre indication", "architect": "confirmée par l'architecte" },
-    "correction": { "auto": "Automatique", "street": "Voie", "neighbour": "Voisin", "side": "Latérale", "rear": "Fond", "other": "Autre" },
-    "compass": { "n": "Nord", "ne": "Nord-est", "e": "Est", "se": "Sud-est", "s": "Sud", "sw": "Sud-ouest", "w": "Ouest", "nw": "Nord-ouest" },
-    "edges": { "caption": "Limites du terrain", "seq": "N°", "kind": "Type", "facing": "Orientation", "length": "Longueur", "adjacent": "Contigu", "correction": "Correction", "correctionFor": "Correction de la limite {{seq}}", "uncertain": "à vérifier", "confirmed": "confirmée" },
-    "binding": { "customer": "Vous avez modifié des limites. Le cabinet d'architecture confirmera ces indications ; d'ici là, les valeurs qui en découlent ne sont pas définitives.", "architect": "Des corrections du client attendent votre confirmation. D'ici là, le cadre constructible n'est pas opposable." },
+    "candidates": {
+      "contained": "Parcelle à l'adresse",
+      "near": "Parcelles proches de l'adresse",
+      "none": "Aucune parcelle trouvée à cet endroit. Sélectionnez-la sur la carte."
+    },
+    "selection": {
+      "title": "Parcelles sélectionnées ({{count}})",
+      "empty": "Aucune parcelle sélectionnée. Cliquez sur votre parcelle sur la carte.",
+      "remove": "Retirer la parcelle {{parcel}}",
+      "submit": "Valider le terrain",
+      "cancel": "Annuler"
+    },
+    "map": {
+      "label": "Carte des parcelles",
+      "zoomIn": "Zoomez pour afficher les parcelles.",
+      "loadError": "Les parcelles n'ont pas pu être chargées.",
+      "basemap": "Fond de carte",
+      "plan": "Plan",
+      "photo": "Photo aérienne",
+      "zoomInButton": "Zoomer",
+      "zoomOutButton": "Dézoomer",
+      "attribution": "Afficher ou masquer les sources"
+    },
+    "plan": {
+      "title": "Plan de situation · Terrain",
+      "label": "Plan de situation du terrain {{idus}}",
+      "dashed": "en pointillés : votre indication, non confirmée"
+    },
+    "facts": {
+      "area": "Surface (cadastre)",
+      "officialArea": "Contenance",
+      "streetSide": "Côté voie",
+      "gardenSide": "Côté jardin",
+      "parcels": "Parcelles",
+      "revision": "Version"
+    },
+    "kind": {
+      "street": "Limite sur voie",
+      "side": "Limite séparative latérale",
+      "rear": "Limite de fond de parcelle",
+      "other": "Autre limite"
+    },
+    "source": {
+      "auto": "détectée automatiquement",
+      "customer": "votre indication",
+      "architect": "confirmée par l'architecte"
+    },
+    "correction": {
+      "auto": "Automatique",
+      "street": "Voie",
+      "neighbour": "Voisin",
+      "side": "Latérale",
+      "rear": "Fond",
+      "other": "Autre"
+    },
+    "compass": {
+      "n": "Nord",
+      "ne": "Nord-est",
+      "e": "Est",
+      "se": "Sud-est",
+      "s": "Sud",
+      "sw": "Sud-ouest",
+      "w": "Ouest",
+      "nw": "Nord-ouest"
+    },
+    "edges": {
+      "caption": "Limites du terrain",
+      "seq": "N°",
+      "kind": "Type",
+      "facing": "Orientation",
+      "length": "Longueur",
+      "adjacent": "Contigu",
+      "correction": "Correction",
+      "correctionFor": "Correction de la limite {{seq}}",
+      "uncertain": "à vérifier",
+      "confirmed": "confirmée"
+    },
+    "binding": {
+      "customer": "Vous avez modifié des limites. Le cabinet d'architecture confirmera ces indications ; d'ici là, les valeurs qui en découlent ne sont pas définitives.",
+      "architect": "Des corrections du client attendent votre confirmation. D'ici là, le cadre constructible n'est pas opposable."
+    },
     "warnings": {
       "title": "Remarques sur le terrain",
       "corner_lot": "Terrain d'angle : le cabinet d'architecture vérifie les reculs par rapport à plusieurs voies.",
@@ -40,15 +138,43 @@
       "edges_need_review": "Au moins une limite est classée avec incertitude."
     },
     "pending": "Interrogation en cours…",
-    "terrain": { "title": "Terrain naturel", "unavailable": "Non interrogé : le service altimétrique n'était pas joignable.", "flat": "Terrain quasiment plat (pente de {{slope}} %), altitude d'environ {{altitude}} m NGF.", "sloped": "Terrain en pente de {{slope}} % (altitude d'environ {{altitude}} m NGF). Les hauteurs seront vérifiées par le cabinet d'architecture." },
+    "terrain": {
+      "title": "Terrain naturel",
+      "unavailable": "Non interrogé : le service altimétrique n'était pas joignable.",
+      "flat": "Terrain quasiment plat (pente de {{slope}} %), altitude d'environ {{altitude}} m NGF.",
+      "sloped": "Terrain en pente de {{slope}} % (altitude d'environ {{altitude}} m NGF). Les hauteurs seront vérifiées par le cabinet d'architecture."
+    },
     "risks": {
       "title": "Risques",
       "unavailable": "Non interrogé : Géorisques n'était pas joignable.",
       "none": "Aucun risque signalé.",
       "commune": "commune",
-      "level": { "low": "faible", "moderate": "modéré", "high": "important", "present": "existant", "unknown": "inconnu" },
+      "level": {
+        "low": "faible",
+        "moderate": "modéré",
+        "high": "important",
+        "present": "existant",
+        "unknown": "inconnu"
+      },
       "kind": {
-        "flood": "Inondation", "groundwater_rise": "Remontée de nappe", "coastal": "Risques côtiers", "seismic": "Séisme", "ground_movement": "Mouvements de terrain", "coastal_erosion": "Recul du trait de côte", "clay_shrink_swell": "Retrait-gonflement des argiles", "avalanche": "Avalanche", "forest_fire": "Feu de forêt", "volcanic": "Volcanisme", "storm": "Vent violent", "radon": "Radon", "industrial": "Installations classées", "nuclear": "Nucléaire", "hazardous_pipeline": "Canalisations de matières dangereuses", "soil_pollution": "Pollution des sols", "dam_failure": "Rupture de barrage", "mining": "Risque minier"
+        "flood": "Inondation",
+        "groundwater_rise": "Remontée de nappe",
+        "coastal": "Risques côtiers",
+        "seismic": "Séisme",
+        "ground_movement": "Mouvements de terrain",
+        "coastal_erosion": "Recul du trait de côte",
+        "clay_shrink_swell": "Retrait-gonflement des argiles",
+        "avalanche": "Avalanche",
+        "forest_fire": "Feu de forêt",
+        "volcanic": "Volcanisme",
+        "storm": "Vent violent",
+        "radon": "Radon",
+        "industrial": "Installations classées",
+        "nuclear": "Nucléaire",
+        "hazardous_pipeline": "Canalisations de matières dangereuses",
+        "soil_pollution": "Pollution des sols",
+        "dam_failure": "Rupture de barrage",
+        "mining": "Risque minier"
       }
     },
     "notices": {
@@ -62,7 +188,10 @@
   },
   "rules": {
     "title": "Règles du document d'urbanisme",
-    "simulation": { "label": "Simulation – non contractuelle.", "text": "Emprise a lu automatiquement les règles dans les documents d'urbanisme publics. Personne ne les a encore vérifiées. Le cabinet d'architecture les vérifie lorsque vous envoyez une demande. Seul un certificat d'urbanisme délivré par la commune fait foi." },
+    "simulation": {
+      "label": "Simulation – non contractuelle.",
+      "text": "Emprise a lu automatiquement les règles dans les documents d'urbanisme publics. Personne ne les a encore vérifiées. Le cabinet d'architecture les vérifie lorsque vous envoyez une demande. Seul un certificat d'urbanisme délivré par la commune fait foi."
+    },
     "plan": "{{title}}, version du {{date}}",
     "document": "Ouvrir le règlement écrit",
     "zone": "Zone {{code}}",
@@ -71,9 +200,25 @@
     "page": "p. {{page}}",
     "pages": "p. {{first}}–{{last}}",
     "inProgress": "Les règles de cette zone sont en cours d'analyse. Cela prend quelques minutes.",
-    "column": { "kind": "Règle", "value": "Valeur", "source": "Source" },
-    "zoneStatus": { "simulated": "analyse automatique", "office_reviewed": "vérifiée par le cabinet", "outdated": "obsolète (version précédente)", "retired": "remplacée", "in_progress": "analyse en cours", "unavailable": "indisponible" },
-    "status": { "effective": "retenue", "unknown": "non déterminé", "not_regulated": "non réglementé", "text_only": "remarque" },
+    "column": {
+      "kind": "Règle",
+      "value": "Valeur",
+      "source": "Source"
+    },
+    "zoneStatus": {
+      "simulated": "analyse automatique",
+      "office_reviewed": "vérifiée par le cabinet",
+      "outdated": "obsolète (version précédente)",
+      "retired": "remplacée",
+      "in_progress": "analyse en cours",
+      "unavailable": "indisponible"
+    },
+    "status": {
+      "effective": "retenue",
+      "unknown": "non déterminé",
+      "not_regulated": "non réglementé",
+      "text_only": "remarque"
+    },
     "reason": {
       "quote_unverified": "non déterminé : passage non confirmé",
       "value_not_in_quote": "non déterminé : valeur non justifiée",
@@ -102,8 +247,18 @@
       "fence": "Clôtures",
       "text_only": "Remarque"
     },
-    "building": { "main": "construction principale", "annex": "annexes, garages", "pool": "piscine", "any": "toutes constructions" },
-    "basis": { "eave": "hauteur à l'égout", "ridge": "hauteur au faîtage", "facade_point": "hauteur de façade", "undefined": "hauteur" },
+    "building": {
+      "main": "construction principale",
+      "annex": "annexes, garages",
+      "pool": "piscine",
+      "any": "toutes constructions"
+    },
+    "basis": {
+      "eave": "hauteur à l'égout",
+      "ridge": "hauteur au faîtage",
+      "facade_point": "hauteur de façade",
+      "undefined": "hauteur"
+    },
     "value": {
       "alignment": "à l'alignement",
       "range": "{{min}} à {{max}}",
@@ -130,11 +285,47 @@
       "fromProjection": "mesuré depuis la partie la plus saillante",
       "minDimensions": "dimensions {{value}}"
     },
-    "roofForm": { "gable": "deux pans", "hip": "quatre pans", "mono_pitch": "monopente", "flat": "toiture terrasse", "mansard": "mansarde", "other": "autre" },
-    "flatRoof": { "allowed": "toiture terrasse autorisée", "annex_only": "toiture terrasse pour les annexes seulement", "green_only": "toiture terrasse végétalisée seulement", "forbidden": "toiture terrasse interdite" },
-    "material": { "render": "enduit", "wood": "bois", "brick": "brique", "stone": "pierre", "concrete": "béton", "metal": "métal", "glass": "verre", "slate": "ardoise", "clay_tile": "tuile", "zinc": "zinc", "composite": "composite", "vegetation": "végétalisation", "other": "autre" },
-    "color": { "light": "claire", "neutral": "neutre", "natural": "naturelle", "dark": "foncée", "bright": "vive", "other": "autre" },
-    "origin": { "office": "cabinet", "project": "cabinet, ce projet uniquement" },
+    "roofForm": {
+      "gable": "deux pans",
+      "hip": "quatre pans",
+      "mono_pitch": "monopente",
+      "flat": "toiture terrasse",
+      "mansard": "mansarde",
+      "other": "autre"
+    },
+    "flatRoof": {
+      "allowed": "toiture terrasse autorisée",
+      "annex_only": "toiture terrasse pour les annexes seulement",
+      "green_only": "toiture terrasse végétalisée seulement",
+      "forbidden": "toiture terrasse interdite"
+    },
+    "material": {
+      "render": "enduit",
+      "wood": "bois",
+      "brick": "brique",
+      "stone": "pierre",
+      "concrete": "béton",
+      "metal": "métal",
+      "glass": "verre",
+      "slate": "ardoise",
+      "clay_tile": "tuile",
+      "zinc": "zinc",
+      "composite": "composite",
+      "vegetation": "végétalisation",
+      "other": "autre"
+    },
+    "color": {
+      "light": "claire",
+      "neutral": "neutre",
+      "natural": "naturelle",
+      "dark": "foncée",
+      "bright": "vive",
+      "other": "autre"
+    },
+    "origin": {
+      "office": "cabinet",
+      "project": "cabinet, ce projet uniquement"
+    },
     "unavailable": {
       "not_imported": "Les documents d'urbanisme de cette commune ne sont pas encore disponibles.",
       "rnu": "La commune n'a pas de document d'urbanisme ; le règlement national d'urbanisme (RNU) s'applique. Le cabinet d'architecture vérifie les règles lors de votre demande.",
@@ -154,7 +345,12 @@
       "plan_update_failed": "La version actuelle du document d'urbanisme n'a pas pu être lue automatiquement. Les règles affichées sont celles de la version précédente ; elles ont pu changer.",
       "zone_coverage_incomplete": "Une partie du terrain ({{share}} %) ne se situe dans aucune zone de ce document d'urbanisme ; les règles de cette partie manquent."
     },
-    "overlays": { "title": "Prescriptions et servitudes", "prescription": "prescription", "information": "information", "servitude": "servitude" },
+    "overlays": {
+      "title": "Prescriptions et servitudes",
+      "prescription": "prescription",
+      "information": "information",
+      "servitude": "servitude"
+    },
     "notices": {
       "simulation": "Les règles sont une simulation automatique, non vérifiée, et ne valent pas renseignement d'urbanisme. Seul le certificat d'urbanisme délivré par la commune fait foi.",
       "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici."
@@ -166,12 +362,19 @@
     "loginIntro": "Réservé aux collaborateurs du cabinet et de l'équipe Emprise. La connexion exige une authentification à deux facteurs.",
     "login": "Se connecter",
     "logout": "Se déconnecter",
-    "nav": { "home": "Accueil", "sites": "Terrains", "rules": "Règlements" },
+    "nav": {
+      "home": "Accueil",
+      "sites": "Terrains",
+      "rules": "Règlements"
+    },
     "sites": {
       "title": "Terrains à vérifier",
       "intro": "Les corrections des clients attendent votre confirmation. « Tous les cas » ajoute les classements incertains, les terrains d'angle et les terrains sans voie détectée, même sans demande.",
       "scope": "Sélection",
-      "scopes": { "corrections": "Corrections du client", "all": "Tous les cas" },
+      "scopes": {
+        "corrections": "Corrections du client",
+        "all": "Tous les cas"
+      },
       "empty": "Aucun terrain à vérifier.",
       "corrections": "Corrections du client",
       "updated": "Modifié",
@@ -199,8 +402,22 @@
       "status": "Statut",
       "runs": "Analyses · coût",
       "unknownCount": "{{count}} valeurs obligatoires ouvertes",
-      "communeStatus": { "ok": "document importé", "rnu": "RNU", "no_document": "aucun document au GPU", "no_regulation": "règlement manquant", "multiple_regulations": "plusieurs fichiers de règlement", "no_chapters": "chapitres non reconnus", "failed": "import en échec", "not_imported": "non importé" },
-      "chapterStatus": { "pending": "en attente", "extracting": "en cours", "succeeded": "analysé", "failed": "en échec" },
+      "communeStatus": {
+        "ok": "document importé",
+        "rnu": "RNU",
+        "no_document": "aucun document au GPU",
+        "no_regulation": "règlement manquant",
+        "multiple_regulations": "plusieurs fichiers de règlement",
+        "no_chapters": "chapitres non reconnus",
+        "failed": "import en échec",
+        "not_imported": "non importé"
+      },
+      "chapterStatus": {
+        "pending": "en attente",
+        "extracting": "en cours",
+        "succeeded": "analysé",
+        "failed": "en échec"
+      },
       "forbidden": "Cette vue exige le rôle architecte, règlements ou exploitation.",
       "back": "Retour aux règlements",
       "quote": "Citation",
@@ -220,7 +437,10 @@
     },
     "homeTitle": "Bienvenue",
     "homeIntro": "Modules en service. Les suivants apparaîtront ici dès leur activation.",
-    "modules": { "sites": "Terrains des clients : vérifier les limites et confirmer les corrections (G1). Le choix du terrain est ouvert en interne au rôle architecte sous /grundstueck.", "rules": "Règles des zones : analyse automatique, coûts, citations et corrections (G2). Les corrections sont facultatives et améliorent les simulations suivantes." },
+    "modules": {
+      "sites": "Terrains des clients : vérifier les limites et confirmer les corrections (G1). Le choix du terrain est ouvert en interne au rôle architecte sous /grundstueck.",
+      "rules": "Règles des zones : analyse automatique, coûts, citations et corrections (G2). Les corrections sont facultatives et améliorent les simulations suivantes."
+    },
     "roles": "Rôles",
     "noAccessTitle": "Accès refusé",
     "noAccess": {
@@ -232,7 +452,127 @@
     },
     "backToLogin": "Retour à la connexion"
   },
-  "sheet": { "project": "Projet", "parcel": "Parcelle", "date": "Date", "sheet": "Planche", "scale": "Échelle", "schematic": "schématique" },
-  "error": { "generic": "Une erreur est survenue.", "notFound": "Page introuvable", "home": "Retour à l'accueil" },
-  "loading": "Chargement…"
+  "sheet": {
+    "project": "Projet",
+    "parcel": "Parcelle",
+    "date": "Date",
+    "sheet": "Planche",
+    "scale": "Échelle",
+    "schematic": "schématique"
+  },
+  "error": {
+    "generic": "Une erreur est survenue.",
+    "notFound": "Page introuvable",
+    "home": "Retour à l'accueil"
+  },
+  "loading": "Chargement…",
+  "envelope": {
+    "simulation": {
+      "label": "Simulation – sans valeur contractuelle.",
+      "text": "Emprise établit le cadre constructible automatiquement à partir du cadastre et des documents d'urbanisme. Personne ne l'a vérifié ; ce n'est pas un renseignement d'urbanisme."
+    },
+    "area": {
+      "lenient": "Constructible, interprétation la plus large",
+      "strict": "Constructible dans tous les cas"
+    },
+    "incomplete": "Un recul n'est pas déterminé : la surface peut être plus grande que la réalité.",
+    "inProgress": "Les règles de ce terrain sont en cours d'analyse. Le cadre constructible suivra.",
+    "unavailable": "Aucun document d'urbanisme exploitable n'est disponible pour ce terrain.",
+    "unavailableHint": "Une demande auprès du bureau d'architecture reste possible ; il examinera la situation.",
+    "caption": "Cadre constructible de la zone {{code}}",
+    "plan": {
+      "title": "Plan de masse · cadre constructible",
+      "label": "Plan avec la surface constructible"
+    },
+    "provenance": "Calcul {{engine}} · empreinte {{hash}}",
+    "limit": {
+      "setback_street": "Recul sur voie",
+      "setback_side": "Retrait latéral",
+      "setback_rear": "Retrait de fond",
+      "setback_between_buildings": "Distance entre constructions",
+      "max_footprint_ratio": "Emprise au sol",
+      "max_height": "Hauteur",
+      "roof": "Toiture",
+      "facade": "Façades",
+      "unsealed_min": "Espaces libres",
+      "parking": "Stationnement",
+      "annex": "Annexes",
+      "planting": "Plantations",
+      "fence": "Clôtures",
+      "text_only": "Prescription",
+      "footprint_max_m2": "Emprise au sol maximale",
+      "unsealed_min_m2": "Espaces libres minimum",
+      "full_soil_min_m2": "Pleine terre minimum"
+    },
+    "edge": {
+      "street": "Limite sur voie {{seq}}",
+      "side": "Limite latérale {{seq}}",
+      "rear": "Limite de fond {{seq}}",
+      "other": "Limite {{seq}} non classée"
+    },
+    "value": {
+      "notDetermined": "non déterminé"
+    },
+    "marker": {
+      "setback_unknown": "recul non déterminé",
+      "height_unknown": "hauteur non déterminée",
+      "alignment": "alignement des constructions voisines",
+      "kind_unclear": "classement ouvert : latérale ou fond",
+      "classification_uncertain": "classement incertain",
+      "customer_correction": "modifié par vous, non confirmé",
+      "on_boundary_allowed": "implantation en limite admise"
+    },
+    "excluded": {
+      "rules_in_progress": "Les règles de cette zone sont en cours d'analyse ; aucune surface affichée.",
+      "rules_unavailable": "Les règles de cette zone ne sont pas déterminées ; aucune surface affichée.",
+      "footprint_zero": "Aucune emprise au sol n'est admise dans cette zone."
+    },
+    "legend": {
+      "no_build": "Inconstructible",
+      "restricts": "Constructibilité limitée",
+      "band": "Bande d'implantation"
+    },
+    "constraints": {
+      "title": "Prescriptions superposées"
+    },
+    "warnings": {
+      "title": "Points d'attention"
+    },
+    "warning": {
+      "corner_lot": "Terrain d'angle : les reculs sur plusieurs voies seront vérifiés par l'architecte.",
+      "flag_lot": "Terrain en drapeau : le classement des limites est incertain.",
+      "no_street_edge": "Aucune limite sur voie identifiée.",
+      "no_neighbour_data": "Données cadastrales voisines manquantes.",
+      "neighbour_data_incomplete": "Le terrain est en bordure de la zone de données.",
+      "area_mismatch": "La surface cadastrale diffère de plus de 3 % de la contenance.",
+      "edges_need_review": "Le classement d'au moins une limite est incertain.",
+      "customer_corrections_unconfirmed": "Les limites modifiées ne sont pas encore confirmées par l'architecte.",
+      "customer_edges_unconfirmed": "Les limites modifiées ne sont pas encore confirmées par l'architecte.",
+      "multiple_zones": "Le terrain est situé dans plusieurs zones ; chaque partie a ses propres règles.",
+      "multiple_communes": "Le terrain s'étend sur plusieurs communes.",
+      "rules_updating": "Une nouvelle analyse des règles est en cours.",
+      "rules_outdated": "Les règles proviennent de la version antérieure du document.",
+      "plan_update_failed": "Le nouveau document n'a pas pu être exploité.",
+      "zone_coverage_incomplete": "Une partie du terrain n'est couverte par aucune zone du PLU.",
+      "zones_without_rules": "Pour une partie du terrain, les règles ne sont pas déterminées ; cette surface reste vide.",
+      "setbacks_incomplete": "Au moins un recul n'est pas déterminé : la surface peut être surestimée.",
+      "no_buildable_area": "Les règles ne laissent aucune surface constructible.",
+      "band_unclear": "Le texte ne dit pas clairement si la bande d'implantation vaut pour tout le bâtiment.",
+      "no_build_area": "Une prescription rend une partie inconstructible.",
+      "restricted_area": "Une prescription limite la constructibilité d'une partie.",
+      "edge_kind_unclear": "Au moins une limite n'a pas pu être classée.",
+      "terrain_unavailable": "Le relief n'a pas pu être interrogé ; les hauteurs sont sans référence.",
+      "terrain_steep": "Pente supérieure à 5 % : les hauteurs seront vérifiées par l'architecte."
+    },
+    "sheet": {
+      "request": "Fiche PDF",
+      "pending": "La fiche est en cours de création, cliquez à nouveau dans un instant.",
+      "download": "Ouvrir la fiche"
+    },
+    "notices": {
+      "simulation": "Le cadre constructible est une simulation automatique non vérifiée et ne constitue pas un renseignement d'urbanisme. Seul le certificat d'urbanisme de la commune fait foi."
+    },
+    "title": "Que puis-je construire ?",
+    "rulesDetails": "Origine : règles et citations"
+  }
 }

@@ -82,6 +82,72 @@
         "title": "ArchitectEdgeIn",
         "type": "object"
       },
+      "BandOut": {
+        "description": "Bauband an einer Straßenkante (`setback_street` mit Band, Plan G3 3.3).",
+        "properties": {
+          "band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "building",
+                  "facade"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "edge_seq": {
+            "title": "Edge Seq",
+            "type": "integer"
+          },
+          "limits_area": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Limits Area",
+            "type": "object"
+          },
+          "max_m": {
+            "title": "Max M",
+            "type": "number"
+          },
+          "min_m": {
+            "title": "Min M",
+            "type": "number"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_seq",
+          "zone_code",
+          "min_m",
+          "max_m",
+          "limits_area",
+          "rings_local"
+        ],
+        "title": "BandOut",
+        "type": "object"
+      },
       "ChapterCoverageOut": {
         "properties": {
           "code": {
@@ -197,6 +263,79 @@
           "rule_set_ids"
         ],
         "title": "ChapterCoverageOut",
+        "type": "object"
+      },
+      "CitationOut": {
+        "description": "Herkunft eines Werts (L3): Seite und Zitat der Planunterlage, Prüfstatus, Link mit Seitensprung.",
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "origin": {
+            "enum": [
+              "extraction",
+              "office",
+              "project"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "quote_verified": {
+            "title": "Quote Verified",
+            "type": "boolean"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          }
+        },
+        "required": [
+          "quote_verified",
+          "origin",
+          "confidence"
+        ],
+        "title": "CitationOut",
         "type": "object"
       },
       "CommuneCoverageOut": {
@@ -321,6 +460,88 @@
         "title": "CommuneOut",
         "type": "object"
       },
+      "ConstraintOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "category": {
+            "enum": [
+              "prescription",
+              "information",
+              "servitude"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "effect": {
+            "enum": [
+              "no_build",
+              "restricts",
+              "info"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "lines_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Lines Local",
+            "type": "array"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          },
+          "type_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Code"
+          }
+        },
+        "required": [
+          "effect",
+          "category",
+          "label",
+          "endpoint",
+          "area_m2",
+          "rings_local",
+          "lines_local"
+        ],
+        "title": "ConstraintOut",
+        "type": "object"
+      },
       "ContextOut": {
         "description": "Umgebung für den Lageplan: Nachbarparzellen und Gebäude im Umkreis.",
         "properties": {
@@ -356,6 +577,58 @@
           "buildings"
         ],
         "title": "ContextOut",
+        "type": "object"
+      },
+      "ContourOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "geojson": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geojson"
+          },
+          "incomplete_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Incomplete Reasons",
+            "type": "array"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rings_local",
+          "area_m2",
+          "complete",
+          "incomplete_reasons"
+        ],
+        "title": "ContourOut",
         "type": "object"
       },
       "CoverageOut": {
@@ -539,6 +812,269 @@
         "title": "EdgeOut",
         "type": "object"
       },
+      "EnvelopeEdgeOut": {
+        "properties": {
+          "classification_source": {
+            "enum": [
+              "auto",
+              "customer",
+              "architect"
+            ],
+            "title": "Classification Source",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "coords_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Coords Local",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "street",
+              "side",
+              "rear",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "length_m": {
+            "title": "Length M",
+            "type": "number"
+          },
+          "lenient_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lenient M"
+          },
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "normal_azimuth_deg": {
+            "title": "Normal Azimuth Deg",
+            "type": "number"
+          },
+          "ring": {
+            "title": "Ring",
+            "type": "integer"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "setbacks": {
+            "items": {
+              "$ref": "#/components/schemas/SetbackOut"
+            },
+            "title": "Setbacks",
+            "type": "array"
+          },
+          "street_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Street Name"
+          },
+          "strict_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strict M"
+          }
+        },
+        "required": [
+          "seq",
+          "ring",
+          "kind",
+          "classification_source",
+          "confidence",
+          "length_m",
+          "normal_azimuth_deg",
+          "coords_local",
+          "setbacks",
+          "markers"
+        ],
+        "title": "EnvelopeEdgeOut",
+        "type": "object"
+      },
+      "EnvelopeOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/BandOut"
+            },
+            "title": "Bands",
+            "type": "array"
+          },
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintOut"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
+          "contours": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ContourOut"
+            },
+            "propertyNames": {
+              "enum": [
+                "lenient",
+                "strict"
+              ]
+            },
+            "title": "Contours",
+            "type": "object"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EnvelopeEdgeOut"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "local_origin": {
+            "$ref": "#/components/schemas/LocalOrigin"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "outline_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Outline Local",
+            "type": "array"
+          },
+          "parcels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Parcels",
+            "type": "array"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/PartOut"
+            },
+            "title": "Parts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/ProvenanceOut"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "simulation": {
+            "const": true,
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "in_progress",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "engine_version",
+          "input_hash",
+          "updated_at",
+          "local_origin",
+          "area_m2",
+          "parcels",
+          "outline_local",
+          "contours",
+          "parts",
+          "edges",
+          "bands",
+          "constraints",
+          "warnings",
+          "notices",
+          "provenance"
+        ],
+        "title": "EnvelopeOut",
+        "type": "object"
+      },
       "ExtractIn": {
         "properties": {
           "force": {
@@ -648,6 +1184,76 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HeightsOut": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "eave_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eave M"
+          },
+          "measured_at": {
+            "title": "Measured At",
+            "type": "string"
+          },
+          "parapet_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parapet M"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "ridge_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge M"
+          },
+          "storeys": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storeys"
+          }
+        },
+        "required": [
+          "reference",
+          "measured_at",
+          "assumptions"
+        ],
+        "title": "HeightsOut",
         "type": "object"
       },
       "IgnoredZoneOut": {
@@ -893,6 +1499,90 @@
           "published_at"
         ],
         "title": "LegalTextOut",
+        "type": "object"
+      },
+      "LimitOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived From"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only",
+              "missing"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "building_kind",
+          "status",
+          "params"
+        ],
+        "title": "LimitOut",
         "type": "object"
       },
       "LocalOrigin": {
@@ -1225,6 +1915,90 @@
         "title": "ParcelSummary",
         "type": "object"
       },
+      "PartOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded"
+          },
+          "heights": {
+            "$ref": "#/components/schemas/HeightsOut"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/LimitOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/LimitOut"
+            },
+            "title": "Limits",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          },
+          "share": {
+            "title": "Share",
+            "type": "number"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          },
+          "zone_status": {
+            "title": "Zone Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "zone_status",
+          "area_m2",
+          "share",
+          "rings_local",
+          "limits",
+          "hints",
+          "heights"
+        ],
+        "title": "PartOut",
+        "type": "object"
+      },
       "PlanOut": {
         "properties": {
           "du_type": {
@@ -1553,6 +2327,101 @@
           "notices"
         ],
         "title": "ProjectRulesOut",
+        "type": "object"
+      },
+      "ProvenanceOut": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "plan_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Id"
+          },
+          "plan_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Title"
+          },
+          "project_overrides": {
+            "title": "Project Overrides",
+            "type": "integer"
+          },
+          "rule_set_version_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Rule Set Version Ids",
+            "type": "array"
+          },
+          "rules_engine_version": {
+            "title": "Rules Engine Version",
+            "type": "string"
+          },
+          "site_engine_version": {
+            "title": "Site Engine Version",
+            "type": "string"
+          },
+          "site_revision": {
+            "title": "Site Revision",
+            "type": "integer"
+          },
+          "terrain_reference_altitude_ngf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terrain Reference Altitude Ngf"
+          },
+          "terrain_slope_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terrain Slope Percent"
+          },
+          "terrain_status": {
+            "title": "Terrain Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_revision",
+          "site_engine_version",
+          "rules_engine_version",
+          "rule_set_version_ids",
+          "project_overrides",
+          "terrain_status",
+          "assumptions"
+        ],
+        "title": "ProvenanceOut",
         "type": "object"
       },
       "RiskOut": {
@@ -2108,6 +2977,145 @@
           "project_id"
         ],
         "title": "SessionInfo",
+        "type": "object"
+      },
+      "SetbackOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "lenient_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lenient M"
+          },
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "effective",
+              "unknown",
+              "not_regulated",
+              "text_only",
+              "missing"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strict_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strict M"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "kind",
+          "building_kind",
+          "status",
+          "params",
+          "markers"
+        ],
+        "title": "SetbackOut",
+        "type": "object"
+      },
+      "SheetOut": {
+        "description": "Steckbrief als PDF: fertig (`ready`) oder in Arbeit (`job_id`).",
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "pending"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "input_hash"
+        ],
+        "title": "SheetOut",
         "type": "object"
       },
       "SiteIn": {
@@ -2975,6 +3983,50 @@
         "summary": "Send Test Mail",
         "tags": [
           "ops"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/envelope": {
+      "get": {
+        "description": "Baurahmen für die Prüfung einer Anfrage (Modul A); ohne Feature-Flag, nur mit Rolle.",
+        "operationId": "get_envelope_staff_api_v1_admin_projects__project_id__envelope_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Envelope Staff",
+        "tags": [
+          "envelope"
         ]
       }
     },
@@ -4034,6 +5086,134 @@
         "summary": "Get Project",
         "tags": [
           "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/envelope": {
+      "get": {
+        "description": "Bebaubare Fläche, Grenzwerte, Abstände und Hinweise – als Simulation (Plan 3.5, D11).",
+        "operationId": "get_envelope_api_v1_projects__project_id__envelope_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnvelopeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Envelope",
+        "tags": [
+          "envelope"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/envelope/sheet": {
+      "get": {
+        "description": "Fertiger Steckbrief zum aktuellen Eingabestand; sonst 409 mit dem Auftrag als Hinweis.",
+        "operationId": "download_sheet_api_v1_projects__project_id__envelope_sheet_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Sheet",
+        "tags": [
+          "envelope"
+        ]
+      },
+      "post": {
+        "description": "Steckbrief als PDF anfordern. Liegt er für diesen Eingabestand vor, kommt er sofort (`ready`).",
+        "operationId": "create_sheet_api_v1_projects__project_id__envelope_sheet_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Sheet",
+        "tags": [
+          "envelope"
         ]
       }
     },

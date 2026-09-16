@@ -86,6 +86,11 @@ class Settings(BaseSettings):
     rules_price_output_per_mtok: float = 25.0
     rules_limit_per_minute: int = 60
 
+    # Baurahmen (G3)
+    envelope_limit_per_minute: int = 60
+    envelope_sheet_limit_per_hour: int = 20
+    """Der Steckbrief wird im Worker gesetzt; je Eingabestand entsteht er nur einmal."""
+
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15

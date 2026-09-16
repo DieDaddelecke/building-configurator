@@ -1,0 +1,713 @@
+{
+ "simulation": true,
+ "status": "ok",
+ "reason": null,
+ "engine_version": "g3-1.0.0",
+ "input_hash": "sha256:3797b771fc4222896cbc046db9e11e91107cdf8d189d8c56bdeecf3f636adfc8",
+ "updated_at": "2026-09-16T07:43:17.718836Z",
+ "local_origin": {
+  "e": 352669.0,
+  "n": 6696884.0,
+  "crs": "EPSG:2154"
+ },
+ "area_m2": 926.11,
+ "parcels": [
+  "44209000AD0065"
+ ],
+ "outline_local": [
+  [
+   [
+    23.223,
+    50.309
+   ],
+   [
+    0.456,
+    10.066
+   ],
+   [
+    17.82,
+    0.219
+   ],
+   [
+    40.702,
+    40.366
+   ],
+   [
+    23.223,
+    50.309
+   ]
+  ]
+ ],
+ "contours": {
+  "lenient": {
+   "rings_local": [
+    [
+     [
+      20.761,
+      45.957
+     ],
+     [
+      38.227,
+      36.022
+     ],
+     [
+      30.799,
+      22.99
+     ],
+     [
+      13.375,
+      32.901
+     ],
+     [
+      20.761,
+      45.957
+     ]
+    ]
+   ],
+   "geojson": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -1.5972381,
+       47.2816657
+      ],
+      [
+       -1.5969998,
+       47.2815856
+      ],
+      [
+       -1.5970878,
+       47.2814646
+      ],
+      [
+       -1.5973256,
+       47.2815445
+      ],
+      [
+       -1.5972381,
+       47.2816657
+      ]
+     ]
+    ]
+   },
+   "area_m2": 301.04,
+   "complete": true,
+   "incomplete_reasons": []
+  },
+  "strict": {
+   "rings_local": [
+    [
+     [
+      23.369,
+      44.474
+     ],
+     [
+      35.619,
+      37.505
+     ],
+     [
+      28.191,
+      24.474
+     ],
+     [
+      15.983,
+      31.418
+     ],
+     [
+      23.369,
+      44.474
+     ]
+    ]
+   ],
+   "geojson": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -1.5972025,
+       47.2816537
+      ],
+      [
+       -1.5970353,
+       47.2815975
+      ],
+      [
+       -1.5971234,
+       47.2814765
+      ],
+      [
+       -1.59729,
+       47.2815325
+      ],
+      [
+       -1.5972025,
+       47.2816537
+      ]
+     ]
+    ]
+   },
+   "area_m2": 211.04,
+   "complete": true,
+   "incomplete_reasons": []
+  }
+ },
+ "parts": [
+  {
+   "zone_code": "Uh",
+   "zone_status": "simulated",
+   "reason": null,
+   "area_m2": 926.11,
+   "share": 1.0,
+   "rings_local": [
+    [
+     [
+      40.702,
+      40.366
+     ],
+     [
+      17.82,
+      0.219
+     ],
+     [
+      0.456,
+      10.066
+     ],
+     [
+      23.223,
+      50.309
+     ],
+     [
+      40.702,
+      40.366
+     ]
+    ]
+   ],
+   "excluded": null,
+   "limits": [
+    {
+     "key": "facade",
+     "kind": "facade",
+     "building_kind": "main",
+     "status": "unknown",
+     "reason": "missing",
+     "value": null,
+     "params": {},
+     "citation": {
+      "page": null,
+      "quote": null,
+      "quote_verified": false,
+      "source_url": null,
+      "origin": "extraction",
+      "confidence": 0.0,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "max_footprint_ratio",
+     "kind": "max_footprint_ratio",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "ratio": 0.25
+     },
+     "citation": {
+      "page": 11,
+      "quote": "L’emprise au sol totale des constructions est limitée à 25% de la surface totale de l’unité foncière à l’intérieur de la zone.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=11",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "max_height",
+     "kind": "max_height",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "eave_m": 7.0,
+      "ridge_m": 10.0,
+      "reference": "natural_terrain",
+      "measured_at": "highest_point",
+      "includes_roof_installations": false
+     },
+     "citation": {
+      "page": 12,
+      "quote": "La hauteur des constructions ne doit pas excéder 7 mètres à l’égout du toit (en cas de toiture à pans) ou à l’acrotère (en cas de toiture terrasse) et 10 mètres au point le plus haut de la construction",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=12",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "roof",
+     "kind": "roof",
+     "building_kind": "main",
+     "status": "unknown",
+     "reason": "missing",
+     "value": null,
+     "params": {},
+     "citation": {
+      "page": null,
+      "quote": null,
+      "quote_verified": false,
+      "source_url": null,
+      "origin": "extraction",
+      "confidence": 0.0,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "setback_rear",
+     "kind": "setback_rear",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "min_m": 3.0,
+      "measured_from": "facade",
+      "allow_on_boundary": true
+     },
+     "citation": {
+      "page": 10,
+      "quote": "Les constructions principales s’implantent soit en limite séparative, soit en retrait. En cas d’implantation en retrait, il doit être d’au moins 3 mètres.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=10",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "setback_side",
+     "kind": "setback_side",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "min_m": 3.0,
+      "measured_from": "facade",
+      "allow_on_boundary": true
+     },
+     "citation": {
+      "page": 10,
+      "quote": "Les constructions principales s’implantent soit en limite séparative, soit en retrait. En cas d’implantation en retrait, il doit être d’au moins 3 mètres.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=10",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "setback_street",
+     "kind": "setback_street",
+     "building_kind": "annex",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "mode": "min",
+      "min_m": 5.0,
+      "measured_from": "facade"
+     },
+     "citation": {
+      "page": 9,
+      "quote": "Les annexes, garages (accolés ou non) et les piscines (margelles comprises) s’implantent en recul de 5 mètres minimum.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=9",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "setback_street",
+     "kind": "setback_street",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": null,
+     "params": {
+      "band": "building",
+      "mode": "range",
+      "max_m": 20.0,
+      "min_m": 5.0,
+      "measured_from": "facade"
+     },
+     "citation": {
+      "page": 9,
+      "quote": "Les constructions principales, hors extension, doivent être implantées dans une bande située entre 5 m et 20m par rapport à l’alignement des voies .",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=9",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "unsealed_min",
+     "kind": "unsealed_min",
+     "building_kind": "main",
+     "status": "unknown",
+     "reason": "missing",
+     "value": null,
+     "params": {},
+     "citation": {
+      "page": null,
+      "quote": null,
+      "quote_verified": false,
+      "source_url": null,
+      "origin": "extraction",
+      "confidence": 0.0,
+      "notes": null
+     },
+     "derived_from": null
+    },
+    {
+     "key": "footprint_max_m2",
+     "kind": "max_footprint_ratio",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "value": 231.53,
+     "params": {},
+     "citation": {
+      "page": 11,
+      "quote": "L’emprise au sol totale des constructions est limitée à 25% de la surface totale de l’unité foncière à l’intérieur de la zone.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=11",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": "max_footprint_ratio"
+    }
+   ],
+   "hints": [
+    {
+     "key": "text_only",
+     "kind": "text_only",
+     "building_kind": "main",
+     "status": "text_only",
+     "reason": null,
+     "value": null,
+     "params": {
+      "summary": "Volumes simples et cohérence architecturale avec le hameau."
+     },
+     "citation": {
+      "page": 13,
+      "quote": "Les constructions principales et leurs annexes, doivent présenter une simplicité de volume et une cohérence architecturale.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=13",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "derived_from": null
+    }
+   ],
+   "heights": {
+    "eave_m": 7.0,
+    "ridge_m": 10.0,
+    "parapet_m": null,
+    "storeys": null,
+    "reference": "natural_terrain",
+    "measured_at": "highest_point",
+    "assumptions": []
+   }
+  }
+ ],
+ "edges": [
+  {
+   "seq": 1,
+   "ring": 0,
+   "kind": "side",
+   "classification_source": "auto",
+   "confidence": 0.85,
+   "length_m": 46.237,
+   "normal_azimuth_deg": 299.5,
+   "street_name": null,
+   "coords_local": [
+    [
+     23.223,
+     50.309
+    ],
+    [
+     0.456,
+     10.066
+    ]
+   ],
+   "lenient_m": 0.0,
+   "strict_m": 3.0,
+   "setbacks": [
+    {
+     "zone_code": "Uh",
+     "kind": "setback_side",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "lenient_m": 0.0,
+     "strict_m": 3.0,
+     "params": {
+      "min_m": 3.0,
+      "measured_from": "facade",
+      "allow_on_boundary": true
+     },
+     "citation": {
+      "page": 10,
+      "quote": "Les constructions principales s’implantent soit en limite séparative, soit en retrait. En cas d’implantation en retrait, il doit être d’au moins 3 mètres.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=10",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "markers": [
+      "on_boundary_allowed"
+     ]
+    }
+   ],
+   "markers": [
+    "on_boundary_allowed"
+   ]
+  },
+  {
+   "seq": 2,
+   "ring": 0,
+   "kind": "rear",
+   "classification_source": "auto",
+   "confidence": 0.8,
+   "length_m": 19.962,
+   "normal_azimuth_deg": 209.56,
+   "street_name": null,
+   "coords_local": [
+    [
+     0.456,
+     10.066
+    ],
+    [
+     17.82,
+     0.219
+    ]
+   ],
+   "lenient_m": 0.0,
+   "strict_m": 3.0,
+   "setbacks": [
+    {
+     "zone_code": "Uh",
+     "kind": "setback_rear",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "lenient_m": 0.0,
+     "strict_m": 3.0,
+     "params": {
+      "min_m": 3.0,
+      "measured_from": "facade",
+      "allow_on_boundary": true
+     },
+     "citation": {
+      "page": 10,
+      "quote": "Les constructions principales s’implantent soit en limite séparative, soit en retrait. En cas d’implantation en retrait, il doit être d’au moins 3 mètres.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=10",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "markers": [
+      "on_boundary_allowed"
+     ]
+    }
+   ],
+   "markers": [
+    "on_boundary_allowed"
+   ]
+  },
+  {
+   "seq": 3,
+   "ring": 0,
+   "kind": "side",
+   "classification_source": "auto",
+   "confidence": 0.85,
+   "length_m": 46.211,
+   "normal_azimuth_deg": 119.68,
+   "street_name": null,
+   "coords_local": [
+    [
+     17.82,
+     0.219
+    ],
+    [
+     40.702,
+     40.366
+    ]
+   ],
+   "lenient_m": 0.0,
+   "strict_m": 3.0,
+   "setbacks": [
+    {
+     "zone_code": "Uh",
+     "kind": "setback_side",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "lenient_m": 0.0,
+     "strict_m": 3.0,
+     "params": {
+      "min_m": 3.0,
+      "measured_from": "facade",
+      "allow_on_boundary": true
+     },
+     "citation": {
+      "page": 10,
+      "quote": "Les constructions principales s’implantent soit en limite séparative, soit en retrait. En cas d’implantation en retrait, il doit être d’au moins 3 mètres.",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=10",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "markers": [
+      "on_boundary_allowed"
+     ]
+    }
+   ],
+   "markers": [
+    "on_boundary_allowed"
+   ]
+  },
+  {
+   "seq": 4,
+   "ring": 0,
+   "kind": "street",
+   "classification_source": "auto",
+   "confidence": 0.8,
+   "length_m": 20.109,
+   "normal_azimuth_deg": 29.63,
+   "street_name": "Rue des chênes",
+   "coords_local": [
+    [
+     40.702,
+     40.366
+    ],
+    [
+     23.223,
+     50.309
+    ]
+   ],
+   "lenient_m": 5.0,
+   "strict_m": 5.0,
+   "setbacks": [
+    {
+     "zone_code": "Uh",
+     "kind": "setback_street",
+     "building_kind": "main",
+     "status": "effective",
+     "reason": null,
+     "lenient_m": 5.0,
+     "strict_m": 5.0,
+     "params": {
+      "band": "building",
+      "mode": "range",
+      "max_m": 20.0,
+      "min_m": 5.0,
+      "measured_from": "facade"
+     },
+     "citation": {
+      "page": 9,
+      "quote": "Les constructions principales, hors extension, doivent être implantées dans une bande située entre 5 m et 20m par rapport à l’alignement des voies .",
+      "quote_verified": true,
+      "source_url": "https://data.geopf.fr/annexes/gpu/documents/DU_244400503/911b23511c396d7211def55c6bf40bd4/244400503_reglement_20260304.pdf#page=9",
+      "origin": "extraction",
+      "confidence": 0.9,
+      "notes": null
+     },
+     "markers": []
+    }
+   ],
+   "markers": []
+  }
+ ],
+ "bands": [
+  {
+   "edge_seq": 4,
+   "zone_code": "Uh",
+   "min_m": 5.0,
+   "max_m": 20.0,
+   "band": "building",
+   "limits_area": {
+    "lenient": true,
+    "strict": true
+   },
+   "rings_local": [
+    [
+     [
+      13.375,
+      32.901
+     ],
+     [
+      23.223,
+      50.309
+     ],
+     [
+      40.702,
+      40.366
+     ],
+     [
+      30.799,
+      22.99
+     ],
+     [
+      13.375,
+      32.901
+     ]
+    ]
+   ]
+  }
+ ],
+ "constraints": [],
+ "warnings": [
+  "terrain_unavailable"
+ ],
+ "notices": [
+  "notice.envelope_simulation",
+  "notice.rules_simulation",
+  "notice.rules_lotissement",
+  "notice.cadastre_accuracy"
+ ],
+ "provenance": {
+  "site_revision": 1,
+  "site_engine_version": "g1-1.1.0",
+  "rules_engine_version": "g2-1.2.0",
+  "plan_id": "4ac4a7d7-3d5e-474c-a8da-6336f7319f01",
+  "plan_title": "Plan Local d'Urbanisme intercommunal (PLUi) D'ERDRE ET GESVRES",
+  "rule_set_version_ids": [
+   "5508e631-e8b3-4a63-85eb-a258914d4b7a"
+  ],
+  "project_overrides": 0,
+  "terrain_status": "pending",
+  "terrain_slope_percent": null,
+  "terrain_reference_altitude_ngf": null,
+  "assumptions": []
+ }
+}

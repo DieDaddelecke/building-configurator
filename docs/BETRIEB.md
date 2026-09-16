@@ -132,3 +132,32 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 **Neuer Planstand:** Bis alle Kapitel ausgewertet sind, sehen Kunden die Regeln des vorigen Planstands als „veraltet“; die Abdeckung nennt ihn (Annahme RW21). Ist der neue Stand nicht lesbar (`no_regulation`, `multiple_regulations`, `no_chapters`), bleibt der vorige als „veraltet“ sichtbar. `multiple_regulations`: Das règlement écrit besteht aus mehreren Dateien (Bände); das wird noch nicht ausgewertet (RW23), das Büro prüft bei Anfrage.
 
 **Viele `unknown`-Werte in einem Kapitel:** Regelwerk im Büro öffnen (Zitat, Grund, Alternativen aus Auswertung und Gegenprüfung). Liegt es an der Auswertung, nach Prompt- oder Modelländerung neu auswerten; liegt es am Planwerk (Werte im Zonenplan), bleibt es bei `unknown`. Korrekturen des Büros sind freiwillig (D11).
+
+## 10. Baurahmen (Modul G3)
+
+Der Baurahmen wird bei jedem Abruf aus Grundstück und Regeln gerechnet und nicht gespeichert. Es gibt daher nichts nachzuführen: Sobald Gelände, Kanten oder Regeln stimmen, stimmt auch der Baurahmen.
+
+**Kunde sieht „kein auswertbarer Bebauungsplan“**
+
+1. Regeln prüfen: `GET /api/v1/admin/projects/<id>/rules` oder `/buero/regeln`. Steht die Zone auf `in_progress` oder `unavailable`, liegt es an G2 (Abschnitt 9), nicht an G3.
+2. Liegt das Grundstück in keiner Zone des Planwerks (`no_zone`), prüfen, ob der Planstand die Gemeinde abdeckt (`plu-import --commune`).
+
+**Fläche wirkt zu groß oder zu klein**
+
+- `strict.complete = false` mit `incomplete_reasons` nennt die Kante, deren Abstand fehlt. Ursache ist eine Regel mit Status `unknown` in G2; Abhilfe: Kapitel erneut auswerten oder Korrektur für die Zone (Abschnitt 9).
+- `band_unclear`: Das Modell hat nicht gesagt, ob das Bauband für den ganzen Baukörper gilt. Nach einer erneuten Auswertung mit `PROMPT_VERSION g2-prompt-3` ist der Parameter gesetzt.
+- `zones_without_rules`: Eine Teilfläche ohne ausgewertete Regeln bleibt bewusst leer (BR04).
+
+**Steckbrief scheitert**
+
+- Job `envelope_sheet` in `/api/v1/admin/ops/status` oder `GET /api/v1/jobs/<id>`. Der Job ist idempotent; ein Fehlschlag wird einmal wiederholt.
+- `skipped: input_changed` ist kein Fehler: Die Eingaben haben sich seit dem Auftrag geändert, der nächste Klick fordert den neuen Stand an.
+- Fehlt WeasyPrint (`cannot load library`), fehlen die Systembibliotheken im Image (`libpango-1.0-0`, `libpangoft2-1.0-0`, `fonts-dejavu-core`); Image neu bauen.
+
+**Regelmäßig prüfen**
+
+```bash
+docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 200
+```
+
+Der Lauf legt nichts an (Transaktion wird zurückgerollt) und meldet Ausnahmen, Dauer und die Verteilung der Hinweise. Nach einer neuen `ENGINE_VERSION` von G2 oder G3 und nach einem neuen Planstand ist er die schnellste Gegenprobe (Werte des letzten Laufs: BR12).

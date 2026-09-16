@@ -6,7 +6,7 @@ Hauskonfigurator für Bauinteressenten in Frankreich. Projektbeschreibung, Dokum
 
 | Ordner | Inhalt |
 |---|---|
-| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), `app/site` (G1 Grundstück), `app/rules` (G2 Regelwerk), Adapter externer Dienste in `app/integrations`; je Fachmodul ein Paket (Plan 3.2) |
+| `backend/` | FastAPI-Anwendung: `app/platform` (Modul P), `app/site` (G1 Grundstück), `app/rules` (G2 Regelwerk), `app/envelope` (G3 Baurahmen), Adapter externer Dienste in `app/integrations`; je Fachmodul ein Paket (Plan 3.2) |
 | `frontend/` | Vite, React, TypeScript, Tailwind, MapLibre; Web-Container mit Caddy |
 | `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anforderungen an einen späteren verwalteten Anbieter |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |

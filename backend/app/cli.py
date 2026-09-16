@@ -9,6 +9,7 @@ cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
 rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
+envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 """
 
 import argparse
@@ -239,6 +240,94 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
         print(f"{chapter_id}: {outcome.status} {detail} ${outcome.cost_usd:.2f} {outcome.counts or ''}")
 
 
+def cmd_envelope_check(args: argparse.Namespace) -> None:
+    """Baurahmen für echte Parzellen ableiten, ohne etwas zu speichern (Plan G3 6.2 Punkt 2).
+
+    Prüft auf Ausnahmen, ungültige Geometrien und die Schachtelung der Konturen und misst die Dauer.
+    Jede Parzelle läuft in einer eigenen Transaktion, die am Ende zurückgerollt wird; Projekte, Grundstücke
+    und Jobs bleiben also nicht zurück.
+    """
+    import statistics
+    import time
+    import uuid
+    from collections import Counter
+
+    from sqlalchemy import text as sql_text
+
+    import app.registry  # noqa: F401  Jobarten registrieren; `form_site` legt `site_enrich` an
+    from app.envelope import service as envelope_service
+    from app.platform.models import Project
+    from app.site import service as site_service
+    from app.site.models import RefParcel
+
+    configure_logging("WARNING", json=False)
+    factory = get_sessionmaker()
+    with factory() as session:
+        query = select(RefParcel.idu).order_by(RefParcel.idu)
+        if args.commune:
+            query = query.where(RefParcel.commune_insee == args.commune)
+        idus = list(session.execute(query).scalars())
+        if args.zone:
+            in_zone = set(
+                session.execute(
+                    sql_text(
+                        "SELECT p.idu FROM ref_parcel p JOIN zone z ON ST_Intersects(z.geometry, p.geometry) "
+                        "WHERE z.code = :zone"
+                    ),
+                    {"zone": args.zone},
+                ).scalars()
+            )
+            idus = [idu for idu in idus if idu in in_zone]
+    if args.sample and args.sample < len(idus):
+        step = len(idus) / args.sample
+        idus = [idus[int(index * step)] for index in range(args.sample)]
+
+    statuses: Counter[str] = Counter()
+    warnings: Counter[str] = Counter()
+    durations: list[float] = []
+    problems: list[str] = []
+    for idu in idus:
+        session = factory()
+        started = time.perf_counter()
+        try:
+            project = Project(access_token_hash=uuid.uuid4().bytes, created_by="envelope-check")
+            session.add(project)
+            session.flush()
+            site_service.form_site(session, project.id, [idu], "envelope-check")
+            envelope, _data = envelope_service.build_envelope(session, project.id)
+            durations.append((time.perf_counter() - started) * 1000)
+            statuses[envelope.status] += 1
+            warnings.update(envelope.warnings)
+            lenient = envelope.contours["lenient"]
+            strict = envelope.contours["strict"]
+            if strict.area_m2 > lenient.area_m2 + 0.01:
+                problems.append(f"{idu}: engste Kontur größer als die weiteste")
+            if lenient.area_m2 > envelope.area_m2 + 0.01:
+                problems.append(f"{idu}: Kontur größer als das Grundstück")
+            if not strict.complete:
+                statuses["strict_incomplete"] += 1
+        except Exception as exc:  # Ausnahmen sind hier das Ergebnis des Laufs
+            problems.append(f"{idu}: {type(exc).__name__}: {exc}")
+        finally:
+            session.rollback()
+            session.close()
+
+    print(f"Parzellen: {len(idus)} (Gemeinde {args.commune or 'alle'}, Zone {args.zone or 'alle'})")
+    for name, count in sorted(statuses.items()):
+        print(f"  {name}: {count}")
+    if durations:
+        ordered = sorted(durations)
+        p95 = ordered[min(len(ordered) - 1, int(len(ordered) * 0.95))]
+        print(f"  Dauer: Median {statistics.median(ordered):.0f} ms, p95 {p95:.0f} ms")
+    for code, count in warnings.most_common():
+        print(f"  Hinweis {code}: {count}")
+    for problem in problems[:20]:
+        print(f"  FEHLER {problem}")
+    print(f"Fehler insgesamt: {len(problems)}")
+    if problems:
+        sys.exit(1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -282,6 +371,11 @@ def main() -> None:
         "--force", action="store_true", help="auch bei unveränderter Eingabe neu auswerten"
     )
     p_extract.set_defaults(func=cmd_rules_extract)
+    p_envelope = sub.add_parser("envelope-check")
+    p_envelope.add_argument("--commune", help="INSEE-Kennung, sonst alle importierten Gemeinden")
+    p_envelope.add_argument("--zone", help="nur Parzellen in dieser Zone (z. B. Uh)")
+    p_envelope.add_argument("--sample", type=int, help="gleichmäßige Stichprobe dieser Größe")
+    p_envelope.set_defaults(func=cmd_envelope_check)
     args = parser.parse_args()
     args.func(args)
 

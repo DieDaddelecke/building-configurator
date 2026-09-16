@@ -648,6 +648,105 @@ class SiteFootprint:
     revision: int
 
 
+@dataclass(frozen=True)
+class EnvelopeEdge:
+    """Kante für den Baurahmen (Modul G3): Einordnung, Sicherheit, Geometrie in Lambert-93."""
+
+    seq: int
+    ring: int
+    kind: str
+    kind_auto: str
+    classification_source: str
+    confidence: float
+    length_m: float
+    normal_azimuth_deg: float
+    street_name: str | None
+    geometry: BaseGeometry
+
+
+@dataclass(frozen=True)
+class EnvelopeSite:
+    """Eingabe des Baurahmens aus G1 (Plan G3 4.2). Ohne Umgebung und GeoJSON, damit der Abruf schlank
+    bleibt; Geometrie in Lambert-93, Ausgabe rechnet G3 in lokale Meter um."""
+
+    site_id: uuid.UUID
+    revision: int
+    engine_version: str
+    updated_at: Any
+    polygon: Polygon
+    area_m2: float
+    local_origin: tuple[float, float]
+    edges: list[EnvelopeEdge]
+    main_street_seq: int | None
+    street_azimuth_deg: float | None
+    garden_azimuth_deg: float | None
+    warnings: list[str]
+    customer_edges_unconfirmed: bool
+    terrain_status: str
+    terrain_slope_percent: float | None
+    terrain_reference_altitude_ngf: float | None
+    terrain_method: str | None
+    commune_insees: list[str]
+    parcel_idus: list[str]
+
+
+def envelope_site(db: Session, project_id: uuid.UUID) -> EnvelopeSite:
+    """Grundstück, Kanten und Gelände für Modul G3.
+
+    Module rufen einander nur über `service` auf (Plan 3.2).
+    """
+    site = db.execute(select(Site).where(Site.project_id == project_id)).scalar_one_or_none()
+    if site is None:
+        raise Problem(404, "site_not_found")
+    edges = list(
+        db.execute(select(SiteEdge).where(SiteEdge.site_id == site.id).order_by(SiteEdge.seq)).scalars()
+    )
+    terrain = db.execute(select(Terrain).where(Terrain.site_id == site.id)).scalar_one_or_none()
+    communes = list(
+        db.execute(
+            select(SiteParcel.commune_insee)
+            .where(SiteParcel.site_id == site.id)
+            .distinct()
+            .order_by(SiteParcel.commune_insee)
+        ).scalars()
+    )
+    return EnvelopeSite(
+        site_id=site.id,
+        revision=site.revision,
+        engine_version=site.engine_version,
+        updated_at=site.updated_at,
+        polygon=cast(Polygon, to_shape(site.geometry)),
+        area_m2=float(site.area_m2),
+        local_origin=(site.local_origin_e, site.local_origin_n),
+        edges=[
+            EnvelopeEdge(
+                seq=e.seq,
+                ring=e.ring,
+                kind=e.kind,
+                kind_auto=e.kind_auto,
+                classification_source=e.classification_source,
+                confidence=e.confidence,
+                length_m=e.length_m,
+                normal_azimuth_deg=e.normal_azimuth_deg,
+                street_name=e.street_name,
+                geometry=to_shape(e.geometry),
+            )
+            for e in edges
+        ],
+        main_street_seq=site.main_street_seq,
+        street_azimuth_deg=site.street_azimuth_deg,
+        garden_azimuth_deg=site.garden_azimuth_deg,
+        warnings=list(site.warnings),
+        customer_edges_unconfirmed=any(e.classification_source == "customer" for e in edges),
+        terrain_status=site.terrain_status,
+        terrain_slope_percent=terrain.slope_percent if terrain else None,
+        terrain_reference_altitude_ngf=terrain.reference_altitude_ngf if terrain else None,
+        terrain_method=terrain.method if terrain else None,
+        commune_insees=communes,
+        parcel_idus=list(site.parcel_idus),
+    )
+
+
 def site_footprint(db: Session, project_id: uuid.UUID) -> SiteFootprint | None:
     row = db.execute(
         text("SELECT id, ST_AsBinary(geometry) AS wkb, area_m2, revision FROM site WHERE project_id = :p"),

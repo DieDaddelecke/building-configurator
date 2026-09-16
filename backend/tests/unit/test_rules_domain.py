@@ -61,6 +61,16 @@ def test_minimum_with_upper_limit_is_a_band() -> None:
     assert validate_params("setback_street", {"min_m": 5.0, "max_m": 20.0})["mode"] == "range"
 
 
+def test_band_only_for_a_band() -> None:
+    """`band` sagt, ob der ganze Baukörper im Band liegt (G3 3.3); ohne Band ist die Angabe gegenstandslos
+    und entfällt, statt die Regel ungültig zu machen."""
+    band = validate_params("setback_street", {"min_m": 5.0, "max_m": 20.0, "band": "building"})
+    assert band["band"] == "building"
+    assert "band" not in validate_params("setback_street", {"mode": "min", "min_m": 5.0, "band": "facade"})
+    with pytest.raises(ParamProblem):
+        validate_params("setback_street", {"min_m": 5.0, "max_m": 20.0, "band": "bande"})
+
+
 @pytest.mark.parametrize(
     ("kind", "params", "reason"),
     [
@@ -278,7 +288,13 @@ def test_assess_realistic_output() -> None:
     rules = {(r.kind, r.building_kind): r for r in _assess(uh_output())}
     street = rules[("setback_street", "main")]
     assert street.status == "effective" and street.page == 97
-    assert street.params == {"mode": "range", "min_m": 5.0, "max_m": 20.0, "measured_from": "facade"}
+    assert street.params == {
+        "mode": "range",
+        "min_m": 5.0,
+        "max_m": 20.0,
+        "band": "building",
+        "measured_from": "facade",
+    }
     assert rules[("max_footprint_ratio", "main")].params["ratio"] == 0.25
     assert rules[("max_height", "main")].status == "effective"
     assert rules[("setback_side", "main")].status == "effective"

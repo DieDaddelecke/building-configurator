@@ -121,9 +121,13 @@ number.
 - `confidence`: 0 to 1, your certainty that the value applies to the general case.
 
 params (units: metres, ratios as 0–1 so 40 % is 0.4, angles in degrees)
-- setback_street: min_m, max_m, mode (min | fixed | range | alignment), measured_from (facade | roof_edge | \
-any_projection). "recul de 3 mètres minimum" is mode min, min_m 3. "à l'alignement" is mode alignment. If \
-both alignment and a minimum setback are allowed, use mode min with the minimum and explain in notes.
+- setback_street: min_m, max_m, mode (min | fixed | range | alignment), band (building | facade), \
+measured_from (facade | roof_edge | any_projection). "recul de 3 mètres minimum" is mode min, min_m 3. \
+"à l'alignement" is mode alignment. If both alignment and a minimum setback are allowed, use mode min with \
+the minimum and explain in notes. Mode range needs band: `building` when the whole main building must stand \
+inside the strip ("bande d'implantation", "bande de constructibilité", "hors bande … ne sont pas \
+autorisées"), `facade` when only the street facade must lie in the range ("recul compris entre 0 et 5 m"). \
+Leave band null if the text does not say.
 - setback_side, setback_rear: min_m, height_factor (0.5 for H/2), height_basis (eave | ridge | \
 facade_point), allow_on_boundary (true if building on the boundary is allowed), on_boundary_max_height_m, \
 measured_from. "soit en limite séparative, soit en retrait d'au moins 3 mètres" is min_m 3 with \

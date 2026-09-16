@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { ENVELOPE_FLAG, useEnvelope } from "../../api/envelope";
 import { RULES_FLAG, useProjectRules } from "../../api/rules";
 import { useSession } from "../../api/session";
 import { SITE_FLAG, useCorrectEdgeCustomer, useEnsureProject, useFlags, useSite, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { Kopfzeile } from "../../components/Kopfzeile";
 import { centerOf } from "../../site/geo";
+import { Baurahmen } from "../../envelope/Baurahmen";
 import { GrundstueckPruefen } from "../../site/GrundstueckPruefen";
 import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { ParzellenWahl } from "../../site/ParzellenWahl";
@@ -36,12 +38,41 @@ function Pruefen({ site, onChangeParcels, rulesBelow }: { site: SiteOut; onChang
   );
 }
 
-function RegelnBereich({ projectId, revision }: { projectId: string; revision: number }) {
+/** Regeln mit Zitaten: als Herleitung eingeklappt, sobald der Baurahmen dieselben Werte schon zeigt. */
+function RegelnBereich({
+  projectId,
+  revision,
+  collapsed,
+}: {
+  projectId: string;
+  revision: number;
+  collapsed: boolean;
+}) {
   const { t } = useTranslation();
   const rules = useProjectRules(projectId, true);
   if (rules.isPending) return <p className="t-mute">{t("loading")}</p>;
   if (rules.isError) return <p className="t-alert" role="alert">{t("error.generic")}</p>;
-  return <RegelnSimulation key={revision} rules={rules.data} />;
+  const inhalt = <RegelnSimulation key={revision} rules={rules.data} />;
+  if (!collapsed) return inhalt;
+  return (
+    <details className="flex flex-col gap-4">
+      <summary className="cursor-pointer eyebrow t-accent">{t("envelope.rulesDetails")}</summary>
+      <div className="pt-6">{inhalt}</div>
+    </details>
+  );
+}
+
+function BaurahmenBereich({ projectId, revision }: { projectId: string; revision: number }) {
+  const { t } = useTranslation();
+  const envelope = useEnvelope(projectId, true);
+  if (envelope.isPending) return <p className="t-mute">{t("loading")}</p>;
+  if (envelope.isError) return <p className="t-alert" role="alert">{t("error.generic")}</p>;
+  return (
+    <section aria-labelledby="baurahmen" className="flex flex-col gap-5">
+      <h2 id="baurahmen" className="eyebrow m-0">{t("envelope.title")}</h2>
+      <Baurahmen key={revision} envelope={envelope.data} projectId={projectId} />
+    </section>
+  );
 }
 
 function focusOf(site: SiteOut | null | undefined) {
@@ -59,6 +90,7 @@ export function GrundstueckSeite() {
   const [editing, setEditing] = useState(false);
   const enabled = Boolean(flags.data?.[SITE_FLAG]);
   const rulesEnabled = Boolean(flags.data?.[RULES_FLAG]);
+  const envelopeEnabled = Boolean(flags.data?.[ENVELOPE_FLAG]);
 
   let inhalt;
   // Ein eben angelegtes Projekt hat noch kein Grundstück: kein Ladezustand, sonst verliert die
@@ -84,9 +116,18 @@ export function GrundstueckSeite() {
           <p>{t("site.review.intro")}</p>
         </Kopf>
         <Pruefen site={site.data} onChangeParcels={() => setEditing(true)} rulesBelow={rulesEnabled} />
+        {envelopeEnabled && (
+          <div className="border-t bd pt-8">
+            <BaurahmenBereich projectId={site.data.project_id} revision={site.data.revision} />
+          </div>
+        )}
         {rulesEnabled && (
           <div className="border-t bd pt-8 max-w-4xl">
-            <RegelnBereich projectId={site.data.project_id} revision={site.data.revision} />
+            <RegelnBereich
+              projectId={site.data.project_id}
+              revision={site.data.revision}
+              collapsed={envelopeEnabled}
+            />
           </div>
         )}
       </div>

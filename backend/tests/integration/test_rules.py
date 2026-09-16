@@ -205,7 +205,13 @@ def test_extraction_writes_simulated_rule_set(db_session: Any, plan: Any, settin
     rules = {(r.kind, r.building_kind): r for r in db_session.execute(select(Rule)).scalars()}
     street = rules[("setback_street", "main")]
     assert street.status == "effective" and street.page == 9 and street.quote_verified
-    assert street.params == {"mode": "range", "min_m": 5.0, "max_m": 20.0, "measured_from": "facade"}
+    assert street.params == {
+        "mode": "range",
+        "min_m": 5.0,
+        "max_m": 20.0,
+        "band": "building",
+        "measured_from": "facade",
+    }
     assert rules[("max_height", "main")].params["ridge_m"] == 10.0
     assert rules[("roof", "main")].reason == "missing"
     assert version.coverage["mandatory_unknown"] == 3

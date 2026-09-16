@@ -121,7 +121,7 @@ def uh_output(*, footprint: float = 0.25) -> dict[str, Any]:
             rule(
                 "Uh",
                 "setback_street",
-                {"mode": "range", "min_m": 5, "max_m": 20},
+                {"mode": "range", "min_m": 5, "max_m": 20, "band": "building"},
                 "Les constructions principales, hors extension, doivent être implantées "
                 "dans une bande située entre 5 m et 20m par rapport à l’alignement des voies .",
                 6,

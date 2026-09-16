@@ -150,3 +150,17 @@ Die Frische der Sicherung prüft ein User Script: Alarm, wenn `last-success` äl
 - Planstände prüft der Worker wöchentlich; sofort: `docker compose exec api python -m app.cli plu-import`.
 - Freischaltung über `rules_simulation`, zuerst intern: `docker compose exec api python -m app.cli flag-set rules_simulation --role architect`.
 - Speicher: das règlement écrit liegt im Objektspeicher (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben in PostGIS (wenige MB je Planstand).
+
+## 11. Hinweise für R1 (Modul G3)
+
+- **Migration 0005** legt die Tabelle `envelope_sheet` an und läuft beim Ausliefern mit.
+- **Kein neuer ausgehender Zugang.** G3 rechnet nur mit Daten aus der eigenen Datenbank.
+- **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core`; sie stecken im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren prüfen: `docker compose exec api python -c "import weasyprint"`.
+- **Freischalten** (intern für das Büro):
+
+  ```bash
+  docker compose exec api python -m app.cli flag-set envelope_simulation --role architect
+  ```
+
+- **Objektspeicher:** Steckbriefe liegen unter `envelope-sheets/`; sie werden mit dem Projekt gelöscht und sind in der Sicherung des Buckets enthalten.
+- **Gegenprobe nach dem Ausliefern:** `docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 50` (0 Fehler erwartet).

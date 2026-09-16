@@ -1,19 +1,20 @@
 import { expect, test } from "@playwright/test";
 
-// Modul G2, Hauptpfad (Plan 4.1 Kriterium 2): Regeln des Grundstücks als Simulation. Voraussetzungen wie in
-// site.spec.ts, zusätzlich Planstand und aufgezeichnete Auswertung der Zone Uh (ohne Claude API):
+// Module G2 und G3, Hauptpfad (Plan 4.1 Kriterium 2): Regeln des Grundstücks als Simulation und der daraus
+// abgeleitete Baurahmen. Voraussetzungen wie in site.spec.ts, zusätzlich Planstand und aufgezeichnete
+// Auswertung der Zone Uh (ohne Claude API):
 //   docker compose cp backend/tests api:/tmp/tests
 //   docker compose exec -T -e EMPRISE_ANTHROPIC_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
 
-test.describe.serial("Regeln als Simulation (G2)", () => {
-  test("ops schaltet Grundstückswahl und Simulation frei", async ({ page }) => {
+test.describe.serial("Regeln und Baurahmen als Simulation (G2, G3)", () => {
+  test("ops schaltet Grundstückswahl, Simulation und Baurahmen frei", async ({ page }) => {
     await page.goto("/buero");
     await page.getByRole("link", { name: "Anmelden" }).click();
     await expect(page.getByRole("heading", { name: "Willkommen" })).toBeVisible();
     const csrf = (await page.context().cookies()).find((c) => c.name === "emprise_csrf")?.value ?? "";
-    for (const key of ["site_selection", "rules_simulation"]) {
+    for (const key of ["site_selection", "rules_simulation", "envelope_simulation"]) {
       const response = await page.request.put(`/api/v1/admin/flags/${key}`, {
-        data: { description: "G2 Ende-zu-Ende", enabled_for_all: true },
+        data: { description: "G2/G3 Ende-zu-Ende", enabled_for_all: true },
         headers: { "X-CSRF-Token": csrf },
       });
       expect(response.status()).toBe(200);
@@ -23,7 +24,7 @@ test.describe.serial("Regeln als Simulation (G2)", () => {
     await expect(page.getByRole("link", { name: "Uh", exact: true })).toBeVisible();
   });
 
-  test("Kunde sieht die Regeln seines Grundstücks mit Quelle und Kennzeichnung", async ({ page }) => {
+  test("Kunde sieht Baurahmen und Regeln mit Quelle und Kennzeichnung", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error" && !msg.text().includes("404")) errors.push(msg.text());
@@ -36,8 +37,18 @@ test.describe.serial("Regeln als Simulation (G2)", () => {
     await page.getByRole("button", { name: "Parzelle suchen" }).click();
     await page.getByRole("button", { name: "Grundstück übernehmen" }).click();
 
+    // Baurahmen (G3): beide Auslegungen, Grenzwerte mit Quelle, Lageplan
+    await expect(page.getByRole("heading", { name: "Was darf ich bauen?" })).toBeVisible();
+    await expect(page.getByText("Simulation – unverbindlich.").first()).toBeVisible();
+    const baurahmen = page.getByRole("table", { name: "Baurahmen der Zone Uh" });
+    await expect(baurahmen.getByRole("row", { name: /^Höchste Grundfläche \d/ })).toBeVisible();
+    await expect(baurahmen.getByRole("row", { name: /^Grenze zur Straße \d+ 5,00 m/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /Lageplan mit bebaubarer Fläche/ })).toBeVisible();
+    await expect(page.getByText("Bebaubar nach jeder Auslegung")).toBeVisible();
+
+    // Regeln (G2) stehen als Herleitung darunter
+    await page.getByText("Herleitung: Regeln mit Zitaten").click();
     await expect(page.getByRole("heading", { name: "Regeln des Bebauungsplans" })).toBeVisible();
-    await expect(page.getByRole("note")).toContainText("Simulation – unverbindlich.");
     const table = page.getByRole("table", { name: "Regeln der Zone Uh" });
     const street = table.getByRole("row", { name: /^Abstand zur Straße 5–20 m/ });
     await expect(street).toBeVisible();
@@ -47,5 +58,26 @@ test.describe.serial("Regeln als Simulation (G2)", () => {
     await expect(page.getByText(/Certificat d'urbanisme/).first()).toBeVisible();
 
     expect(errors, "keine Konsolenfehler, insbesondere keine CSP-Verstöße").toEqual([]);
+  });
+
+  test("Kunde fordert den Steckbrief an, der Worker setzt ihn als PDF", async ({ page }) => {
+    await page.goto("/grundstueck");
+    await expect(page.getByRole("heading", { name: "Was darf ich bauen?" })).toBeVisible();
+    const knopf = page.getByRole("button", { name: "Steckbrief als PDF" });
+    await knopf.click();
+    // Der Worker erzeugt das PDF im Hintergrund; ein erneuter Klick liefert es, sobald es fertig ist
+    await expect
+      .poll(
+        async () => {
+          await knopf.click();
+          return page.getByRole("link", { name: "Steckbrief öffnen" }).count();
+        },
+        { timeout: 25_000, intervals: [1000] },
+      )
+      .toBeGreaterThan(0);
+    const href = await page.getByRole("link", { name: "Steckbrief öffnen" }).getAttribute("href");
+    const pdf = await page.request.get(href ?? "");
+    expect(pdf.status()).toBe(200);
+    expect(pdf.headers()["content-type"]).toContain("application/pdf");
   });
 });

@@ -65,6 +65,7 @@ PARAM_TYPES: dict[str, ParamType] = {
     "min_m": "number",
     "max_m": "number",
     "mode": "text",
+    "band": "text",
     "measured_from": "text",
     "height_factor": "number",
     "height_basis": "text",
@@ -143,14 +144,22 @@ class SetbackStreet(_Params):
     min_m: float | None = None
     max_m: float | None = None
     mode: Literal["min", "fixed", "range", "alignment"] = "min"
+    band: Literal["building", "facade"] | None = None
+    """Nur bei `range`: Liegt der **ganze** Hauptbaukörper im Band (bande d'implantation) oder nur die
+    Straßenfassade (recul compris entre …)? Ohne Angabe legt G3 beide Lesarten nebeneinander (Plan G3 3.3)."""
     measured_from: Literal["facade", "roof_edge", "any_projection"] = "facade"
 
     @model_validator(mode="before")
     @classmethod
     def _band_is_range(cls, data: Any) -> Any:
-        """Mindestabstand mit Obergrenze ist ein Bauband (`range`); sonst ginge die Obergrenze verloren."""
-        if isinstance(data, dict) and data.get("mode", "min") == "min" and data.get("max_m") is not None:
-            return {**data, "mode": "range"}
+        """Mindestabstand mit Obergrenze ist ein Bauband (`range`); sonst ginge die Obergrenze verloren.
+        Ein `band` ohne Band ist gegenstandslos und entfällt, statt die Regel ungültig zu machen."""
+        if not isinstance(data, dict):
+            return data
+        if data.get("mode", "min") == "min" and data.get("max_m") is not None:
+            data = {**data, "mode": "range"}
+        if data.get("mode", "min") != "range" and data.get("band") is not None:
+            data = {**data, "band": None}
         return data
 
     @model_validator(mode="after")

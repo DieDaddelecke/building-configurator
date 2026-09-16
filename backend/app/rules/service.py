@@ -6,6 +6,7 @@ freiwillig: für die Zone (neue Version `office_reviewed`) oder nur für ein Pro
 
 import uuid
 from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any
 
@@ -196,21 +197,68 @@ def _validated(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]
 # ---------------------------------------------------------------------------
 
 
-def _unavailable(commune: str | None, reason: str, warnings: list[str]) -> ProjectRulesOut:
-    return ProjectRulesOut(
-        status="unavailable",
-        reason=reason,
-        commune_insee=commune,
-        plan=None,
-        zones=[],
-        ignored_zones=[],
-        overlays=[],
-        warnings=sorted(set(warnings)),
-        notices=NOTICES,
+@dataclass(frozen=True)
+class ZoneGeometry:
+    """Teilfläche Grundstück × Zone in Lambert-93 (WKB) für den Baurahmen (Plan G3 4.2)."""
+
+    code: str
+    wkb: bytes
+
+
+@dataclass(frozen=True)
+class ConstraintGeometry:
+    """Überlagernde Vorgabe, auf das Grundstück und seine nahe Umgebung zugeschnitten."""
+
+    category: str
+    type_code: str | None
+    label: str
+    endpoint: str
+    wkb: bytes
+
+
+@dataclass(frozen=True)
+class RulesResult:
+    """Ergebnis der Regelauswahl: Anzeige (`out`) und – auf Anforderung – Geometrie für G3.
+
+    Anzeige und Baurahmen entstehen aus **einem** Aufruf, damit sie nie verschiedene Zonen,
+    Planstände oder Korrekturen verwenden (Plan G3 11.1 Nr. 7).
+    """
+
+    out: ProjectRulesOut
+    zones: list[ZoneGeometry] = field(default_factory=list)
+    constraints: list[ConstraintGeometry] = field(default_factory=list)
+    rule_set_version_ids: list[uuid.UUID] = field(default_factory=list)
+    override_count: int = 0
+    engine_version: str = ENGINE_VERSION
+
+
+def _unavailable(commune: str | None, reason: str, warnings: list[str]) -> RulesResult:
+    return RulesResult(
+        out=ProjectRulesOut(
+            status="unavailable",
+            reason=reason,
+            commune_insee=commune,
+            plan=None,
+            zones=[],
+            ignored_zones=[],
+            overlays=[],
+            warnings=sorted(set(warnings)),
+            notices=NOTICES,
+        )
     )
 
 
 def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
+    """Simulation für das Grundstück (Anzeige)."""
+    return resolve_rules(db, project_id).out
+
+
+def envelope_rules(db: Session, project_id: uuid.UUID) -> RulesResult:
+    """Wie `project_rules`, zusätzlich mit Geometrie der Teilflächen und Vorgaben (Modul G3)."""
+    return resolve_rules(db, project_id, geometry=True)
+
+
+def resolve_rules(db: Session, project_id: uuid.UUID, *, geometry: bool = False) -> RulesResult:
     """Simulation für das Grundstück. Ist der aktuelle Planstand für dieses Grundstück nicht vollständig
     ausgewertet oder nicht lesbar, zeigt sie den vorigen Planstand als „veraltet“ (Plan 3.4, RW21)."""
     footprint = site_service.site_footprint(db, project_id)
@@ -223,8 +271,12 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
     state = db.get(RulesCommune, commune) if commune else None
     plan = db.get(LandUsePlan, state.land_use_plan_id) if state and state.land_use_plan_id else None
     usable = state is not None and state.status == "ok" and plan is not None and plan.status == "active"
-    current = _plan_rules(db, project_id, footprint, commune, plan, warnings) if usable and plan else None
-    if current is not None and current.status == "ok":
+    current = (
+        _plan_rules(db, project_id, footprint, commune, plan, warnings, geometry=geometry)
+        if usable and plan
+        else None
+    )
+    if current is not None and current.out.status == "ok":
         return current
 
     fallback = (
@@ -240,10 +292,11 @@ def project_rules(db: Session, project_id: uuid.UUID) -> ProjectRulesOut:
             commune,
             fallback,
             [*warnings, "rules_outdated" if usable else "plan_update_failed"],
+            geometry=geometry,
         )
-        current_has_rules = current is not None and current.status == "partial"
-        if older.status == "ok" or (older.status == "partial" and not current_has_rules):
-            for zone in older.zones:
+        current_has_rules = current is not None and current.out.status == "partial"
+        if older.out.status == "ok" or (older.out.status == "partial" and not current_has_rules):
+            for zone in older.out.zones:
                 if zone.status in RESULT_STATUSES:
                     zone.status = "outdated"
             return older
@@ -260,19 +313,23 @@ def _plan_rules(
     commune: str | None,
     plan: LandUsePlan,
     base_warnings: list[str],
-) -> ProjectRulesOut:
+    *,
+    geometry: bool = False,
+) -> RulesResult:
     warnings = list(base_warnings)
+    part = "ST_Union(ST_Intersection(z.geometry, s.g))"
     rows = db.execute(
         text(
-            """
+            f"""
             WITH s AS (SELECT ST_GeomFromWKB(:wkb, 2154) AS g)
             SELECT z.code, max(z.label) AS label, max(z.chapter_code) AS chapter_code,
-                   ST_Area(ST_Union(ST_Intersection(z.geometry, s.g))) AS area
+                   ST_Area({part}) AS area,
+                   {f"ST_AsBinary(ST_MakeValid({part}))" if geometry else "NULL"} AS part_wkb
             FROM zone z, s
             WHERE z.land_use_plan_id = :plan AND z.geometry && s.g AND ST_Intersects(z.geometry, s.g)
             GROUP BY z.code
             ORDER BY area DESC
-            """
+            """  # noqa: S608  nur ein fester Ausdruck, keine Eingabe
         ),
         {"wkb": footprint.wkb, "plan": plan.id},
     ).all()
@@ -370,15 +427,20 @@ def _plan_rules(
 
     overlay_rows = db.execute(
         text(
-            """
+            f"""
             WITH s AS (SELECT ST_GeomFromWKB(:wkb, 2154) AS g)
-            SELECT DISTINCT o.category, o.type_code, o.label, o.endpoint
+            SELECT o.category, o.type_code, o.label, o.endpoint,
+                   {
+                "ST_AsBinary(ST_MakeValid(ST_Intersection(o.geometry, ST_Buffer(s.g, :distance))))"
+                if geometry
+                else "NULL"
+            } AS clipped
             FROM overlay_constraint o, s
             WHERE o.land_use_plan_id = :plan AND o.commune_insee = :commune
               AND ST_DWithin(o.geometry, s.g, :distance)
               AND (GeometryType(o.geometry) NOT LIKE '%POLYGON%' OR ST_Intersects(o.geometry, s.g))
             ORDER BY o.category, o.label
-            """
+            """  # noqa: S608  nur ein fester Ausdruck, keine Eingabe
         ),
         {"wkb": footprint.wkb, "plan": plan.id, "commune": commune, "distance": LINE_OVERLAY_DISTANCE_M},
     ).all()
@@ -393,7 +455,14 @@ def _plan_rules(
         overall, overall_reason = "partial", None
     else:
         overall, overall_reason = "unavailable", zones[0].reason
-    return ProjectRulesOut(
+    overlays: list[OverlayOut] = []
+    for row in overlay_rows:
+        overlay = OverlayOut(
+            category=row.category, type_code=row.type_code, label=row.label, endpoint=row.endpoint
+        )
+        if overlay not in overlays:  # dieselbe Vorgabe kommt in mehreren Teilen vor
+            overlays.append(overlay)
+    out = ProjectRulesOut(
         status=overall,
         reason=overall_reason,
         commune_insee=commune,
@@ -401,12 +470,32 @@ def _plan_rules(
         zones=zones,
         ignored_zones=ignored,
         uncovered_share=round(uncovered, 4) if rows else 0.0,
-        overlays=[
-            OverlayOut(category=r.category, type_code=r.type_code, label=r.label, endpoint=r.endpoint)
-            for r in overlay_rows
-        ],
+        overlays=overlays,
         warnings=sorted(set(warnings)),
         notices=NOTICES,
+    )
+    if not geometry:
+        return RulesResult(out=out)
+    return RulesResult(
+        out=out,
+        zones=[
+            ZoneGeometry(code=row.code, wkb=bytes(row.part_wkb))
+            for row in relevant
+            if row.part_wkb is not None
+        ],
+        constraints=[
+            ConstraintGeometry(
+                category=row.category,
+                type_code=row.type_code,
+                label=row.label,
+                endpoint=row.endpoint,
+                wkb=bytes(row.clipped),
+            )
+            for row in overlay_rows
+            if row.clipped is not None
+        ],
+        rule_set_version_ids=sorted({v.id for v in versions.values()}),
+        override_count=sum(len(items) for items in overrides.values()),
     )
 
 
