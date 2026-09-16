@@ -42,9 +42,10 @@ test.describe.serial("Regeln und Baurahmen als Simulation (G2, G3)", () => {
     await expect(page.getByText("Simulation – unverbindlich.").first()).toBeVisible();
     const baurahmen = page.getByRole("table", { name: "Baurahmen der Zone Uh" });
     await expect(baurahmen.getByRole("row", { name: /^Höchste Grundfläche \d/ })).toBeVisible();
-    await expect(baurahmen.getByRole("row", { name: /^Grenze zur Straße \d+ 5,00 m/ })).toBeVisible();
+    // Zeilenname enthält auch den Straßennamen der Kante, deshalb der Abstand als Textprüfung
+    await expect(baurahmen.getByRole("row", { name: /^Grenze zur Straße \d/ })).toContainText("5,00 m");
     await expect(page.getByRole("img", { name: /Lageplan mit bebaubarer Fläche/ })).toBeVisible();
-    await expect(page.getByText("Bebaubar nach jeder Auslegung")).toBeVisible();
+    await expect(page.getByText("Bebaubar nach jeder Auslegung").first()).toBeVisible();
 
     // Regeln (G2) stehen als Herleitung darunter
     await page.getByText("Herleitung: Regeln mit Zitaten").click();
@@ -57,27 +58,16 @@ test.describe.serial("Regeln und Baurahmen als Simulation (G2, G3)", () => {
     await expect(table.getByRole("row", { name: /^Dach nicht ermittelt/ })).toBeVisible();
     await expect(page.getByText(/Certificat d'urbanisme/).first()).toBeVisible();
 
-    expect(errors, "keine Konsolenfehler, insbesondere keine CSP-Verstöße").toEqual([]);
-  });
-
-  test("Kunde fordert den Steckbrief an, der Worker setzt ihn als PDF", async ({ page }) => {
-    await page.goto("/grundstueck");
-    await expect(page.getByRole("heading", { name: "Was darf ich bauen?" })).toBeVisible();
-    const knopf = page.getByRole("button", { name: "Steckbrief als PDF" });
-    await knopf.click();
-    // Der Worker erzeugt das PDF im Hintergrund; ein erneuter Klick liefert es, sobald es fertig ist
-    await expect
-      .poll(
-        async () => {
-          await knopf.click();
-          return page.getByRole("link", { name: "Steckbrief öffnen" }).count();
-        },
-        { timeout: 25_000, intervals: [1000] },
-      )
-      .toBeGreaterThan(0);
-    const href = await page.getByRole("link", { name: "Steckbrief öffnen" }).getAttribute("href");
+    // Steckbrief: der Worker setzt das PDF, ein erneuter Klick liefert es (dasselbe Projekt wie oben,
+    // deshalb im selben Test: jeder Test startet mit einem leeren Cookie und damit ohne Grundstück)
+    await page.getByRole("button", { name: "Steckbrief als PDF" }).click();
+    const link = page.getByRole("link", { name: "Steckbrief öffnen" });
+    await expect(link).toBeVisible({ timeout: 25_000 });
+    const href = await link.getAttribute("href");
     const pdf = await page.request.get(href ?? "");
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toContain("application/pdf");
+
+    expect(errors, "keine Konsolenfehler, insbesondere keine CSP-Verstöße").toEqual([]);
   });
 });

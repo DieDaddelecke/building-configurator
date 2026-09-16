@@ -1,8 +1,10 @@
 """Hintergrundjobs des Moduls G3 (Spez. 7, Plan 3.5).
 
-`envelope_sheet`: Steckbrief als PDF im Worker (WeasyPrint). Der Job ist idempotent über die Prüfsumme der
-Eingaben: Hat sich seit dem Auftrag etwas geändert (Gelände eingetroffen, Kante korrigiert, neue Regeln),
-entsteht kein PDF zu einem überholten Stand; der nächste Abruf fordert es für den neuen Stand an.
+`envelope_sheet`: Steckbrief als PDF im Worker (WeasyPrint). Der Job setzt den Steckbrief immer zum
+**aktuellen** Stand und legt ihn unter dessen Prüfsumme ab. Hat sich seit dem Auftrag etwas geändert
+(Gelände eingetroffen, Kante korrigiert, neue Regeln), entsteht also kein PDF zu einem überholten Stand,
+und der nächste Abruf findet den neuen sofort. Ein Job, der einen überholten Stand nur überspränge, käme
+nie zum Ziel, solange eine Eingabe noch eintrifft.
 """
 
 import uuid
@@ -25,25 +27,30 @@ def envelope_sheet(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     wanted = payload.get("locale")
     locale: Locale = wanted if wanted in SUPPORTED else DEFAULT_LOCALE
     with ctx.session() as session:
-        existing = service.stored_sheet(session, project_id, requested)
-        if existing is not None:
+        if service.stored_sheet(session, project_id, requested) is not None:
             return {"skipped": "already_generated", "input_hash": requested}
         envelope, data = service.build_envelope(session, project_id)
-        if envelope.input_hash != requested:
-            log.info("envelope_sheet_input_changed", project_id=str(project_id), requested=requested[:19])
-            return {"skipped": "input_changed", "input_hash": envelope.input_hash}
-        reference = ", ".join(data.site.parcels)
-        pdf = sheet.render_pdf(envelope, reference=reference, locale=locale)
-        key = service.sheet_key(project_id, requested)
+        current = envelope.input_hash
+        if current != requested:
+            log.info(
+                "envelope_sheet_input_changed",
+                project_id=str(project_id),
+                requested=requested[7:19],
+                current=current[7:19],
+            )
+            if service.stored_sheet(session, project_id, current) is not None:
+                return {"skipped": "already_generated", "input_hash": current}
+        pdf = sheet.render_pdf(envelope, reference=", ".join(data.site.parcels), locale=locale)
+        key = service.sheet_key(project_id, current)
         storage.put_bytes(key, pdf, "application/pdf")
         session.add(
             EnvelopeSheet(
                 project_id=project_id,
-                input_hash=requested,
+                input_hash=current,
                 engine_version=envelope.engine_version,
                 storage_key=key,
                 size_bytes=len(pdf),
             )
         )
         session.commit()
-        return {"input_hash": requested, "size_bytes": len(pdf), "key": key}
+        return {"input_hash": current, "matched_request": current == requested, "size_bytes": len(pdf)}

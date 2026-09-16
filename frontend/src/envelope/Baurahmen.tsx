@@ -4,7 +4,7 @@
  * Nicht ermittelte Werte erscheinen als solche, nie geschätzt; Hinweise nach L7 stehen darunter.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { EnvelopeOut, LimitOut, PartOut } from "../api/envelope";
@@ -143,10 +143,26 @@ function Teilflaeche({
   );
 }
 
+const SHEET_POLL_MS = 2000;
+const SHEET_POLL_MAX = 15;
+
 function Steckbrief({ projectId, envelope }: { projectId: string; envelope: EnvelopeOut }) {
   const { t } = useTranslation();
   const request = useRequestSheet(projectId);
   const ready = request.data?.status === "ready";
+  const tries = useRef(0);
+  const { mutate, data } = request;
+
+  // Der Worker setzt das PDF; die Seite fragt selbst nach, statt einen zweiten Klick zu verlangen
+  useEffect(() => {
+    if (data?.status !== "pending" || tries.current >= SHEET_POLL_MAX) return;
+    const timer = setTimeout(() => {
+      tries.current += 1;
+      mutate();
+    }, SHEET_POLL_MS);
+    return () => clearTimeout(timer);
+  }, [data, mutate]);
+
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button

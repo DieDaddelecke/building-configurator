@@ -334,8 +334,11 @@ def test_sheet_is_created_once_per_input_state(
     assert client.post(f"/api/v1/projects/{project}/envelope/sheet").json()["status"] == "ready"
 
 
-def test_sheet_job_skips_an_outdated_input(client: Any, project: str, db_session: Any) -> None:
-    """Hat sich zwischen Auftrag und Lauf etwas geändert, entsteht kein PDF zu einem überholten Stand."""
+def test_sheet_job_uses_the_current_state(client: Any, project: str, db_session: Any) -> None:
+    """Hat sich zwischen Auftrag und Lauf etwas geändert, entsteht der Steckbrief zum **aktuellen** Stand.
+
+    Ein Job, der einen überholten Stand nur überspränge, käme nie zum Ziel, solange eine Eingabe noch
+    eintrifft (Gelände nach `site_enrich`)."""
     from app.envelope.jobs import envelope_sheet
     from app.platform.jobs.registry import JobContext
 
@@ -343,8 +346,11 @@ def test_sheet_job_skips_an_outdated_input(client: Any, project: str, db_session
         JobContext(job_id=uuid.uuid4(), attempt=1, project_id=uuid.UUID(project)),
         {"project_id": project, "input_hash": "sha256:veraltet"},
     )
-    assert result["skipped"] == "input_changed"
-    assert db_session.execute(select(EnvelopeSheet)).scalars().all() == []
+    assert result["matched_request"] is False
+    db_session.expire_all()
+    stored = db_session.execute(select(EnvelopeSheet)).scalar_one()
+    assert stored.input_hash == get_envelope(client, project)["input_hash"]
+    assert client.get(f"/api/v1/projects/{project}/envelope/sheet").status_code == 200
 
 
 # ---------------------------------------------------------------------------

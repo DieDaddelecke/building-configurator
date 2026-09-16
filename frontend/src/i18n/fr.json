@@ -566,7 +566,7 @@
     },
     "sheet": {
       "request": "Fiche PDF",
-      "pending": "La fiche est en cours de création, cliquez à nouveau dans un instant.",
+      "pending": "La fiche est en cours de création …",
       "download": "Ouvrir la fiche"
     },
     "notices": {

@@ -566,7 +566,7 @@
     },
     "sheet": {
       "request": "Steckbrief als PDF",
-      "pending": "Der Steckbrief wird erzeugt, bitte gleich erneut klicken.",
+      "pending": "Der Steckbrief wird erzeugt …",
       "download": "Steckbrief öffnen"
     },
     "notices": {
