@@ -4,6 +4,83 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 17.09.2026 – G1: Weg E, Grundstück frei zeichnen ohne Kataster
+
+**Neu**
+- `backend/app/site/domain/manual.py` – Polygon aus `n − 1` bemaßten Kanten (Länge, Azimut) bauen und prüfen (Selbstüberschneidung, Mindest-/Höchstfläche und -kantenlänge); die letzte Kante schließt automatisch.
+- `backend/migrations/versions/0006_manual_sketch.py` – Spalten `site.origin` (`parcel`/`manual_sketch`), `site.address_label`.
+- `frontend/src/site/FreiesZeichnen.tsx` – Zeichen- und Bemaßungswerkzeug: Punkte auf freiem Koordinatenraster klicken, Kantenlängen mit Live-Vorschau bearbeiten, Adresse als Pflichtfeld.
+- `frontend/src/site/manual.ts`, `manual.test.ts` – Geometrie fürs Frontend (Azimut, Punkte ↔ Kanten, Fläche), rein zur Vorschau; der Server prüft (L5).
+
+**Geändert**
+- `backend/app/site/schemas.py` – `SiteIn` nimmt entweder `parcel_idus` oder `edges` (+ `address_label` Pflicht dabei), wie `LookupIn._exactly_one`; `SiteOut` um `origin`, `address_label`.
+- `backend/app/site/service.py` – `form_manual_site`, eigene schlanke `load_site`-Ausgabe für `manual_sketch` (keine Kanten, kein Gelände, keine Risiken, keine Umgebung); Sperre gegen Wechsel der Herkunft am selben Projekt (`site_origin_mismatch`, 409); `EnvelopeSite.origin` für G3.
+- `backend/app/site/api.py` – `PUT …/site` verzweigt nach `edges`/`parcel_idus`.
+- `backend/app/site/domain/tolerances.py` – `MANUAL_MIN_EDGES`/`MAX_EDGES`, `MANUAL_MIN_EDGE_M`/`MAX_EDGE_M`, `MANUAL_MIN_AREA_M2`/`MAX_AREA_M2`.
+- `backend/app/envelope/service.py` – `build_envelope`/`project_envelope` liefern für `manual_sketch` sofort `status = unavailable, reason = manual_sketch`, **ohne** `rules_service.envelope_rules` aufzurufen (G2 entfällt, D13); `request_sheet`/`sheet_bytes` lehnen mit `409 sheet_unavailable_manual_sketch` ab.
+- `backend/app/platform/locales/{de,fr}.json` – `problem.manual_polygon_invalid`, `problem.site_origin_mismatch`, `problem.sheet_unavailable_manual_sketch`.
+- `frontend/src/api/site.ts` – `useFormManualSite`; `frontend/src/pages/grundstueck/GrundstueckSeite.tsx` – Umschalter „selbst zeichnen“, eigene schlanke Ergebnisansicht `ManuelleZeichnungAnsicht` (kein Baurahmen-/Regeln-Abschnitt für Weg E).
+- `frontend/src/i18n/{de,fr}.json` – Texte `site.manual.*`, Hinweis `site.notices.manual_sketch`.
+- `backend/openapi.json`, `frontend/src/api/schema.d.ts` – neu erzeugt.
+- `backend/tests/unit/test_site_domain.py`, `integration/test_site.py`, `integration/test_envelope.py` – Domäne (Schließung, Selbstüberschneidung, Eigenschaftstest), Endpunkt, Zusammenspiel mit G3. Backend insgesamt 262 Tests, alle grün.
+- `frontend/src/pages/grundstueck/grundstueck-seite.test.tsx` – Umschalter, Ergebnisansicht ohne Baurahmen/Regeln. Frontend insgesamt 40 Tests, alle grün.
+- `UMSETZUNGSPLAN.md` – Zusatz zu 3.3 (Zweck, Umfang, Daten, Ablauf, Abnahme, Größe), Abweichung in Kapitel 7, offene Entscheidung D13 (Kapitel 9), Prüfprotokoll 10.4 (vier gefundene und behobene Logikfehler, u. a. dass ein vollständig bemaßtes Polygon mathematisch überbestimmt ist), Status im Kopf.
+- `docs/ANNAHMEN.md` – Abschnitt „G1 – Weg E“ (G26–G30).
+
+**Entschieden**
+- Nutzer: Idee zum freien Zeichnen ausarbeiten, dann in `UMSETZUNGSPLAN.md` (3.3) fassen, dann umsetzen – Empfehlungen des Plans gelten damit als entschieden (`feedback-plan-dann-umsetzen`): Zusatz zu G1 statt eigenem Modul, freies Koordinatenraster ohne Kartenbezug, Adresse Pflicht.
+- Nutzer: „so viel wie möglich lokal, keine Drittanbieter“ – auf Nachfrage präzisiert: Mailversand (E2) darf ein EU-Drittanbieter sein (Brevo/Scaleway TEM), kein Eigenbetrieb; die Claude API ist als Kernfunktion ausdrücklich ausgenommen. Betrifft nur die Abwägung künftiger Infrastrukturentscheidungen, E2 selbst (welcher Anbieter) bleibt offen.
+- Nutzer: committen (`11a6e64`); Push nicht beauftragt.
+
+**Ohne Dateiänderung**
+- Browserprüfung von Weg E am lokalen Stack: Zeichnen, Bemaßen mit Live-Vorschau (Längenänderung aktualisiert Umriss und Fläche sofort), Absenden, Ergebnisansicht, Selbstüberschneidung vom Server abgelehnt, Deutsch/Französisch. Dabei zwei Befunde gefunden und noch in dieser Session behoben: Label „Surface (cadastre)“ für ein Grundstück ohne Kataster (jetzt eigenes Label), ungerundete Klickkoordinaten in den Bemaßungsfeldern (jetzt auf 0,1 m/0,1° gerundet).
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/PLAN_G3_BAURAHMEN.md`, `docs/BETRIEB.md`, `deploy/unraid/`.
+
+**Memory:** `project-hosting-unraid` präzisiert (Mail als EU-Drittanbieter akzeptiert, Claude API ausgenommen von „keine Drittanbieter“).
+
+**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts (Weg E kam als neue Idee dazu, nicht aus Abschnitt 4 der vorigen Fassung). Alle Punkte aus 4.1–4.5 der vorigen Fassung bleiben offen und stehen unten erneut; neu hinzugekommen: D13 (H2 ohne Baurahmen für Weg E, vor R2 zu entscheiden), Weg E im Browser durch das Büro/echte Kunden ausprobieren lassen.
+
+---
+
+## 16.09.2026 – G3 Baurahmen: Plan und Umsetzung
+
+**Neu**
+- `docs/PLAN_G3_BAURAHMEN.md` – Plan des Moduls G3 mit fachlichen Festlegungen, Architektur, Arbeitsschritten, Prüfprotokoll und Stand der Umsetzung (Abschnitt 12).
+- `backend/app/envelope/` – Modul G3: `domain/` (`inputs`, `setbacks`, `bands`, `heights`, `overlays`, `local`, `derive`, `tolerances`; `ENGINE_VERSION g3-1.0.0`), `models.py`, `schemas.py`, `service.py`, `api.py`, `jobs.py` (`envelope_sheet`), `sheet.py` (HTML und Lageplan-SVG des Steckbriefs).
+- `backend/migrations/versions/0005_envelope.py` – Tabelle `envelope_sheet` (Projekt, Prüfsumme, Speicherschlüssel).
+- `backend/tests/` – `envelope_support.py`, `unit/test_envelope_domain.py` (24 Fälle: Parität, D4, D10, Bauband, Grenzbebauung, fehlende Werte, Zonen, Vorgaben, Höhen, Eigenschaftstests), `integration/test_envelope.py` (13 Fälle gegen PostGIS).
+- `frontend/src/api/envelope.ts`, `frontend/src/envelope/` (`Baurahmen.tsx`, `BaurahmenPlan.tsx`, `format.ts`, `baurahmen.test.tsx`, Fixture aus der echten API-Antwort für AD 65).
+
+**Geändert**
+- `backend/app/rules/domain/kinds.py`, `extraction.py`, `__init__.py` – Parameter `setback_street.band` (`building` oder `facade`), Prompt dazu, `PROMPT_VERSION g2-prompt-3`, `ENGINE_VERSION g2-1.2.0`.
+- `backend/app/rules/service.py` – `envelope_rules`/`resolve_rules`: dieselbe Auswahl von Planstand, Zonen und Korrekturen wie `project_rules`, zusätzlich Geometrie der Teilflächen und Vorgaben.
+- `backend/app/site/service.py` – `envelope_site` als Eingabe für G3 (Umriss, Kanten, Gelände, Warnungen).
+- `backend/app/cli.py` – `envelope-check` (Robustheitslauf über echte Parzellen, rollt jede Transaktion zurück).
+- `backend/app/config.py` (Rate-Limits), `main.py`, `registry.py`, `migrations/env.py`, `platform/locales/*.json` (Steckbrief- und Baurahmentexte), `Dockerfile` (WeasyPrint mit Pango und DejaVu), `pyproject.toml`/`uv.lock` (weasyprint), `openapi.json`.
+- `backend/tests/rules_support.py`, `unit/test_rules_domain.py`, `integration/test_rules.py` – `band` in der aufgezeichneten Antwort und in den Erwartungen.
+- `frontend/src/pages/grundstueck/GrundstueckSeite.tsx` – Baurahmen zwischen Grundstück und Regeln; Regeln als aufklappbare Herleitung, sobald der Baurahmen sichtbar ist.
+- `frontend/src/i18n/*.json`, `api/schema.d.ts`, `e2e/rules.spec.ts` (Baurahmen und Steckbrief im Kundenpfad).
+- `docs/ANNAHMEN.md` (Abschnitt G3, BR01–BR15), `docs/BETRIEB.md` (Abschnitt 10), `deploy/unraid/README.md` (Abschnitt 11), `README.md`, `AGENTS.md`, `UMSETZUNGSPLAN.md` (Status, 3.5 „Umgesetzt“, Kapitel 7 mit vier neuen Abweichungen).
+
+**Entschieden**
+- Nutzer: G3 nach dem Plan umsetzen; die Empfehlungen des Plans zu E-G3-1 bis E-G3-4 gelten damit als entschieden – Teilflächen ohne Regeln nicht bebaubar, Wirkung der CNIG-Vorgaben, G2-Erweiterung vor dem API-Schlüssel, Steckbrief in G3.
+- Nutzer: committen und pushen (`2dfbc88` G3, `b8cae60` Nacharbeiten); CI vollständig grün.
+
+**Ohne Dateiänderung**
+- Messung mit `envelope-check` über 200 Parzellen der Zone Uh: 0 Ausnahmen, 0 ungültige Geometrien, 133 `ok`, 42 `partial`, 25 `unavailable`, Median 75 ms, p95 122 ms. Die 25 ohne Baurahmen liegen in Zonen ohne ausgewertetes Kapitel (kein API-Schlüssel), die 42 ohne Fläche sind Parzellen von 10 bis 160 m². Werte stehen in ANNAHMEN BR12.
+- Browserprüfung des Kundenpfads am lokalen Stack (Zone Uh, AD 65): Tabelle, Lageplan mit beiden Konturen, Bauband, Hinweise, Steckbrief. Die dort gespeicherte Auswertung stammt aus der Zeit vor dem Parameter `band` und zeigt deshalb zu Recht `band_unclear` (826 m² weiteste, 211 m² engste Auslegung).
+- Zwei Befunde aus Ende-zu-Ende-Läufen behoben: Der Steckbrief-Job übersprang jeden Auftrag mit veralteter Prüfsumme und kam nie zum Ziel, solange das Gelände noch eintraf; die Oberfläche verlangte für jeden Versuch einen neuen Klick (ANNAHMEN BR10).
+- Verworfen: Heuristik für das Bauband nach Banddicke statt eines Parameters in G2 – vor dem API-Schlüssel kostet die saubere Lösung nichts (Plan G3 11.2).
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (Anpassungen S1–S14 weiter offen; die vier neuen Abweichungen stehen in Plan 7), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+
+**Memory:** `feedback-plan-dann-umsetzen` neu (Empfehlungen eines eigenen Plans gelten mit dem Auftrag zur Umsetzung als entschieden).
+
+**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: alle G3-Punkte aus 4.3 (Zonenstatus und Warnungen, Vorrang spezifischer Regeln, Wirkung überlagernder Vorgaben, Standard-Geschosshöhen, Abstände `unknown` markieren, unsichere Straßenkanten). Offen bleiben der API-Schlüssel (4.1), Unraid (4.2), die Spezifikationskorrekturen (4.4) und die Oberflächenprüfung der Büro-Knöpfe aus G2.
+
+---
+
 ## 14.09.2026 – Prüfung von G1 und G2 und Behebung aller 23 Befunde
 
 **Neu**
