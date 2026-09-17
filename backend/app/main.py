@@ -5,6 +5,7 @@ from fastapi import APIRouter, FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 import app.registry  # noqa: F401  Jobs registrieren, damit enqueue sie kennt
+from app.catalog import api as catalog_api
 from app.config import Settings, get_settings
 from app.envelope import api as envelope_api
 from app.platform import flags, health, legal, ops, projects
@@ -45,7 +46,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_problem_handlers(app)
 
     v1 = APIRouter(prefix=API_V1)
-    for module in (staff, projects, flags, legal, ops, jobs_api, site_api, rules_api, envelope_api):
+    for module in (
+        staff,
+        projects,
+        flags,
+        legal,
+        ops,
+        jobs_api,
+        site_api,
+        rules_api,
+        envelope_api,
+        catalog_api,
+    ):
         v1.include_router(module.router)
     app.include_router(v1)
     app.include_router(health.router, prefix="/api")

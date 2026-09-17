@@ -39,6 +39,8 @@ Oberflächen für das Büro gehören jeweils zu ihrem Fachmodul (Kantenkorrektur
 
 A funktioniert auch ohne Baurahmen: Liegt ein Grundstück außerhalb des Einzugsgebiets oder konnte die Simulation nicht erstellt werden (kein PLU im GPU, Auswertung gescheitert), entsteht eine Anfrage ohne Baurahmen. Die Abhängigkeit G3 → A ist deshalb weich.
 
+**A bleibt Notausgang, auch mit Baurahmen und auch nach H1–H3 (Entscheidung D14, 17.09.2026):** Der geplante Regelweg für den fertigen Konfigurator ist G3 → H2 → H3 → V – eine einzige Anfrage erst nach der vollständigen Konfiguration (Spez. 3.4 Gesamtablauf), ohne Büro-Input davor (D11). A direkt nach G3 bleibt aber dauerhaft als zusätzlicher, schnellerer Weg bestehen: Wer nicht konfigurieren will oder kann, fragt sofort mit der Simulation aus G1–G3 an, auch wenn ein gültiger Baurahmen vorliegt. V erweitert dieselbe Anfrage um Konfiguration und Auswertung, falls der Kunde doch noch konfiguriert (3.10).
+
 G1 liefert außerdem einen fünften Weg ganz ohne Kataster (Weg E, 3.3): Wer sein Grundstück nicht über Adresse oder Karte einordnen will oder kann, zeichnet den Umriss selbst und bemaßt ihn. Für diesen Weg entfallen G2 und G3 vollständig – die Abhängigkeit zu G3 ist hier nicht nur weich, sondern besteht gar nicht.
 
 ### 2.2 Abhängigkeiten
@@ -299,7 +301,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 ### 3.6 A – Anfrage (R1)
 
-**Zweck:** Aus dem Bebaubarkeitscheck eine verwertbare Anfrage an das Büro.
+**Zweck:** Aus dem Bebaubarkeitscheck eine verwertbare Anfrage an das Büro. Bleibt nach H1–H3 als Notausgang bestehen (D14): schnellere Anfrage ohne Konfiguration, auch mit gültigem Baurahmen.
 
 **Umfang:**
 - Anonymes Projekt bis zur Kontaktaufnahme
@@ -701,6 +703,7 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 | D11 | Herkunft und Verbindlichkeit der Regeln | **Entschieden 14.09.2026:** G2 arbeitet vollautomatisch und ist nicht auf Eingaben des Büros angewiesen. Das Ergebnis ist eine unverbindliche Simulation, nicht kontraktuell. Das Büro prüft die fertige Simulation erst, nachdem der Kunde Kontakt aufgenommen hat (3.4, 3.6, Kapitel 7) |
 | D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden |
 | D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden |
+| D14 | Bleibt A (Anfrage direkt nach G3, ohne Konfiguration) bestehen, sobald H1–H3 und V den vollständigen Weg G3 → Konfigurator → V anbieten? | **Entschieden 17.09.2026:** Ja, dauerhaft als Notausgang, auch mit gültigem Baurahmen. Regelweg bleibt G3 → H2 → H3 → V mit einer Anfrage erst nach vollständiger Konfiguration (Spez. 3.4); A daneben als schnellerer Weg ohne Konfiguration. V erweitert dieselbe Anfrage, falls der Kunde nachträglich konfiguriert |
 
 ---
 

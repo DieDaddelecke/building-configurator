@@ -82,6 +82,304 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/catalog/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Packages */
+        get: operations["list_packages_api_v1_admin_catalog_lines_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/lines/{slug}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Package Version */
+        post: operations["create_package_version_api_v1_admin_catalog_lines__slug__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/lines/{slug}/versions/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Package Version */
+        post: operations["publish_package_version_api_v1_admin_catalog_lines__slug__versions__version__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Modules */
+        get: operations["list_modules_api_v1_admin_catalog_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/options/{slug}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Module Version */
+        post: operations["create_module_version_api_v1_admin_catalog_options__slug__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/options/{slug}/versions/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Module Version */
+        post: operations["publish_module_version_api_v1_admin_catalog_options__slug__versions__version__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/price-catalog/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Draft Price Catalog
+         * @description Entwurf des Preiskatalogs, mit den aus Typ-Importen übernommenen Preisen (Plan H1 3.7).
+         */
+        get: operations["get_draft_price_catalog_api_v1_admin_catalog_price_catalog_draft_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/price-catalog/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Price Catalog */
+        post: operations["publish_price_catalog_api_v1_admin_catalog_price_catalog_publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Types */
+        get: operations["list_types_api_v1_admin_catalog_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/plan-document": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Plan Document
+         * @description Grundriss-PDF als reiner Upload, ohne Auswertung (Plan H1 3.6).
+         */
+        post: operations["upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Type Version
+         * @description Neuer Entwurf aus Typdatenblatt (XLSX) und Umriss (DXF), Plan H1 3.2, 3.3.
+         */
+        post: operations["import_type_version_api_v1_admin_catalog_types__slug__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Type Version */
+        get: operations["get_type_version_api_v1_admin_catalog_types__slug__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/facade-roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Facade Roles */
+        put: operations["set_facade_roles_api_v1_admin_catalog_types__slug__versions__version__facade_roles_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/placement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Placement */
+        put: operations["set_placement_api_v1_admin_catalog_types__slug__versions__version__placement_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish Type Version */
+        post: operations["publish_type_version_api_v1_admin_catalog_types__slug__versions__version__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire Type Version */
+        post: operations["retire_type_version_api_v1_admin_catalog_types__slug__versions__version__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/types/{type_slug}/energy-assessment/{package_slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Energy Assessment */
+        put: operations["set_energy_assessment_api_v1_admin_catalog_types__type_slug__energy_assessment__package_slug__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/flags": {
         parameters: {
             query?: never;
@@ -808,6 +1106,18 @@ export interface components {
             /** Zone Code */
             zone_code: string;
         };
+        /** Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post */
+        Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post: {
+            /** Dxf */
+            dxf: string;
+            /** Xlsx */
+            xlsx: string;
+        };
+        /** Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post */
+        Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
+            /** File */
+            file: string;
+        };
         /** ChapterCoverageOut */
         ChapterCoverageOut: {
             /** Code */
@@ -910,6 +1220,18 @@ export interface components {
             name: string;
             /** Release */
             release: string;
+        };
+        /** ConsistencyFindingOut */
+        ConsistencyFindingOut: {
+            /** Code */
+            code: string;
+            /** Detail */
+            detail: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "error" | "warning";
         };
         /** ConstraintOut */
         ConstraintOut: {
@@ -1020,6 +1342,39 @@ export interface components {
             /** Street Name */
             street_name: string | null;
         };
+        /**
+         * EnergyAssessmentIn
+         * @description Freitext-Befund je Typ und Linie (Plan H1 3.8): kein Gutachten, eine Simulation wie G2/G3.
+         */
+        EnergyAssessmentIn: {
+            /** Climate Zone */
+            climate_zone: string;
+            /** Compliance Surcharge Cents */
+            compliance_surcharge_cents?: number | null;
+            /** Compliant */
+            compliant: boolean;
+            /** Measures */
+            measures?: string | null;
+            /** Verdict */
+            verdict: string;
+        };
+        /** EnergyAssessmentOut */
+        EnergyAssessmentOut: {
+            /** Building Type Slug */
+            building_type_slug: string;
+            /** Climate Zone */
+            climate_zone: string;
+            /** Compliance Surcharge Cents */
+            compliance_surcharge_cents: number | null;
+            /** Compliant */
+            compliant: boolean;
+            /** Measures */
+            measures: string | null;
+            /** Package Slug */
+            package_slug: string;
+            /** Verdict */
+            verdict: string;
+        };
         /** EnvelopeEdgeOut */
         EnvelopeEdgeOut: {
             /**
@@ -1111,6 +1466,13 @@ export interface components {
              * @default false
              */
             force: boolean;
+        };
+        /** FacadeRolesIn */
+        FacadeRolesIn: {
+            /** Roles */
+            roles: {
+                [key: string]: "street" | "garden" | "side_left" | "side_right";
+            };
         };
         /** FlagIn */
         FlagIn: {
@@ -1356,6 +1718,57 @@ export interface components {
             /** Length M */
             length_m: number;
         };
+        /** ModuleIn */
+        ModuleIn: {
+            /**
+             * Excludes Slugs
+             * @default []
+             */
+            excludes_slugs: string[];
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+        };
+        /** ModuleTypePriceOut */
+        ModuleTypePriceOut: {
+            /** Building Type Slug */
+            building_type_slug: string;
+            /** Module Slug */
+            module_slug: string;
+            /** Surcharge Cents */
+            surcharge_cents: number;
+        };
+        /** ModuleVersionOut */
+        ModuleVersionOut: {
+            /** Excludes Slugs */
+            excludes_slugs: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            /**
+             * Module Id
+             * Format: uuid
+             */
+            module_id: string;
+            /** Published At */
+            published_at: string | null;
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "review" | "published" | "retired";
+            /** Version */
+            version: number;
+        };
         /** OpsStatus */
         OpsStatus: {
             /** Env */
@@ -1386,6 +1799,57 @@ export interface components {
             label: string;
             /** Type Code */
             type_code: string | null;
+        };
+        /** PackageIn */
+        PackageIn: {
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            /**
+             * Scope
+             * @default []
+             */
+            scope: string[];
+        };
+        /** PackageTypePriceOut */
+        PackageTypePriceOut: {
+            /** Building Type Slug */
+            building_type_slug: string;
+            /** Package Slug */
+            package_slug: string;
+            /** Surcharge Cents */
+            surcharge_cents: number;
+        };
+        /** PackageVersionOut */
+        PackageVersionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            /**
+             * Package Id
+             * Format: uuid
+             */
+            package_id: string;
+            /** Published At */
+            published_at: string | null;
+            /** Scope */
+            scope: string[];
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "review" | "published" | "retired";
+            /** Version */
+            version: number;
         };
         /** ParcelOut */
         ParcelOut: {
@@ -1451,6 +1915,39 @@ export interface components {
             /** Zone Status */
             zone_status: string;
         };
+        /** PlacementIn */
+        PlacementIn: {
+            /** Entrance */
+            entrance?: {
+                [key: string]: unknown;
+            } | null;
+            /** Garage Door */
+            garage_door?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** PlanDocumentOut */
+        PlanDocumentOut: {
+            /**
+             * Building Type Id
+             * Format: uuid
+             */
+            building_type_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
         /** PlanOut */
         PlanOut: {
             /** Du Type */
@@ -1468,6 +1965,45 @@ export interface components {
             regulation_url: string | null;
             /** Title */
             title: string;
+        };
+        /** PriceCatalogVersionOut */
+        PriceCatalogVersionOut: {
+            /** Base Prices */
+            base_prices: components["schemas"]["TypeBasePriceOut"][];
+            /** Energy Assessments */
+            energy_assessments: components["schemas"]["EnergyAssessmentOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Module Prices */
+            module_prices: components["schemas"]["ModuleTypePriceOut"][];
+            /** Package Prices */
+            package_prices: components["schemas"]["PackageTypePriceOut"][];
+            /**
+             * Price Catalog Id
+             * Format: uuid
+             */
+            price_catalog_id: string;
+            /** Published At */
+            published_at: string | null;
+            /** Region */
+            region: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "review" | "published" | "retired";
+            /**
+             * Valid From
+             * Format: date
+             */
+            valid_from: string;
+            /** Vat Rate Default */
+            vat_rate_default: number;
+            /** Version */
+            version: number;
         };
         /** ProjectOut */
         ProjectOut: {
@@ -1637,6 +2173,17 @@ export interface components {
          * @enum {string}
          */
         Role: "architect" | "rules_admin" | "catalog_admin" | "ops";
+        /** RoomOut */
+        RoomOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Category */
+            category: string;
+            /** Name */
+            name: string;
+            /** Storey */
+            storey: string;
+        };
         /** RuleDetailOut */
         RuleDetailOut: {
             /** Alternatives */
@@ -1949,6 +2496,110 @@ export interface components {
              */
             status: "pending" | "ok" | "unavailable";
         };
+        /** TypeBasePriceOut */
+        TypeBasePriceOut: {
+            /** Building Type Slug */
+            building_type_slug: string;
+            /** Max Cents */
+            max_cents: number;
+            /** Min Cents */
+            min_cents: number;
+        };
+        /** TypeSummaryOut */
+        TypeSummaryOut: {
+            /** Alternatives */
+            alternatives: string[];
+            current_version: components["schemas"]["TypeVersionOut"] | null;
+            /** Family */
+            family: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Slug */
+            slug: string;
+        };
+        /** TypeVersionOut */
+        TypeVersionOut: {
+            /** Base Price Max Cents */
+            base_price_max_cents: number;
+            /** Base Price Min Cents */
+            base_price_min_cents: number;
+            /**
+             * Building Type Id
+             * Format: uuid
+             */
+            building_type_id: string;
+            /** Consistency Warnings */
+            consistency_warnings: components["schemas"]["ConsistencyFindingOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Eave Height M */
+            eave_height_m: number;
+            /** Entrance */
+            entrance: {
+                [key: string]: unknown;
+            } | null;
+            /** Facade Roles */
+            facade_roles: {
+                [key: string]: string;
+            };
+            /** Family */
+            family: string | null;
+            /** Footprint Facade */
+            footprint_facade: number[][];
+            /** Footprint Facade Area M2 */
+            footprint_facade_area_m2: number;
+            /** Footprint Projection */
+            footprint_projection: number[][];
+            /** Footprint Projection Area M2 */
+            footprint_projection_area_m2: number;
+            /** Garage Door */
+            garage_door: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Living Area M2 */
+            living_area_m2: number;
+            /** Name */
+            name: string;
+            /** Pitch Deg */
+            pitch_deg: number | null;
+            /** Published At */
+            published_at: string | null;
+            /** Ridge Direction */
+            ridge_direction: string | null;
+            /** Ridge Height M */
+            ridge_height_m: number;
+            /**
+             * Roof Form
+             * @enum {string}
+             */
+            roof_form: "gable" | "hip" | "flat" | "complex";
+            /** Rooms */
+            rooms: components["schemas"]["RoomOut"][];
+            /** Rooms Text */
+            rooms_text: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "review" | "published" | "retired";
+            /** Storeys */
+            storeys: string;
+            /** Version */
+            version: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -2137,6 +2788,514 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_packages_api_v1_admin_catalog_lines_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackageVersionOut"][];
+                };
+            };
+        };
+    };
+    create_package_version_api_v1_admin_catalog_lines__slug__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackageVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_package_version_api_v1_admin_catalog_lines__slug__versions__version__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackageVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_modules_api_v1_admin_catalog_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleVersionOut"][];
+                };
+            };
+        };
+    };
+    create_module_version_api_v1_admin_catalog_options__slug__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModuleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_module_version_api_v1_admin_catalog_options__slug__versions__version__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_draft_price_catalog_api_v1_admin_catalog_price_catalog_draft_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceCatalogVersionOut"];
+                };
+            };
+        };
+    };
+    publish_price_catalog_api_v1_admin_catalog_price_catalog_publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceCatalogVersionOut"];
+                };
+            };
+        };
+    };
+    list_types_api_v1_admin_catalog_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeSummaryOut"][];
+                };
+            };
+        };
+    };
+    upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanDocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_type_version_api_v1_admin_catalog_types__slug__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_type_version_api_v1_admin_catalog_types__slug__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_facade_roles_api_v1_admin_catalog_types__slug__versions__version__facade_roles_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacadeRolesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_placement_api_v1_admin_catalog_types__slug__versions__version__placement_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlacementIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_type_version_api_v1_admin_catalog_types__slug__versions__version__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_type_version_api_v1_admin_catalog_types__slug__versions__version__retire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_energy_assessment_api_v1_admin_catalog_types__type_slug__energy_assessment__package_slug__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_slug: string;
+                package_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnergyAssessmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnergyAssessmentOut"];
                 };
             };
             /** @description Validation Error */

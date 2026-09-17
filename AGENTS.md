@@ -24,6 +24,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 | [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, technische Umsetzung je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), offene Entscheidungen D1–D10, Prüfprotokoll | vor Planung oder Beginn eines Moduls; welche Spezifikationskapitel ein Modul braucht, steht im Modulabschnitt |
 | [README.md](README.md) | Aufbau des Repositorys, lokal starten, Prüfbefehle, Regeln für API-Änderungen | vor Code-Arbeit |
 | [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md) | Plan des Moduls G3: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Baurahmen |
+| [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md) | Plan des Moduls H1: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Hauskatalog |
 | [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen in der Umsetzung (Spez. 0 Punkt 7), je Modul ein Abschnitt | vor Code-Arbeit; neue Annahmen hier eintragen |
 | [docs/BETRIEB.md](docs/BETRIEB.md) | Betriebsanleitung: Ausliefern, Rückrollen, Zugang, Jobs, Mail, Wiederherstellung, Sicherheitsvorfall | Betrieb, Störungen |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung | Auslieferung, Arbeit an `deploy/unraid` |

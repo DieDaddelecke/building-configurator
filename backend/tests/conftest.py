@@ -45,6 +45,19 @@ $$
 """
 
 CLEAN_TABLES = [
+    "module_type_price",
+    "package_type_price",
+    "type_base_price",
+    "price_catalog_version",
+    "price_catalog",
+    "energy_assessment",
+    "plan_document",
+    "building_type_version",
+    "building_type",
+    "module_version",
+    "module",
+    "package_version",
+    "package",
     "project_rule_override",
     "rule",
     "rule_set_version",

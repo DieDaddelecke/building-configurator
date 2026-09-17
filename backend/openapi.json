@@ -148,6 +148,40 @@
         "title": "BandOut",
         "type": "object"
       },
+      "Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post": {
+        "properties": {
+          "dxf": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Dxf",
+            "type": "string"
+          },
+          "xlsx": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Xlsx",
+            "type": "string"
+          }
+        },
+        "required": [
+          "xlsx",
+          "dxf"
+        ],
+        "title": "Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post",
+        "type": "object"
+      },
+      "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post",
+        "type": "object"
+      },
       "ChapterCoverageOut": {
         "properties": {
           "code": {
@@ -458,6 +492,33 @@
           "imported_at"
         ],
         "title": "CommuneOut",
+        "type": "object"
+      },
+      "ConsistencyFindingOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "error",
+              "warning"
+            ],
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "level",
+          "detail"
+        ],
+        "title": "ConsistencyFindingOut",
         "type": "object"
       },
       "ConstraintOut": {
@@ -812,6 +873,109 @@
         "title": "EdgeOut",
         "type": "object"
       },
+      "EnergyAssessmentIn": {
+        "description": "Freitext-Befund je Typ und Linie (Plan H1 3.8): kein Gutachten, eine Simulation wie G2/G3.",
+        "properties": {
+          "climate_zone": {
+            "title": "Climate Zone",
+            "type": "string"
+          },
+          "compliance_surcharge_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compliance Surcharge Cents"
+          },
+          "compliant": {
+            "title": "Compliant",
+            "type": "boolean"
+          },
+          "measures": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measures"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "climate_zone",
+          "verdict",
+          "compliant"
+        ],
+        "title": "EnergyAssessmentIn",
+        "type": "object"
+      },
+      "EnergyAssessmentOut": {
+        "properties": {
+          "building_type_slug": {
+            "title": "Building Type Slug",
+            "type": "string"
+          },
+          "climate_zone": {
+            "title": "Climate Zone",
+            "type": "string"
+          },
+          "compliance_surcharge_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compliance Surcharge Cents"
+          },
+          "compliant": {
+            "title": "Compliant",
+            "type": "boolean"
+          },
+          "measures": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measures"
+          },
+          "package_slug": {
+            "title": "Package Slug",
+            "type": "string"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "building_type_slug",
+          "package_slug",
+          "climate_zone",
+          "verdict",
+          "compliant",
+          "compliance_surcharge_cents",
+          "measures"
+        ],
+        "title": "EnergyAssessmentOut",
+        "type": "object"
+      },
       "EnvelopeEdgeOut": {
         "properties": {
           "classification_source": {
@@ -1084,6 +1248,28 @@
           }
         },
         "title": "ExtractIn",
+        "type": "object"
+      },
+      "FacadeRolesIn": {
+        "properties": {
+          "roles": {
+            "additionalProperties": {
+              "enum": [
+                "street",
+                "garden",
+                "side_left",
+                "side_right"
+              ],
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "object"
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "title": "FacadeRolesIn",
         "type": "object"
       },
       "FlagIn": {
@@ -1734,6 +1920,127 @@
         "title": "ManualEdgeIn",
         "type": "object"
       },
+      "ModuleIn": {
+        "properties": {
+          "excludes_slugs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Excludes Slugs",
+            "type": "array"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label_de",
+          "label_fr"
+        ],
+        "title": "ModuleIn",
+        "type": "object"
+      },
+      "ModuleTypePriceOut": {
+        "properties": {
+          "building_type_slug": {
+            "title": "Building Type Slug",
+            "type": "string"
+          },
+          "module_slug": {
+            "title": "Module Slug",
+            "type": "string"
+          },
+          "surcharge_cents": {
+            "title": "Surcharge Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "module_slug",
+          "building_type_slug",
+          "surcharge_cents"
+        ],
+        "title": "ModuleTypePriceOut",
+        "type": "object"
+      },
+      "ModuleVersionOut": {
+        "properties": {
+          "excludes_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Excludes Slugs",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "module_id": {
+            "format": "uuid",
+            "title": "Module Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "review",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "module_id",
+          "slug",
+          "version",
+          "status",
+          "label_de",
+          "label_fr",
+          "excludes_slugs",
+          "published_at"
+        ],
+        "title": "ModuleVersionOut",
+        "type": "object"
+      },
       "OpsStatus": {
         "properties": {
           "env": {
@@ -1820,6 +2127,127 @@
           "endpoint"
         ],
         "title": "OverlayOut",
+        "type": "object"
+      },
+      "PackageIn": {
+        "properties": {
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "scope": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label_de",
+          "label_fr"
+        ],
+        "title": "PackageIn",
+        "type": "object"
+      },
+      "PackageTypePriceOut": {
+        "properties": {
+          "building_type_slug": {
+            "title": "Building Type Slug",
+            "type": "string"
+          },
+          "package_slug": {
+            "title": "Package Slug",
+            "type": "string"
+          },
+          "surcharge_cents": {
+            "title": "Surcharge Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "package_slug",
+          "building_type_slug",
+          "surcharge_cents"
+        ],
+        "title": "PackageTypePriceOut",
+        "type": "object"
+      },
+      "PackageVersionOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "package_id": {
+            "format": "uuid",
+            "title": "Package Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "review",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "package_id",
+          "slug",
+          "version",
+          "status",
+          "label_de",
+          "label_fr",
+          "scope",
+          "published_at"
+        ],
+        "title": "PackageVersionOut",
         "type": "object"
       },
       "ParcelOut": {
@@ -2022,6 +2450,72 @@
         "title": "PartOut",
         "type": "object"
       },
+      "PlacementIn": {
+        "properties": {
+          "entrance": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrance"
+          },
+          "garage_door": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Garage Door"
+          }
+        },
+        "title": "PlacementIn",
+        "type": "object"
+      },
+      "PlanDocumentOut": {
+        "properties": {
+          "building_type_id": {
+            "format": "uuid",
+            "title": "Building Type Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "building_type_id",
+          "filename",
+          "size_bytes",
+          "created_at"
+        ],
+        "title": "PlanDocumentOut",
+        "type": "object"
+      },
       "PlanOut": {
         "properties": {
           "du_type": {
@@ -2073,6 +2567,103 @@
           "regulation_url"
         ],
         "title": "PlanOut",
+        "type": "object"
+      },
+      "PriceCatalogVersionOut": {
+        "properties": {
+          "base_prices": {
+            "items": {
+              "$ref": "#/components/schemas/TypeBasePriceOut"
+            },
+            "title": "Base Prices",
+            "type": "array"
+          },
+          "energy_assessments": {
+            "items": {
+              "$ref": "#/components/schemas/EnergyAssessmentOut"
+            },
+            "title": "Energy Assessments",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "module_prices": {
+            "items": {
+              "$ref": "#/components/schemas/ModuleTypePriceOut"
+            },
+            "title": "Module Prices",
+            "type": "array"
+          },
+          "package_prices": {
+            "items": {
+              "$ref": "#/components/schemas/PackageTypePriceOut"
+            },
+            "title": "Package Prices",
+            "type": "array"
+          },
+          "price_catalog_id": {
+            "format": "uuid",
+            "title": "Price Catalog Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "review",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date",
+            "title": "Valid From",
+            "type": "string"
+          },
+          "vat_rate_default": {
+            "title": "Vat Rate Default",
+            "type": "number"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "price_catalog_id",
+          "region",
+          "version",
+          "status",
+          "valid_from",
+          "vat_rate_default",
+          "published_at",
+          "base_prices",
+          "package_prices",
+          "module_prices",
+          "energy_assessments"
+        ],
+        "title": "PriceCatalogVersionOut",
         "type": "object"
       },
       "ProjectOut": {
@@ -2521,6 +3112,34 @@
         ],
         "title": "Role",
         "type": "string"
+      },
+      "RoomOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "storey": {
+            "title": "Storey",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "storey",
+          "area_m2"
+        ],
+        "title": "RoomOut",
+        "type": "object"
       },
       "RuleDetailOut": {
         "properties": {
@@ -3521,6 +4140,308 @@
         "title": "TerrainOut",
         "type": "object"
       },
+      "TypeBasePriceOut": {
+        "properties": {
+          "building_type_slug": {
+            "title": "Building Type Slug",
+            "type": "string"
+          },
+          "max_cents": {
+            "title": "Max Cents",
+            "type": "integer"
+          },
+          "min_cents": {
+            "title": "Min Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "building_type_slug",
+          "min_cents",
+          "max_cents"
+        ],
+        "title": "TypeBasePriceOut",
+        "type": "object"
+      },
+      "TypeSummaryOut": {
+        "properties": {
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "current_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TypeVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "family",
+          "alternatives",
+          "current_version"
+        ],
+        "title": "TypeSummaryOut",
+        "type": "object"
+      },
+      "TypeVersionOut": {
+        "properties": {
+          "base_price_max_cents": {
+            "title": "Base Price Max Cents",
+            "type": "integer"
+          },
+          "base_price_min_cents": {
+            "title": "Base Price Min Cents",
+            "type": "integer"
+          },
+          "building_type_id": {
+            "format": "uuid",
+            "title": "Building Type Id",
+            "type": "string"
+          },
+          "consistency_warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ConsistencyFindingOut"
+            },
+            "title": "Consistency Warnings",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "eave_height_m": {
+            "title": "Eave Height M",
+            "type": "number"
+          },
+          "entrance": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrance"
+          },
+          "facade_roles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Facade Roles",
+            "type": "object"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "footprint_facade": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Footprint Facade",
+            "type": "array"
+          },
+          "footprint_facade_area_m2": {
+            "title": "Footprint Facade Area M2",
+            "type": "number"
+          },
+          "footprint_projection": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Footprint Projection",
+            "type": "array"
+          },
+          "footprint_projection_area_m2": {
+            "title": "Footprint Projection Area M2",
+            "type": "number"
+          },
+          "garage_door": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Garage Door"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "living_area_m2": {
+            "title": "Living Area M2",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pitch_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Deg"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "ridge_direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge Direction"
+          },
+          "ridge_height_m": {
+            "title": "Ridge Height M",
+            "type": "number"
+          },
+          "roof_form": {
+            "enum": [
+              "gable",
+              "hip",
+              "flat",
+              "complex"
+            ],
+            "title": "Roof Form",
+            "type": "string"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/RoomOut"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "rooms_text": {
+            "title": "Rooms Text",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "review",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "storeys": {
+            "title": "Storeys",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "building_type_id",
+          "slug",
+          "version",
+          "status",
+          "name",
+          "family",
+          "storeys",
+          "roof_form",
+          "pitch_deg",
+          "ridge_direction",
+          "ridge_height_m",
+          "eave_height_m",
+          "footprint_facade",
+          "footprint_facade_area_m2",
+          "footprint_projection",
+          "footprint_projection_area_m2",
+          "living_area_m2",
+          "rooms_text",
+          "rooms",
+          "facade_roles",
+          "entrance",
+          "garage_door",
+          "base_price_min_cents",
+          "base_price_max_cents",
+          "consistency_warnings",
+          "published_at",
+          "created_at"
+        ],
+        "title": "TypeVersionOut",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -3900,6 +4821,772 @@
         "summary": "Start Cadastre Import",
         "tags": [
           "site"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/lines": {
+      "get": {
+        "operationId": "list_packages_api_v1_admin_catalog_lines_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PackageVersionOut"
+                  },
+                  "title": "Response List Packages Api V1 Admin Catalog Lines Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Packages",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/lines/{slug}/versions": {
+      "post": {
+        "operationId": "create_package_version_api_v1_admin_catalog_lines__slug__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Package Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/lines/{slug}/versions/{version}/publish": {
+      "post": {
+        "operationId": "publish_package_version_api_v1_admin_catalog_lines__slug__versions__version__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackageVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Package Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/options": {
+      "get": {
+        "operationId": "list_modules_api_v1_admin_catalog_options_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModuleVersionOut"
+                  },
+                  "title": "Response List Modules Api V1 Admin Catalog Options Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Modules",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/options/{slug}/versions": {
+      "post": {
+        "operationId": "create_module_version_api_v1_admin_catalog_options__slug__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModuleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Module Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/options/{slug}/versions/{version}/publish": {
+      "post": {
+        "operationId": "publish_module_version_api_v1_admin_catalog_options__slug__versions__version__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Module Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/price-catalog/draft": {
+      "get": {
+        "description": "Entwurf des Preiskatalogs, mit den aus Typ-Importen übernommenen Preisen (Plan H1 3.7).",
+        "operationId": "get_draft_price_catalog_api_v1_admin_catalog_price_catalog_draft_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceCatalogVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Draft Price Catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/price-catalog/publish": {
+      "post": {
+        "operationId": "publish_price_catalog_api_v1_admin_catalog_price_catalog_publish_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceCatalogVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Publish Price Catalog",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types": {
+      "get": {
+        "operationId": "list_types_api_v1_admin_catalog_types_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TypeSummaryOut"
+                  },
+                  "title": "Response List Types Api V1 Admin Catalog Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Types",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/plan-document": {
+      "post": {
+        "description": "Grundriss-PDF als reiner Upload, ohne Auswertung (Plan H1 3.6).",
+        "operationId": "upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanDocumentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Plan Document",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions": {
+      "post": {
+        "description": "Neuer Entwurf aus Typdatenblatt (XLSX) und Umriss (DXF), Plan H1 3.2, 3.3.",
+        "operationId": "import_type_version_api_v1_admin_catalog_types__slug__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Type Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}": {
+      "get": {
+        "operationId": "get_type_version_api_v1_admin_catalog_types__slug__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Type Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/facade-roles": {
+      "put": {
+        "operationId": "set_facade_roles_api_v1_admin_catalog_types__slug__versions__version__facade_roles_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacadeRolesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Facade Roles",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/placement": {
+      "put": {
+        "operationId": "set_placement_api_v1_admin_catalog_types__slug__versions__version__placement_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlacementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Placement",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/publish": {
+      "post": {
+        "operationId": "publish_type_version_api_v1_admin_catalog_types__slug__versions__version__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Type Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{slug}/versions/{version}/retire": {
+      "post": {
+        "operationId": "retire_type_version_api_v1_admin_catalog_types__slug__versions__version__retire_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypeVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retire Type Version",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/catalog/types/{type_slug}/energy-assessment/{package_slug}": {
+      "put": {
+        "operationId": "set_energy_assessment_api_v1_admin_catalog_types__type_slug__energy_assessment__package_slug__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type_slug",
+            "required": true,
+            "schema": {
+              "title": "Type Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "package_slug",
+            "required": true,
+            "schema": {
+              "title": "Package Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnergyAssessmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyAssessmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Energy Assessment",
+        "tags": [
+          "catalog"
         ]
       }
     },
