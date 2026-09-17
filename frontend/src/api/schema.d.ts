@@ -707,7 +707,8 @@ export interface paths {
         get: operations["get_site_api_v1_projects__project_id__site_get"];
         /**
          * Put Site
-         * @description Grundstück aus einer oder mehreren zusammenhängenden Parzellen bilden (Spez. 5.1.3).
+         * @description Grundstück aus Parzellen bilden (Spez. 5.1.3) oder frei zeichnen und bemaßen, ohne Kataster
+         *     (Weg E, Plan 3.3).
          */
         put: operations["put_site_api_v1_projects__project_id__site_put"];
         post?: never;
@@ -1343,6 +1344,18 @@ export interface components {
             /** In Service Area */
             in_service_area: boolean;
         };
+        /**
+         * ManualEdgeIn
+         * @description Kante für Weg E (freies Zeichnen ohne Kataster, Plan 3.3): Länge und Azimut der Laufrichtung
+         *     (0° = Norden im Uhrzeigersinn). Bei `n` Kanten werden nur `n − 1` angegeben; die letzte schließt
+         *     das Polygon automatisch, weil ein vollständig bemaßtes Polygon überbestimmt wäre.
+         */
+        ManualEdgeIn: {
+            /** Angle Deg */
+            angle_deg: number;
+            /** Length M */
+            length_m: number;
+        };
         /** OpsStatus */
         OpsStatus: {
             /** Env */
@@ -1817,13 +1830,22 @@ export interface components {
              */
             status: "ready" | "pending";
         };
-        /** SiteIn */
+        /**
+         * SiteIn
+         * @description Genau eine Angabe: Parzellen (Wege A–D, Spez. 5.1.1) oder bemaßte Kanten ohne Kataster (Weg E).
+         */
         SiteIn: {
+            /** Address Label */
+            address_label?: string | null;
+            /** Edges */
+            edges?: components["schemas"]["ManualEdgeIn"][] | null;
             /** Parcel Idus */
-            parcel_idus: string[];
+            parcel_idus?: string[] | null;
         };
         /** SiteOut */
         SiteOut: {
+            /** Address Label */
+            address_label: string | null;
             /** Area M2 */
             area_m2: number;
             /** Area Official M2 */
@@ -1842,6 +1864,11 @@ export interface components {
             main_street_seq: number | null;
             /** Notices */
             notices: string[];
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "parcel" | "manual_sketch";
             /** Outline Geojson */
             outline_geojson: {
                 [key: string]: unknown;

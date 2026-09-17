@@ -176,6 +176,8 @@ class Site(UuidPk, Created, Base):
     __tablename__ = "site"
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"), unique=True)
+    origin: Mapped[str] = mapped_column(String(20), server_default=text("'parcel'"))
+    address_label: Mapped[str | None] = mapped_column(String(200))
     geometry: Mapped[Any] = mapped_column(_geom("POLYGON"))
     area_m2: Mapped[float] = mapped_column(Float)
     area_official_m2: Mapped[int | None] = mapped_column(Integer)
@@ -203,6 +205,7 @@ class Site(UuidPk, Created, Base):
         CheckConstraint(
             "neighbour_coverage IN ('complete','partial','none')", name="neighbour_coverage_known"
         ),
+        CheckConstraint("origin IN ('parcel','manual_sketch')", name="origin_known"),
     )
 
 

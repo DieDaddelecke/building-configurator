@@ -80,6 +80,43 @@ describe("Grundstücksseite", () => {
     expect(screen.getByRole("button", { name: "Andere Parzellen wählen" })).toBeInTheDocument();
   });
 
+  it("bietet den Weg zum freien Zeichnen an und wechselt dorthin (Plan 3.3, Weg E)", async () => {
+    state.flags = { site_selection: true };
+    renderAt("/grundstueck");
+    const link = screen.getByRole("button", { name: "Finden Sie Ihre Parzelle nicht? Zeichnen Sie den Umriss selbst" });
+    await act(() => link.click());
+    expect(screen.getByRole("heading", { name: "Zeichnen Sie den Umriss Ihres Grundstücks" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Zeichenfläche ohne Kartenhintergrund" })).toBeInTheDocument();
+  });
+
+  it("zeigt ein frei gezeichnetes Grundstück ohne Kanten, Regeln oder Baurahmen (Weg E, D13)", () => {
+    state.flags = { site_selection: true, envelope_simulation: true, rules_simulation: true };
+    state.site = {
+      ...fixture,
+      origin: "manual_sketch",
+      address_label: "12 rue imaginaire",
+      area_m2: 200,
+      area_official_m2: null,
+      parcels: [],
+      edges: [],
+      warnings: [],
+      notices: ["notice.manual_sketch"],
+      outline_local: [[[0, 0], [10, 0], [10, 20], [0, 20], [0, 0]]],
+      terrain: { status: "unavailable" },
+      risks: { status: "unavailable", items: [] },
+    };
+    renderAt("/grundstueck");
+    expect(screen.getByRole("heading", { name: "Ihr Grundstück (gezeichnet)" })).toBeInTheDocument();
+    expect(screen.getByText("12 rue imaginaire")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Diese Fläche wurde nicht mit dem Bebauungsplan abgeglichen. Die Vereinbarkeit mit den geltenden Vorschriften ist nicht geprüft.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Was darf ich bauen?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Regeln des Bebauungsplans" })).not.toBeInTheDocument();
+  });
+
   it("verlinkt die Büro-Prüfliste", () => {
     state.session = { ...state.session, staff: { id: "1", email: "archi@buero.test", display_name: null, roles: ["architect"] } };
     state.queue = [

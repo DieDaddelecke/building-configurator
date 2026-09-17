@@ -10,9 +10,12 @@ import { useSession } from "../../api/session";
 import { SITE_FLAG, useCorrectEdgeCustomer, useEnsureProject, useFlags, useSite, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { Kopfzeile } from "../../components/Kopfzeile";
-import { centerOf } from "../../site/geo";
+import { Nordpfeil, strich } from "../../components/plan/Masskette";
+import { PlanSvg, ringPath, type LocalPoint } from "../../components/plan/PlanSvg";
+import { centerOf, formatNumber, siteBounds } from "../../site/geo";
 import { Baurahmen } from "../../envelope/Baurahmen";
-import { GrundstueckPruefen } from "../../site/GrundstueckPruefen";
+import { FreiesZeichnen } from "../../site/FreiesZeichnen";
+import { GrundstueckPruefen, useNotices } from "../../site/GrundstueckPruefen";
 import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { ParzellenWahl } from "../../site/ParzellenWahl";
 
@@ -35,6 +38,47 @@ function Pruefen({ site, onChangeParcels, rulesBelow }: { site: SiteOut; onChang
         </div>
       }
     />
+  );
+}
+
+/** Ergebnis von Weg E (Plan 3.3): kein Kataster, keine Kanten, kein Baurahmen – G2 und G3 werden für ein
+ * frei gezeichnetes Grundstück nicht aufgerufen (D13). Deutlich einfacher als `GrundstueckPruefen`. */
+function ManuelleZeichnungAnsicht({ site, onRedraw }: { site: SiteOut; onRedraw: () => void }) {
+  const { t, i18n } = useTranslation();
+  const notices = useNotices(site.notices);
+  const bounds = siteBounds(site);
+  const outline = (site.outline_local[0] ?? []) as unknown as LocalPoint[];
+  const published = notices.data?.find((n) => n.key === "notice.manual_sketch");
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="lg:col-span-7 flex flex-col gap-3">
+        <PlanSvg bounds={bounds} label={t("site.manual.preview")}>
+          <path d={ringPath(outline)} style={{ ...strich("var(--accent)", 0.15), fill: "var(--sheet)", fillOpacity: 0.85 }} />
+          <g transform={`translate(${bounds.maxE + 3} ${-bounds.maxN + 1})`}>
+            <Nordpfeil x={0} y={0} />
+          </g>
+        </PlanSvg>
+      </div>
+      <div className="lg:col-span-5 flex flex-col gap-6">
+        <dl className="m-0">
+          <div className="flex justify-between gap-4 py-2 border-t bd">
+            <dt className="t-mute">{t("site.manual.address.label")}</dt>
+            <dd className="m-0 t-ink text-right">{site.address_label}</dd>
+          </div>
+          <div className="flex justify-between gap-4 py-2 border-t bd">
+            <dt className="t-mute">{t("site.manual.areaLabel")}</dt>
+            <dd className="m-0 t-ink text-right">{`${formatNumber(site.area_m2, i18n.language, 0)} m²`}</dd>
+          </div>
+        </dl>
+        <p className="bg-tint t-ink px-4 py-3 text-sm m-0" lang={published?.locale}>
+          {published ? published.body : t("site.notices.manual_sketch")}
+        </p>
+        <button type="button" className="btn btn-ghost self-start" onClick={onRedraw}>
+          {t("site.manual.redraw")}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -88,6 +132,7 @@ export function GrundstueckSeite() {
   const projectId = session.data?.project_id ?? ensure.data ?? null;
   const site = useSite(projectId);
   const [editing, setEditing] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   const enabled = Boolean(flags.data?.[SITE_FLAG]);
   const rulesEnabled = Boolean(flags.data?.[RULES_FLAG]);
   const envelopeEnabled = Boolean(flags.data?.[ENVELOPE_FLAG]);
@@ -108,6 +153,21 @@ export function GrundstueckSeite() {
           {t("error.home")}
         </Link>
       </Kopf>
+    );
+  } else if (site.data && site.data.origin === "manual_sketch" && !editing) {
+    inhalt = (
+      <div className="flex flex-col gap-8">
+        <Kopf eyebrow={t("site.review.eyebrow")} titel={t("site.manual.review.title")}>
+          <p>{t("site.manual.review.intro")}</p>
+        </Kopf>
+        <ManuelleZeichnungAnsicht
+          site={site.data}
+          onRedraw={() => {
+            setEditing(true);
+            setManualMode(true);
+          }}
+        />
+      </div>
     );
   } else if (site.data && !editing) {
     inhalt = (
@@ -132,6 +192,22 @@ export function GrundstueckSeite() {
         )}
       </div>
     );
+  } else if (manualMode) {
+    inhalt = (
+      <div className="flex flex-col gap-8">
+        <Kopf eyebrow={t("site.manual.select.eyebrow")} titel={t("site.manual.select.title")}>
+          <p>{t("site.manual.select.intro")}</p>
+        </Kopf>
+        <FreiesZeichnen
+          ensureProject={() => ensure.mutateAsync(projectId)}
+          onFormed={() => {
+            setEditing(false);
+            setManualMode(false);
+          }}
+          onCancel={() => setManualMode(false)}
+        />
+      </div>
+    );
   } else {
     inhalt = (
       <div className="flex flex-col gap-8">
@@ -145,6 +221,9 @@ export function GrundstueckSeite() {
           onFormed={() => setEditing(false)}
           onCancel={site.data ? () => setEditing(false) : undefined}
         />
+        <button type="button" className="link self-start" onClick={() => setManualMode(true)}>
+          {t("site.manual.switch")}
+        </button>
       </div>
     );
   }

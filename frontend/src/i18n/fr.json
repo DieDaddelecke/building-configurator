@@ -30,6 +30,40 @@
       "title": "Votre terrain",
       "intro": "Vérifiez quelles limites donnent sur la voie et lesquelles sont mitoyennes. Les reculs imposés par le PLU en dépendent."
     },
+    "manual": {
+      "switch": "Vous ne trouvez pas votre parcelle ? Dessinez le contour vous-même",
+      "select": {
+        "eyebrow": "Étape 1 · Dessiner le terrain",
+        "title": "Dessinez le contour de votre terrain",
+        "intro": "Sans cadastre : dessinez le contour, puis indiquez la longueur de chaque limite. Aucune vérification du PLU n'est effectuée sur ce terrain."
+      },
+      "review": {
+        "title": "Votre terrain (dessiné)",
+        "intro": "Ce contour a été dessiné et coté par vos soins, sans lien avec le cadastre."
+      },
+      "draw": {
+        "hint": "Cliquez pour placer chaque angle du terrain, dans l'ordre. Trois points au moins.",
+        "canvas": "Zone de dessin, sans fond de carte",
+        "undo": "Annuler le dernier point",
+        "reset": "Recommencer",
+        "next": "Passer à la cotation"
+      },
+      "preview": "Aperçu du contour dessiné",
+      "area": "Surface : environ {{area}} m²",
+      "areaLabel": "Surface",
+      "backToDrawing": "Revenir au dessin",
+      "edges": {
+        "title": "Cotation des limites",
+        "label": "Limite {{index}}"
+      },
+      "address": {
+        "label": "Adresse du terrain",
+        "placeholder": "Rue, code postal, commune",
+        "hint": "Sert uniquement de repère ; aucune recherche cadastrale n'est effectuée."
+      },
+      "submit": "Valider ce terrain",
+      "redraw": "Dessiner un autre contour"
+    },
     "search": {
       "label": "Adresse du terrain",
       "placeholder": "Rue, code postal, commune",
@@ -180,7 +214,8 @@
     "notices": {
       "title": "Limites de l'information",
       "cadastre_accuracy": "Les limites cadastrales ne sont pas des limites de bornage. Seul un géomètre-expert établit des limites opposables.",
-      "risks_public_data": "Les risques sont des indications issues de données publiques et ne remplacent pas une étude."
+      "risks_public_data": "Les risques sont des indications issues de données publiques et ne remplacent pas une étude.",
+      "manual_sketch": "Cette surface n'a pas été comparée au plan local d'urbanisme. Sa conformité aux règles en vigueur n'est pas vérifiée."
     },
     "next": "Emprise affichera ensuite les règles du PLU applicables à ce terrain.",
     "nextBelow": "Les règles du document d'urbanisme applicables à ce terrain figurent ci-dessous.",

@@ -6,6 +6,7 @@ Geometrie wird in PostGIS gesucht und transformiert, in Shapely (Lambert-93) ber
 import hashlib
 import json
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -35,6 +36,7 @@ from app.site.domain.edges import (
     edge_facts,
     split_edges,
 )
+from app.site.domain.manual import ManualEdgeInput, ManualPolygonInvalid, build_manual_polygon
 from app.site.domain.outline import ParcelInput, SiteNotContiguous, merge_parcels, to_local
 from app.site.models import L93, Site, SiteEdge, SiteParcel, SiteRisk, Terrain
 from app.site.schemas import (
@@ -252,6 +254,8 @@ def form_site(db: Session, project_id: uuid.UUID, idus: list[str], actor: str) -
     site = db.execute(
         select(Site).where(Site.project_id == project_id).with_for_update()
     ).scalar_one_or_none()
+    if site is not None and site.origin == "manual_sketch":
+        raise Problem(409, "site_origin_mismatch")
     outline_hash = _outline_hash(outline.polygon)
     if site is not None and site.outline_hash == outline_hash and sorted(site.parcel_idus) == idus:
         return load_site(db, project_id)
@@ -384,6 +388,67 @@ def _apply_classification(site: Site, classification: Classification, warnings: 
     site.street_azimuth_deg = classification.street_azimuth_deg
     site.garden_azimuth_deg = classification.garden_azimuth_deg
     site.warnings = list(dict.fromkeys(warnings))
+
+
+# ---------------------------------------------------------------------------
+# Grundstück frei zeichnen (Weg E, Plan 3.3)
+# ---------------------------------------------------------------------------
+
+
+def form_manual_site(
+    db: Session, project_id: uuid.UUID, edges: Sequence[ManualEdgeInput], address_label: str, actor: str
+) -> SiteOut:
+    """Grundstück aus freier Zeichnung und Bemaßung bilden, ohne Kataster (Weg E, Plan 3.3).
+
+    G2 und G3 werden für dieses Grundstück nicht aufgerufen (D13): kein Baurahmen, kein Steckbrief. Ein
+    vorhandenes Grundstück eines anderen Ursprungs wird nicht überschrieben (`site_origin_mismatch`);
+    dafür ist ein neues Projekt vorgesehen.
+    """
+    try:
+        outline = build_manual_polygon(edges)
+    except ManualPolygonInvalid as exc:
+        raise Problem(422, "manual_polygon_invalid", detail=str(exc)) from None
+
+    db.execute(select(Project.id).where(Project.id == project_id).with_for_update())
+    site = db.execute(
+        select(Site).where(Site.project_id == project_id).with_for_update()
+    ).scalar_one_or_none()
+    if site is not None and site.origin == "parcel":
+        raise Problem(409, "site_origin_mismatch")
+    outline_hash = _outline_hash(outline.polygon)
+    if site is not None and site.outline_hash == outline_hash and site.address_label == address_label:
+        return load_site(db, project_id)
+
+    if site is None:
+        site = Site(project_id=project_id, created_by=actor, revision=1)
+        db.add(site)
+    else:
+        site.revision += 1
+        for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
+            db.execute(delete(model).where(model.site_id == site.id))
+    site.origin = "manual_sketch"
+    site.address_label = address_label
+    site.geometry = from_shape(outline.polygon, srid=L93)
+    site.area_m2 = round(outline.area_m2, tol.STORAGE_DECIMALS)
+    site.area_official_m2 = None
+    site.local_origin_e, site.local_origin_n = outline.local_origin
+    site.parcel_idus = []
+    site.outline_hash = outline_hash
+    site.neighbour_coverage = "none"
+    site.road_data = False
+    # Nie `pending`: für Weg E wird nie ein site_enrich-Job eingeplant (kein Kataster, keine echte Lage)
+    site.terrain_status = "unavailable"
+    site.risks_status = "unavailable"
+    site.engine_version = ENGINE_VERSION
+    site.main_street_seq = None
+    site.street_azimuth_deg = None
+    site.garden_azimuth_deg = None
+    site.warnings = []
+    site.updated_by = actor
+    site.updated_at = _db_now(db)
+    db.flush()
+    db.commit()
+    return load_site(db, project_id)
 
 
 # ---------------------------------------------------------------------------
@@ -670,6 +735,9 @@ class EnvelopeSite:
     bleibt; Geometrie in Lambert-93, Ausgabe rechnet G3 in lokale Meter um."""
 
     site_id: uuid.UUID
+    origin: str
+    """`parcel` oder `manual_sketch` (Weg E, Plan 3.3): G3 leitet für `manual_sketch` keinen Baurahmen
+    ab und ruft G2 dafür nicht auf (D13)."""
     revision: int
     engine_version: str
     updated_at: Any
@@ -712,6 +780,7 @@ def envelope_site(db: Session, project_id: uuid.UUID) -> EnvelopeSite:
     )
     return EnvelopeSite(
         site_id=site.id,
+        origin=site.origin,
         revision=site.revision,
         engine_version=site.engine_version,
         updated_at=site.updated_at,
@@ -763,10 +832,44 @@ def site_footprint(db: Session, project_id: uuid.UUID) -> SiteFootprint | None:
     return SiteFootprint(row.id, bytes(row.wkb), float(row.area_m2), list(communes), int(row.revision))
 
 
+def _manual_site_out(site: Site) -> SiteOut:
+    """Weg E (Plan 3.3): kein Kataster, keine Kanteneinordnung, kein Gelände, keine Risiken, kein
+    Umgebungskontext. `outline_geojson` bleibt leer statt über `ST_Transform` berechnet: die Koordinaten
+    haben keinen geografischen Bezug (Kapitel 7)."""
+    origin = (site.local_origin_e, site.local_origin_n)
+    polygon = to_shape(site.geometry)
+    return SiteOut(
+        project_id=site.project_id,
+        origin=cast(Any, site.origin),
+        address_label=site.address_label,
+        revision=site.revision,
+        engine_version=site.engine_version,
+        updated_at=site.updated_at,
+        area_m2=site.area_m2,
+        area_official_m2=None,
+        local_origin=LocalOrigin(e=origin[0], n=origin[1]),
+        outline_local=_rings(polygon, origin),
+        outline_geojson={"type": "Polygon", "coordinates": []},
+        parcels=[],
+        edges=[],
+        main_street_seq=None,
+        street_azimuth_deg=None,
+        garden_azimuth_deg=None,
+        binding=True,
+        warnings=[],
+        notices=["notice.manual_sketch"],
+        terrain=TerrainOut(status="unavailable"),
+        risks=RisksOut(status="unavailable", items=[]),
+        context=ContextOut(parcels=[], buildings=[]),
+    )
+
+
 def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
     site = db.execute(select(Site).where(Site.project_id == project_id)).scalar_one_or_none()
     if site is None:
         raise Problem(404, "site_not_found")
+    if site.origin == "manual_sketch":
+        return _manual_site_out(site)
     origin = (site.local_origin_e, site.local_origin_n)
     polygon = to_shape(site.geometry)
     outline_geojson = db.execute(
@@ -809,6 +912,8 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
         notices.append("notice.risks_public_data")
     return SiteOut(
         project_id=site.project_id,
+        origin=cast(Any, site.origin),
+        address_label=site.address_label,
         revision=site.revision,
         engine_version=site.engine_version,
         updated_at=site.updated_at,

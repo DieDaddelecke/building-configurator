@@ -270,6 +270,50 @@ def test_envelope_without_site_is_not_found(client: Any, db_session: Any) -> Non
 
 
 # ---------------------------------------------------------------------------
+# Weg E: freies Zeichnen ohne Kataster (Plan 3.3, D13)
+# ---------------------------------------------------------------------------
+
+MANUAL_EDGES = [
+    {"length_m": 10, "angle_deg": 90},
+    {"length_m": 20, "angle_deg": 180},
+    {"length_m": 10, "angle_deg": 270},
+]
+
+
+@pytest.fixture
+def manual_project(client: Any, db_session: Any) -> str:
+    """Grundstück ohne Kataster, keine Zonen oder Regeln nötig: G2 wird für Weg E nicht aufgerufen."""
+    for key in ("site_selection", "envelope_simulation"):
+        db_session.add(FeatureFlag(key=key, enabled_for_all=True))
+    db_session.commit()
+    project_id = str(client.post("/api/v1/projects").json()["id"])
+    body = {"edges": MANUAL_EDGES, "address_label": "12 rue imaginaire"}
+    formed = client.put(f"/api/v1/projects/{project_id}/site", json=body)
+    assert formed.status_code == 200, formed.json()
+    return project_id
+
+
+def test_manual_envelope_unavailable_without_rules(client: Any, manual_project: str) -> None:
+    """G2 wird nicht aufgerufen (kein Planwerk, kein Regelwerk importiert): trotzdem eine Antwort, kein
+    Fehler – der gezeichnete Umriss bleibt sichtbar, nur ohne Baurahmen (Plan 3.3, D13)."""
+    response = client.get(f"/api/v1/projects/{manual_project}/envelope")
+    assert response.status_code == 200, response.json()
+    body = response.json()
+    assert body["status"] == "unavailable" and body["reason"] == "manual_sketch"
+    assert body["notices"] == ["notice.manual_sketch"]
+    assert body["parts"] == [] and body["contours"] == {}
+    assert body["area_m2"] == pytest.approx(200.0)
+
+
+def test_manual_sketch_has_no_sheet(client: Any, manual_project: str) -> None:
+    """Kein Steckbrief für Weg E: ohne Baurahmen keine Simulation, die er zusammenfassen könnte."""
+    create = client.post(f"/api/v1/projects/{manual_project}/envelope/sheet")
+    assert create.status_code == 409 and create.json()["code"] == "sheet_unavailable_manual_sketch"
+    download = client.get(f"/api/v1/projects/{manual_project}/envelope/sheet")
+    assert download.status_code == 409 and download.json()["code"] == "sheet_unavailable_manual_sketch"
+
+
+# ---------------------------------------------------------------------------
 # Zugriff
 # ---------------------------------------------------------------------------
 

@@ -1711,6 +1711,29 @@
         "title": "LookupOut",
         "type": "object"
       },
+      "ManualEdgeIn": {
+        "description": "Kante für Weg E (freies Zeichnen ohne Kataster, Plan 3.3): Länge und Azimut der Laufrichtung\n(0° = Norden im Uhrzeigersinn). Bei `n` Kanten werden nur `n − 1` angegeben; die letzte schließt\ndas Polygon automatisch, weil ein vollständig bemaßtes Polygon überbestimmt wäre.",
+        "properties": {
+          "angle_deg": {
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Angle Deg",
+            "type": "number"
+          },
+          "length_m": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 500.0,
+            "title": "Length M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "length_m",
+          "angle_deg"
+        ],
+        "title": "ManualEdgeIn",
+        "type": "object"
+      },
       "OpsStatus": {
         "properties": {
           "env": {
@@ -3119,25 +3142,70 @@
         "type": "object"
       },
       "SiteIn": {
+        "description": "Genau eine Angabe: Parzellen (Wege A–D, Spez. 5.1.1) oder bemaßte Kanten ohne Kataster (Weg E).",
         "properties": {
+          "address_label": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Label"
+          },
+          "edges": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ManualEdgeIn"
+                },
+                "maxItems": 39,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edges"
+          },
           "parcel_idus": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 10,
-            "minItems": 1,
-            "title": "Parcel Idus",
-            "type": "array"
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 10,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parcel Idus"
           }
         },
-        "required": [
-          "parcel_idus"
-        ],
         "title": "SiteIn",
         "type": "object"
       },
       "SiteOut": {
         "properties": {
+          "address_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Label"
+          },
           "area_m2": {
             "title": "Area M2",
             "type": "number"
@@ -3202,6 +3270,14 @@
             },
             "title": "Notices",
             "type": "array"
+          },
+          "origin": {
+            "enum": [
+              "parcel",
+              "manual_sketch"
+            ],
+            "title": "Origin",
+            "type": "string"
           },
           "outline_geojson": {
             "additionalProperties": true,
@@ -3269,6 +3345,8 @@
         },
         "required": [
           "project_id",
+          "origin",
+          "address_label",
           "revision",
           "engine_version",
           "updated_at",
@@ -5357,7 +5435,7 @@
         ]
       },
       "put": {
-        "description": "Grundstück aus einer oder mehreren zusammenhängenden Parzellen bilden (Spez. 5.1.3).",
+        "description": "Grundstück aus Parzellen bilden (Spez. 5.1.3) oder frei zeichnen und bemaßen, ohne Kataster\n(Weg E, Plan 3.3).",
         "operationId": "put_site_api_v1_projects__project_id__site_put",
         "parameters": [
           {

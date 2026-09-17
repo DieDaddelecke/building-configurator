@@ -30,6 +30,40 @@
       "title": "Ihr Grundstück",
       "intro": "Prüfen Sie, welche Grenzen an der Straße und welche am Nachbarn liegen. Davon hängen die Abstände ab, die der Bebauungsplan vorschreibt."
     },
+    "manual": {
+      "switch": "Finden Sie Ihre Parzelle nicht? Zeichnen Sie den Umriss selbst",
+      "select": {
+        "eyebrow": "Schritt 1 · Grundstück zeichnen",
+        "title": "Zeichnen Sie den Umriss Ihres Grundstücks",
+        "intro": "Ohne Kataster: Zeichnen Sie den Umriss und geben Sie danach die Länge jeder Kante ein. Für dieses Grundstück findet keine Prüfung des Bebauungsplans statt."
+      },
+      "review": {
+        "title": "Ihr Grundstück (gezeichnet)",
+        "intro": "Dieser Umriss wurde von Ihnen gezeichnet und bemaßt, ohne Bezug zum Kataster."
+      },
+      "draw": {
+        "hint": "Klicken Sie der Reihe nach jede Ecke des Grundstücks an. Mindestens drei Punkte.",
+        "canvas": "Zeichenfläche ohne Kartenhintergrund",
+        "undo": "Letzten Punkt zurücknehmen",
+        "reset": "Neu beginnen",
+        "next": "Weiter zur Bemaßung"
+      },
+      "preview": "Vorschau des gezeichneten Umrisses",
+      "area": "Fläche: etwa {{area}} m²",
+      "areaLabel": "Fläche",
+      "backToDrawing": "Zurück zum Zeichnen",
+      "edges": {
+        "title": "Kanten bemaßen",
+        "label": "Kante {{index}}"
+      },
+      "address": {
+        "label": "Adresse des Grundstücks",
+        "placeholder": "Straße, Postleitzahl, Ort",
+        "hint": "Dient nur zur Beschriftung; es findet keine Katastersuche statt."
+      },
+      "submit": "Dieses Grundstück übernehmen",
+      "redraw": "Anderen Umriss zeichnen"
+    },
     "search": {
       "label": "Adresse des Grundstücks",
       "placeholder": "Straße, Postleitzahl, Ort",
@@ -180,7 +214,8 @@
     "notices": {
       "title": "Grenzen der Aussage",
       "cadastre_accuracy": "Katastergrenzen sind nicht vermessungsgenau. Verbindliche Grenzen ermittelt ein Géomètre-expert.",
-      "risks_public_data": "Standortrisiken sind Hinweise aus öffentlichen Daten und ersetzen kein Gutachten."
+      "risks_public_data": "Standortrisiken sind Hinweise aus öffentlichen Daten und ersetzen kein Gutachten.",
+      "manual_sketch": "Diese Fläche wurde nicht mit dem Bebauungsplan abgeglichen. Die Vereinbarkeit mit den geltenden Vorschriften ist nicht geprüft."
     },
     "next": "Als Nächstes zeigt Emprise, welche Regeln des Bebauungsplans für dieses Grundstück gelten.",
     "nextBelow": "Die Regeln des Bebauungsplans für dieses Grundstück stehen unten.",

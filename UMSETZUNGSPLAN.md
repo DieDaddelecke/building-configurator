@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1 und G2; D1–D4 und D11 entschieden (Kapitel 9) · **Stand:** 14.09.2026, überarbeitet für G2 als automatische Simulation ohne Eingaben des Büros (10.3)
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2 und G3; D1–D4 und D11 entschieden (Kapitel 9) · **Stand:** 17.09.2026, G3 umgesetzt (3.5, Kapitel 7); G1 um Weg E (freies Zeichnen ohne Bebaubarkeitscheck) umgesetzt (3.3, Kapitel 7, ANNAHMEN G26–G30); D13 (H2 ohne Baurahmen) weiter offen
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -25,7 +25,7 @@
 | Kürzel | Modul | Liefert | Release |
 |---|---|---|---|
 | **P** | Plattform | Hosting, Auslieferung, Anmeldung, Rollen, Queue, Speicher, Mail, Rechtstexte, Überwachung, Büro-Rahmen | R0 |
-| **G1** | Grundstück | Aus Adresse oder Kartenklick ein bestätigtes Grundstück mit eingeordneten Kanten, Gelände, Risiken | R1 |
+| **G1** | Grundstück | Aus Adresse oder Kartenklick ein bestätigtes Grundstück mit eingeordneten Kanten, Gelände, Risiken; alternativ ein frei gezeichnetes, bemaßtes Grundstück ohne Bebaubarkeitscheck (Weg E, 3.3) | R1 |
 | **G2** | Regelwerk | Zone, Planunterlagen, automatisch per Sprachmodell ausgewertete Regeln mit geprüftem Zitat, Abdeckung, Planstandsprüfung – ohne Eingaben des Büros | R1 |
 | **G3** | Baurahmen | Simulierte Rahmenbedingungen des Grundstücks: bebaubare Fläche, Grenzwerte, Vorgaben, Hinweise; Steckbrief als PDF | R1 |
 | **A** | Anfrage | Kontakt, E-Mail-Bestätigung, Einwilligung, Snapshot, Mail an Büro, Zugangslink, Export und Löschung, Anfragenliste im Büro, Prüfung der Simulation durch das Büro | R1 |
@@ -38,6 +38,8 @@
 Oberflächen für das Büro gehören jeweils zu ihrem Fachmodul (Kantenkorrektur zu G1, Korrektur von Regeln zu G2, Katalogpflege zu H1). Das Büro nutzt sie beim Prüfen einer Anfrage (A); kein Kundenschritt setzt sie voraus. P stellt nur Anmeldung, Navigation und Rechte bereit.
 
 A funktioniert auch ohne Baurahmen: Liegt ein Grundstück außerhalb des Einzugsgebiets oder konnte die Simulation nicht erstellt werden (kein PLU im GPU, Auswertung gescheitert), entsteht eine Anfrage ohne Baurahmen. Die Abhängigkeit G3 → A ist deshalb weich.
+
+G1 liefert außerdem einen fünften Weg ganz ohne Kataster (Weg E, 3.3): Wer sein Grundstück nicht über Adresse oder Karte einordnen will oder kann, zeichnet den Umriss selbst und bemaßt ihn. Für diesen Weg entfallen G2 und G3 vollständig – die Abhängigkeit zu G3 ist hier nicht nur weich, sondern besteht gar nicht.
 
 ### 2.2 Abhängigkeiten
 
@@ -54,6 +56,7 @@ flowchart LR
   H2 --> H3[H3 Konfiguration<br/>und Kosten]
   H3 --> V[V Vorentwurf-Übergabe]
   A --> V
+  G1 -. Weg E ohne G2 und G3 .-> A
   G1 -.-> X2[X2 Uploads]
   H1 -.-> X3[X3 IFC-Typen]
   V -.-> X4[X4 Erweitertes Dossier]
@@ -175,6 +178,44 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Größe:** M (3–5 PW).
 
+**Zusatz zu G1: Weg E – Freies Zeichnen (ohne Bebaubarkeitscheck)**
+
+**Zweck:** Wer sein Grundstück nicht über Adresse oder Kataster einordnen will oder kann – etwa bei eigener Vermessung, einem vorliegenden Certificat d'urbanisme oder wenn der Bebaubarkeitscheck bewusst nicht gebraucht wird –, zeichnet den Umriss selbst und bemaßt ihn. Das Ergebnis ist direkt Grundlage für den Konfigurator, ganz ohne Regelprüfung.
+
+**Abgrenzung zu den Wegen A–D (Spez. 5.1.1):** kein Bezug zu Kataster oder Karte, kein Kartenhintergrund, keine Georeferenzierung, kein GDAL. Bewusst der einfachste der fünf Wege – deshalb zusammen mit G1 umsetzbar, nicht erst mit X2 (Uploads, Georeferenzierung).
+
+**Umfang:**
+- Adresse (Pflicht, nur Beschriftung für Anzeige und eine spätere Anfrage; keine Geokodierung, keine Parzellensuche)
+- Zeichnen auf einem freien Koordinatenraster ohne Kartenbezug: Punkte setzen, Umriss schließen
+- Bemaßung je Kante: Länge eintragen, Winkel aus der Zeichnung; das Polygon wird aus den eingegebenen Maßen serverseitig neu aufgebaut (L5), nicht nur clientseitig gezeichnet – Bemaßung ist damit exakt, nicht nur eine Näherung der Zeichnung. Die zuletzt gezogene Kante schließt das Polygon automatisch und ist nicht frei bemaßbar: Bei `n` Kanten legen Länge und Winkel von `n − 1` Kanten das Polygon eindeutig fest, die letzte Kante ergibt sich aus dem Schlusspunkt (Anzeige „wird berechnet“)
+- Live-Vorschau mit Flächenangabe vor dem Bestätigen
+- **G2 und G3 werden für diesen Weg nicht aufgerufen:** kein Baurahmen, kein Steckbrief, keine Kosten für Regelauswertung
+- Eigener Hinweistext (L7), deutlich abgesetzt vom Hinweis der anderen Wege: „Diese Fläche wurde nicht mit dem Bebauungsplan abgeglichen. Die Vereinbarkeit mit den geltenden Vorschriften ist nicht geprüft.“ (neuer Schlüssel `notice.manual_sketch`, Rückfalltext bis eine endgültige Formulierung vorliegt, wie bei den übrigen Hinweistexten aus G16)
+
+**Nicht:** Kantenklassifikation (Straße/Nachbar/hinten) entfällt inhaltlich, da es keine PLU-Abstände zu prüfen gibt; Gelände- und Risikoabfrage entfallen, da sie an der echten Position hängen; nachträglicher Wechsel von `manual_sketch` zu einem Kataster-Grundstück am selben Projekt – dafür ein neues Projekt anlegen.
+
+**Daten:** Abweichend von Spez. 4.2 (Tabelle `site`) neues Feld `site.origin ∈ {parcel, manual_sketch}`. Bei `manual_sketch` bleibt `parcel_ids[]` leer (kein `parcel`-Datensatz, da kein Kataster beteiligt ist); `site_edge`, `terrain`, `site_risk` bleiben ebenfalls leer. Bestehende und über die Wege A–D gebildete Grundstücke erhalten `origin = parcel`.
+
+**Ablauf:**
+1. Projekt anlegen (wie bisher), Adresse eingeben.
+2. Zeichnen und Bemaßen im Frontend; bestehender Endpunkt `PUT /projects/{id}/site` um eine Variante ohne `parcel_ids` ergänzt, stattdessen `edges: [{length_m, angle_deg}]` für `n − 1` Kanten, woraus der Server das geschlossene Polygon baut.
+3. Serverseitige Prüfung (Schranken statt Freigabe, wie in G2/G3): keine Selbstüberschneidung, Mindestfläche und Mindestkantenlänge plausibel.
+4. Kein Job `site_enrich`, kein Aufruf von G2/G3 (`GET /projects/{id}/envelope` liefert wie bei anderen fehlenden Voraussetzungen Status `unavailable` mit `reason = manual_sketch`, kein Fehler).
+5. Ergebnis direkt sichtbar: Umriss, Fläche, Hinweistext; weiter zum Konfigurator (R2, siehe unten).
+
+**Abnahme:** Zeichnen und Bemaßen ergibt exakt das eingegebene Polygon (Rundungstoleranz 1 cm); Selbstüberschneidung wird abgelehnt mit verständlicher Meldung; G2 und G3 werden nachweislich nicht aufgerufen (kein Job, keine Kosten); der Hinweistext erscheint sichtbar getrennt vom Baurahmen-Hinweis der anderen Wege.
+
+**Größe:** M (2–4 PW) – kein Kataster, keine Nachbarparzellen, keine Kantenklassifikation und keine externen Dienste, aber ein eigenes interaktives Zeichen- und Bemaßungswerkzeug (Frontend) mit serverseitigem Polygonaufbau und Schließungslogik (Backend) ist mehr als reine Datenverdrahtung.
+
+**Offen (vor R2, siehe D13):** Wie H2 (Zulässigkeit und Implantation) mit einem Grundstück ohne Baurahmen umgeht.
+
+**Umgesetzt am 17.09.2026:** Festlegungen in `docs/ANNAHMEN.md` G26–G30. Gegenüber diesem Abschnitt geändert:
+
+- `PUT …/site` erweitert (nicht ein zweiter Endpunkt): entweder `parcel_idus` oder `edges` (Länge, Azimut je Kante) mit Pflichtfeld `address_label`, nach demselben Muster wie `LookupIn._exactly_one` (G27).
+- Ein bestehendes Grundstück anderer Herkunft wird nicht überschrieben (`409 site_origin_mismatch`); dafür ist ein neues Projekt vorgesehen, wie hier beschrieben (G28).
+- Zeichenfläche als eigenes Werkzeug (`FreiesZeichnen.tsx`), keine Wiederverwendung von `GrundstueckPruefen` für die Ansicht danach (`ManuelleZeichnungAnsicht`): keine Kanten, kein Gelände, keine Risiken zu zeigen (G30).
+- Abnahme erfüllt: Bemaßung ergibt exakt das eingegebene Polygon, Selbstüberschneidung abgelehnt, G2/G3 nachweislich nicht aufgerufen (kein Job, kein Steckbrief), Hinweistext sichtbar getrennt. Backend 262 Tests, Frontend 40 Tests; im Browser geprüft (Zeichnen, Bemaßen mit Live-Vorschau, Fehlerfall, Deutsch/Französisch).
+
 ### 3.4 G2 – Regelwerk (R1)
 
 **Zweck:** Für jede Zone im Einzugsgebiet automatisch ein Regelwerk mit geprüften Zitaten, das den Baurahmen als Simulation speist, **ohne Eingaben des Büros** (Entscheidung D11 vom 14.09.2026).
@@ -246,6 +287,15 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 **Abnahme:** Parität 14,0 × 21,0 m = 294 m² (Spez. 11.2); Rechenbeispiel D4 und aus D10 die Grenzwerte je Teilfläche (UB 200 m², N 0 m²; die Prüfung mit Haus folgt in H3) (Spez. Anhang D); Eigenschaftstests; Mehrzonenfall; Bauverbotsfläche; Abstandsregel `unknown` markiert die Kante und den Hinweis; p95 unter 300 ms; Steckbriefe für die realen Testgrundstücke aus G1 automatisch erzeugt, ohne Eingabe des Büros. ~~Steckbrief für 10 reale Grundstücke vom Architekten fachlich bestätigt~~ – entfällt (D11).
 
 **Größe:** M (3–5 PW).
+
+**Umgesetzt am 16.09.2026** nach [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md); Festlegungen in `docs/ANNAHMEN.md` BR01–BR15. Gegenüber diesem Abschnitt geändert:
+
+- Statt `B(0)` und `B(H_max)` zwei Konturen, die jede mehrdeutige Regel am günstigsten bzw. am strengsten auslegen (Höhe, Bauen auf der Grenze, Bauband, Kantenart, einschränkende Vorgaben). Ohne mehrdeutige Regel sind beide gleich (BR01).
+- Das Bauband einer Straße wirkt auf die Fläche, wenn der Text das ganze Gebäude meint; G2 liefert dafür den Parameter `band` (BR02, Kapitel 7).
+- Kein Zwischenspeicher `site_envelope`: Neuberechnung je Abruf (gemessen p95 122 ms), Prüfsumme über den **Inhalt** der Eingaben statt über Revisions- und Versionsnummern, weil Gelände, Projektkorrekturen und der Rückfall-Planstand keine Nummer ändern (BR07).
+- Teilflächen ohne ausgewertete Regeln oder mit Grundflächenzahl 0 liegen in keiner Kontur (BR04); Wirkung überlagernder Vorgaben nach CNIG-Typ (BR05).
+- Kein Höhenbezug auf Straßenniveau und keine Angabe in m NGF: G3 fragt keine externen Dienste ab (BR09).
+- Abnahme erfüllt: Parität 294 m², Rechenbeispiele D4 und D10, Eigenschaftstests, Mehrzonenfall, Bauverbotsfläche, markierte Kante ohne Abstand, p95 unter 300 ms, Steckbriefe automatisch erzeugt.
 
 ### 3.6 A – Anfrage (R1)
 
@@ -586,6 +636,7 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | Kataster | Kataster-API bei jedem Abruf | Massendaten des Einzugsgebiets; außerhalb keine Parzellenauswahl | Schneller, unabhängig von Ausfällen und Zugriffsgrenzen, Nachbarn direkt verfügbar; außerhalb gibt es ohnehin keine Regelwerke |
 | Kantenkorrektur Kunde | wirkt wie Korrektur durch Architekt | in der Simulation als unbestätigt gekennzeichnet, Bestätigung beim Prüfen einer Anfrage | Kunde könnte sonst den Baurahmen unbemerkt vergrößern |
 | Uploads Kataster | Wege C und D für Kunden | Nur Büro, erst X2 | Passpunkte und Koordinatensysteme sind für Laien nicht bedienbar |
+| **Fünfter Eingangsweg Grundstück** | Vier Wege A–D (5.1.1), alle mit oder auf dem Weg zu Katasterbezug | Weg E: freies Zeichnen mit Bemaßung, ganz ohne Katasterbezug; `site.origin ∈ {parcel, manual_sketch}` statt eines abgeleiteten Werts aus `parcel_ids[]`; G2 und G3 werden für diesen Weg nicht aufgerufen | Nutzerwunsch 17.09.2026: Kunden, die ihr Grundstück nicht über Adresse oder Kataster einordnen wollen oder können, sollen trotzdem konfigurieren können, ausdrücklich ohne Bebaubarkeitscheck (3.3) |
 | **Leitplanken L2 und L6 für Regeln** | Nur freigegebene Regelwerke sind harte Grenzen; Automatik schlägt vor, nichts wird ohne Bestätigung veröffentlicht | Automatisch ausgewertete Regeln erscheinen sofort beim Kunden, als unverbindliche Simulation gekennzeichnet; Qualität über automatische Schranken (3.4); das Büro prüft erst bei einer Anfrage | Entscheidung des Auftraggebers 14.09.2026 (D11): G2 darf nicht auf Eingaben des Büros angewiesen sein. Spezifikation 1.2, 3.4, 5.2.3 Schritt 5, 5.9.1 und 5.10.2 bei Freigabe des Plans anpassen |
 | Freigabe von Regeln | MUSS vor Wirkung (Spez. 5.2.3 Schritt 5) | Entfällt; freiwillige Korrektur beim Prüfen einer Anfrage, für die Zone oder nur das Projekt | D11 |
 | Datenmodell Regelwerk | `status` `draft`/`validated`, `rule.decision` | `status` `simulated`/`office_reviewed`/`retired`, `rule.origin`, `project_rule_override`, `rule_extraction_run` | Folge von D11 |
@@ -598,6 +649,10 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | Preisbezug | An Typversion | An Typ-Identität mit Gültigkeit | Modelländerung erzwingt keinen neuen Preiskatalog und kein neues Gutachten |
 | Katalogdaten | IFC ab M4 | Typdatenblatt und DXF-Umriss; IFC erst X3 | Bei wenigen Typen günstiger und genauer |
 | Optionspreise | Mengen × Einheitspreis ab M5 | Feste Spanne je Typ; Mengen erst X3 | Kein Mengengerüst nötig für gerundete Spannen |
+| **Bauband an der Straße** | `setback_street` mit `range` ist nur eine Bedingung an die Straßenfassade, keine Flächenbedingung (Spez. 5.2.4) | Parameter `band`: Meint der Text den ganzen Hauptbaukörper („bande d'implantation“), begrenzt das Band die bebaubare Fläche; meint er nur die Fassade, bleibt es eine Bedingung für H2; ohne Angabe gilt es nur in der engsten Auslegung, mit Hinweis | Wortlaut der Zone Uh in Treillières: „hors bande d'implantation, les constructions nouvelles ne sont pas autorisées“. Ohne Unterscheidung wäre die Fläche dreifach zu groß (3.5, BR02) |
+| **Bebaubare Fläche** | `B(0)` und `B(H_max)` je nach Höhe (Spez. 5.3.1) | Zwei Konturen als weiteste und engste Auslegung **jeder** mehrdeutigen Regel | Unsicherheit entsteht auch aus Grenzbebauung, Bauband, Kantenart und fehlenden Werten; sichtbar machen statt schätzen (D11, BR01) |
+| Höhenbezug Straßenniveau, Angabe in m NGF | Spez. 5.9.4 | Nur der Bezug wird genannt, keine absolute Höhe | G3 fragt keine externen Dienste ab; H2 fragt ohnehin Punkte unter dem Haus nach (BR09) |
+| Endpunkt `/buildable?height_m=` | Spez. 6.3 | Erst mit H2 | Ohne Haus gibt es keine Höhe; G3 liefert beide Konturen (BR01) |
 | Lagesuche | Rastersuche 0,25 m | Fläche erlaubter Ursprünge je Drehung; Raster als Rückfall | Leistungsziele erreichbar, exakte Vorschau |
 | Drehung | beliebig | R2 in festen Schritten | Voraussetzung für die Flächenmethode |
 | Jobs | Celery, Redis, Outbox, Dispatcher | PostgreSQL-Queue | Weniger Bausteine, transaktional |
@@ -645,6 +700,7 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 | D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto |
 | D11 | Herkunft und Verbindlichkeit der Regeln | **Entschieden 14.09.2026:** G2 arbeitet vollautomatisch und ist nicht auf Eingaben des Büros angewiesen. Das Ergebnis ist eine unverbindliche Simulation, nicht kontraktuell. Das Büro prüft die fertige Simulation erst, nachdem der Kunde Kontakt aufgenommen hat (3.4, 3.6, Kapitel 7) |
 | D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden |
+| D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden |
 
 ---
 
@@ -727,3 +783,25 @@ Nach der Umstellung wurde der Plan erneut gegengelesen. Die Fehler unten traten 
 | Wirkung im Konfigurator (R2) | Verifizierte Regeln wirken wie Grenzen (Vorschlag D12) | Nur Hinweise, alles speicherbar | die Simulation häufig zu streng ist; Anteil der Korrekturen des Büros messen |
 
 **Offene Risiken:** Die Qualität der Auswertung ist erst nach der Messung gegen die Referenzmenge bekannt (Abnahme 3.4). Zwei Läufe desselben Modells können denselben Fehler machen. Die rechtliche Einordnung der ungeprüften Simulation ist offen (6.9).
+
+### 10.4 Ergänzung 17.09.2026: Weg E – Freies Zeichnen (G1)
+
+Nach dem Ausarbeiten wurde der neue Abschnitt gegengelesen. Die Fehler unten sind im Text (3.3, 7, 9) behoben.
+
+| Nr. | Fehler | Folge ohne Korrektur | Behoben in |
+|---|---|---|---|
+| 34 | Länge **und** Winkel jeder Kante sollten frei eingebbar sein. Bei `n` Kanten ergeben `n` Längen und `n` Winkel ein überbestimmtes System (2 Schließungsbedingungen: Summe der Verschiebungen in Ost und Nord = 0); ein beliebig bemaßtes Polygon schließt sich generell nicht von selbst | Nutzer bemaßt ein Polygon, das der Server nicht schließen kann, ohne erkennbaren Grund | 3.3: letzte Kante ergibt sich aus dem Schlusspunkt, nicht frei bemaßbar |
+| 35 | Der Hinweisgrund am Endpunkt `/envelope` wurde als eigener Status `envelope_unavailable` erfunden, obwohl G3 (3.5) bereits `status = unavailable` mit einem `reason`-Feld führt | Neuer, mit G3 inkonsistenter Status; doppelte Fallunterscheidung im Frontend | 3.3: `status = unavailable`, `reason = manual_sketch`, wie die bestehenden Gründe (z. B. `no_zone`) |
+| 36 | Der Hinweis-Grund hieß im Ablauf `manual_site`, das Datenfeld aber `site.origin = manual_sketch` – zwei Namen für denselben Fall | Verwechslung beim Umsetzen, Suche nach `manual_site` liefe ins Leere | 3.3: einheitlich `manual_sketch` |
+| 37 | Die Größe war zunächst mit S (1–2 PW) angesetzt, nur nach Datenaufwand geschätzt; ein eigenes interaktives Zeichen- und Bemaßungswerkzeug mit Schließungslogik ist mehr als Datenverdrahtung | Zu knappe Planung dieses Zusatzes | 3.3: M (2–4 PW) |
+
+**Geprüfte Alternativen**
+
+| Frage | Gewählt | Alternative | Die Alternative ist besser, wenn … |
+|---|---|---|---|
+| Wo einordnen | Zusatz zu G1 (Weg E), zusammen mit G1 nachgezogen | Eigenes Modul mit eigener Nummer; Teil von X2 (Uploads/Georeferenzierung) | eigenes Modul: der Umfang wächst später merklich (z. B. Wiederverwendung für Innenhöfe, mehrere Baukörper) – aktuell zu klein dafür. X2: nur wenn ein Kartenhintergrund oder eine Georeferenzierung dazukäme; ohne Katasterbezug passt es nicht zu X2s eigentlichem Zweck (Datei-Uploads) |
+| Zeichenhintergrund | Freies Koordinatenraster ohne Kartenbezug | Luftbild/Karte als Orientierung (wie Weg D) | Nutzer regelmäßig die grobe Lage auf einer echten Karte verorten wollen – Risiko, mit einer echten Grundstücksauswahl verwechselt zu werden, dagegen abwägen |
+| Schließung des Polygons | Letzte Kante automatisch berechnet, nicht frei bemaßbar | Alle Kanten frei bemaßbar, Server meldet Schließungsfehler zur Korrektur | Nutzer eher inkrementell nachbessern als eine berechnete Kante akzeptieren – aufwändigere Oberfläche (Fehlermeldung je Versuch statt automatischer Schließung) |
+| Adresspflicht | Pflicht | Optional, nur wenn eine Anfrage folgt | reine Kostenschätzungen ohne jede Ortsangabe gewünscht sind; widerspricht der Nutzerentscheidung vom 17.09.2026 |
+
+**Offenes Risiko:** D13 (H2-Verhalten ohne Baurahmen) ist erst vor H2 zu entscheiden; bis dahin bleibt offen, ob der Konfigurator (R2) auf einem manuell gezeichneten Grundstück irgendeine Prüfung anbietet oder ausschließlich die freie Fläche.

@@ -34,6 +34,7 @@ from app.platform.jobs import enqueue
 from app.platform.problems import Problem
 from app.site import service
 from app.site.domain.edges import OverrideKind
+from app.site.domain.manual import ManualEdgeInput
 from app.site.jobs import latest_imports
 from app.site.schemas import (
     AddressOut,
@@ -201,9 +202,16 @@ def put_site(
     project_id: uuid.UUID = Depends(require_project_access),
     db: Session = Depends(get_db),
 ) -> SiteOut:
-    """Grundstück aus einer oder mehreren zusammenhängenden Parzellen bilden (Spez. 5.1.3)."""
+    """Grundstück aus Parzellen bilden (Spez. 5.1.3) oder frei zeichnen und bemaßen, ohne Kataster
+    (Weg E, Plan 3.3)."""
     rate_limit.check(request, "site_write", get_settings().site_write_limit_per_hour, 3600)
-    return service.form_site(db, project_id, body.parcel_idus, actor=f"project:{project_id}")
+    actor = f"project:{project_id}"
+    if body.edges is not None:
+        edges = [ManualEdgeInput(length_m=e.length_m, angle_deg=e.angle_deg) for e in body.edges]
+        assert body.address_label is not None  # von SiteIn erzwungen
+        return service.form_manual_site(db, project_id, edges, body.address_label, actor=actor)
+    assert body.parcel_idus is not None  # von SiteIn erzwungen
+    return service.form_site(db, project_id, body.parcel_idus, actor=actor)
 
 
 @router.get("/projects/{project_id}/site", response_model=SiteOut, dependencies=[Feature])

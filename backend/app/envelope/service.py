@@ -87,9 +87,13 @@ def _rule_input(rule: RuleOut) -> RuleInput:
     )
 
 
-def envelope_input(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeInput, rules_service.RulesResult]:
-    """Eingaben aus G1 und G2 einsammeln."""
-    site = site_service.envelope_site(db, project_id)
+def envelope_input(
+    db: Session, project_id: uuid.UUID, site: site_service.EnvelopeSite | None = None
+) -> tuple[EnvelopeInput, rules_service.RulesResult]:
+    """Eingaben aus G1 und G2 einsammeln. Nur für Grundstücke aus Kataster (`site.origin == 'parcel'`);
+    für Weg E (freies Zeichnen) siehe `_manual_sketch_input` – G2 wird dafür nicht aufgerufen (D13)."""
+    if site is None:
+        site = site_service.envelope_site(db, project_id)
     rules = rules_service.envelope_rules(db, project_id)
     geometries = {zone.code: shapely.from_wkb(zone.wkb) for zone in rules.zones}
     zones = [
@@ -220,14 +224,78 @@ def _geometry_key(geometry: BaseGeometry) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Weg E: freies Zeichnen ohne Kataster (Plan 3.3, D13)
+# ---------------------------------------------------------------------------
+
+MANUAL_SKETCH_REASON = "manual_sketch"
+MANUAL_SKETCH_NOTICE = "notice.manual_sketch"
+
+
+def _manual_sketch_input(site: site_service.EnvelopeSite) -> EnvelopeInput:
+    """G2 wird nicht aufgerufen: keine Zonen, keine Vorgaben, keine Kosten für eine Auswertung (D13)."""
+    return EnvelopeInput(
+        site=SiteInput(
+            polygon=site.polygon,
+            area_m2=site.area_m2,
+            local_origin=site.local_origin,
+            edges=[],
+            parcels=[],
+            revision=site.revision,
+            engine_version=site.engine_version,
+            terrain=TerrainInput(status=site.terrain_status),
+        ),
+        rules_status="unavailable",
+        rules_reason=MANUAL_SKETCH_REASON,
+        notices=[MANUAL_SKETCH_NOTICE],
+        rules_engine_version="n/a",
+    )
+
+
+def _manual_sketch_envelope(site: site_service.EnvelopeSite) -> EnvelopeOut:
+    """Kein Baurahmen für Weg E: die Fläche ist nicht mit dem Bebauungsplan abgeglichen (Plan 3.3)."""
+    origin = site.local_origin
+    fingerprint_raw = f"manual_sketch:{site.site_id}:{site.revision}".encode()
+    return EnvelopeOut(
+        status="unavailable",
+        reason=MANUAL_SKETCH_REASON,
+        engine_version=ENGINE_VERSION,
+        input_hash="sha256:" + hashlib.sha256(fingerprint_raw).hexdigest(),
+        updated_at=utcnow(),
+        local_origin=LocalOrigin(e=origin[0], n=origin[1]),
+        area_m2=round(site.area_m2, 2),
+        parcels=[],
+        outline_local=local_coords.rings(site.polygon, origin),
+        contours={},
+        parts=[],
+        edges=[],
+        bands=[],
+        constraints=[],
+        warnings=[],
+        notices=[MANUAL_SKETCH_NOTICE],
+        provenance=ProvenanceOut(
+            site_revision=site.revision,
+            site_engine_version=site.engine_version,
+            rules_engine_version="n/a",
+            rule_set_version_ids=[],
+            project_overrides=0,
+            terrain_status=site.terrain_status,
+            assumptions=[],
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Baurahmen
 # ---------------------------------------------------------------------------
 
 
 def build_envelope(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeOut, EnvelopeInput]:
     """Baurahmen ableiten und ausgeben; die Eingaben kommen mit, damit der Steckbrief ihre Prüfsumme
-    gegen den angeforderten Stand halten kann."""
-    data, rules = envelope_input(db, project_id)
+    gegen den angeforderten Stand halten kann. Für Weg E (Plan 3.3) wird G2 nicht aufgerufen (D13)."""
+    site = site_service.envelope_site(db, project_id)
+    if site.origin == "manual_sketch":
+        return _manual_sketch_envelope(site), _manual_sketch_input(site)
+    data, rules = envelope_input(db, project_id, site=site)
     envelope = derive_envelope(data)
     return _out(db, data, rules, envelope), data
 
@@ -440,8 +508,14 @@ def stored_sheet(db: Session, project_id: uuid.UUID, input_hash: str) -> Envelop
 
 
 def request_sheet(db: Session, project_id: uuid.UUID, actor: str | None = None) -> SheetOut:
-    """Steckbrief liefern oder erzeugen lassen. Für denselben Eingabestand entsteht er nur einmal."""
-    data, _rules = envelope_input(db, project_id)
+    """Steckbrief liefern oder erzeugen lassen. Für denselben Eingabestand entsteht er nur einmal.
+
+    Für Weg E (freies Zeichnen, Plan 3.3) gibt es keinen Steckbrief: ohne Baurahmen keine Simulation,
+    die er zusammenfassen könnte (D13)."""
+    site = site_service.envelope_site(db, project_id)
+    if site.origin == "manual_sketch":
+        raise Problem(409, "sheet_unavailable_manual_sketch")
+    data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)
     existing = stored_sheet(db, project_id, input_hash)
     if existing is not None:
@@ -461,7 +535,10 @@ def sheet_bytes(db: Session, project_id: uuid.UUID) -> tuple[bytes, str]:
     """Fertiger Steckbrief zum aktuellen Eingabestand; sonst 409 mit Hinweis auf den Auftrag."""
     from app.platform import storage
 
-    data, _rules = envelope_input(db, project_id)
+    site = site_service.envelope_site(db, project_id)
+    if site.origin == "manual_sketch":
+        raise Problem(409, "sheet_unavailable_manual_sketch")
+    data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)
     sheet = stored_sheet(db, project_id, input_hash)
     if sheet is None:

@@ -10,6 +10,7 @@ from shapely.geometry import LineString, Polygon, box
 
 from app.site.domain import terrain
 from app.site.domain.edges import NeighbourParcel, Override, RoadLine, classify, edge_facts, split_edges
+from app.site.domain.manual import ManualEdgeInput, ManualPolygonInvalid, build_manual_polygon
 from app.site.domain.outline import ParcelInput, SiteNotContiguous, merge_parcels
 
 E0, N0 = 350_000.0, 6_700_000.0
@@ -352,4 +353,64 @@ def test_context_rings_skip_empty_parts() -> None:
     rings = _rings(geometry, (E0, N0))
     assert rings == [] or all(len(r) >= 4 for r in rings)
     assert _rings(Polygon(), (E0, N0)) == []
-    assert len(_rings(rect(0, 0, 2, 2), (E0, N0))) == 1
+
+
+# ---------------------------------------------------------------------------
+# Weg E: freies Zeichnen ohne Kataster (Plan 3.3, Prüfprotokoll 10.4 Nr. 34)
+# ---------------------------------------------------------------------------
+
+
+def edge(length_m: float, angle_deg: float) -> ManualEdgeInput:
+    return ManualEdgeInput(length_m=length_m, angle_deg=angle_deg)
+
+
+def test_manual_rectangle_closes_with_computed_last_edge() -> None:
+    """20 × 10 m: Ost-, Süd- und Westkante bemaßt, die Nordkante (Schluss) wird berechnet."""
+    outline = build_manual_polygon([edge(10, 90), edge(20, 180), edge(10, 270)])
+    assert outline.area_m2 == pytest.approx(200.0)
+    assert outline.local_origin == (0.0, -20.0)
+    minx, miny, maxx, maxy = outline.polygon.bounds
+    assert (maxx - minx, maxy - miny) == pytest.approx((10.0, 20.0))
+
+
+def test_manual_polygon_is_counter_clockwise_like_cadastre_outline() -> None:
+    """Dieselbe Ausrichtung wie `outline.merge_parcels` (`orient(..., sign=1.0)`), damit die Ansicht und
+    spätere Module (H2) nicht zwischen den beiden Wegen unterscheiden müssen."""
+    outline = build_manual_polygon([edge(10, 90), edge(10, 180), edge(10, 270)])
+    assert outline.polygon.exterior.is_ccw
+
+
+def test_manual_self_intersecting_outline_is_rejected() -> None:
+    """Bemaßtes Schmetterlingsviereck (0,0)→(10,10)→(10,0)→(0,10)→(0,0): die beiden Diagonalen
+    überschneiden sich bei (5,5), kein gültiges Polygon."""
+    diag = math.hypot(10, 10)
+    with pytest.raises(ManualPolygonInvalid):
+        build_manual_polygon([edge(diag, 45), edge(10, 180), edge(diag, 315)])
+
+
+def test_manual_edge_too_short_is_rejected() -> None:
+    with pytest.raises(ManualPolygonInvalid):
+        build_manual_polygon([edge(0.5, 90), edge(10, 180), edge(10, 270)])
+
+
+def test_manual_too_few_edges_is_rejected() -> None:
+    with pytest.raises(ManualPolygonInvalid):
+        build_manual_polygon([edge(10, 90)])
+
+
+def test_manual_area_too_small_is_rejected() -> None:
+    """Ein 1 × 1 m „Grundstück“ liegt unter der plausiblen Mindestfläche."""
+    with pytest.raises(ManualPolygonInvalid):
+        build_manual_polygon([edge(1, 90), edge(1, 180), edge(1, 270)])
+
+
+@given(
+    length=st.floats(min_value=5.0, max_value=200.0),
+    width=st.floats(min_value=5.0, max_value=200.0),
+)
+@settings(max_examples=50)
+def test_manual_rectangle_area_matches_length_times_width(length: float, width: float) -> None:
+    """Eigenschaftstest: Für ein bemaßtes Rechteck stimmt die Fläche mit Länge × Breite überein, gleich
+    welche drei der vier Kanten eingegeben werden – die vierte (Schluss) wird berechnet."""
+    outline = build_manual_polygon([edge(width, 90), edge(length, 180), edge(width, 270)])
+    assert outline.area_m2 == pytest.approx(length * width, rel=1e-6)

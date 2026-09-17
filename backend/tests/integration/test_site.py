@@ -282,6 +282,82 @@ def test_site_is_private_to_project(client: Any, app: Any, project: str) -> None
 
 
 # ---------------------------------------------------------------------------
+# Weg E: freies Zeichnen ohne Kataster (Plan 3.3)
+# ---------------------------------------------------------------------------
+
+RECTANGLE_EDGES = [
+    {"length_m": 10, "angle_deg": 90},
+    {"length_m": 20, "angle_deg": 180},
+    {"length_m": 10, "angle_deg": 270},
+]
+
+
+@pytest.fixture
+def manual_project(client: Any, enabled: None) -> str:
+    """Projekt ohne Katasterimport: Weg E braucht kein Kataster (Plan 3.3)."""
+    return str(client.post("/api/v1/projects").json()["id"])
+
+
+def test_manual_sketch_forms_site_without_cadastre(client: Any, manual_project: str, db_session: Any) -> None:
+    url = f"/api/v1/projects/{manual_project}/site"
+    response = client.put(url, json={"edges": RECTANGLE_EDGES, "address_label": "12 rue imaginaire"})
+    assert response.status_code == 200, response.json()
+    body = response.json()
+    assert body["origin"] == "manual_sketch" and body["address_label"] == "12 rue imaginaire"
+    assert body["area_m2"] == pytest.approx(200.0)
+    assert body["area_official_m2"] is None
+    assert body["parcels"] == [] and body["edges"] == []
+    assert body["terrain"]["status"] == "unavailable" and body["risks"]["status"] == "unavailable"
+    assert body["notices"] == ["notice.manual_sketch"]
+    assert body["binding"] is True and body["warnings"] == []
+
+    # Kein site_enrich-Job: keine echte Lage, nichts zum Abfragen (Plan 3.3)
+    jobs = db_session.execute(select(Job).where(Job.kind == "site_enrich")).scalars().all()
+    assert jobs == []
+
+
+def test_manual_sketch_requires_address_label(client: Any, manual_project: str) -> None:
+    url = f"/api/v1/projects/{manual_project}/site"
+    response = client.put(url, json={"edges": RECTANGLE_EDGES})
+    assert response.status_code == 422 and response.json()["code"] == "validation_error"
+
+
+def test_manual_sketch_rejects_self_intersecting_polygon(client: Any, manual_project: str) -> None:
+    diag = round((10.0**2 + 10.0**2) ** 0.5, 3)
+    bowtie = [
+        {"length_m": diag, "angle_deg": 45},
+        {"length_m": 10, "angle_deg": 180},
+        {"length_m": diag, "angle_deg": 315},
+    ]
+    url = f"/api/v1/projects/{manual_project}/site"
+    response = client.put(url, json={"edges": bowtie, "address_label": "Schmetterling"})
+    assert response.status_code == 422 and response.json()["code"] == "manual_polygon_invalid"
+
+
+def test_manual_sketch_cannot_replace_cadastre_site_and_back(client: Any, project: str) -> None:
+    url = f"/api/v1/projects/{project}/site"
+    client.put(url, json={"parcel_idus": [REGULAR]})
+    switched = client.put(url, json={"edges": RECTANGLE_EDGES, "address_label": "x"})
+    assert switched.status_code == 409 and switched.json()["code"] == "site_origin_mismatch"
+
+
+def test_cadastre_site_cannot_replace_manual_sketch(client: Any, project: str) -> None:
+    """`project` hat Kataster importiert (anders als `manual_project`), damit REGULAR hier auffindbar
+    wäre – die Zurückweisung muss trotzdem vor jedem Parzellenabgleich greifen."""
+    url = f"/api/v1/projects/{project}/site"
+    client.put(url, json={"edges": RECTANGLE_EDGES, "address_label": "x"})
+    switched = client.put(url, json={"parcel_idus": [REGULAR]})
+    assert switched.status_code == 409 and switched.json()["code"] == "site_origin_mismatch"
+
+
+def test_manual_sketch_same_input_is_idempotent(client: Any, manual_project: str) -> None:
+    url = f"/api/v1/projects/{manual_project}/site"
+    first = client.put(url, json={"edges": RECTANGLE_EDGES, "address_label": "x"}).json()
+    again = client.put(url, json={"edges": RECTANGLE_EDGES, "address_label": "x"}).json()
+    assert again["revision"] == first["revision"] == 1
+
+
+# ---------------------------------------------------------------------------
 # Kantenkorrektur
 # ---------------------------------------------------------------------------
 

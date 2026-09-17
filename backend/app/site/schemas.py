@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.site.domain import tolerances as tol
 from app.site.domain.edges import EdgeKind
 
 LocalRing = list[list[float]]
@@ -75,18 +76,44 @@ class LookupOut(BaseModel):
     candidates: list[ParcelSummary]
 
 
+class ManualEdgeIn(BaseModel):
+    """Kante für Weg E (freies Zeichnen ohne Kataster, Plan 3.3): Länge und Azimut der Laufrichtung
+    (0° = Norden im Uhrzeigersinn). Bei `n` Kanten werden nur `n − 1` angegeben; die letzte schließt
+    das Polygon automatisch, weil ein vollständig bemaßtes Polygon überbestimmt wäre."""
+
+    length_m: float = Field(gt=0, le=tol.MANUAL_MAX_EDGE_M)
+    angle_deg: float = Field(ge=0, lt=360)
+
+
 class SiteIn(BaseModel):
-    parcel_idus: list[str] = Field(min_length=1, max_length=10)
+    """Genau eine Angabe: Parzellen (Wege A–D, Spez. 5.1.1) oder bemaßte Kanten ohne Kataster (Weg E)."""
+
+    parcel_idus: list[str] | None = Field(default=None, min_length=1, max_length=10)
+    edges: list[ManualEdgeIn] | None = Field(
+        default=None, min_length=tol.MANUAL_MIN_EDGES - 1, max_length=tol.MANUAL_MAX_EDGES - 1
+    )
+    address_label: str | None = Field(default=None, min_length=1, max_length=200)
+    """Nur bei `edges` (Weg E) verwendet: Beschriftung, keine Geokodierung (Plan 3.3)."""
 
     @field_validator("parcel_idus")
     @classmethod
-    def _valid(cls, value: list[str]) -> list[str]:
+    def _valid(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
         cleaned = [v.strip().upper() for v in value]
         if any(not IDU.match(v) for v in cleaned):
             raise ValueError("IDU mit 14 Zeichen erwartet")
         if len(set(cleaned)) != len(cleaned):
             raise ValueError("Parzellen doppelt angegeben")
         return sorted(cleaned)
+
+    @model_validator(mode="after")
+    def _exactly_one_source(self) -> "SiteIn":
+        if (self.parcel_idus is None) == (self.edges is None):
+            raise ValueError("entweder parcel_idus oder edges angeben")
+        if self.edges is not None and not (self.address_label and self.address_label.strip()):
+            raise ValueError("address_label ist bei edges Pflicht")
+        return self
 
 
 class CustomerEdgeIn(BaseModel):
@@ -164,6 +191,9 @@ class LocalOrigin(BaseModel):
 
 class SiteOut(BaseModel):
     project_id: uuid.UUID
+    origin: Literal["parcel", "manual_sketch"]
+    """`manual_sketch`: Weg E, frei gezeichnet und bemaßt, ohne Bebaubarkeitscheck (Plan 3.3)."""
+    address_label: str | None
     revision: int
     engine_version: str
     updated_at: datetime

@@ -15,6 +15,7 @@ export type LookupOut = components["schemas"]["LookupOut"];
 export type CommuneOut = components["schemas"]["CommuneOut"];
 export type SiteReviewItem = components["schemas"]["SiteReviewItem"];
 export type CustomerEdgeKind = "street" | "neighbour" | null;
+export type ManualEdgeIn = components["schemas"]["ManualEdgeIn"];
 
 export const SITE_FLAG = "site_selection";
 
@@ -124,6 +125,24 @@ export function useFormSite() {
     onSuccess: (site) => {
       client.setQueryData(siteKey(site.project_id), site);
       // Neue Parzellen, neue Zonen: die Regeln des vorigen Grundstücks nicht kurz weiter zeigen
+      client.removeQueries({ queryKey: ["rules", site.project_id] });
+    },
+  });
+}
+
+/** Weg E (Plan 3.3): Grundstück frei zeichnen und bemaßen, ohne Kataster und ohne Bebaubarkeitscheck. */
+export function useFormManualSite() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, edges, addressLabel }: { projectId: string; edges: ManualEdgeIn[]; addressLabel: string }) =>
+      unwrap(
+        await api.PUT("/api/v1/projects/{project_id}/site", {
+          params: { path: { project_id: projectId } },
+          body: { edges, address_label: addressLabel },
+        }),
+      ),
+    onSuccess: (site) => {
+      client.setQueryData(siteKey(site.project_id), site);
       client.removeQueries({ queryKey: ["rules", site.project_id] });
     },
   });
