@@ -4,6 +4,41 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 18.09.2026 – A Anfrage: Plan und Umsetzung (Backend und Frontend)
+
+**Neu**
+- `docs/PLAN_A_ANFRAGE.md` – Plan des Moduls A mit Selbstprüfung (Prüfprotokoll 11): Ablauf, E-Mail-Code, Snapshot, Vorgangsnummer, Lotissement-Frage, Anfrage ohne Baurahmen, Zustände, Export und Löschung, Rechtstexte.
+- `backend/app/inquiry/` – Modul A: `models.py` (`customer`, `inquiry`, `consent`), `schemas.py`, `service.py` (Kontakt, Codebestätigung, Snapshot, Export, Löschung, Büro-Sicht), `api.py`, `texts.py` (vorläufige Rechtstexte fr/de).
+- `backend/migrations/versions/0008_inquiry.py` – Tabellen, Sequenz `inquiry_number_seq` (mit eigenem `GRANT`), Trigger `consent_append_only`/`consent_no_truncate`.
+- `backend/tests/integration/test_inquiry.py` – 12 Fälle: Ablauf, beide Einwilligungen, falscher Code, Versuchsgrenze, Rate-Limit je E-Mail, Weg E, Export, Löschung vor und nach der Anfrage, Büro-Liste/-Detail/Status, Rollen.
+- `frontend/src/api/inquiry.ts`, `frontend/src/inquiry/AnfrageFormular.tsx`, `DatenschutzAktionen.tsx`, `anfrageFormular.test.tsx` (3 Fälle) – Kundenstrecke.
+- `frontend/src/pages/buero/Anfragen.tsx`, `AnfrageDetail.tsx` – Büro-Liste mit Statusfilter und Detailseite (Kontakt, Status, Baurahmen, Kanten, Regeln).
+
+**Geändert**
+- `backend/app/site/service.py` – `review_queue(require_inquiry=True)`: Grundstücks-Prüfliste zeigt nur Projekte mit Anfrage (G21).
+- `backend/app/envelope/api.py` – `POST`/`GET /admin/projects/{id}/envelope/sheet` für das Büro; `frontend/src/api/envelope.ts`, `frontend/src/envelope/Baurahmen.tsx` – Steckbrief-Knopf auch für `rolle="architect"`.
+- `backend/app/platform/legal.py` – `publish()` aus dem Endpunkt herausgelöst; `rate_limit.py` – `check_value` (Schlüssel je E-Mail); `config.py` – `office_email`, `inquiry_*`; `cli.py` – `legal-seed`; `main.py`, `migrations/env.py`, `locales/{de,fr}.json` (Mailvorlagen, Fehlertexte), `pyproject.toml`/`uv.lock` (`email-validator`), `openapi.json`, `tests/conftest.py`, `tests/integration/test_site.py` (Hilfe `stub_inquiry`, neue Aussage „ohne Anfrage unsichtbar“).
+- `frontend/src/pages/grundstueck/GrundstueckSeite.tsx`, `pages/buero/BueroLayout.tsx`, `pages/buero/Grundstuecke.tsx` (Exporte `Detail`, `ProjektRegeln`, `Fehler`), `App.tsx`, `i18n/{de,fr}.json`, `api/schema.d.ts`.
+- `UMSETZUNGSPLAN.md` (Status, Hinweis in 3.6), `AGENTS.md` (Stand, Dokumententabelle), `docs/ANNAHMEN.md` (Abschnitt „A – Anfrage“, AF01–AF12), `docs/BETRIEB.md` (Abschnitt 11).
+
+**Entschieden**
+- Nutzer: „setze modul A um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`): Steckbrief nur als Link (kein Mailanhang), Löschung nach einer Anfrage gesperrt (`409`, D6 offen), vorläufige Rechtstexte selbst entworfen. Alle als Annahmen in ANNAHMEN AF01–AF05 festgehalten, keine ausdrückliche Bestätigung des Nutzers.
+- Nutzer: „comitte und pushe“ – Commit `d66ee11` gepusht, CI-Lauf 35389397303 grün.
+
+**Ohne Dateiänderung**
+- Beim Bau gefundene und behobene Fehler: fehlender `GRANT` auf die neue Sequenz (`permission denied for sequence`, jetzt in Migration und ANNAHMEN AF07); zwei G1-Tests setzten Projekte ohne Anfrage voraus (angepasst); `unwrap` erwartet Nutzdaten und scheitert an `204` (Löschroute umgangen).
+- Browserprüfung am lokalen Stack: Kontakt → Code aus Mailpit → Bestätigung → `EMP-2026-000001` → Büro-Liste → Detail → Statuswechsel → Export. Die Löschung mit `window.confirm` ließ sich im Browser nicht auslösen (Dialog wurde abgebrochen); nur im Backend-Test geprüft.
+- Beim Handoff aufgefallen (jetzt in ANNAHMEN AF11 und PLAN_A 3.6): Adressen außerhalb des Einzugsgebiets haben keine Anfragestrecke; der Hinweis `site.outside` verspricht sie.
+- E2E (Playwright) lokal nicht gelaufen; die CI war grün.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/PLAN_H1_HAUSKATALOG.md`, `deploy/unraid/`, `platform/tasks.py` (Aufbewahrung greift über `status = 'submitted'`, AF10).
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Commit und Push nur auf Aufforderung).
+
+**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: „Modul A nachholen?“ (Abschnitt 3, 4.4, 5), H1 4.1 Punkt 5 (lokaler Stack neu gebaut, Migrationen 0007 und 0008 angewendet). Alle übrigen Punkte bleiben offen; neu: Anfrage außerhalb des Einzugsgebiets (AF11), Zugangslink und Antwortvorlage aus Plan 3.6 (AF12), endgültige Rechtstexte, Büro-Postfach, Test zur Aufbewahrung (AF10), Abstimmung mit dem Büro zur Anfragebearbeitung.
+
+---
+
 ## 18.09.2026 – H1 Hauskatalog: Plan und Backend-Umsetzung
 
 **Neu**

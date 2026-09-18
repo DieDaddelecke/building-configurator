@@ -6,12 +6,12 @@ Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben
 
 Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
-- Mockup und Fachdokumentation des Mockups: fertig.
-- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3 und H1 (Backend) wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden (Plan Kapitel 9).
+- Mockup und Fachdokumentation: fertig. Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
+- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1 (Backend) und A wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
-- G1–G3 (Grundstück, Regelwerk, Baurahmen): umgesetzt, getestet, lokal intern freigeschaltet, gepusht. G1 zusätzlich um Weg E ergänzt (freies Zeichnen ohne Kataster, ANNAHMEN G26–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (ANNAHMEN RW01–RW27); G3 über 200 echte Parzellen ohne Fehler geprüft (ANNAHMEN BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
-- H1 Hauskatalog: Backend umgesetzt und getestet (`backend/app/catalog`, Datenmodell, XLSX/DXF-Import, Katalogpflege-API unter `/admin/catalog`, kein Kundenschritt), gepusht, CI grün (ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)). Katalogpflege-Oberfläche im Frontend und die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien noch offen.
-- Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
+- G1–G3 (Grundstück, Regelwerk, Baurahmen): umgesetzt, getestet, lokal intern freigeschaltet, gepusht. G1 zusätzlich um Weg E (freies Zeichnen ohne Kataster, ANNAHMEN G26–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (RW01–RW27); G3 über 200 echte Parzellen geprüft (BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
+- H1 Hauskatalog: Backend umgesetzt, gepusht (`backend/app/catalog`, Katalogpflege-API unter `/admin/catalog`, ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)). Katalogpflege-Oberfläche und die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien offen.
+- A Anfrage: Backend und Frontend umgesetzt, im Browser geprüft, gepusht, CI grün (`backend/app/inquiry`, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)); lokal intern für `architect` freigeschaltet. Offen: Anfrage ohne Grundstück außerhalb des Einzugsgebiets, endgültige Rechtstexte.
 
 ## Dokumente
 
@@ -42,7 +42,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 3. `Hauskonfigurator.jsx` für Verhalten und Aussehen der Oberfläche
 4. `Dokumentation.html` – beschreibt den Stand des Mockups und wird nicht automatisch nachgezogen
 
-Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1, G2, G3, H1) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
+Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1, G2, G3, H1, A) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
 
 Die Leitplanken L1–L8 (Spezifikation 1.2) gelten auch für Änderungen am Frontend.
 

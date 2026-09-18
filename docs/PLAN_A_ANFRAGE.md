@@ -107,13 +107,18 @@ feste Hinweis `notice.rules_lotissement` (RW16) bleibt unabhängig davon in jede
 Zwei Fälle, in denen G3 keinen Baurahmen liefert, aber die Anfrage trotzdem möglich sein muss (Plan 3.6:
 „oder ohne Baurahmen, siehe 2.1“):
 
-1. **Außerhalb des Einzugsgebiets** (G18): `rules`/`envelope` bleiben `unavailable`. Anfrage möglich, Snapshot
-   ohne Regeln, Mail an Büro mit Hinweis „außerhalb des Einzugsgebiets, keine Simulation“.
+1. **Gemeinde ohne ausgewertetes Planwerk** (Grundstück gebildet, G2 `not_imported`/`unavailable`): `rules` und
+   `envelope` tragen `status = unavailable`. Anfrage möglich, getestet mit `REGULAR` ohne Planwerk.
 2. **Weg E, frei gezeichnetes Grundstück** (`site.origin = manual_sketch`): `envelope` ist laut G1/G3 bereits
    fest `unavailable, reason = manual_sketch`. Anfrage möglich, Snapshot enthält nur die gezeichnete Geometrie.
 
 In beiden Fällen: Kontaktformular und Codebestätigung laufen identisch; einzig der Snapshot und die
 Büro-Mail fallen kürzer aus. Keine Sonderlogik im Formular selbst nötig.
+
+**Nicht umgesetzt (Stand 18.09.2026):** Adressen **außerhalb des Einzugsgebiets** (G18). G1 bildet dort kein
+Grundstück (nur Hinweis), `_require_site` verlangt eines, und das Formular hängt an der Grundstücksseite –
+eine Anfrage ohne Grundstück gibt es also nicht. Diese Kunden können nur über Weg E zeichnen. Der Hinweistext
+in G1 („die Anfrage dafür folgt in Kürze“, `site.outside`) verspricht mehr; offen in HANDOFF.md, Abschnitt 3.
 
 ### 3.7 Zustände der Anfrage
 

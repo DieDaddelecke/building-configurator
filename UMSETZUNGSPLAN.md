@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3 und H1 (Backend); D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 Backend umgesetzt (3.7, Kapitel 7, ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), Frontend offen; D13 (H2 ohne Baurahmen) weiter offen
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1 (Backend) und A; D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 Backend umgesetzt (3.7, ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), Frontend offen; A umgesetzt (3.6, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)), Anfrage ohne Grundstück außerhalb des Einzugsgebiets offen; D13 (H2 ohne Baurahmen) weiter offen
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -300,6 +300,8 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 - Abnahme erfüllt: Parität 294 m², Rechenbeispiele D4 und D10, Eigenschaftstests, Mehrzonenfall, Bauverbotsfläche, markierte Kante ohne Abstand, p95 unter 300 ms, Steckbriefe automatisch erzeugt.
 
 ### 3.6 A – Anfrage (R1)
+
+**Stand 18.09.2026:** umgesetzt und getestet, Abweichungen in [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md) 8 und ANNAHMEN AF01–AF12; nicht umgesetzt: Anfrage ohne Grundstück außerhalb des Einzugsgebiets (AF11).
 
 **Zweck:** Aus dem Bebaubarkeitscheck eine verwertbare Anfrage an das Büro. Bleibt nach H1–H3 als Notausgang bestehen (D14): schnellere Anfrage ohne Konfiguration, auch mit gültigem Baurahmen.
 
