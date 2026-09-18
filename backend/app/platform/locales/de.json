@@ -160,5 +160,19 @@
   "envelope.warning.restricted_area": "Eine Vorgabe schränkt die Bebauung eines Teils ein.",
   "envelope.warning.edge_kind_unclear": "Mindestens eine Grenze konnte nicht eingeordnet werden.",
   "envelope.warning.terrain_unavailable": "Das Gelände konnte nicht abgefragt werden.",
-  "envelope.warning.terrain_steep": "Neigung über 5 %: Höhen sind vom Architekturbüro zu prüfen."
+  "envelope.warning.terrain_steep": "Neigung über 5 %: Höhen sind vom Architekturbüro zu prüfen.",
+  "problem.inquiry_already_exists": "Für dieses Projekt besteht bereits eine Anfrage",
+  "problem.inquiry_contact_missing": "Bitte zuerst das Kontaktformular ausfüllen",
+  "problem.inquiry_code_expired": "Der Code ist abgelaufen, bitte einen neuen anfordern",
+  "problem.inquiry_code_invalid": "Der Code ist nicht richtig",
+  "problem.inquiry_code_too_many_attempts": "Zu viele Versuche, bitte einen neuen Code anfordern",
+  "problem.consent_required": "Beide Bestätigungen sind erforderlich",
+  "problem.deletion_requires_office": "Für dieses Projekt besteht bereits eine Anfrage; für die Löschung bitte an das Architekturbüro wenden",
+  "problem.legal_text_missing": "Die Einwilligungstexte sind noch nicht eingerichtet",
+  "mail.inquiry_code.subject": "Ihr Bestätigungscode für Emprise",
+  "mail.inquiry_code.body": "Guten Tag,\n\nIhr Bestätigungscode lautet: {code}\nEr ist {ttl_minutes} Minuten gültig.\n\nEmprise",
+  "mail.inquiry_office.subject": "Neue Anfrage {number}",
+  "mail.inquiry_office.body": "Guten Tag,\n\nüber Emprise ist eine neue Anfrage eingegangen (unverbindliche Simulation, Status Baurahmen: {envelope_status}).\n\nDetails und Steckbrief im Büro-Portal:\n{portal_url}\n\nEmprise",
+  "mail.inquiry_customer_copy.subject": "Ihre Anfrage {number} ist beim Architekturbüro",
+  "mail.inquiry_customer_copy.body": "Guten Tag,\n\nIhre Anfrage {number} wurde an das Architekturbüro übermittelt. Es meldet sich direkt bei Ihnen.\n\nEmprise"
 }

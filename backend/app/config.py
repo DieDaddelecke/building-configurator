@@ -91,6 +91,15 @@ class Settings(BaseSettings):
     envelope_sheet_limit_per_hour: int = 20
     """Der Steckbrief wird im Worker gesetzt; je Eingabestand entsteht er nur einmal."""
 
+    # Anfrage (A, Plan 3.6)
+    office_email: str = "buero@emprise.local"
+    """Sammelpostfach des Architekturbüros für neue Anfragen; ein Anbieterwechsel (E2) ändert nur SMTP."""
+    inquiry_code_ttl_minutes: int = 10
+    inquiry_code_max_attempts: int = 5
+    inquiry_contact_limit_per_hour_ip: int = 10
+    inquiry_contact_limit_per_hour_email: int = 5
+    inquiry_confirm_limit_per_hour_ip: int = 20
+
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15

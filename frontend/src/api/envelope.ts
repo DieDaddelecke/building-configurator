@@ -58,3 +58,21 @@ export function useStaffEnvelope(projectId: string) {
       ),
   });
 }
+
+/** Wie `useRequestSheet`/`sheetUrl`, aber für die Prüfung einer Anfrage (Modul A): Rolle statt Feature-Flag. */
+export function useStaffRequestSheet(projectId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(
+        await api.POST("/api/v1/admin/projects/{project_id}/envelope/sheet", {
+          params: { path: { project_id: projectId } },
+        }),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["admin", "envelope", projectId] }),
+  });
+}
+
+export function staffSheetUrl(projectId: string): string {
+  return `/api/v1/admin/projects/${projectId}/envelope/sheet`;
+}

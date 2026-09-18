@@ -3,6 +3,8 @@ import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { createBrowserRouter, Link, RouterProvider, type RouteObject } from "react-router";
 
+import { AnfrageDetail } from "./pages/buero/AnfrageDetail";
+import { Anfragen } from "./pages/buero/Anfragen";
 import { BueroLayout } from "./pages/buero/BueroLayout";
 import { BueroStart } from "./pages/buero/BueroStart";
 import { GrundstueckBuero, Grundstuecke } from "./pages/buero/Grundstuecke";
@@ -38,6 +40,8 @@ export const routes: RouteObject[] = [
       { path: "grundstuecke/:projectId", element: <GrundstueckBuero /> },
       { path: "regeln", element: <Regeln /> },
       { path: "regeln/:ruleSetId", element: <Regelwerk /> },
+      { path: "anfragen", element: <Anfragen /> },
+      { path: "anfragen/:projectId", element: <AnfrageDetail /> },
     ],
   },
   ...(import.meta.env.DEV

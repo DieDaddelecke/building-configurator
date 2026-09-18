@@ -8,6 +8,7 @@ storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
+legal-seed                     Vorläufige Einwilligungstexte des Moduls A veröffentlichen (Plan A 3.10)
 rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 """
@@ -184,6 +185,28 @@ def cmd_flag_set(args: argparse.Namespace) -> None:
         )
         session.commit()
         print(f"{args.key}: alle={flag.enabled_for_all} rollen={', '.join(roles) or '–'}")
+
+
+def cmd_legal_seed(args: argparse.Namespace) -> None:
+    """Vorläufige Einwilligungstexte des Moduls A veröffentlichen, falls noch keine Version besteht
+    (docs/PLAN_A_ANFRAGE.md 3.10). Endgültiger Wortlaut folgt später über `POST /admin/legal-texts`."""
+    from app.inquiry.texts import PROVISIONAL_TEXTS
+    from app.platform import legal
+    from app.platform.models import LegalText
+
+    with get_sessionmaker()() as session:
+        for key, locale, title, body in PROVISIONAL_TEXTS:
+            exists = session.execute(
+                select(LegalText.id).where(LegalText.key == key, LegalText.locale == locale)
+            ).first()
+            if exists is not None:
+                print(f"{key} ({locale}): bereits veröffentlicht, übersprungen")
+                continue
+            text = legal.publish(
+                session, key=key, locale=locale, title=title, body=body, actor_type="system", actor_id="cli"
+            )
+            print(f"{key} ({locale}): Version {text.version} veröffentlicht")
+        session.commit()
 
 
 def cmd_plu_import(args: argparse.Namespace) -> None:
@@ -363,6 +386,7 @@ def main() -> None:
     )
     p_plu.add_argument("--from-dir", help="Ordner mit aufgezeichneten GPU-Antworten und Planunterlagen")
     p_plu.set_defaults(func=cmd_plu_import)
+    sub.add_parser("legal-seed").set_defaults(func=cmd_legal_seed)
     p_extract = sub.add_parser("rules-extract")
     target = p_extract.add_mutually_exclusive_group(required=True)
     target.add_argument("--chapter", help="ID des Zonenkapitels (Büro: Abdeckung)")

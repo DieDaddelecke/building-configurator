@@ -8,6 +8,7 @@ import app.registry  # noqa: F401  Jobs registrieren, damit enqueue sie kennt
 from app.catalog import api as catalog_api
 from app.config import Settings, get_settings
 from app.envelope import api as envelope_api
+from app.inquiry import api as inquiry_api
 from app.platform import flags, health, legal, ops, projects
 from app.platform.auth import staff
 from app.platform.jobs import api as jobs_api
@@ -57,6 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         rules_api,
         envelope_api,
         catalog_api,
+        inquiry_api,
     ):
         v1.include_router(module.router)
     app.include_router(v1)

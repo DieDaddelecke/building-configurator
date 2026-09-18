@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { EnvelopeOut, LimitOut, PartOut } from "../api/envelope";
-import { sheetUrl, useRequestSheet } from "../api/envelope";
+import { sheetUrl, staffSheetUrl, useRequestSheet, useStaffRequestSheet } from "../api/envelope";
 import { Planblatt } from "../components/plan/Planblatt";
 import { useNotices } from "../site/GrundstueckPruefen";
 import { formatNumber } from "../site/geo";
@@ -146,9 +146,20 @@ function Teilflaeche({
 const SHEET_POLL_MS = 2000;
 const SHEET_POLL_MAX = 15;
 
-function Steckbrief({ projectId, envelope }: { projectId: string; envelope: EnvelopeOut }) {
+function Steckbrief({
+  projectId,
+  envelope,
+  rolle,
+}: {
+  projectId: string;
+  envelope: EnvelopeOut;
+  rolle: "customer" | "architect";
+}) {
   const { t } = useTranslation();
-  const request = useRequestSheet(projectId);
+  const customerRequest = useRequestSheet(projectId);
+  const staffRequest = useStaffRequestSheet(projectId);
+  const request = rolle === "architect" ? staffRequest : customerRequest;
+  const url = rolle === "architect" ? staffSheetUrl(projectId) : sheetUrl(projectId);
   const ready = request.data?.status === "ready";
   const tries = useRef(0);
   const { mutate, data } = request;
@@ -175,7 +186,7 @@ function Steckbrief({ projectId, envelope }: { projectId: string; envelope: Enve
       </button>
       {request.data?.status === "pending" && <span className="text-sm t-mute">{t("envelope.sheet.pending")}</span>}
       {ready && (
-        <a className="link" href={sheetUrl(projectId)} target="_blank" rel="noreferrer">
+        <a className="link" href={url} target="_blank" rel="noreferrer">
           {t("envelope.sheet.download")}
         </a>
       )}
@@ -254,7 +265,7 @@ export function Baurahmen({ envelope, projectId, rolle = "customer" }: Baurahmen
             </ul>
           </section>
         )}
-        {rolle === "customer" && <Steckbrief projectId={projectId} envelope={envelope} />}
+        <Steckbrief projectId={projectId} envelope={envelope} rolle={rolle} />
         <section aria-labelledby="baurahmen-hinweise" className="flex flex-col gap-2 text-sm">
           <h3 id="baurahmen-hinweise" className="eyebrow m-0">{t("site.notices.title")}</h3>
           {envelope.notices.map((key) => {

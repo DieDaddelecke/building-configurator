@@ -82,41 +82,59 @@ class LegalTextIn(BaseModel):
     body: str = Field(min_length=1)
 
 
+def publish(
+    db: Session,
+    *,
+    key: str,
+    locale: Locale,
+    title: str,
+    body: str,
+    actor_type: audit.ActorType,
+    actor_id: str | None,
+) -> LegalText:
+    """Neue Version veröffentlichen (Endpunkt und CLI, z. B. `legal-seed` für Modul A, 3.10)."""
+    # Sperre je Schlüssel und Sprache, damit parallele Veröffentlichungen nicht dieselbe Version belegen
+    db.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"legal:{key}:{locale}"))))
+    current = db.execute(
+        select(func.max(LegalText.version)).where(LegalText.key == key, LegalText.locale == locale)
+    ).scalar()
+    text = LegalText(
+        key=key, locale=locale, version=(current or 0) + 1, title=title, body=body, created_by=actor_id
+    )
+    db.add(text)
+    db.flush()
+    audit.record(
+        db,
+        actor_type=actor_type,
+        actor_id=actor_id,
+        action="legal_text.publish",
+        entity_type="legal_text",
+        entity_id=str(text.id),
+        after={"key": text.key, "locale": text.locale, "version": text.version},
+    )
+    return text
+
+
 @router.post("/admin/legal-texts", response_model=LegalTextOut, status_code=201)
 def publish_text(
     body: LegalTextIn,
     staff: StaffPrincipal = Depends(require_roles(Role.ops)),
     db: Session = Depends(get_db),
 ) -> LegalTextOut:
-    # Sperre je Schlüssel und Sprache, damit parallele Veröffentlichungen nicht dieselbe Version belegen
-    db.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"legal:{body.key}:{body.locale}"))))
-    current = db.execute(
-        select(func.max(LegalText.version)).where(LegalText.key == body.key, LegalText.locale == body.locale)
-    ).scalar()
-    text = LegalText(
+    text = publish(
+        db,
         key=body.key,
         locale=body.locale,
-        version=(current or 0) + 1,
         title=body.title,
         body=body.body,
-        created_by=staff.actor_id,
-    )
-    db.add(text)
-    db.flush()
-    audit.record(
-        db,
         actor_type="staff",
         actor_id=staff.actor_id,
-        action="legal_text.publish",
-        entity_type="legal_text",
-        entity_id=str(text.id),
-        after={"key": text.key, "locale": text.locale, "version": text.version},
     )
     db.commit()
     db.refresh(text)
     return LegalTextOut(
         key=text.key,
-        locale=body.locale,
+        locale=text.locale,
         version=text.version,
         title=text.title,
         body=text.body,

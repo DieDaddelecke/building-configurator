@@ -647,23 +647,36 @@ def retry_enrichment(db: Session, actor: str) -> int:
     return len(sites)
 
 
-def review_queue(db: Session, *, only_corrections: bool = True, limit: int = 200) -> list[SiteReviewItem]:
-    """Prüfliste des Büros. Standard: nur unbestätigte Kundenkorrekturen. Mit `only_corrections=False` auch
-    unsichere Einordnungen; bis Modul A Anfragen kennzeichnet, sind das auch Grundstücke anonymer Besucher."""
+def review_queue(
+    db: Session, *, only_corrections: bool = True, require_inquiry: bool = True, limit: int = 200
+) -> list[SiteReviewItem]:
+    """Prüfliste des Büros. Standard: nur unbestätigte Kundenkorrekturen, nur Projekte mit Anfrage (G21,
+    Modul A). Mit `only_corrections=False` auch unsichere Einordnungen; `require_inquiry=False` zeigt wie
+    vor Modul A auch Grundstücke anonymer Besucher (nur zum Testen, keine Büro-Route)."""
     warnings = ["customer_corrections_unconfirmed"] if only_corrections else REVIEW_WARNINGS
+    base_query = """
+        SELECT s.project_id, s.parcel_idus, s.revision, s.warnings, s.updated_at,
+               (SELECT count(*) FROM site_edge e
+                WHERE e.site_id = s.id AND e.classification_source = 'customer') AS customer_corrections
+        FROM site s
+        WHERE s.warnings && CAST(:warnings AS varchar[])
+        ORDER BY (s.warnings && ARRAY['customer_corrections_unconfirmed']::varchar[]) DESC,
+                 s.updated_at DESC
+        LIMIT :limit
+        """
+    with_inquiry_query = """
+        SELECT s.project_id, s.parcel_idus, s.revision, s.warnings, s.updated_at,
+               (SELECT count(*) FROM site_edge e
+                WHERE e.site_id = s.id AND e.classification_source = 'customer') AS customer_corrections
+        FROM site s
+        WHERE s.warnings && CAST(:warnings AS varchar[])
+          AND EXISTS (SELECT 1 FROM inquiry i WHERE i.project_id = s.project_id)
+        ORDER BY (s.warnings && ARRAY['customer_corrections_unconfirmed']::varchar[]) DESC,
+                 s.updated_at DESC
+        LIMIT :limit
+        """
     rows = db.execute(
-        text(
-            """
-            SELECT s.project_id, s.parcel_idus, s.revision, s.warnings, s.updated_at,
-                   (SELECT count(*) FROM site_edge e
-                    WHERE e.site_id = s.id AND e.classification_source = 'customer') AS customer_corrections
-            FROM site s
-            WHERE s.warnings && CAST(:warnings AS varchar[])
-            ORDER BY (s.warnings && ARRAY['customer_corrections_unconfirmed']::varchar[]) DESC,
-                     s.updated_at DESC
-            LIMIT :limit
-            """
-        ),
+        text(with_inquiry_query if require_inquiry else base_query),
         {"warnings": warnings, "limit": limit},
     ).all()
     return [

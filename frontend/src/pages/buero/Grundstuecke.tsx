@@ -18,7 +18,7 @@ import { Kopf } from "../../components/Kopf";
 import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { GrundstueckPruefen } from "../../site/GrundstueckPruefen";
 
-function Fehler({ error }: { error: unknown }) {
+export function Fehler({ error }: { error: unknown }) {
   const { t } = useTranslation();
   const forbidden = error instanceof ApiError && error.problem.status === 403;
   return (
@@ -79,7 +79,7 @@ export function Grundstuecke() {
   );
 }
 
-function Detail({ site }: { site: SiteOut }) {
+export function Detail({ site }: { site: SiteOut }) {
   const { t } = useTranslation();
   const correct = useCorrectEdgeArchitect(site);
   const confirm = useConfirmCustomerEdges(site);
@@ -185,7 +185,7 @@ function ProjektKorrektur({ projectId, zone }: { projectId: string; zone: ZoneRu
   );
 }
 
-function ProjektRegeln({ projectId }: { projectId: string }) {
+export function ProjektRegeln({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
   const rules = useStaffProjectRules(projectId);
   const overrides = useProjectOverrides(projectId);

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { ENVELOPE_FLAG, useEnvelope } from "../../api/envelope";
+import { INQUIRY_FLAG } from "../../api/inquiry";
 import { RULES_FLAG, useProjectRules } from "../../api/rules";
 import { useSession } from "../../api/session";
 import { SITE_FLAG, useCorrectEdgeCustomer, useEnsureProject, useFlags, useSite, type SiteOut } from "../../api/site";
@@ -14,6 +15,8 @@ import { Nordpfeil, strich } from "../../components/plan/Masskette";
 import { PlanSvg, ringPath, type LocalPoint } from "../../components/plan/PlanSvg";
 import { centerOf, formatNumber, siteBounds } from "../../site/geo";
 import { Baurahmen } from "../../envelope/Baurahmen";
+import { AnfrageFormular } from "../../inquiry/AnfrageFormular";
+import { DatenschutzAktionen } from "../../inquiry/DatenschutzAktionen";
 import { FreiesZeichnen } from "../../site/FreiesZeichnen";
 import { GrundstueckPruefen, useNotices } from "../../site/GrundstueckPruefen";
 import { RegelnSimulation } from "../../rules/RegelnSimulation";
@@ -136,6 +139,7 @@ export function GrundstueckSeite() {
   const enabled = Boolean(flags.data?.[SITE_FLAG]);
   const rulesEnabled = Boolean(flags.data?.[RULES_FLAG]);
   const envelopeEnabled = Boolean(flags.data?.[ENVELOPE_FLAG]);
+  const inquiryEnabled = Boolean(flags.data?.[INQUIRY_FLAG]);
 
   let inhalt;
   // Ein eben angelegtes Projekt hat noch kein Grundstück: kein Ladezustand, sonst verliert die
@@ -167,6 +171,14 @@ export function GrundstueckSeite() {
             setManualMode(true);
           }}
         />
+        {inquiryEnabled && (
+          <div className="border-t bd pt-8 max-w-xl">
+            <AnfrageFormular projectId={site.data.project_id} />
+          </div>
+        )}
+        <div className="border-t bd pt-8 max-w-xl">
+          <DatenschutzAktionen projectId={site.data.project_id} />
+        </div>
       </div>
     );
   } else if (site.data && !editing) {
@@ -190,6 +202,14 @@ export function GrundstueckSeite() {
             />
           </div>
         )}
+        {inquiryEnabled && (
+          <div className="border-t bd pt-8 max-w-xl">
+            <AnfrageFormular projectId={site.data.project_id} />
+          </div>
+        )}
+        <div className="border-t bd pt-8 max-w-xl">
+          <DatenschutzAktionen projectId={site.data.project_id} />
+        </div>
       </div>
     );
   } else if (manualMode) {

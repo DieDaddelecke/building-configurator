@@ -161,3 +161,28 @@ docker compose exec api python -m app.cli envelope-check --commune 44209 --sampl
 ```
 
 Der Lauf legt nichts an (Transaktion wird zurückgerollt) und meldet Ausnahmen, Dauer und die Verteilung der Hinweise. Nach einer neuen `ENGINE_VERSION` von G2 oder G3 und nach einem neuen Planstand ist er die schnellste Gegenprobe (Werte des letzten Laufs: BR12).
+
+## 11. Anfrage (Modul A)
+
+Keine neuen externen Dienste; Mail läuft über den bestehenden Weg (Abschnitt 5).
+
+**Vor der Freischaltung (`flag-set inquiry`)**
+
+1. `EMPRISE_OFFICE_EMAIL` auf die echte Sammeladresse des Architekturbüros setzen (Vorschlag `buero@emprise.local` ist ein Platzhalter).
+2. Vorläufige Einwilligungstexte einmalig veröffentlichen, falls noch keine Version besteht:
+
+   ```bash
+   docker compose exec api python -m app.cli legal-seed
+   ```
+
+   Ohne diese Texte scheitert `POST .../inquiry/confirm` mit `503 legal_text_missing`. Endgültiger Wortlaut nach Rechtsberatung: neue Version über `POST /admin/legal-texts` veröffentlichen, keine Codeänderung nötig.
+3. Flag setzen: `docker compose exec api python -m app.cli flag-set inquiry --role architect` (intern), später `--all` für die Beta.
+
+**Anfrage kommt nicht beim Büro an**
+
+- Job `mail_send` in `/api/v1/admin/ops/status` prüfen (wie Abschnitt 5); die Anfrage selbst ist bereits gespeichert, auch wenn der Mailversand scheitert (`inquiry` committet vor den Mail-Jobs).
+- `office_mail`/`customer_mail` sind zwei getrennte Jobs; ein Fehlschlag der einen betrifft die andere nicht.
+
+**Löschung eines Projekts mit Anfrage**
+
+`DELETE /api/v1/projects/<id>` liefert `409 deletion_requires_office`, sobald eine Anfrage besteht (Plan A 3.9, D6 noch offen). Es gibt noch keine Büro-Funktion für die Endlöschung danach; bis dahin händisch in der Datenbank, mit Audit-Eintrag.

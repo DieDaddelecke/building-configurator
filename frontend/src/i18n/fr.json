@@ -391,6 +391,57 @@
       "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici."
     }
   },
+  "inquiry": {
+    "title": "Demande à l'agence",
+    "intro": "Un clic suffit : renseignez vos coordonnées, confirmez le code – l'agence reçoit votre demande avec l'état actuel de la simulation.",
+    "yes": "oui",
+    "no": "non",
+    "contact": {
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone (facultatif)",
+      "desiredStart": "Début des travaux souhaité (facultatif)",
+      "financingClarified": "Financement clarifié (facultatif)",
+      "lotissement": "Le terrain fait-il partie d'un lotissement ?",
+      "notAnswered": "non renseigné",
+      "submit": "Demander le code"
+    },
+    "code": {
+      "intro": "Un code a été envoyé à {{email}}.",
+      "label": "Code de confirmation",
+      "submit": "Envoyer la demande",
+      "resend": "Renvoyer le code",
+      "resent": "Un nouveau code est en route."
+    },
+    "consents": {
+      "simulationFallback": "Je reconnais qu'il s'agit d'une simulation non contractuelle et non vérifiée.",
+      "transmissionFallback": "J'accepte que mes informations soient transmises à l'agence d'architecture.",
+      "simulation_confirmation": "Confirmation : simulation non contractuelle",
+      "transmission_office": "Consentement à la transmission"
+    },
+    "status": {
+      "neu": "nouvelle",
+      "in_bearbeitung": "en cours",
+      "beantwortet": "répondue",
+      "geschlossen": "clôturée",
+      "summary": "Demande {{number}} · Statut : {{status}}"
+    },
+    "lotissement": {
+      "yes": "oui",
+      "no": "non",
+      "unknown": "non renseigné"
+    },
+    "done": {
+      "title": "Demande envoyée",
+      "text": "Numéro de dossier {{number}}. L'agence vous contactera directement."
+    },
+    "privacy": {
+      "summary": "Mes données",
+      "export": "Exporter mes données",
+      "delete": "Supprimer le projet",
+      "deleteConfirm": "Supprimer définitivement le projet et le terrain ?"
+    }
+  },
   "office": {
     "area": "Espace bureau",
     "loginTitle": "Connexion du bureau",
@@ -400,7 +451,8 @@
     "nav": {
       "home": "Accueil",
       "sites": "Terrains",
-      "rules": "Règlements"
+      "rules": "Règlements",
+      "inquiries": "Demandes"
     },
     "sites": {
       "title": "Terrains à vérifier",
@@ -469,6 +521,20 @@
       "projectOverride": "Corriger pour ce projet uniquement (zone {{code}})",
       "overrides": "Corrections pour ce projet",
       "removeOverride": "Supprimer"
+    },
+    "inquiries": {
+      "title": "Demandes",
+      "intro": "Contact, statut et état de la simulation par demande. Terrain et règles se vérifient et se corrigent ici comme sous « Terrains » et « Règlements ».",
+      "statusFilter": "Statut",
+      "allStatuses": "Toutes",
+      "empty": "Aucune demande.",
+      "number": "Dossier",
+      "status": "Statut",
+      "envelope": "Emprise constructible",
+      "created": "Reçue",
+      "back": "Retour à la liste",
+      "detailTitle": "Demande d'un projet",
+      "consents": "Consentements"
     },
     "homeTitle": "Bienvenue",
     "homeIntro": "Modules en service. Les suivants apparaîtront ici dès leur activation.",

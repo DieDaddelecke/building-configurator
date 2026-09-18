@@ -494,6 +494,78 @@
         "title": "CommuneOut",
         "type": "object"
       },
+      "ConfirmIn": {
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "simulation_confirmation": {
+            "title": "Simulation Confirmation",
+            "type": "boolean"
+          },
+          "transmission_office": {
+            "title": "Transmission Office",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "simulation_confirmation",
+          "transmission_office"
+        ],
+        "title": "ConfirmIn",
+        "type": "object"
+      },
+      "ConfirmOut": {
+        "properties": {
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "status": {
+            "const": "submitted",
+            "default": "submitted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number"
+        ],
+        "title": "ConfirmOut",
+        "type": "object"
+      },
+      "ConsentOut": {
+        "properties": {
+          "confirmed_at": {
+            "format": "date-time",
+            "title": "Confirmed At",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "legal_text_key": {
+            "title": "Legal Text Key",
+            "type": "string"
+          },
+          "legal_text_version": {
+            "title": "Legal Text Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "legal_text_key",
+          "legal_text_version",
+          "confirmed_at"
+        ],
+        "title": "ConsentOut",
+        "type": "object"
+      },
       "ConsistencyFindingOut": {
         "properties": {
           "code": {
@@ -601,6 +673,91 @@
           "lines_local"
         ],
         "title": "ConstraintOut",
+        "type": "object"
+      },
+      "ContactIn": {
+        "properties": {
+          "desired_start": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desired Start"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "financing_clarified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Financing Clarified"
+          },
+          "lotissement": {
+            "default": "unknown",
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ],
+            "title": "Lotissement",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ],
+        "title": "ContactIn",
+        "type": "object"
+      },
+      "ContactOut": {
+        "properties": {
+          "code_expires_in_minutes": {
+            "title": "Code Expires In Minutes",
+            "type": "integer"
+          },
+          "status": {
+            "const": "code_sent",
+            "default": "code_sent",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code_expires_in_minutes"
+        ],
+        "title": "ContactOut",
         "type": "object"
       },
       "ContextOut": {
@@ -751,6 +908,70 @@
           "kind"
         ],
         "title": "CustomerEdgeIn",
+        "type": "object"
+      },
+      "CustomerOut": {
+        "properties": {
+          "desired_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desired Start"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "financing_clarified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Financing Clarified"
+          },
+          "lotissement": {
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ],
+            "title": "Lotissement",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "desired_start",
+          "financing_clarified",
+          "lotissement"
+        ],
+        "title": "CustomerOut",
         "type": "object"
       },
       "EdgeOut": {
@@ -1239,6 +1460,88 @@
         "title": "EnvelopeOut",
         "type": "object"
       },
+      "ExportOut": {
+        "properties": {
+          "consents": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentOut"
+            },
+            "title": "Consents",
+            "type": "array"
+          },
+          "customer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inquiry_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Number"
+          },
+          "inquiry_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "neu",
+                  "in_bearbeitung",
+                  "beantwortet",
+                  "geschlossen"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inquiry Status"
+          },
+          "project_created_at": {
+            "format": "date-time",
+            "title": "Project Created At",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot"
+          }
+        },
+        "required": [
+          "project_id",
+          "project_created_at",
+          "customer",
+          "consents",
+          "inquiry_number",
+          "inquiry_status",
+          "snapshot"
+        ],
+        "title": "ExportOut",
+        "type": "object"
+      },
       "ExtractIn": {
         "properties": {
           "force": {
@@ -1538,6 +1841,162 @@
           "finished_at"
         ],
         "title": "ImportStatusOut",
+        "type": "object"
+      },
+      "InquiryDetailOut": {
+        "properties": {
+          "consents": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentOut"
+            },
+            "title": "Consents",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerOut"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "title": "Snapshot",
+            "type": "object"
+          },
+          "snapshot_schema_version": {
+            "title": "Snapshot Schema Version",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "neu",
+              "in_bearbeitung",
+              "beantwortet",
+              "geschlossen"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "number",
+          "status",
+          "customer",
+          "consents",
+          "snapshot",
+          "snapshot_schema_version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "InquiryDetailOut",
+        "type": "object"
+      },
+      "InquiryListItem": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer_corrections": {
+            "title": "Customer Corrections",
+            "type": "integer"
+          },
+          "customer_email": {
+            "title": "Customer Email",
+            "type": "string"
+          },
+          "customer_name": {
+            "title": "Customer Name",
+            "type": "string"
+          },
+          "has_envelope": {
+            "title": "Has Envelope",
+            "type": "boolean"
+          },
+          "lotissement": {
+            "enum": [
+              "yes",
+              "no",
+              "unknown"
+            ],
+            "title": "Lotissement",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "neu",
+              "in_bearbeitung",
+              "beantwortet",
+              "geschlossen"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "number",
+          "status",
+          "customer_name",
+          "customer_email",
+          "lotissement",
+          "has_envelope",
+          "customer_corrections",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "InquiryListItem",
+        "type": "object"
+      },
+      "InquiryPatchIn": {
+        "properties": {
+          "status": {
+            "enum": [
+              "neu",
+              "in_bearbeitung",
+              "beantwortet",
+              "geschlossen"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "InquiryPatchIn",
         "type": "object"
       },
       "JobCreated": {
@@ -2039,6 +2498,47 @@
           "published_at"
         ],
         "title": "ModuleVersionOut",
+        "type": "object"
+      },
+      "MyInquiryOut": {
+        "properties": {
+          "exists": {
+            "title": "Exists",
+            "type": "boolean"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "neu",
+                  "in_bearbeitung",
+                  "beantwortet",
+                  "geschlossen"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "exists"
+        ],
+        "title": "MyInquiryOut",
         "type": "object"
       },
       "OpsStatus": {
@@ -5667,6 +6167,65 @@
         ]
       }
     },
+    "/api/v1/admin/inquiries": {
+      "get": {
+        "operationId": "list_inquiries_api_v1_admin_inquiries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "neu",
+                    "in_bearbeitung",
+                    "beantwortet",
+                    "geschlossen"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InquiryListItem"
+                  },
+                  "title": "Response List Inquiries Api V1 Admin Inquiries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Inquiries",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
     "/api/v1/admin/legal-texts": {
       "post": {
         "operationId": "publish_text_api_v1_admin_legal_texts_post",
@@ -5792,6 +6351,183 @@
         "summary": "Get Envelope Staff",
         "tags": [
           "envelope"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/envelope/sheet": {
+      "get": {
+        "operationId": "download_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Sheet Staff",
+        "tags": [
+          "envelope"
+        ]
+      },
+      "post": {
+        "description": "Steckbrief zur Anfrage anfordern (Modul A, docs/PLAN_A_ANFRAGE.md 4.3): wie die Kundenroute, aber\nohne Feature-Flag, nur mit Rolle.",
+        "operationId": "create_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Sheet Staff",
+        "tags": [
+          "envelope"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/inquiry": {
+      "get": {
+        "operationId": "get_inquiry_staff_api_v1_admin_projects__project_id__inquiry_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inquiry Staff",
+        "tags": [
+          "inquiry"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_inquiry_status_api_v1_admin_projects__project_id__inquiry_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InquiryPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Inquiry Status",
+        "tags": [
+          "inquiry"
         ]
       }
     },
@@ -6812,6 +7548,40 @@
       }
     },
     "/api/v1/projects/{project_id}": {
+      "delete": {
+        "operationId": "delete_project_api_v1_projects__project_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Project",
+        "tags": [
+          "inquiry"
+        ]
+      },
       "get": {
         "operationId": "get_project_api_v1_projects__project_id__get",
         "parameters": [
@@ -6979,6 +7749,199 @@
         "summary": "Create Sheet",
         "tags": [
           "envelope"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/export": {
+      "get": {
+        "description": "Betroffenenrechte (Spez. 10.2), unabhängig vom Feature-Flag.",
+        "operationId": "export_project_api_v1_projects__project_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Project",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/inquiry": {
+      "get": {
+        "operationId": "get_my_inquiry_api_v1_projects__project_id__inquiry_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInquiryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get My Inquiry",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/inquiry/confirm": {
+      "post": {
+        "operationId": "confirm_contact_api_v1_projects__project_id__inquiry_confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Contact",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/inquiry/contact": {
+      "post": {
+        "operationId": "submit_contact_api_v1_projects__project_id__inquiry_contact_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Contact",
+        "tags": [
+          "inquiry"
         ]
       }
     },

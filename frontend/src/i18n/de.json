@@ -391,6 +391,57 @@
       "lotissement": "Liegt das Grundstück in einem Lotissement, gelten zusätzliche Regeln, die hier nicht berücksichtigt sind."
     }
   },
+  "inquiry": {
+    "title": "Anfrage an das Büro",
+    "intro": "Ein Klick genügt: Kontakt aufnehmen, Code bestätigen – das Büro erhält Ihre Anfrage mit dem aktuellen Stand der Simulation.",
+    "yes": "ja",
+    "no": "nein",
+    "contact": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon (freiwillig)",
+      "desiredStart": "Gewünschter Baubeginn (freiwillig)",
+      "financingClarified": "Finanzierung geklärt (freiwillig)",
+      "lotissement": "Liegt das Grundstück in einem Lotissement?",
+      "notAnswered": "keine Angabe",
+      "submit": "Code anfordern"
+    },
+    "code": {
+      "intro": "Ein Code wurde an {{email}} gesendet.",
+      "label": "Bestätigungscode",
+      "submit": "Anfrage absenden",
+      "resend": "Code erneut senden",
+      "resent": "Ein neuer Code ist unterwegs."
+    },
+    "consents": {
+      "simulationFallback": "Ich habe zur Kenntnis genommen, dass es sich um eine unverbindliche, ungeprüfte Simulation handelt.",
+      "transmissionFallback": "Ich willige ein, dass meine Angaben an das Architekturbüro übermittelt werden.",
+      "simulation_confirmation": "Bestätigung: unverbindliche Simulation",
+      "transmission_office": "Einwilligung zur Übermittlung"
+    },
+    "status": {
+      "neu": "neu",
+      "in_bearbeitung": "in Bearbeitung",
+      "beantwortet": "beantwortet",
+      "geschlossen": "geschlossen",
+      "summary": "Anfrage {{number}} · Status: {{status}}"
+    },
+    "lotissement": {
+      "yes": "ja",
+      "no": "nein",
+      "unknown": "keine Angabe"
+    },
+    "done": {
+      "title": "Anfrage gesendet",
+      "text": "Vorgangsnummer {{number}}. Das Büro meldet sich direkt bei Ihnen."
+    },
+    "privacy": {
+      "summary": "Meine Daten",
+      "export": "Daten exportieren",
+      "delete": "Projekt löschen",
+      "deleteConfirm": "Projekt und Grundstück wirklich löschen? Das kann nicht zurückgenommen werden."
+    }
+  },
   "office": {
     "area": "Büro",
     "loginTitle": "Anmeldung Büro",
@@ -400,7 +451,8 @@
     "nav": {
       "home": "Start",
       "sites": "Grundstücke",
-      "rules": "Regelwerke"
+      "rules": "Regelwerke",
+      "inquiries": "Anfragen"
     },
     "sites": {
       "title": "Grundstücke prüfen",
@@ -469,6 +521,20 @@
       "projectOverride": "Nur für dieses Projekt korrigieren (Zone {{code}})",
       "overrides": "Korrekturen für dieses Projekt",
       "removeOverride": "Entfernen"
+    },
+    "inquiries": {
+      "title": "Anfragen",
+      "intro": "Kontakt, Status und Simulationsstand je Anfrage. Grundstück und Regeln lassen sich hier ebenso prüfen und korrigieren wie unter „Grundstücke“ und „Regelwerke“.",
+      "statusFilter": "Status",
+      "allStatuses": "Alle",
+      "empty": "Keine Anfragen.",
+      "number": "Vorgang",
+      "status": "Status",
+      "envelope": "Baurahmen",
+      "created": "Eingegangen",
+      "back": "Zurück zur Liste",
+      "detailTitle": "Anfrage eines Projekts",
+      "consents": "Einwilligungen"
     },
     "homeTitle": "Willkommen",
     "homeIntro": "Module in Betrieb. Weitere erscheinen hier, sobald sie freigeschaltet sind.",

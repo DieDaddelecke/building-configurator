@@ -83,3 +83,25 @@ def get_envelope_staff(
 ) -> EnvelopeOut:
     """Baurahmen für die Prüfung einer Anfrage (Modul A); ohne Feature-Flag, nur mit Rolle."""
     return service.project_envelope(db, project_id)
+
+
+@router.post("/admin/projects/{project_id}/envelope/sheet", response_model=SheetOut)
+def create_sheet_staff(
+    project_id: uuid.UUID, staff: StaffPrincipal = Reader, db: Session = Depends(get_db)
+) -> SheetOut:
+    """Steckbrief zur Anfrage anfordern (Modul A, docs/PLAN_A_ANFRAGE.md 4.3): wie die Kundenroute, aber
+    ohne Feature-Flag, nur mit Rolle."""
+    return service.request_sheet(db, project_id, actor=staff.actor_id)
+
+
+@router.get("/admin/projects/{project_id}/envelope/sheet")
+def download_sheet_staff(
+    project_id: uuid.UUID, staff: StaffPrincipal = Reader, db: Session = Depends(get_db)
+) -> Response:
+    content, input_hash = service.sheet_bytes(db, project_id)
+    name = f"emprise-baurahmen-{input_hash.removeprefix('sha256:')[:8]}.pdf"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )

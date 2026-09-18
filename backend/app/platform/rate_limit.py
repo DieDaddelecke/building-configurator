@@ -29,10 +29,16 @@ def client_ip(request: Request) -> str:
 
 
 def check(request: Request, scope: str, limit: int, window_seconds: int) -> None:
+    check_value(scope, client_ip(request), limit, window_seconds)
+
+
+def check_value(scope: str, value: str, limit: int, window_seconds: int) -> None:
+    """Wie `check`, aber mit einem eigenen Schlüsselwert statt der Client-IP (z. B. eine E-Mail-Adresse,
+    Plan A 3.2: Codeversand je Adresse **und** je IP bremsen)."""
     settings = get_settings()
     now = datetime.now(UTC).timestamp()
     window_start = int(now // window_seconds) * window_seconds
-    key = f"{scope}:{keyed_digest(settings.secret_key.get_secret_value(), client_ip(request))}"
+    key = f"{scope}:{keyed_digest(settings.secret_key.get_secret_value(), value)}"
     with get_engine().begin() as conn:
         count = conn.execute(
             _UPSERT, {"key": key, "window_start": datetime.fromtimestamp(window_start, UTC)}

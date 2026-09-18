@@ -59,6 +59,31 @@ def project(client: Any, imported: Any, enabled: None) -> str:
     return str(client.post("/api/v1/projects").json()["id"])
 
 
+def stub_inquiry(db_session: Any, project_id: str) -> None:
+    """Minimale Anfrage anlegen: `/admin/sites/review` zeigt seit Modul A nur Projekte mit Anfrage (G21)."""
+    customer_id = str(uuid.uuid4())
+    db_session.execute(
+        text(
+            "INSERT INTO customer (id, project_id, name, email, created_by) "
+            "VALUES (:id, :project_id, 'Test', 'test@example.com', 'test')"
+        ),
+        {"id": customer_id, "project_id": project_id},
+    )
+    db_session.execute(
+        text(
+            "INSERT INTO inquiry (id, project_id, customer_id, number, snapshot, created_by) "
+            "VALUES (:id, :project_id, :customer_id, :number, '{}'::jsonb, 'test')"
+        ),
+        {
+            "id": str(uuid.uuid4()),
+            "project_id": project_id,
+            "customer_id": customer_id,
+            "number": f"EMP-TEST-{uuid.uuid4().hex[:6]}",
+        },
+    )
+    db_session.commit()
+
+
 def edge_facing(body: dict[str, Any], azimuth: float) -> dict[str, Any]:
     return min(
         (e for e in body["edges"] if e["ring"] == 0),
@@ -379,6 +404,9 @@ def test_customer_correction_needs_architect_confirmation(
     assert "customer_corrections_unconfirmed" in corrected["warnings"]
 
     login_as("architect")
+    # Ohne Anfrage unsichtbar (G21, Modul A): sonst zeigte die Prüfliste jedes anonyme Testprojekt.
+    assert client.get("/api/v1/admin/sites/review").json() == []
+    stub_inquiry(db_session, project)
     queue = client.get("/api/v1/admin/sites/review").json()
     assert queue[0]["project_id"] == project and queue[0]["customer_corrections"] == 1
     confirmed = client.post(f"/api/v1/admin/projects/{project}/site/edges/confirm").json()
@@ -562,13 +590,14 @@ def test_ops_retries_unavailable_enrichment(
 
 
 def test_review_queue_defaults_to_customer_corrections(
-    client: Any, project: str, app: Any, login_as: Callable[..., Any]
+    client: Any, project: str, app: Any, login_as: Callable[..., Any], db_session: Any
 ) -> None:
     from fastapi.testclient import TestClient
 
     client.put(
         f"/api/v1/projects/{project}/site", json={"parcel_idus": [CORNER]}
     )  # Eckgrundstück, keine Korrektur
+    stub_inquiry(db_session, project)
     login_as("architect")
     assert client.get("/api/v1/admin/sites/review").json() == []
     assert [i["project_id"] for i in client.get("/api/v1/admin/sites/review?scope=all").json()] == [project]

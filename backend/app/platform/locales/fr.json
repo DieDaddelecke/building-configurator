@@ -160,5 +160,19 @@
   "envelope.warning.restricted_area": "Une prescription limite la constructibilité d'une partie du terrain.",
   "envelope.warning.edge_kind_unclear": "Au moins une limite n'a pas pu être classée.",
   "envelope.warning.terrain_unavailable": "Le relief n'a pas pu être interrogé.",
-  "envelope.warning.terrain_steep": "Pente supérieure à 5 % : les hauteurs sont à vérifier par un architecte."
+  "envelope.warning.terrain_steep": "Pente supérieure à 5 % : les hauteurs sont à vérifier par un architecte.",
+  "problem.inquiry_already_exists": "Une demande existe déjà pour ce projet",
+  "problem.inquiry_contact_missing": "Veuillez d'abord remplir le formulaire de contact",
+  "problem.inquiry_code_expired": "Le code a expiré, veuillez en demander un nouveau",
+  "problem.inquiry_code_invalid": "Le code est incorrect",
+  "problem.inquiry_code_too_many_attempts": "Trop de tentatives, veuillez demander un nouveau code",
+  "problem.consent_required": "Les deux confirmations sont obligatoires",
+  "problem.deletion_requires_office": "Une demande existe déjà pour ce projet ; pour la suppression, veuillez contacter l'agence d'architecture",
+  "problem.legal_text_missing": "Les textes de consentement ne sont pas encore configurés",
+  "mail.inquiry_code.subject": "Votre code de confirmation Emprise",
+  "mail.inquiry_code.body": "Bonjour,\n\nVotre code de confirmation est : {code}\nIl est valable {ttl_minutes} minutes.\n\nEmprise",
+  "mail.inquiry_office.subject": "Nouvelle demande {number}",
+  "mail.inquiry_office.body": "Bonjour,\n\nUne nouvelle demande est arrivée via Emprise (simulation non contractuelle, statut de l'emprise constructible : {envelope_status}).\n\nDétails et fiche dans le portail :\n{portal_url}\n\nEmprise",
+  "mail.inquiry_customer_copy.subject": "Votre demande {number} est chez l'agence d'architecture",
+  "mail.inquiry_customer_copy.body": "Bonjour,\n\nVotre demande {number} a été transmise à l'agence d'architecture, qui vous contactera directement.\n\nEmprise"
 }

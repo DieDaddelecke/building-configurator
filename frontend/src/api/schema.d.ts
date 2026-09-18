@@ -414,6 +414,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/inquiries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Inquiries */
+        get: operations["list_inquiries_api_v1_admin_inquiries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/legal-texts": {
         parameters: {
             query?: never;
@@ -486,6 +503,46 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/envelope/sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Sheet Staff */
+        get: operations["download_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_get"];
+        put?: never;
+        /**
+         * Create Sheet Staff
+         * @description Steckbrief zur Anfrage anfordern (Modul A, docs/PLAN_A_ANFRAGE.md 4.3): wie die Kundenroute, aber
+         *     ohne Feature-Flag, nur mit Rolle.
+         */
+        post: operations["create_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/inquiry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Inquiry Staff */
+        get: operations["get_inquiry_staff_api_v1_admin_projects__project_id__inquiry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Inquiry Status */
+        patch: operations["patch_inquiry_status_api_v1_admin_projects__project_id__inquiry_patch"];
         trace?: never;
     };
     "/api/v1/admin/projects/{project_id}/rule-overrides": {
@@ -907,7 +964,8 @@ export interface paths {
         get: operations["get_project_api_v1_projects__project_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Project */
+        delete: operations["delete_project_api_v1_projects__project_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -951,6 +1009,77 @@ export interface paths {
          * @description Steckbrief als PDF anfordern. Liegt er für diesen Eingabestand vor, kommt er sofort (`ready`).
          */
         post: operations["create_sheet_api_v1_projects__project_id__envelope_sheet_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Project
+         * @description Betroffenenrechte (Spez. 10.2), unabhängig vom Feature-Flag.
+         */
+        get: operations["export_project_api_v1_projects__project_id__export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inquiry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get My Inquiry */
+        get: operations["get_my_inquiry_api_v1_projects__project_id__inquiry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inquiry/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Contact */
+        post: operations["confirm_contact_api_v1_projects__project_id__inquiry_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inquiry/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Contact */
+        post: operations["submit_contact_api_v1_projects__project_id__inquiry_contact_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1221,6 +1350,40 @@ export interface components {
             /** Release */
             release: string;
         };
+        /** ConfirmIn */
+        ConfirmIn: {
+            /** Code */
+            code: string;
+            /** Simulation Confirmation */
+            simulation_confirmation: boolean;
+            /** Transmission Office */
+            transmission_office: boolean;
+        };
+        /** ConfirmOut */
+        ConfirmOut: {
+            /** Number */
+            number: string;
+            /**
+             * Status
+             * @default submitted
+             * @constant
+             */
+            status: "submitted";
+        };
+        /** ConsentOut */
+        ConsentOut: {
+            /**
+             * Confirmed At
+             * Format: date-time
+             */
+            confirmed_at: string;
+            /** Kind */
+            kind: string;
+            /** Legal Text Key */
+            legal_text_key: string;
+            /** Legal Text Version */
+            legal_text_version: number;
+        };
         /** ConsistencyFindingOut */
         ConsistencyFindingOut: {
             /** Code */
@@ -1257,6 +1420,39 @@ export interface components {
             rings_local: number[][][];
             /** Type Code */
             type_code?: string | null;
+        };
+        /** ContactIn */
+        ContactIn: {
+            /** Desired Start */
+            desired_start?: string | null;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Financing Clarified */
+            financing_clarified?: boolean | null;
+            /**
+             * Lotissement
+             * @default unknown
+             * @enum {string}
+             */
+            lotissement: "yes" | "no" | "unknown";
+            /** Name */
+            name: string;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** ContactOut */
+        ContactOut: {
+            /** Code Expires In Minutes */
+            code_expires_in_minutes: number;
+            /**
+             * Status
+             * @default code_sent
+             * @constant
+             */
+            status: "code_sent";
         };
         /**
          * ContextOut
@@ -1303,6 +1499,24 @@ export interface components {
         CustomerEdgeIn: {
             /** Kind */
             kind: ("street" | "neighbour") | null;
+        };
+        /** CustomerOut */
+        CustomerOut: {
+            /** Desired Start */
+            desired_start: string | null;
+            /** Email */
+            email: string;
+            /** Financing Clarified */
+            financing_clarified: boolean | null;
+            /**
+             * Lotissement
+             * @enum {string}
+             */
+            lotissement: "yes" | "no" | "unknown";
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string | null;
         };
         /** EdgeOut */
         EdgeOut: {
@@ -1459,6 +1673,30 @@ export interface components {
             /** Warnings */
             warnings: string[];
         };
+        /** ExportOut */
+        ExportOut: {
+            /** Consents */
+            consents: components["schemas"]["ConsentOut"][];
+            customer: components["schemas"]["CustomerOut"] | null;
+            /** Inquiry Number */
+            inquiry_number: string | null;
+            /** Inquiry Status */
+            inquiry_status: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
+            /**
+             * Project Created At
+             * Format: date-time
+             */
+            project_created_at: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** ExtractIn */
         ExtractIn: {
             /**
@@ -1575,6 +1813,86 @@ export interface components {
             release: string | null;
             /** Status */
             status: string;
+        };
+        /** InquiryDetailOut */
+        InquiryDetailOut: {
+            /** Consents */
+            consents: components["schemas"]["ConsentOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            customer: components["schemas"]["CustomerOut"];
+            /** Number */
+            number: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /** Snapshot Schema Version */
+            snapshot_schema_version: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** InquiryListItem */
+        InquiryListItem: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Customer Corrections */
+            customer_corrections: number;
+            /** Customer Email */
+            customer_email: string;
+            /** Customer Name */
+            customer_name: string;
+            /** Has Envelope */
+            has_envelope: boolean;
+            /**
+             * Lotissement
+             * @enum {string}
+             */
+            lotissement: "yes" | "no" | "unknown";
+            /** Number */
+            number: string;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** InquiryPatchIn */
+        InquiryPatchIn: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
         };
         /** JobCreated */
         JobCreated: {
@@ -1768,6 +2086,15 @@ export interface components {
             status: "draft" | "review" | "published" | "retired";
             /** Version */
             version: number;
+        };
+        /** MyInquiryOut */
+        MyInquiryOut: {
+            /** Exists */
+            exists: boolean;
+            /** Number */
+            number?: string | null;
+            /** Status */
+            status?: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
         };
         /** OpsStatus */
         OpsStatus: {
@@ -3364,6 +3691,37 @@ export interface operations {
             };
         };
     };
+    list_inquiries_api_v1_admin_inquiries_get: {
+        parameters: {
+            query?: {
+                status?: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InquiryListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     publish_text_api_v1_admin_legal_texts_post: {
         parameters: {
             query?: never;
@@ -3455,6 +3813,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EnvelopeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_sheet_staff_api_v1_admin_projects__project_id__envelope_sheet_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_inquiry_staff_api_v1_admin_projects__project_id__inquiry_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InquiryDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_inquiry_status_api_v1_admin_projects__project_id__inquiry_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InquiryPatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InquiryDetailOut"];
                 };
             };
             /** @description Validation Error */
@@ -4179,6 +4665,35 @@ export interface operations {
             };
         };
     };
+    delete_project_api_v1_projects__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_envelope_api_v1_projects__project_id__envelope_get: {
         parameters: {
             query?: never;
@@ -4259,6 +4774,138 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_project_api_v1_projects__project_id__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_my_inquiry_api_v1_projects__project_id__inquiry_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyInquiryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_contact_api_v1_projects__project_id__inquiry_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfirmOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_contact_api_v1_projects__project_id__inquiry_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
                 };
             };
             /** @description Validation Error */
