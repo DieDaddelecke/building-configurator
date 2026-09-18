@@ -3,6 +3,7 @@
 import hashlib
 import math
 import re
+import uuid
 from datetime import date
 
 from shapely.geometry import Polygon
@@ -44,6 +45,7 @@ from app.catalog.schemas import (
     TypeBasePriceOut,
     TypeSummaryOut,
     TypeVersionOut,
+    TypeVersionRefOut,
 )
 from app.platform import audit, storage
 from app.platform.db import utcnow
@@ -122,6 +124,11 @@ def list_types(db: Session) -> list[TypeSummaryOut]:
             if building_type.current_version_id
             else None
         )
+        versions = db.execute(
+            select(BuildingTypeVersion)
+            .where(BuildingTypeVersion.building_type_id == building_type.id)
+            .order_by(BuildingTypeVersion.version.desc())
+        ).scalars()
         out.append(
             TypeSummaryOut(
                 id=building_type.id,
@@ -129,6 +136,16 @@ def list_types(db: Session) -> list[TypeSummaryOut]:
                 family=building_type.family,
                 alternatives=building_type.alternatives,
                 current_version=_version_out(current, building_type.slug) if current else None,
+                versions=[
+                    TypeVersionRefOut(
+                        version=v.version,
+                        status=v.status,
+                        name=v.name,
+                        created_at=v.created_at,
+                        published_at=v.published_at,
+                    )
+                    for v in versions
+                ],
             )
         )
     return out
@@ -414,15 +431,24 @@ def upload_plan_document(
 
 
 def list_packages(db: Session) -> list[PackageVersionOut]:
-    out = []
-    for package in db.execute(select(Package).order_by(Package.slug)).scalars():
-        version = db.get(PackageVersion, package.current_version_id) if package.current_version_id else None
-        if version is not None:
-            out.append(_package_version_out(version, package.slug))
-    return out
+    """Alle Versionen je Linie, neueste zuerst: Entwürfe müssen in der Katalogpflege sichtbar sein."""
+    rows = db.execute(
+        select(Package, PackageVersion)
+        .join(PackageVersion, PackageVersion.package_id == Package.id)
+        .order_by(Package.slug, PackageVersion.version.desc())
+    ).all()
+    return [_package_version_out(db, version, package.slug) for package, version in rows]
 
 
-def _package_version_out(version: PackageVersion, slug: str) -> PackageVersionOut:
+def _option_slugs(db: Session, module_ids: list[uuid.UUID]) -> list[str]:
+    if not module_ids:
+        return []
+    return list(
+        db.execute(select(Module.slug).where(Module.id.in_(module_ids)).order_by(Module.slug)).scalars()
+    )
+
+
+def _package_version_out(db: Session, version: PackageVersion, slug: str) -> PackageVersionOut:
     return PackageVersionOut(
         id=version.id,
         package_id=version.package_id,
@@ -432,6 +458,7 @@ def _package_version_out(version: PackageVersion, slug: str) -> PackageVersionOu
         label_de=version.label_de,
         label_fr=version.label_fr,
         scope=version.scope,
+        included_option_slugs=_option_slugs(db, version.included_module_ids),
         published_at=version.published_at,
     )
 
@@ -451,6 +478,15 @@ def create_package_version(db: Session, slug: str, body: PackageIn, actor_id: st
         ).scalar_one()
         + 1
     )
+    included = set(body.included_option_slugs)
+    modules = db.execute(select(Module).where(Module.slug.in_(included))).scalars().all() if included else []
+    unknown = included - {m.slug for m in modules}
+    if unknown:
+        raise Problem(
+            422,
+            "catalog_reference_unknown",
+            detail=f"Option(en) nicht angelegt: {', '.join(sorted(unknown))}",
+        )
     version = PackageVersion(
         package_id=package.id,
         version=next_version,
@@ -458,11 +494,12 @@ def create_package_version(db: Session, slug: str, body: PackageIn, actor_id: st
         label_de=body.label_de,
         label_fr=body.label_fr,
         scope=body.scope,
+        included_module_ids=[m.id for m in modules],
         created_by=actor_id,
     )
     db.add(version)
     db.commit()
-    return _package_version_out(version, slug)
+    return _package_version_out(db, version, slug)
 
 
 def publish_package_version(db: Session, slug: str, version_no: int, actor_id: str) -> PackageVersionOut:
@@ -481,19 +518,20 @@ def publish_package_version(db: Session, slug: str, version_no: int, actor_id: s
     version.published_by = actor_id
     package.current_version_id = version.id
     db.commit()
-    return _package_version_out(version, slug)
+    return _package_version_out(db, version, slug)
 
 
 # --- Optionen (Module) ------------------------------------------------------------------------------
 
 
 def list_modules(db: Session) -> list[ModuleVersionOut]:
-    out = []
-    for module in db.execute(select(Module).order_by(Module.slug)).scalars():
-        version = db.get(ModuleVersion, module.current_version_id) if module.current_version_id else None
-        if version is not None:
-            out.append(_module_version_out(version, module.slug))
-    return out
+    """Alle Versionen je Option, neueste zuerst (siehe `list_packages`)."""
+    rows = db.execute(
+        select(Module, ModuleVersion)
+        .join(ModuleVersion, ModuleVersion.module_id == Module.id)
+        .order_by(Module.slug, ModuleVersion.version.desc())
+    ).all()
+    return [_module_version_out(version, module.slug) for module, version in rows]
 
 
 def _module_version_out(version: ModuleVersion, slug: str) -> ModuleVersionOut:

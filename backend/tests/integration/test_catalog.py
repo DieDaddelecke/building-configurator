@@ -102,6 +102,16 @@ def test_second_import_of_the_same_type_bumps_the_version(client: Any, login_as:
     assert response.json()["version"] == 2
 
 
+def test_list_types_shows_drafts_in_the_version_list(client: Any, login_as: Any) -> None:
+    """Entwürfe stehen nur in der Versionsliste; `current_version` kennt nur Veröffentlichtes."""
+    login_as("catalog_admin")
+    _upload(client, "ligne", LIGNE_KENNWERTE, [])
+    _upload(client, "ligne", {**LIGNE_KENNWERTE, "neigung_deg": "35"}, [])
+    entry = next(t for t in client.get("/api/v1/admin/catalog/types").json() if t["slug"] == "ligne")
+    assert entry["current_version"] is None
+    assert [(v["version"], v["status"]) for v in entry["versions"]] == [(2, "draft"), (1, "draft")]
+
+
 def test_publish_is_blocked_while_a_consistency_error_remains(client: Any, login_as: Any) -> None:
     login_as("catalog_admin")
     _upload(client, "ligne", LIGNE_KENNWERTE, [])
@@ -132,6 +142,43 @@ def test_publish_succeeds_without_findings_and_then_locks_the_version(
         db_session.execute(text("UPDATE building_type_version SET name = 'geändert' WHERE version = 1"))
         db_session.flush()
     db_session.rollback()
+
+
+def test_lines_and_options_list_drafts_and_published_versions(client: Any, login_as: Any) -> None:
+    login_as("catalog_admin")
+    line = {"label_de": "Confort", "label_fr": "Confort"}
+    client.post("/api/v1/admin/catalog/lines/confort/versions", json=line)
+    client.post("/api/v1/admin/catalog/options/pv/versions", json={**line, "excludes_slugs": []})
+    lines = client.get("/api/v1/admin/catalog/lines").json()
+    options = client.get("/api/v1/admin/catalog/options").json()
+    assert [(row["slug"], row["version"], row["status"]) for row in lines] == [("confort", 1, "draft")]
+    assert [(row["slug"], row["version"], row["status"]) for row in options] == [("pv", 1, "draft")]
+
+    client.post("/api/v1/admin/catalog/lines/confort/versions/1/publish")
+    client.post("/api/v1/admin/catalog/lines/confort/versions", json=line)
+    lines = client.get("/api/v1/admin/catalog/lines").json()
+    assert [(row["version"], row["status"]) for row in lines] == [(2, "draft"), (1, "published")]
+
+
+def test_line_lists_the_options_it_includes_and_rejects_unknown_ones(client: Any, login_as: Any) -> None:
+    login_as("catalog_admin")
+    label = {"label_de": "Signature", "label_fr": "Signature"}
+    client.post("/api/v1/admin/catalog/options/pv/versions", json={**label, "excludes_slugs": []})
+
+    unknown = client.post(
+        "/api/v1/admin/catalog/lines/signature/versions",
+        json={**label, "included_option_slugs": ["gibt_es_nicht"]},
+    )
+    assert unknown.status_code == 422
+    assert unknown.json()["code"] == "catalog_reference_unknown"
+
+    created = client.post(
+        "/api/v1/admin/catalog/lines/signature/versions", json={**label, "included_option_slugs": ["pv"]}
+    )
+    assert created.status_code == 201
+    assert created.json()["included_option_slugs"] == ["pv"]
+    listed = client.get("/api/v1/admin/catalog/lines").json()
+    assert listed[0]["included_option_slugs"] == ["pv"]
 
 
 def test_facade_roles_rejects_an_edge_index_outside_the_outline(client: Any, login_as: Any) -> None:

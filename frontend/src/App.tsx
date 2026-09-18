@@ -8,6 +8,11 @@ import { Anfragen } from "./pages/buero/Anfragen";
 import { BueroLayout } from "./pages/buero/BueroLayout";
 import { BueroStart } from "./pages/buero/BueroStart";
 import { GrundstueckBuero, Grundstuecke } from "./pages/buero/Grundstuecke";
+import { KatalogLayout } from "./pages/buero/katalog/KatalogLayout";
+import { KatalogLinienOptionen } from "./pages/buero/katalog/KatalogLinienOptionen";
+import { KatalogPreise } from "./pages/buero/katalog/KatalogPreise";
+import { KatalogTyp } from "./pages/buero/katalog/KatalogTyp";
+import { KatalogTypen } from "./pages/buero/katalog/KatalogTypen";
 import { KeinZugang } from "./pages/buero/KeinZugang";
 import { Regeln, Regelwerk } from "./pages/buero/Regeln";
 import { GrundstueckSeite } from "./pages/grundstueck/GrundstueckSeite";
@@ -42,6 +47,16 @@ export const routes: RouteObject[] = [
       { path: "regeln/:ruleSetId", element: <Regelwerk /> },
       { path: "anfragen", element: <Anfragen /> },
       { path: "anfragen/:projectId", element: <AnfrageDetail /> },
+      {
+        path: "katalog",
+        element: <KatalogLayout />,
+        children: [
+          { index: true, element: <KatalogTypen /> },
+          { path: "typen/:slug/:version", element: <KatalogTyp /> },
+          { path: "linien-optionen", element: <KatalogLinienOptionen /> },
+          { path: "preise", element: <KatalogPreise /> },
+        ],
+      },
     ],
   },
   ...(import.meta.env.DEV

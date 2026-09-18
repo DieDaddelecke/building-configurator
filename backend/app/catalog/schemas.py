@@ -54,12 +54,24 @@ class TypeVersionOut(BaseModel):
     created_at: datetime
 
 
+class TypeVersionRefOut(BaseModel):
+    """Kurzangabe je Version, damit die Katalogpflege auch Entwürfe und zurückgezogene Stände erreicht."""
+
+    version: int
+    status: VersionStatus
+    name: str
+    created_at: datetime
+    published_at: datetime | None
+
+
 class TypeSummaryOut(BaseModel):
     id: uuid.UUID
     slug: str
     family: str | None
     alternatives: list[str]
     current_version: TypeVersionOut | None
+    versions: list[TypeVersionRefOut]
+    """Alle Versionen, neueste zuerst."""
 
 
 class FacadeRolesIn(BaseModel):
@@ -89,6 +101,8 @@ class PackageVersionOut(BaseModel):
     label_de: str
     label_fr: str
     scope: list[str]
+    included_option_slugs: list[str]
+    """Optionen, die diese Linie ohne Aufpreis enthält (Mockup `enthalten_in`, Plan H1 5 Schritt 4)."""
     published_at: datetime | None
 
 
@@ -96,6 +110,7 @@ class PackageIn(BaseModel):
     label_de: str
     label_fr: str
     scope: list[str] = []
+    included_option_slugs: list[str] = []
 
 
 class ModuleVersionOut(BaseModel):

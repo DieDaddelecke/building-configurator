@@ -452,7 +452,8 @@
       "home": "Start",
       "sites": "Grundstücke",
       "rules": "Regelwerke",
-      "inquiries": "Anfragen"
+      "inquiries": "Anfragen",
+      "catalog": "Katalog"
     },
     "sites": {
       "title": "Grundstücke prüfen",
@@ -540,7 +541,8 @@
     "homeIntro": "Module in Betrieb. Weitere erscheinen hier, sobald sie freigeschaltet sind.",
     "modules": {
       "sites": "Grundstücke der Kunden: Grenzen prüfen und Kundenkorrekturen bestätigen (G1). Die Grundstückswahl ist intern für die Rolle Architekt freigeschaltet unter /grundstueck.",
-      "rules": "Regelwerke der Zonen: automatische Auswertung, Kosten, Zitate und Korrekturen (G2). Korrekturen sind freiwillig und verbessern spätere Simulationen."
+      "rules": "Regelwerke der Zonen: automatische Auswertung, Kosten, Zitate und Korrekturen (G2). Korrekturen sind freiwillig und verbessern spätere Simulationen.",
+      "catalog": "Haustypen, Linien, Optionen und Preise pflegen und veröffentlichen (H1). Veröffentlichte Stände sind unveränderlich."
     },
     "roles": "Rollen",
     "noAccessTitle": "Kein Zugang",
@@ -675,5 +677,192 @@
     },
     "title": "Was darf ich bauen?",
     "rulesDetails": "Herleitung: Regeln mit Zitaten"
+  },
+  "catalog": {
+    "title": "Hauskatalog",
+    "intro": "Haustypen, Ausstattungslinien, Optionen und Preise pflegen. Veröffentlichte Stände sind unveränderlich: Eine Änderung erzeugt immer eine neue Version. Die Kunden sehen den Katalog erst mit den späteren Modulen.",
+    "tabs": {
+      "types": "Haustypen",
+      "linesOptions": "Linien und Optionen",
+      "prices": "Preise"
+    },
+    "forbidden": "Diese Ansicht verlangt die Rolle Architekt, Katalogpflege oder Betrieb.",
+    "readOnly": "Ihre Rolle darf den Katalog lesen, aber nicht ändern.",
+    "save": "Speichern",
+    "saved": "Gespeichert.",
+    "status": {
+      "draft": "Entwurf",
+      "review": "in Prüfung",
+      "published": "veröffentlicht",
+      "retired": "zurückgezogen"
+    },
+    "roofForm": {
+      "gable": "Satteldach",
+      "hip": "Walmdach",
+      "flat": "Flachdach",
+      "complex": "Sonderform"
+    },
+    "ridgeDirection": {
+      "laengs": "First längs",
+      "quer": "First quer"
+    },
+    "roomCategory": {
+      "living": "Wohnen",
+      "bedroom": "Schlafen",
+      "bathroom": "Bad",
+      "kitchen": "Küche",
+      "circulation": "Verkehrsfläche",
+      "storage": "Abstellraum",
+      "garage": "Garage",
+      "other": "Sonstiges"
+    },
+    "facadeRole": {
+      "street": "Straßenseite",
+      "garden": "Gartenseite",
+      "side_left": "Seite links",
+      "side_right": "Seite rechts"
+    },
+    "types": {
+      "empty": "Noch kein Haustyp erfasst. Laden Sie unten ein Typdatenblatt und einen Umriss hoch.",
+      "unpublished": "Noch keine veröffentlichte Version.",
+      "versions": "Versionen"
+    },
+    "import": {
+      "title": "Neuen Entwurf importieren",
+      "intro": "Typdatenblatt (XLSX) und Umriss (DXF) ergeben einen neuen Entwurf. Ein vorhandener kann nicht überschrieben werden: Bei gleicher Kennung entsteht die nächste Version. Fehler nennen Blatt und Zelle.",
+      "slug": "Kennung des Typs",
+      "slugHint": "Kleinbuchstaben, Ziffern und Unterstrich, z. B. ligne oder plateau_adapte.",
+      "xlsx": "Typdatenblatt (XLSX)",
+      "dxf": "Umriss (DXF)",
+      "submit": "Entwurf anlegen",
+      "running": "Wird geprüft …",
+      "formatTitle": "Aufbau der Dateien",
+      "formatKennwerte": "Blatt „Kennwerte“, je Zeile Feldname und Wert: name, geschosse, dachform (gable, hip, flat, complex), firsthoehe_m, traufhoehe_m (bei Flachdach Oberkante Attika), wohnflaeche_m2, zimmer_text, basispreis_min_eur, basispreis_max_eur; optional familie, neigung_deg, firstrichtung (laengs, quer).",
+      "formatRooms": "Blatt „Räume“: Spalten name, kategorie (living, bedroom, bathroom, kitchen, circulation, storage, garage, other), geschoss, flaeche_m2.",
+      "formatPrices": "Blatt „Preise“: Spalten art (linie oder option), referenz (Kennung; die Linie oder Option muss im Katalog schon angelegt sein), aufpreis_eur.",
+      "formatDxf": "DXF: je ein geschlossenes Polygon auf den Layern EMPRISE_FOOTPRINT_FACADE (Fassadenhülle) und EMPRISE_FOOTPRINT_PROJECTION (mit Dachüberstand), in Metern, Y-Achse nach Norden."
+    },
+    "type": {
+      "back": "Zurück zur Typenliste",
+      "storeys": "Geschosse",
+      "roof": "Dach",
+      "livingArea": "Wohnfläche",
+      "basePrice": "Basispreis (Spanne)",
+      "ridgeHeight": "Firsthöhe",
+      "eaveHeight": "Traufhöhe (Flachdach: Attika)",
+      "rooms": "Zimmer",
+      "footprintFacade": "Umrissfläche Fassade",
+      "footprintProjection": "Umrissfläche mit Dachüberstand",
+      "entrance": "Eingang",
+      "garageDoor": "Garagentor",
+      "values": "Kennwerte",
+      "planLabel": "Umriss des Haustyps mit Fassadenrollen",
+      "planCaption": "Umriss in Metern, Norden oben. Gestrichelt: Projektion mit Dachüberstand. Die Zahlen sind die Kantenindizes.",
+      "axoLabel": "Axonometrie {{name}}: {{roof}}, Firsthöhe {{height}} m",
+      "axoCaption": "Schematische Vorschau aus den Kennwerten, Blick von Südosten. Sie ist keine Planzeichnung.",
+      "legend": "Fassadenrollen",
+      "lockedPublished": "Dieser Stand ist veröffentlicht und unveränderlich. Für Änderungen importieren Sie einen neuen Entwurf.",
+      "publish": "Veröffentlichen",
+      "publishConfirm": "„{{name}}“ Version {{version}} veröffentlichen? Danach ist dieser Stand unveränderlich.",
+      "publishBlocked": "Die Veröffentlichung ist gesperrt, solange ein Fehler in den Prüfhinweisen steht.",
+      "retire": "Zurückziehen",
+      "retireConfirm": "„{{name}}“ Version {{version}} zurückziehen? Sie steht dann nicht mehr zur Auswahl.",
+      "checks": {
+        "title": "Prüfhinweise",
+        "none": "Keine Auffälligkeiten.",
+        "error": "Fehler:",
+        "warning": "Hinweis:",
+        "blocksPublish": "Sperrt die Veröffentlichung."
+      },
+      "room": {
+        "title": "Räume",
+        "name": "Raum",
+        "category": "Kategorie",
+        "storey": "Geschoss",
+        "area": "Fläche",
+        "total": "Summe"
+      },
+      "roles": {
+        "title": "Fassadenrollen",
+        "intro": "Jede Kante des Umrisses kann eine Rolle bekommen. Optionen beziehen sich später auf Rollen, nicht auf Himmelsrichtungen. Der Vorschlag ist nur ein Vorschlag: die längste Kante als Straßenseite, gegenüber die Gartenseite, links und rechts von der Straße aus gesehen.",
+        "edge": "Kante",
+        "length": "Länge",
+        "role": "Rolle",
+        "none": "keine Rolle",
+        "suggest": "Vorschlag übernehmen",
+        "forEdge": "Rolle der Kante {{index}}"
+      },
+      "placement": {
+        "title": "Eingang und Garagentor",
+        "intro": "Je ein Punkt auf einer Umrisskante. Daraus folgt später die Zufahrt.",
+        "set": "Gesetzt",
+        "edge": "Kante",
+        "position": "Lage auf der Kante: {{percent}} %"
+      },
+      "energy": {
+        "title": "RE2020",
+        "intro": "Ein zusammengefasster Befund je Typ und Linie. Er gilt für den Typ, nicht für eine Version, und ist keine Wärmeschutzberechnung. Ohne Befund erscheint „nicht bewertet“; die Veröffentlichung sperrt das nicht.",
+        "noLines": "Legen Sie zuerst Linien an (Reiter „Linien und Optionen“).",
+        "notAssessed": "nicht bewertet",
+        "forLine": "RE2020 für {{line}}",
+        "zone": "Klimazone",
+        "compliant": "Anforderung erfüllt",
+        "verdict": "Befund",
+        "surcharge": "Aufpreis für die Erfüllung (EUR)",
+        "measures": "Maßnahmen",
+        "compliantShort": "erfüllt",
+        "notCompliantShort": "nicht erfüllt"
+      },
+      "pdf": {
+        "title": "Grundriss (PDF)",
+        "intro": "Nur zur Ablage als Referenz für das Büro; das PDF wird nicht ausgewertet und nicht an Kunden gegeben.",
+        "file": "PDF-Datei",
+        "upload": "Hochladen",
+        "done": "{{name}} hochgeladen ({{size}} KB)."
+      }
+    },
+    "lo": {
+      "intro": "Linien und Optionen gelten für alle Typen. Ausschlüsse und „in der Linie enthalten“ werden hier nur erfasst; durchgesetzt werden sie erst bei der Konfiguration. Bearbeiten heißt: neuen Entwurf anlegen.",
+      "linesTitle": "Ausstattungslinien",
+      "optionsTitle": "Optionen",
+      "noLines": "Noch keine Linie angelegt.",
+      "noOptions": "Noch keine Option angelegt.",
+      "slug": "Kennung",
+      "labelDe": "Bezeichnung (Deutsch)",
+      "labelFr": "Bezeichnung (Französisch)",
+      "scope": "Leistungsumfang",
+      "scopeHint": "Ein Stichpunkt je Zeile.",
+      "included": "In dieser Linie ohne Aufpreis enthaltene Optionen",
+      "includedShort": "enthält",
+      "excludes": "Schließt aus",
+      "excludesShort": "schließt aus",
+      "newVersion": "Als neue Version speichern",
+      "createLine": "Neue Linie anlegen",
+      "createOption": "Neue Option anlegen",
+      "draftCreated": "Entwurf Version {{version}} angelegt.",
+      "editAsNew": "Als neue Version bearbeiten",
+      "publish": "Veröffentlichen",
+      "publishConfirm": "„{{name}}“ Version {{version}} veröffentlichen? Danach ist dieser Stand unveränderlich."
+    },
+    "prices": {
+      "intro": "Die Preise kommen aus dem Blatt „Preise“ der Typdatenblätter und hängen am Typ, nicht an einer Version. Angezeigt werden nur Bestandteile und Spannen; den Preiskorridor rechnet erst die Konfiguration.",
+      "empty": "Noch keine Einträge.",
+      "base": "Basispreis je Typ",
+      "lines": "Linienaufpreise",
+      "options": "Optionsaufpreise",
+      "energy": "RE2020-Befunde",
+      "type": "Typ",
+      "line": "Linie",
+      "option": "Option",
+      "range": "Spanne",
+      "surcharge": "Aufpreis",
+      "version": "Preiskatalog",
+      "validFrom": "gültig ab",
+      "vat": "Mehrwertsteuer",
+      "publish": "Preiskatalog veröffentlichen",
+      "publishConfirm": "Preiskatalog Version {{version}} veröffentlichen? Danach ist dieser Stand unveränderlich.",
+      "publishHint": "Danach entsteht bei der nächsten Änderung ein neuer Entwurf.",
+      "published": "Preiskatalog Version {{version}} veröffentlicht."
+    }
   }
 }

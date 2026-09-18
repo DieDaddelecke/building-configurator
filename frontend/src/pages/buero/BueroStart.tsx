@@ -27,6 +27,12 @@ export function BueroStart() {
           </Link>
           <p className="text-sm t-mute m-0 mt-1">{t("office.modules.rules")}</p>
         </li>
+        <li className="karte p-4">
+          <Link className="link font-medium" to="/buero/katalog">
+            {t("office.nav.catalog")}
+          </Link>
+          <p className="text-sm t-mute m-0 mt-1">{t("office.modules.catalog")}</p>
+        </li>
       </ul>
       <p className="text-sm t-mute">
         {t("office.roles")}: <span className="f-mono">{staff.roles.join(", ") || "–"}</span>

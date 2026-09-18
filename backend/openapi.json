@@ -2631,6 +2631,14 @@
       },
       "PackageIn": {
         "properties": {
+          "included_option_slugs": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Included Option Slugs",
+            "type": "array"
+          },
           "label_de": {
             "title": "Label De",
             "type": "string"
@@ -2684,6 +2692,13 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "included_option_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Included Option Slugs",
+            "type": "array"
           },
           "label_de": {
             "title": "Label De",
@@ -2745,6 +2760,7 @@
           "label_de",
           "label_fr",
           "scope",
+          "included_option_slugs",
           "published_at"
         ],
         "title": "PackageVersionOut",
@@ -4701,6 +4717,13 @@
           "slug": {
             "title": "Slug",
             "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/TypeVersionRefOut"
+            },
+            "title": "Versions",
+            "type": "array"
           }
         },
         "required": [
@@ -4708,7 +4731,8 @@
           "slug",
           "family",
           "alternatives",
-          "current_version"
+          "current_version",
+          "versions"
         ],
         "title": "TypeSummaryOut",
         "type": "object"
@@ -4940,6 +4964,55 @@
           "created_at"
         ],
         "title": "TypeVersionOut",
+        "type": "object"
+      },
+      "TypeVersionRefOut": {
+        "description": "Kurzangabe je Version, damit die Katalogpflege auch Entwürfe und zurückgezogene Stände erreicht.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "review",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "status",
+          "name",
+          "created_at",
+          "published_at"
+        ],
+        "title": "TypeVersionRefOut",
         "type": "object"
       },
       "ValidationError": {

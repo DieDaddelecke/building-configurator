@@ -2129,6 +2129,11 @@ export interface components {
         };
         /** PackageIn */
         PackageIn: {
+            /**
+             * Included Option Slugs
+             * @default []
+             */
+            included_option_slugs: string[];
             /** Label De */
             label_de: string;
             /** Label Fr */
@@ -2155,6 +2160,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Included Option Slugs */
+            included_option_slugs: string[];
             /** Label De */
             label_de: string;
             /** Label Fr */
@@ -2846,6 +2853,8 @@ export interface components {
             id: string;
             /** Slug */
             slug: string;
+            /** Versions */
+            versions: components["schemas"]["TypeVersionRefOut"][];
         };
         /** TypeVersionOut */
         TypeVersionOut: {
@@ -2924,6 +2933,28 @@ export interface components {
             status: "draft" | "review" | "published" | "retired";
             /** Storeys */
             storeys: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * TypeVersionRefOut
+         * @description Kurzangabe je Version, damit die Katalogpflege auch Entwürfe und zurückgezogene Stände erreicht.
+         */
+        TypeVersionRefOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Name */
+            name: string;
+            /** Published At */
+            published_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "review" | "published" | "retired";
             /** Version */
             version: number;
         };

@@ -452,7 +452,8 @@
       "home": "Accueil",
       "sites": "Terrains",
       "rules": "Règlements",
-      "inquiries": "Demandes"
+      "inquiries": "Demandes",
+      "catalog": "Catalogue"
     },
     "sites": {
       "title": "Terrains à vérifier",
@@ -540,7 +541,8 @@
     "homeIntro": "Modules en service. Les suivants apparaîtront ici dès leur activation.",
     "modules": {
       "sites": "Terrains des clients : vérifier les limites et confirmer les corrections (G1). Le choix du terrain est ouvert en interne au rôle architecte sous /grundstueck.",
-      "rules": "Règles des zones : analyse automatique, coûts, citations et corrections (G2). Les corrections sont facultatives et améliorent les simulations suivantes."
+      "rules": "Règles des zones : analyse automatique, coûts, citations et corrections (G2). Les corrections sont facultatives et améliorent les simulations suivantes.",
+      "catalog": "Gérer et publier les types de maison, gammes, options et prix (H1). Les versions publiées ne changent plus."
     },
     "roles": "Rôles",
     "noAccessTitle": "Accès refusé",
@@ -675,5 +677,192 @@
     },
     "title": "Que puis-je construire ?",
     "rulesDetails": "Origine : règles et citations"
+  },
+  "catalog": {
+    "title": "Catalogue de maisons",
+    "intro": "Gérer les types de maison, les gammes, les options et les prix. Les versions publiées ne changent plus : toute modification crée une nouvelle version. Les clients ne voient le catalogue qu'avec les modules suivants.",
+    "tabs": {
+      "types": "Types de maison",
+      "linesOptions": "Gammes et options",
+      "prices": "Prix"
+    },
+    "forbidden": "Cette vue exige le rôle architecte, gestion du catalogue ou exploitation.",
+    "readOnly": "Votre rôle peut lire le catalogue, mais pas le modifier.",
+    "save": "Enregistrer",
+    "saved": "Enregistré.",
+    "status": {
+      "draft": "brouillon",
+      "review": "en revue",
+      "published": "publié",
+      "retired": "retiré"
+    },
+    "roofForm": {
+      "gable": "toit à deux pans",
+      "hip": "toit à quatre pans",
+      "flat": "toit plat",
+      "complex": "forme particulière"
+    },
+    "ridgeDirection": {
+      "laengs": "faîtage longitudinal",
+      "quer": "faîtage transversal"
+    },
+    "roomCategory": {
+      "living": "séjour",
+      "bedroom": "chambre",
+      "bathroom": "salle de bain",
+      "kitchen": "cuisine",
+      "circulation": "circulation",
+      "storage": "rangement",
+      "garage": "garage",
+      "other": "autre"
+    },
+    "facadeRole": {
+      "street": "côté rue",
+      "garden": "côté jardin",
+      "side_left": "côté gauche",
+      "side_right": "côté droit"
+    },
+    "types": {
+      "empty": "Aucun type de maison n'est encore saisi. Importez ci-dessous une fiche technique et un contour.",
+      "unpublished": "Pas encore de version publiée.",
+      "versions": "Versions"
+    },
+    "import": {
+      "title": "Importer un nouveau brouillon",
+      "intro": "La fiche technique (XLSX) et le contour (DXF) donnent un nouveau brouillon. Un brouillon existant n'est pas écrasé : avec le même identifiant, la version suivante est créée. Les erreurs indiquent la feuille et la cellule.",
+      "slug": "Identifiant du type",
+      "slugHint": "Minuscules, chiffres et tiret bas, par ex. ligne ou plateau_adapte.",
+      "xlsx": "Fiche technique (XLSX)",
+      "dxf": "Contour (DXF)",
+      "submit": "Créer le brouillon",
+      "running": "Vérification en cours …",
+      "formatTitle": "Structure des fichiers",
+      "formatKennwerte": "Feuille « Kennwerte », une ligne par champ et valeur : name, geschosse, dachform (gable, hip, flat, complex), firsthoehe_m, traufhoehe_m (toit plat : arête supérieure de l'acrotère), wohnflaeche_m2, zimmer_text, basispreis_min_eur, basispreis_max_eur ; facultatifs : familie, neigung_deg, firstrichtung (laengs, quer).",
+      "formatRooms": "Feuille « Räume » : colonnes name, kategorie (living, bedroom, bathroom, kitchen, circulation, storage, garage, other), geschoss, flaeche_m2.",
+      "formatPrices": "Feuille « Preise » : colonnes art (linie ou option), referenz (identifiant ; la gamme ou l'option doit déjà exister dans le catalogue), aufpreis_eur.",
+      "formatDxf": "DXF : un polygone fermé par calque, EMPRISE_FOOTPRINT_FACADE (enveloppe de façade) et EMPRISE_FOOTPRINT_PROJECTION (avec débord de toit), en mètres, axe Y vers le nord."
+    },
+    "type": {
+      "back": "Retour à la liste des types",
+      "storeys": "Niveaux",
+      "roof": "Toiture",
+      "livingArea": "Surface habitable",
+      "basePrice": "Prix de base (fourchette)",
+      "ridgeHeight": "Hauteur au faîtage",
+      "eaveHeight": "Hauteur à l'égout (toit plat : acrotère)",
+      "rooms": "Pièces",
+      "footprintFacade": "Emprise de la façade",
+      "footprintProjection": "Emprise avec débord de toit",
+      "entrance": "Entrée",
+      "garageDoor": "Porte de garage",
+      "values": "Caractéristiques",
+      "planLabel": "Contour du type de maison avec les rôles de façade",
+      "planCaption": "Contour en mètres, nord en haut. En pointillé : projection avec débord de toit. Les chiffres sont les indices des côtés.",
+      "axoLabel": "Axonométrie {{name}} : {{roof}}, hauteur au faîtage {{height}} m",
+      "axoCaption": "Aperçu schématique tiré des caractéristiques, vue du sud-est. Ce n'est pas un plan.",
+      "legend": "Rôles de façade",
+      "lockedPublished": "Cette version est publiée et ne change plus. Pour la modifier, importez un nouveau brouillon.",
+      "publish": "Publier",
+      "publishConfirm": "Publier « {{name}} » version {{version}} ? Cette version ne pourra plus être modifiée.",
+      "publishBlocked": "La publication est bloquée tant qu'une erreur figure dans les avis de contrôle.",
+      "retire": "Retirer",
+      "retireConfirm": "Retirer « {{name}} » version {{version}} ? Elle ne sera plus proposée.",
+      "checks": {
+        "title": "Avis de contrôle",
+        "none": "Aucune anomalie.",
+        "error": "Erreur :",
+        "warning": "Avis :",
+        "blocksPublish": "Bloque la publication."
+      },
+      "room": {
+        "title": "Pièces",
+        "name": "Pièce",
+        "category": "Catégorie",
+        "storey": "Niveau",
+        "area": "Surface",
+        "total": "Total"
+      },
+      "roles": {
+        "title": "Rôles de façade",
+        "intro": "Chaque côté du contour peut recevoir un rôle. Les options se rapporteront plus tard aux rôles, pas aux points cardinaux. La proposition n'est qu'une proposition : le côté le plus long comme côté rue, en face le côté jardin, à gauche et à droite en regardant depuis la rue.",
+        "edge": "Côté",
+        "length": "Longueur",
+        "role": "Rôle",
+        "none": "aucun rôle",
+        "suggest": "Reprendre la proposition",
+        "forEdge": "Rôle du côté {{index}}"
+      },
+      "placement": {
+        "title": "Entrée et porte de garage",
+        "intro": "Un point sur un côté du contour pour chacune. L'accès en découlera plus tard.",
+        "set": "Définie",
+        "edge": "Côté",
+        "position": "Position sur le côté : {{percent}} %"
+      },
+      "energy": {
+        "title": "RE2020",
+        "intro": "Un avis résumé par type et par gamme. Il vaut pour le type, pas pour une version, et n'est pas un calcul thermique. Sans avis, « non évalué » s'affiche ; cela ne bloque pas la publication.",
+        "noLines": "Créez d'abord des gammes (onglet « Gammes et options »).",
+        "notAssessed": "non évalué",
+        "forLine": "RE2020 pour {{line}}",
+        "zone": "Zone climatique",
+        "compliant": "Exigence satisfaite",
+        "verdict": "Avis",
+        "surcharge": "Supplément pour la conformité (EUR)",
+        "measures": "Mesures",
+        "compliantShort": "satisfaite",
+        "notCompliantShort": "non satisfaite"
+      },
+      "pdf": {
+        "title": "Plan (PDF)",
+        "intro": "Simple archivage comme référence pour le bureau ; le PDF n'est ni analysé ni transmis aux clients.",
+        "file": "Fichier PDF",
+        "upload": "Téléverser",
+        "done": "{{name}} téléversé ({{size}} Ko)."
+      }
+    },
+    "lo": {
+      "intro": "Les gammes et les options valent pour tous les types. Les exclusions et « inclus dans la gamme » ne sont que saisis ici ; ils ne sont appliqués qu'à la configuration. Modifier signifie créer un nouveau brouillon.",
+      "linesTitle": "Gammes d'équipement",
+      "optionsTitle": "Options",
+      "noLines": "Aucune gamme créée.",
+      "noOptions": "Aucune option créée.",
+      "slug": "Identifiant",
+      "labelDe": "Désignation (allemand)",
+      "labelFr": "Désignation (français)",
+      "scope": "Prestations",
+      "scopeHint": "Un point par ligne.",
+      "included": "Options incluses sans supplément dans cette gamme",
+      "includedShort": "inclut",
+      "excludes": "Exclut",
+      "excludesShort": "exclut",
+      "newVersion": "Enregistrer comme nouvelle version",
+      "createLine": "Créer une gamme",
+      "createOption": "Créer une option",
+      "draftCreated": "Brouillon version {{version}} créé.",
+      "editAsNew": "Modifier comme nouvelle version",
+      "publish": "Publier",
+      "publishConfirm": "Publier « {{name}} » version {{version}} ? Cette version ne pourra plus être modifiée."
+    },
+    "prices": {
+      "intro": "Les prix viennent de la feuille « Preise » des fiches techniques et sont liés au type, pas à une version. Seuls les composants et fourchettes s'affichent ; la fourchette de prix n'est calculée qu'à la configuration.",
+      "empty": "Pas encore d'entrées.",
+      "base": "Prix de base par type",
+      "lines": "Suppléments de gamme",
+      "options": "Suppléments d'option",
+      "energy": "Avis RE2020",
+      "type": "Type",
+      "line": "Gamme",
+      "option": "Option",
+      "range": "Fourchette",
+      "surcharge": "Supplément",
+      "version": "Catalogue de prix",
+      "validFrom": "valable dès le",
+      "vat": "TVA",
+      "publish": "Publier le catalogue de prix",
+      "publishConfirm": "Publier le catalogue de prix version {{version}} ? Cette version ne pourra plus être modifiée.",
+      "publishHint": "À la prochaine modification, un nouveau brouillon sera créé.",
+      "published": "Catalogue de prix version {{version}} publié."
+    }
   }
 }
