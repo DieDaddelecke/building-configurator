@@ -1,26 +1,27 @@
 # Hand-off für die nächste Session
 
-> **Stand:** 17.09.2026 · **Letzte Session:** G1 um Weg E ergänzt (Grundstück frei zeichnen und bemaßen, ohne Kataster und ohne Bebaubarkeitscheck), committet, CI-Stand noch ungeprüft (nicht gepusht)
+> **Stand:** 18.09.2026 · **Letzte Session:** H1 Hauskatalog geplant und das Backend umgesetzt (Datenmodell, XLSX/DXF-Import, Katalogpflege-API), gepusht, CI grün. Davor: Stand von G1 Weg E korrigiert (war entgegen dem Vermerk schon gepusht), Modul-Landkarte erläutert, Entscheidung D14 getroffen.
 > Diese Datei ist eine Momentaufnahme und wird bei jedem `/handoff` vollständig neu geschrieben. Die Historie steht in [AENDERUNGEN.md](AENDERUNGEN.md).
 
 ---
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat). Letzter Commit `11a6e64` (Weg E) liegt **einen Commit vor `origin/main`** – noch nicht gepusht, CI dafür also noch nicht gelaufen. Davor `b8cae60` (G3 Nacharbeiten), gepusht, CI grün.
-- **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; Überwachung, Offsite-Sicherung, Mail offen. [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
-- **Betrieb bis zur Beta:** [deploy/unraid/README.md](deploy/unraid/README.md) (G1 Abschnitt 9, G2 Abschnitt 10, G3 Abschnitt 11), lokal geprüft, **noch nicht auf Unraid ausgeliefert**.
-- **G1 Grundstück (Plan 3.3):** fertig, lokal intern freigeschaltet. ANNAHMEN G01–G25, [docs/BETRIEB.md](docs/BETRIEB.md) 8. **Neu: Weg E** – Grundstück ohne Kataster frei zeichnen und bemaßen (`site.origin = manual_sketch`), G2/G3 werden dafür nicht aufgerufen, kein Baurahmen, kein Steckbrief; eigener Hinweistext `notice.manual_sketch`. ANNAHMEN G26–G30, Plan 3.3 (Zusatz), Kapitel 7, 9 (D13), 10.4.
-- **G2 Regelwerk (Plan 3.4):** fertig, ANNAHMEN RW01–RW27, BETRIEB 9. **Noch keine echte Auswertung mit der Claude API** (kein Schlüssel); die aufgezeichnete Auswertung im lokalen Stack kennt `setback_street.band` noch nicht.
-- **G3 Baurahmen (Plan 3.5):** umgesetzt, getestet, lokal intern freigeschaltet. Plan und Prüfprotokoll: [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md), Festlegungen ANNAHMEN BR01–BR15, Betrieb BETRIEB 10. Zwei Konturen statt `B(0)`/`B(H_max)`; Bauband wirkt auf die Fläche bei ganzem Baukörper; kein Zwischenspeicher, Prüfsumme über den Inhalt der Eingaben.
-- **Lokaler Stack `emprise`** (Port 8080): mit dem Stand dieser Session neu gebaut, Migration 0006 angewendet; Flags `site_selection`, `rules_simulation`, `envelope_simulation` für `architect`; Konto `ops@emprise.local`.
-- **Umsetzungsplan:** R0, G1, G2, G3 beauftragt; D1–D4, D11 entschieden, D12 und **D13 (neu)** offen (Plan 9); Abweichungen in Plan 7. **Spezifikation:** unverändert, Korrekturen S1–S14 offen (4.4). **Mockup, Dokumentation.html:** unverändert.
+- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat), gepusht, CI grün. Letzter Commit `596e075` (H1 Backend, Lauf 35308790615), davor `a37e76d`/`11a6e64` (G1 Weg E, Lauf 35258574782).
+- **R0 Plattform (Plan 3.2):** anbieterunabhängiger Teil fertig; noch nicht auf Unraid ausgeliefert. [docs/ANNAHMEN.md](docs/ANNAHMEN.md) A1–A27.
+- **G1–G3 (Grundstück, Regelwerk, Baurahmen):** fertig, lokal intern freigeschaltet, gepusht. G1 um Weg E ergänzt (ANNAHMEN G01–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (ANNAHMEN RW01–RW27); G3 über 200 echte Parzellen geprüft (ANNAHMEN BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
+- **H1 Hauskatalog – Backend fertig, Frontend offen:** [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md), `backend/app/catalog/`. Typen/Linien/Optionen/Preiskatalog als Identität+Version, unveränderlich nach Veröffentlichung (Trigger `forbid_published_modification`, bedingt auf `status='published'`, anders als das unbedingte `rule_no_update`). Erfassung ohne IFC aus XLSX (Blätter „Kennwerte“, „Räume“, „Preise“) und DXF (Layer `EMPRISE_FOOTPRINT_FACADE`/`_PROJECTION`). Nur Büro-Endpunkte unter `/admin/catalog/...`, Rolle `catalog_admin` als Editor (ANNAHMEN H01–H09). 28 neue Tests, alle grün.
+- **Wichtig – Modul A übersprungen:** Der Umsetzungsplan sieht die Reihenfolge A → H1 → H2 → H3 → V vor (Kapitel 5); diese Session hat direkt mit H1 begonnen, A (Anfrage) existiert noch nicht. Vor Modul H2 prüfen, ob A nachgeholt werden soll (siehe Abschnitt 6).
+- **Lokaler Stack `emprise`:** mit dem H1-Stand dieser Session noch nicht neu gebaut/getestet (nur im CI-Container geprüft); Migration 0007 muss beim nächsten lokalen Start mitlaufen.
+- **Umsetzungsplan:** R0, G1, G2, G3, H1 (Backend) beauftragt; D1–D4, D11, D14 entschieden, D12 und D13 offen (Plan 9). **Spezifikation:** unverändert, Korrekturen S1–S14 offen (4.4).
 
 ## 2. Ergebnisse der letzten Session, die nur im Chat standen
 
-- **„So viel wie möglich lokal, keine Drittanbieter“** auf Nachfrage präzisiert: Mailversand (E2) darf ein EU-Drittanbieter sein (Brevo/Scaleway TEM, wegen Zustellbarkeit), kein Eigenbetrieb eines SMTP-Servers; die Claude API bleibt als Kernfunktion ausdrücklich ausgenommen. Memory `project-hosting-unraid` entsprechend präzisiert.
-- **Idee „Grundstück selbst zeichnen“** vom Nutzer eingebracht, gemeinsam zu einem Konzept ausgearbeitet (Entscheidungen per Rückfrage: Zusatz zu G1 statt eigenem Modul, freies Koordinatenraster ohne Kartenbezug, Adresse Pflicht), in UMSETZUNGSPLAN.md 3.3 ausformuliert und mit Selbstprüfung versehen (Prüfprotokoll 10.4: vier Logikfehler gefunden und behoben, u. a. dass ein vollständig bemaßtes Polygon mathematisch überbestimmt ist – die letzte Kante muss sich aus dem Schlusspunkt ergeben).
-- **Browserprüfung von Weg E** am lokalen Stack: Zeichnen, Bemaßen mit Live-Vorschau, Absenden, Ergebnisansicht, Selbstüberschneidung vom Server abgelehnt, Deutsch/Französisch. Dabei zwei Anzeigefehler gefunden und noch in derselben Session behoben: Label „Surface (cadastre)“ bei einem Grundstück ganz ohne Kataster; ungerundete Klickkoordinaten (`34,391423349434085`) in den Bemaßungsfeldern.
+- **Modul-Landkarte erläutert:** Es gibt kein Modul „G4“; die G-Kette endet bei G3. Nächste Module: A (Anfrage), dann H1–H3 (Konfigurator), V (Übergabe), X2–X5 (Ausbau). Inhalt von Modul A im Detail erklärt (Kontakt, Snapshot, Büro-Prüfung).
+- **Gesamtablauf geklärt (→ D14):** Nutzer erinnerte an die ursprünglich geplante Reihenfolge – Kunde konfiguriert sein Haus frei, ohne Büro-Input, die Anfrage entsteht erst danach. Abgeglichen mit Spez. 3.4 (Gesamtablauf): stimmt für den fertigen Konfigurator (G3 → H2 → H3 → V). Modul A direkt nach G3 ist der **zusätzliche** Notausgang für die Zeit, solange H1–H3 noch nicht existieren bzw. für Kunden, die nicht konfigurieren wollen – bleibt laut D14 dauerhaft bestehen, auch mit gültigem Baurahmen.
+- **H1-Plan (Kapitel 9) vom Nutzer entschieden:** fünf Platzhalter-Typen statt drei (zwei neu erarbeitet: Carré – ebenerdig, Walmdach; Attique – drei Ebenen mit ausgebautem Dachgeschoss, nah an den Höhengrenzen der Zone; Kennwerte in Plan Kapitel 12); Katalogpflege über `architect`; Grundriss-PDF bleibt intern.
+- **Rollenkorrektur während der Umsetzung:** `catalog_admin` existierte bereits seit R0 (ungenutzt) – die eigene Empfehlung „architect reicht“ war ein Rechercheversehen und wurde vor dem Bau der API auf `catalog_admin` als Editor-Rolle korrigiert (H01), ohne erneute Rückfrage.
+- **Trigger-Fehler beim Schreiben gefunden:** Der erste Entwurf von `forbid_published_modification` gab bei jedem Aufruf `RETURN NULL` zurück, was auch unveröffentlichte Entwürfe stillschweigend am Schreiben gehindert hätte – vor dem Testen bemerkt und auf `RETURN NEW`/`RETURN OLD` korrigiert.
 
 ## 3. Offene Entscheidungen des Nutzers
 
@@ -28,16 +29,17 @@
 |---|---|---|---|
 | 1 | – | Konto und Schlüssel der Claude API (vom Nutzer selbst in `.env`); Monatsbudget (Vorschlag 150 $, lokal 20 $) | BETRIEB 9, RW11 |
 | 1 | – | Hostname für Authentik (Vorschlag `auth.aslani.work`); Cloudflare „DNS only“ (empfohlen, L8) oder Proxy | Unraid README 2, A26 |
-| 1 | E2 | Mailanbieter: EU-Drittanbieter akzeptiert (Nutzer, 17.09.2026), welcher konkret (z. B. Brevo, Scaleway TEM) noch offen | Spez. 16, BETRIEB 5 |
-| 2 (vor Beta) | – | Rechtliche Prüfung der ungeprüften Simulation: Wortlaut der Hinweise, Haftung, Bezeichnungen der beiden Konturen **und der Hinweis für Weg E** (`notice.manual_sketch` darf nicht wie ein Bebaubarkeitscheck wirken) | Plan 6.9, RW16, Plan G3 10, Plan 3.3 |
-| 2 | – | Wer schreibt die Hinweistexte L7 (`notice.cadastre_accuracy`, `notice.risks_public_data`, `notice.rules_simulation`, `notice.rules_lotissement`, `notice.envelope_simulation`, **`notice.manual_sketch`**)? Bis dahin Rückfalltext | G16, G30, BR11, Plan 8 |
-| 2 | – | Datenschutzerklärung: Kartenkacheln direkt vom IGN; Hinweis genügt oder eigener Kachel-Proxy? Empfehlung Hinweis | G15 |
+| 1 | E2 | Mailanbieter: EU-Drittanbieter akzeptiert, welcher konkret (z. B. Brevo, Scaleway TEM) noch offen | Spez. 16, BETRIEB 5 |
+| 2 (vor Beta) | – | Rechtliche Prüfung der ungeprüften Simulation: Wortlaut der Hinweise, Haftung, Bezeichnungen der Konturen, Hinweis für Weg E | Plan 6.9, RW16, Plan G3 10 |
+| 2 | – | Wer schreibt die Hinweistexte L7? Bis dahin Rückfalltext | G16, G30, BR11, Plan 8 |
+| 2 | – | Datenschutzerklärung: Kartenkacheln direkt vom IGN – Hinweis genügt oder eigener Kachel-Proxy? Empfehlung Hinweis | G15 |
 | 2 | D8 | Bietet das Büro Honorar oder Bauleistung an? | Plan 9 |
 | 2 | D5, D6 | Betriebsverantwortung; Datenschutzrolle Emprise ↔ Büro | Plan 9 |
 | 2 | – | Standort des Unraid-Servers bestätigen (EU, L8) | – |
-| 3 (vor H2/R2) | D12 | Wie stark schränken simulierte Regeln den Konfigurator ein? Engste Kontur als Grenze, weiteste als Suchraum (Vorschlag) | Plan 9, BR01 |
-| 3 (vor R2) | **D13** | **Neu:** Wie geht H2 mit einem Grundstück ohne Baurahmen um (Weg E)? Vorschlag: Platzierung ohne Abstandsprüfung, gezeichneter Umriss gilt direkt als Fläche | Plan 9, 3.3 |
-| 3 | – | Gegenprüfung statt zweitem Lauf (RW19) in den Umsetzungsplan 3.4 übernehmen? Empfehlung: nach der Messung mit der Referenzmenge | RW19, Plan 3.4 |
+| 3 (vor H2) | D12 | Wie stark schränken simulierte Regeln den Konfigurator ein? Engste Kontur als Grenze, weiteste als Suchraum (Vorschlag) | Plan 9, BR01 |
+| 3 (vor H2) | D13 | Wie geht H2 mit einem Grundstück ohne Baurahmen um (Weg E)? Vorschlag: Platzierung ohne Abstandsprüfung | Plan 9, 3.3 |
+| 3 | – | Modul A nachholen, bevor H2 begonnen wird, oder bewusst erst später (Abschnitt 6)? | neu, diese Session |
+| 3 | – | Gegenprüfung statt zweitem Lauf (RW19) in den Umsetzungsplan 3.4 übernehmen? | RW19, Plan 3.4 |
 | 3 | – | ODbL des Katasters vor Modul V klären; Géorisques-Token vor öffentlichem Start | G12, G17 |
 | 3 | – | Außerhalb des Einzugsgebiets bis Modul A nur Hinweis – ausreichend? | G18 |
 | 3 | – | Umsetzungsplan als Ganzes freigeben; D2 (Beta, öffentlich), D7, D10, E1–E12 | Plan 9, Spez. 16 |
@@ -45,67 +47,75 @@
 
 ## 4. Offene Arbeitspunkte
 
-### 4.1 G2 und G3 abschließen (sobald ein Schlüssel eingetragen ist)
+### 4.1 H1 abschließen
 
-1. Schlüssel in `.env`, `docker compose up -d`. `rules_housekeeping` plant die Kapitel innerhalb einer Stunde ein; sofort: `docker compose exec api python -m app.cli rules-extract --pending`. Kosten, Dauer und Anteil der Gegenprüfung je Kapitel in BETRIEB 9 eintragen.
-2. **Wegen `g2-prompt-3` werten alle Kapitel neu aus** (gespeicherte Antworten passen nicht mehr zur Prüfsumme). Danach prüfen, ob `setback_street.band` gefüllt ist und der Hinweis `band_unclear` verschwindet.
-3. Referenzmenge der Zonen von Treillières messen (Sollwerte am Text, Spez. 11.4): falsche Pflichtwerte ≤ 5 %, `unknown` ≤ 15 %; Wirkung der Gegenprüfung (RW19) und der Schranken RW24/RW25.
-4. Danach `envelope-check --commune 44209` über **alle** Zonen wiederholen und den Anteil unvollständiger engster Konturen in BETRIEB 10 festhalten (BR12).
-5. Erst danach Beta für `rules_simulation` und `envelope_simulation` erwägen.
+1. Katalogpflege-Oberfläche im Frontend (Büro-Route, kein Kundenschritt): Typ-Import mit Vorschau, Fassadenrollen zuweisen, Preise/RE2020 erfassen, veröffentlichen.
+2. Fünf Platzhalter-Typen als echte XLSX/DXF-Dateien erfassen (Kennwerte in Plan H1 Kapitel 12; DXF-Umriss dort nur als Rechteck angenommen, muss noch gezeichnet werden) und über die API hochladen.
+3. Linien (Base/Confort/Signature) und Optionen vor den Typen anlegen und veröffentlichen, sonst meldet der Typ-Import `catalog_reference_unknown`.
+4. `docs/BETRIEB.md`-Abschnitt für H1 (Migration 0007, keine neuen externen Dienste, neue Python-Abhängigkeiten openpyxl/ezdxf/python-multipart im Image).
+5. Lokalen Stack neu bauen und Migration 0007 anwenden, bevor im Browser geprüft wird.
+
+### 4.2 G2 und G3 abschließen (sobald ein Schlüssel eingetragen ist)
+
+1. Schlüssel in `.env`, `docker compose up -d`; sofort `docker compose exec api python -m app.cli rules-extract --pending`. Kosten, Dauer, Anteil der Gegenprüfung in BETRIEB 9 eintragen.
+2. Wegen `g2-prompt-3` alle Kapitel neu auswerten; danach prüfen, ob `setback_street.band` gefüllt ist.
+3. Referenzmenge der Zonen von Treillières messen (Spez. 11.4).
+4. `envelope-check --commune 44209` über alle Zonen wiederholen, Anteil unvollständiger Konturen in BETRIEB 10 festhalten.
+5. Danach Beta für `rules_simulation`/`envelope_simulation` erwägen.
 6. Später: Korrekturformular aus dem Schema statt JSON (RW15); OCR für Seiten ohne Textschicht (RW03); mehrbändige Reglements (RW23).
 
-### 4.2 Auslieferung und Betrieb
+### 4.3 Auslieferung und Betrieb
 
-1. **Unraid in Betrieb nehmen** nach Unraid README 2–4 (durch den Nutzer: DNS, Reverse Proxy, Code auf den Server). Danach TLS, Authentik aus dem API-Container, `staff-add`, Login prüfen.
-2. **G1, G2 und G3 auf Unraid:** ausgehender Zugang (`data.geopf.fr`, `cadastre.data.gouv.fr` → `*.cloud.ovh.net`, `georisques.gouv.fr`, `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com`); `.env` mit `ANTHROPIC_API_KEY`; Flags für `architect` (README 9–11). G3 und Weg E brauchen keinen neuen Zugang, G3 aber WeasyPrint im Image. Migration 0006 läuft beim Ausliefern mit.
-3. Überwachung: Uptime Kuma mit `/api/health/ready`, `/api/health/jobs` und Authentik; Alarm auf Logs `rules_extract_failed`, `rules_budget_exceeded`, `road_import_implausible`; Frische der Sicherung (README 7).
-4. Offsite-Kopie von `BACKUP_DIR` und Appdata; erste Wiederherstellungsübung (BETRIEB 6).
-5. SMTP nach E2 eintragen (EU-Anbieter, siehe Abschnitt 3); Testmail über `POST /api/v1/admin/ops/test-mail`.
-6. GitHub: Schutz des Hauptzweigs einrichten (infra/README); Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (A27).
-7. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6, 6.9): Staff-E-Mail, Mailadresse in Jobs (A12), IP-HMAC (A7), Adressvorschläge im Arbeitsspeicher (G22), IP an IGN (G15); Steckbriefe im Objektspeicher (BR10); Claude API erhält nur Planunterlagen.
-8. Optional: lokal und in CI SeaweedFS statt MinIO (A16, A22).
+1. Unraid in Betrieb nehmen (README 2–4), danach TLS, Authentik, `staff-add`, Login prüfen.
+2. G1–H1 auf Unraid: ausgehender Zugang (`data.geopf.fr`, `cadastre.data.gouv.fr`, `georisques.gouv.fr`, `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com`), `.env` mit `ANTHROPIC_API_KEY`, Flags für `architect`; Migration 0007 läuft beim Ausliefern mit; Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (A27).
+3. Überwachung (Uptime Kuma), Offsite-Sicherung, erste Wiederherstellungsübung.
+4. SMTP nach E2 eintragen, Testmail; GitHub-Hauptzweig schützen.
+5. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6): Staff-E-Mail, Mailadresse in Jobs (A12), IP-HMAC (A7), Steckbriefe im Objektspeicher (BR10); Claude API erhält nur Planunterlagen.
+6. Optional: lokal und in CI SeaweedFS statt MinIO (A16, A22).
 
-### 4.3 Nächstes Modul und spätere Module
+### 4.4 Nächstes Modul
 
-- **A Anfrage (Plan 3.6)** ist der nächste Schnitt: Kontakt mit E-Mail-Code, Einwilligung, Snapshot aus Grundstück und Baurahmen (`input_hash` aus G3 übernehmen, BR07), Mail mit Steckbrief (BR10), Anfragenliste, **Prüfung der Simulation durch das Büro** mit den Endpunkten `GET /admin/projects/{id}/site|rules|envelope`. Für Weg E entsteht keine Simulation zur Prüfung – die Anfrage müsste den gezeichneten Umriss trotzdem transportieren (noch nicht entworfen). Weiter offen: Frage „Lotissement?“ (RW16), Anfrage ohne Baurahmen außerhalb des Einzugsgebiets (G18), Büro-Prüfliste auf Projekte mit Anfrage beschränken (G21), `retention_cleanup` erweitern (A11, auch `envelope_sheet`), `DELETE /projects/{id}` gegen Aufbewahrung abwägen (S10).
-- **H2** nutzt `envelope/domain` mit den Höhen der Konfiguration (Setback-Funktionen, Bauband-Bedingung `facade`, Flucht `fixed`) und legt `/buildable?height_m=` an (Plan 7); für Weg E siehe D13.
+- **Erst klären:** Modul A nachholen (Abschnitt 3) oder direkt mit **H2** (Zulässigkeit und Implantation) weitermachen? H2 braucht H1 (fertig, Backend) und G3 (fertig); D12 und D13 vorher entscheiden. Spezifikation 5.3.3–5.3.6 vor Code lesen. H2 nutzt `envelope/domain` mit den Höhen der Konfiguration und legt `/buildable?height_m=` an (Plan 7).
+- **A (Plan 3.6):** Kontakt, Snapshot, Mail ans Büro, Prüfung der Simulation; offene Punkte darin: Frage „Lotissement?“ (RW16), Büro-Prüfliste auf Projekte mit Anfrage beschränken (G21), `retention_cleanup` erweitern (A11), `DELETE /projects/{id}` gegen Aufbewahrung abwägen (S10). Für Weg E noch nicht entworfen, wie eine Anfrage ohne Simulation aussieht.
 - **Vor Erweiterung des Einzugsgebiets:** CNIG-Typliste der überlagernden Vorgaben gegen den Standard prüfen (BR05).
 
-### 4.4 Korrekturen an der Spezifikation (offen)
+### 4.5 Korrekturen an der Spezifikation (offen)
 
-Prüfung vom 13.09.2026 (Lösung im Plan in Klammern): S1 Winkeltoleranz (Plan 3.7), S2 Firstrichtung Flachdach (3.8), S3 Neuprüfung beim Absenden (3.10), S4 Einzelabweichungen (teilweise), S5 Zustände (teilweise), S6 Preise an Typ-Identität (3.7), S7 keine Entwurfsregeln beim Kunden (durch D11 überholt), S8 Messpunkt Traufhöhe, S9 Queue `sandbox`, S10 Löschrecht vs. Aufbewahrung, S11 Paritätstest Lärche (teilweise), S12 Attikahöhe im Flachdach-Testmodell, S13 Spezifikation aufteilen, S14 Leitplanken L2 und L6 an D11 anpassen. Aus Plan 7 zusätzlich: Bauband als Flächenbedingung (5.2.4), zwei Auslegungen statt `B(0)`/`B(H_max)` (5.3.1), `/buildable` erst mit H2 (6.3), kein Höhenbezug in m NGF (5.9.4). **Neu:** ein fünfter Eingangsweg zum Grundstück (Weg E, 5.1.1) ohne Katasterbezug ist der Spezifikation noch nicht bekannt.
+Unverändert seit 13.09.2026: S1–S14 (siehe vorige Fassungen von HANDOFF.md bzw. AENDERUNGEN.md 14.09.). H1s Abweichungen (ANNAHMEN H01–H09) sind Plan-Ebene, keine neue Spezifikationskorrektur.
 
-### 4.5 Weitere Punkte
+### 4.6 Weitere Punkte
 
 1. Einwilligung zur Datenweitergabe fehlt im Mockup (Spez. Anh. E.2 M10).
-2. Büro-Oberfläche aus G2 (Knöpfe „Erneut versuchen“, „Neu auswerten“, Status „veraltet“) im Browser ansehen; bisher nur Komponententests. Der Kundenpfad ist mit G3 und Weg E im Browser geprüft.
+2. Büro-Oberfläche aus G2 (Knöpfe „Erneut versuchen“, „Neu auswerten“, Status „veraltet“) im Browser ansehen; bisher nur Komponententests.
 
 ## 5. Empfohlener nächster Schritt
 
-1. **Push entscheiden:** `11a6e64` (Weg E) ist committet, aber noch nicht gepusht – push freigeben, damit CI läuft, oder vorher noch etwas ändern.
-2. Nutzer trägt den Schlüssel der Claude API ein → 4.1 Punkt 1–4 (echte Auswertung mit `band`, Referenzmenge, Wiederholung der G3-Messung).
-3. Priorität 1 aus Abschnitt 3 (Authentik-Hostname, konkreter E2-Anbieter) → Unraid nach 4.2 Punkt 1–2.
-4. Danach **Modul A** (Plan 3.6) als letztes Modul von R1; Spezifikation 5.10 und 10.2 vor Code lesen. Vorher klären, wie eine Anfrage ohne Simulation (Weg E) aussieht (4.3).
+1. Entscheiden: Modul A nachholen oder direkt H1-Frontend/H2 (Abschnitt 3, 4.4).
+2. H1 fertigstellen (4.1): Katalogpflege-Oberfläche, fünf echte Typen, lokal im Browser prüfen.
+3. Priorität 1 aus Abschnitt 3 (Claude-API-Schlüssel, Authentik-Hostname, E2-Anbieter) → 4.2/4.3.
 
 ## 6. Hinweise und Stolperstellen
 
-- **Befehle:** Backend-Prüfungen `docker compose --profile dev run --rm -e TEST_S3=1 backend-dev sh -c "ruff check . && ruff format --check . && mypy app && pytest"` (MinIO und Mailpit müssen laufen, sonst scheitern `test_storage_ops`). Nach neuen Abhängigkeiten zuerst `uv lock` im Container, dann `docker compose --profile dev build backend-dev`. Frontend `corepack pnpm …` im Ordner `frontend`. Git Bash: bei `docker -v` oder `docker exec -w` mit Linux-Pfaden `MSYS_NO_PATHCONV=1`.
-- **Heredocs im Bash-Werkzeug** zerbrechen an einer **ungeraden Zahl von Apostrophen** im Text (französische Zitate!), an Backticks und `$$`. Längere Dateien mit dem Write-Werkzeug schreiben oder ein Skript im Scratchpad ablegen und mit `node` ausführen.
-- **E2E vor dem Push lokal laufen lassen:** Flags per `flag-set … --all`, dann `corepack pnpm exec playwright test -g Kunde`, danach `--role architect` zurücksetzen. Nur der Kundenpfad läuft lokal; Tests mit Büro-Anmeldung brauchen die CI. Weg E hat noch kein E2E-Playwright-Szenario, nur Komponententests – beim nächsten E2E-Lauf ergänzen.
-- **G3:** `envelope-check` legt nichts an (Transaktion wird zurückgerollt) und ist die schnellste Gegenprobe nach Änderungen an G1, G2 oder den Schranken. Der Baurahmen wird nie gespeichert; ändert sich etwas an den Eingaben, ändert sich `input_hash` und damit auch der Steckbrief.
-- **Weg E:** Bemaßte Polygone sind mit `n` Kanten mathematisch überbestimmt, wenn alle `n` frei eingebbar wären (zwei Schließungsbedingungen); die letzte Kante ergibt sich immer aus dem Schlusspunkt und wird weder abgefragt noch angezeigt. Koordinaten der Wanderung vor `math.floor()` auf Mikrometer runden, sonst weicht der Ursprung bei glatten Winkeln (90°/180°/270°) durch Gleitkommarauschen gelegentlich um 1 m ab (`backend/app/site/domain/manual.py`). Die Geometrie liegt technisch im SRID 2154, hat aber keinen geografischen Bezug – nie ohne Prüfung von `site.origin` als echte Lage behandeln.
-- **WeasyPrint** braucht Pango und DejaVu im Image (`Dockerfile`, Stufe `base`); die Warnung zu HarfBuzz-Subset ist unkritisch.
-- **Unsichtbare Zeichen:** `backend/app/rules/domain/text.py` enthält in `_TRANSLATE` geschützte Leerzeichen (U+00A0, U+202F) und einen weichen Trennstrich; beim Neuschreiben mit `git diff` prüfen. `ruff format` ändert Dateien – danach vor dem Edit-Werkzeug neu lesen.
-- **Jobarten registrieren:** Wer `enqueue` aufruft (auch die CLI), muss `app.registry` importieren, sonst „Unbekannte Jobart“.
-- **FastAPI:** jede neue öffentliche Route in `test_access_policies.py` eintragen (Weg E brauchte keine neue Route, nur eine erweiterte `SiteIn`); `openapi.json` neu erzeugen, dann `pnpm api:types`. Listenfelder in Antwortmodellen **ohne** Standardwert lassen, sonst werden sie im Frontend-Typ optional.
+- **Modul A übersprungen:** siehe Abschnitt 1 und 4.4 – nicht automatisch annehmen, dass A schon existiert.
+- **H1-Trigger `forbid_published_modification`** ist **bedingt** (blockt nur `UPDATE`/`DELETE` bei `status = 'published'`), anders als das unbedingte `forbid_modification` (`rule_no_update`, `audit_log`/`legal_text`). Bei weiteren unveränderlichen Tabellen das richtige Muster wählen.
+- **H1-Preiskatalog ist ein Singleton-Entwurf** je Region (`default`), wird beim ersten Typ-Import oder Linie/Option automatisch angelegt und mit `POST /admin/catalog/price-catalog/publish` als Ganzes veröffentlicht.
+- **Befehle:** Backend-Prüfungen `docker compose --profile dev run --rm -e TEST_S3=1 backend-dev sh -c "ruff check . && ruff format --check . && mypy app && pytest"` (MinIO und Mailpit müssen laufen). Nach neuen Abhängigkeiten zuerst `uv lock` im Container, dann `docker compose --profile dev build backend-dev` (diese Session: openpyxl, ezdxf, python-multipart neu). Frontend `corepack pnpm …` im Ordner `frontend` **ohne** `MSYS_NO_PATHCONV=1` (das zerbricht den Pfad zu `corepack.js` in Git Bash); die Variable nur bei `docker …`-Befehlen mit Linux-Pfaden setzen.
+- **Heredocs im Bash-Werkzeug** zerbrechen an einer ungeraden Zahl von Apostrophen, an Backticks und `$$`. Längere Dateien mit dem Write-Werkzeug schreiben.
+- **E2E vor dem Push lokal laufen lassen:** Flags per `flag-set … --all`, dann `corepack pnpm exec playwright test -g Kunde`. H1 hat noch kein E2E-Szenario (reiner Büro-Pfad, kein Kundenschritt) und braucht keins, solange keine Kunden-Oberfläche existiert.
+- **G3:** `envelope-check` ist die schnellste Gegenprobe nach Änderungen an G1, G2 oder den Schranken.
+- **Weg E:** Details siehe vorige Fassungen; Geometrie ohne geografischen Bezug, nie ohne Prüfung von `site.origin` behandeln.
+- **WeasyPrint** braucht Pango und DejaVu im Image; die HarfBuzz-Subset-Warnung ist unkritisch.
+- **Unsichtbare Zeichen:** `backend/app/rules/domain/text.py` – beim Neuschreiben mit `git diff` prüfen.
+- **Jobarten registrieren:** Wer `enqueue` aufruft, muss `app.registry` importieren. H1 hat keine Hintergrundjobs (Import ist synchron) und braucht keinen Eintrag.
+- **FastAPI:** neue **öffentliche** Route in `test_access_policies.py` eintragen; H1s Routen sind alle `/admin/...` mit Rollenprüfung, keine Eintragung nötig (Test prüft ohnehin „genau eine Zugriffsregel je Route“). `openapi.json` neu erzeugen (`python -m app.cli openapi openapi.json`), dann `pnpm api:types`.
 - **Docker Desktop** beendet sich gelegentlich; Start `C:\Users\sarah\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe`, dann `docker info` abwarten.
 - **Ports lokal:** Web 8080, API 8000, OIDC-Testdienst 8081, MinIO 9000, Mailpit 8025. **Lokaler Login:** `ops@emprise.local`; beim Wechsel Testdienst ↔ Authentik `oidc_subject` auf NULL setzen. Datenbank: `docker exec emprise-db-1 psql -U postgres -d emprise`.
-- **Rate-Limits beim Testen:** viele Projekte oder Grundstücke von derselben IP → 429; `EMPRISE_PROJECT_CREATE_LIMIT_PER_HOUR`, `EMPRISE_SITE_WRITE_LIMIT_PER_HOUR` hochsetzen.
-- **Kosten der Claude API:** Aufrufe mit Schlüssel kosten; `--force` und „Neu auswerten“ werten vollständig neu aus. Eine Änderung an Prompt oder Ausgabeschema erzwingt eine neue Auswertung aller Kapitel (RW26) – solche Änderungen vor dem Eintragen des Schlüssels bündeln.
-- **CI:** Der Security-Job baut Caddy mit `xcaddy`; ein Netzfehler zu `sum.golang.org` ließ früher einen Lauf scheitern (kein Codefehler). Wiederholen mit `gh run rerun <id> --failed`. Für `11a6e64` noch kein CI-Lauf, da nicht gepusht.
+- **Rate-Limits beim Testen:** viele Projekte/Grundstücke von derselben IP → 429; Limits in `.env` hochsetzen.
+- **Kosten der Claude API:** Aufrufe mit Schlüssel kosten; Änderungen an Prompt/Ausgabeschema vor dem Eintragen des Schlüssels bündeln.
+- **CI:** Security-Job baut Caddy mit `xcaddy`; Netzfehler zu `sum.golang.org` sind kein Codefehler, mit `gh run rerun <id> --failed` wiederholen. `596e075` (H1) lief grün ohne Auffälligkeiten trotz drei neuer Python-Abhängigkeiten.
 
 ## 7. Startprompt für die neue Session
 
 ```
-Lies HANDOFF.md und den Eintrag vom 17.09.2026 in AENDERUNGEN.md. Prüfe mit git status, ob der Commit 11a6e64 (Weg E) gepusht ist; falls nicht, frag nach, ob du das tun sollst, und prüfe danach mit gh run list die CI. Fasse den Stand in fünf Sätzen zusammen und nenne die Entscheidungen mit Priorität 1, die du von mir brauchst.
+Lies HANDOFF.md und den Eintrag vom 18.09.2026 in AENDERUNGEN.md. Fasse den Stand in fünf Sätzen zusammen, nenne die Entscheidungen mit Priorität 1 und frag mich ausdrücklich, ob Modul A nachgeholt werden soll, bevor wir mit H2 oder dem H1-Frontend weitermachen.
 ```

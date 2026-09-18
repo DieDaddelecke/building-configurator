@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 18.09.2026 – H1 Hauskatalog: Plan und Backend-Umsetzung
+
+**Neu**
+- `docs/PLAN_H1_HAUSKATALOG.md` – Plan des Moduls H1: fachliche Festlegungen (XLSX/DXF-Erfassung ohne IFC, Konsistenzprüfung, Preismodell, Veröffentlichungszustände), Architektur, Arbeitsschritte, Prüfprotokoll, Anhang mit den fünf Platzhalter-Typen (Kapitel 12: neu erarbeitet Carré und Attique, gegen `REGELWERK`/`BEBAUBARE_FLAECHE` aus dem Mockup geprüft).
+- `backend/app/catalog/` – Modul H1: `domain/` (`tolerances`, `consistency` – Neigungsprüfung nur `gable`/`hip`, Raumflächen-Warnschwelle; `xlsx` – Typdatenblatt mit drei Blättern; `dxf` – Umriss aus zwei Layern), `models.py` (Typen/Linien/Optionen/Preiskatalog als Identität+Version), `schemas.py`, `service.py`, `api.py` (nur `/admin/catalog/...`, kein Kundenschritt).
+- `backend/migrations/versions/0007_catalog.py` – neue Tabellen sowie der bedingte Trigger `forbid_published_modification` (blockt UPDATE/DELETE nur bei `status = 'published'`, L4).
+- `backend/tests/unit/test_catalog_domain.py` (18 Fälle: XLSX-Schema, DXF-Umriss, Neigungsprüfung gegen alle fünf Platzhalter-Typen), `backend/tests/integration/test_catalog.py` (10 Fälle: Rollen, Import, Konsistenzsperre, Veröffentlichung inkl. Trigger per Rohzugriff, Preisübernahme, RE2020).
+
+**Geändert**
+- `UMSETZUNGSPLAN.md` – Entscheidung D14 (Kapitel 9), Ergänzung zu Modul A (2.1, 3.6): bleibt Notausgang neben dem Weg G3 → H2 → H3 → V.
+- `AGENTS.md` – Dokumententabelle um `docs/PLAN_H1_HAUSKATALOG.md` ergänzt.
+- `docs/ANNAHMEN.md` – Abschnitt „H1 – Hauskatalog“ (H01–H09), u. a. Rolle `catalog_admin` statt `architect`, RE2020 nicht im Typdatenblatt, Trigger-Entwurf.
+- `backend/app/main.py`, `migrations/env.py`, `platform/locales/{de,fr}.json`, `pyproject.toml` (openpyxl, ezdxf, python-multipart), `uv.lock`, `tests/conftest.py` (neue Tabellen in `CLEAN_TABLES`), `openapi.json`, `frontend/src/api/schema.d.ts` – Verdrahtung, Abhängigkeiten, generierte Dateien.
+
+**Entschieden**
+- D14: Modul A (Anfrage direkt nach G3, ohne Konfiguration) bleibt dauerhaft als Notausgang bestehen, auch mit gültigem Baurahmen und auch nachdem H1–H3 und V den vollständigen Weg anbieten.
+- H1-Plan Kapitel 9 Punkt 1: Start mit fünf Platzhalter-Typen statt drei (Nutzer: „erarbeite 5 Mockup Typen“).
+- H1-Plan Kapitel 9 Punkt 2: zunächst „architect ist okay“ freigegeben, während der Umsetzung als Rechercheversehen erkannt und auf `catalog_admin` korrigiert (H01) – der Nutzer hat diese Korrektur nicht gesondert bestätigt, sie steht als Annahme im Protokoll.
+- H1-Plan Kapitel 9 Punkt 3: Grundriss-PDF bleibt rein intern in H1 (Nutzer: „ja“).
+- Nutzer: „Setze H1 um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`); Backend umgesetzt, committet (`596e075`).
+- Nutzer: „push it“ – gepusht, CI grün (Lauf 35308790615).
+
+**Ohne Dateiänderung**
+- Nachgeholte CI-Prüfung für den zu Sessionbeginn bereits committeten, aber laut `HANDOFF.md` fälschlich als „nicht gepusht“ vermerkten Stand (`11a6e64`/`a37e76d`, G1 Weg E): tatsächlich schon gepusht, CI-Lauf 35258574782 grün; Vermerk in `HANDOFF.md` korrigiert.
+- Klärung auf Nachfrage: Es gibt kein Modul „G4“, die G-Kette endet bei G3; Modul-Landkarte (A, H1–H3, V, X2–X5) und der Inhalt von Modul A im Detail erläutert.
+- Nutzer erinnerte an die ursprünglich geplante Reihenfolge (Kunde konfiguriert frei, Anfrage erst am Ende) – abgeglichen mit dem Gesamtablauf der Spezifikation (3.4) und als für R2 weiterhin gültig bestätigt; daraus D14.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/BETRIEB.md` (H1 hat keine Hintergrundjobs oder externen Dienste – Abschnitt folgt, sobald etwas Betriebliches zu dokumentieren ist), `deploy/unraid/`.
+
+**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: Push-Punkt 5.1 (war tatsächlich schon erledigt, nur der Vermerk fehlte). Alle Punkte aus 4.1–4.5 der vorigen Fassung bleiben offen und stehen unten erneut; neu hinzugekommen: H1-Frontend (Katalogpflege-Oberfläche) und die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien.
+
+---
+
 ## 17.09.2026 – G1: Weg E, Grundstück frei zeichnen ohne Kataster
 
 **Neu**

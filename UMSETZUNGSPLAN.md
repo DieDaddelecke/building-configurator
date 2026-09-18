@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2 und G3; D1–D4 und D11 entschieden (Kapitel 9) · **Stand:** 17.09.2026, G3 umgesetzt (3.5, Kapitel 7); G1 um Weg E (freies Zeichnen ohne Bebaubarkeitscheck) umgesetzt (3.3, Kapitel 7, ANNAHMEN G26–G30); D13 (H2 ohne Baurahmen) weiter offen
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3 und H1 (Backend); D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 Backend umgesetzt (3.7, Kapitel 7, ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), Frontend offen; D13 (H2 ohne Baurahmen) weiter offen
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
