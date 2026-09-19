@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 19.09.2026 – H2: Zulässigkeit und Implantation (Plan und Umsetzung), Hand-off
+
+**Neu**
+- `docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md` – Plan des Moduls H2 mit Herleitung der Fläche zulässiger Ursprünge, Wirkung der Regeln (D12), Drehung, Weg E, Prüfprotokoll (10: Befunde beim Bau, verworfene Alternativen, Grenzen).
+- `backend/app/configuration/` – Modul H2: `domain/` (rein: `house`, `geometry`, `context`, `checks`, `rotations`, `surface`, `placement`, `presets`, `fit`, `tolerances`), `models.py` (`configuration`), `schemas.py`, `service.py`, `api.py`.
+- `backend/migrations/versions/0009_configuration.py` – Tabelle `configuration` (ein Datensatz je Projekt, Typversion, Lage in Lambert-93, Grenzschalter, Revision).
+- `backend/tests/unit/test_configuration_domain.py` (38 Fälle: Parität Spez. 11.2, Bauband, Grenze, Höhen, Zonen, Drehung, `hypothesis`), `backend/tests/integration/test_configuration.py` (19 Fälle gegen PostGIS, echtes Testgrundstück AD 65 und Weg E), `backend/tests/configuration_support.py`, `backend/tests/e2e_seed_types.py` (drei Demo-Typen `demo_*` für den lokalen Stack).
+- `frontend/src/api/configuration.ts`, `frontend/src/configuration/` (`geometry.ts`, `format.ts`, `TypKarten.tsx`, `Implantation.tsx`, Tests, `__fixtures__/konfiguration.ts`), `frontend/src/pages/konfigurator/KonfiguratorSeite.tsx` (+ Test) – Route `/konfigurator`; 28 neue Tests der Oberfläche.
+
+**Geändert**
+- `backend/app/catalog/service.py` – `published_types`, `type_by_version_id` (Lesezugriff für H2); `backend/app/envelope/service.py` – `derived` (reine Ableitung statt Ausgabeform); `backend/app/main.py`, `config.py` (`configuration_limit_per_minute`), `migrations/env.py`, `tests/conftest.py` (Tabelle in der Bereinigung), Fehlertexte `problem.type_blocked` u. a. in `backend/app/platform/locales/{de,fr}.json`.
+- `backend/openapi.json`, `frontend/src/api/schema.d.ts` – neu erzeugt (Modell `PlacementRequest`, weil `PlacementIn` schon im Katalog vergeben ist).
+- `frontend/src/App.tsx`, `pages/grundstueck/GrundstueckSeite.tsx` (Knopf „Haus wählen“ hinter dem Flag), `i18n/{de,fr}.json` (Block `configurator`, beide Sprachen deckungsgleich).
+- `docs/ANNAHMEN.md` (HP01–HP20), `docs/BETRIEB.md` (12), `UMSETZUNGSPLAN.md` (Umsetzungsstand 3.8; D12/D13 vermerkt), `AGENTS.md` (Stand, Dokumententabelle), `HANDOFF.md`.
+
+**Entschieden**
+- Nutzer: „erstelle den hauskonfigurator“ – ich habe das als Release R2 gelesen und mit H2, dem ersten Modul der Kette, begonnen; H3 und V blieben aus, das habe ich gesagt. Keine Rückfrage.
+- **D12 und D13** nach der Empfehlung des Plans genommen (Auftrag als Umsetzung gewertet, Memory `feedback-plan-dann-umsetzen`); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. D13 erweitert: Freier Modus auch bei Kataster-Grundstücken ohne verfügbare Regeln (ANNAHMEN HP02).
+- Abweichung vom Umsetzungsplan 3.8: Terrasse, Carport und Zufahrt kommen mit H3 (HP03); `/buildable` entfällt zugunsten der Fläche zulässiger Ursprünge (HP04).
+- Nutzer: „commit und pushe“ – zwei Commits, `4423903` (offene Hand-off-Dokumente der Vorsession) und `98fce8f` (H2), auf `main` gepusht. CI-Lauf 35427795221 war bei Abschluss noch in Arbeit.
+
+**Ohne Dateiänderung**
+- Browserprüfung am lokalen Stack (Französisch und Deutsch, Grundstück AD 65 über die Katasterreferenz): Typkarten, Typwahl, Schnellstellung „Près de la rue“ (Straße 5,00 m), Drehen, Ziehen mit dem Zeiger, Grenzschalter. Dabei gefunden und behoben: „2,99 m von 3,00 m“ (HP11), Schwenken um die Ecke beim Drehen (HP19), Hinweise auf jeder Karte wiederholt. Alles in Plan 10.1.
+- Lokaler Stack neu gebaut (Migration 0009 angewendet), Flag `configurator` für `architect` gesetzt, drei `demo_*`-Typen in der lokalen Datenbank (zusätzlich zu den zwei H1-Testtypen `ligne`, `plateau`).
+- Vollständiger Backend-Lauf: 362 Tests, ruff, mypy grün; Frontend: 91 Tests, Typprüfung und Lint grün.
+- Nicht gelaufen: Playwright (E2E). Nicht im Browser gesehen: ein gesperrter Typ mit echten Regeln, Ziehen per Berührung, Grundstück mit mehreren Zonen.
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/PLAN_G3_BAURAHMEN.md`, `docs/PLAN_A_ANFRAGE.md`.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Umgang mit einem Auftrag für ein ganzes Release; getrennte Commits).
+
+---
+
 ## 18.09.2026 – H1: Katalogpflege-Oberfläche
 
 **Neu**

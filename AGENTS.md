@@ -2,16 +2,16 @@
 
 Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben des Bebauungsplans (PLU) werden zu harten Grenzen, darin wird ein Haus konfiguriert (Typ, Ausstattungslinie, Optionen, Lage). Ergebnis ist kein Kauf, sondern ein unverbindlicher Vorentwurf, den ein Architekturbüro prüft und in ein Angebot überführt. „Emprise“ ist eine eigene Marke, getrennt vom Büro.
 
-## Stand (18.09.2026)
+## Stand (19.09.2026)
 
 Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 - Mockup und Fachdokumentation: fertig. Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
-- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1 und A wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden (Plan Kapitel 9).
+- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1, A und H2 wurden daraus beauftragt (H3 und V stehen aus). D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden; D12 und D13 sind nach der Empfehlung des Plans genommen, vom Nutzer nicht bestätigt (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
 - G1–G3 (Grundstück, Regelwerk, Baurahmen): umgesetzt, getestet, lokal intern freigeschaltet, gepusht. G1 zusätzlich um Weg E (freies Zeichnen ohne Kataster, ANNAHMEN G26–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (RW01–RW27); G3 über 200 echte Parzellen geprüft (BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
-- H1 Hauskatalog: Backend und Katalogpflege-Oberfläche umgesetzt, im Browser geprüft, gepusht (`backend/app/catalog`, API unter `/admin/catalog`, Oberfläche unter `/buero/katalog`, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)). Offen: die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien, Betriebsabschnitt.
-- A Anfrage: Backend und Frontend umgesetzt, im Browser geprüft, gepusht, CI grün (`backend/app/inquiry`, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)); lokal intern für `architect` freigeschaltet. Offen: Anfrage ohne Grundstück außerhalb des Einzugsgebiets, endgültige Rechtstexte.
+- H1 Hauskatalog und A Anfrage: umgesetzt, im Browser geprüft, gepusht, CI grün (`backend/app/catalog` mit Oberfläche `/buero/katalog`, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md); `backend/app/inquiry`, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)). Offen: die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien, Anfrage außerhalb des Einzugsgebiets, endgültige Rechtstexte.
+- H2 Zulässigkeit und Implantation: Backend (`backend/app/configuration`, Migration 0009, Flag `configurator`) und Kundenoberfläche `/konfigurator` umgesetzt, im Browser auf AD 65 geprüft, gepusht (`98fce8f`, CI-Lauf bei Abschluss offen; ANNAHMEN HP01–HP20, [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md)). Der Hauskonfigurator (R2) ist damit erst zu einem Drittel da: Linie, Optionen, Kosten (H3) und Übergabe (V) fehlen; die Anfrage kennt noch keine Konfiguration.
 
 ## Dokumente
 
