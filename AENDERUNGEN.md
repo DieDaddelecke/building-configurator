@@ -4,6 +4,33 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 18.09.2026 – H1: Katalogpflege-Oberfläche
+
+**Neu**
+- `frontend/src/pages/buero/katalog/` – Büro-Oberfläche der Katalogpflege: `KatalogLayout` (Rahmen mit Reitern), `KatalogTypen` (Typenliste, Import XLSX + DXF), `KatalogTyp` (Typstand), `KatalogLinienOptionen`, `KatalogPreise`, `katalog.test.tsx` (11 Fälle).
+- `frontend/src/katalog/` – `geometrie.ts` (Kanten, Vorschlag der Fassadenrollen, Platzierung; `geometrie.test.ts`, 8 Fälle), `Grundriss.tsx` (Umriss mit Rollen, Eingang, Garagentor), `Axonometrie.tsx` (Plan H1 3.6, clientseitig), `TypFormulare.tsx` (Rollen, Lage, RE2020, Grundriss-PDF), `bausteine.tsx` (Beträge, Statusmarke, Fehleranzeige, Rechte).
+- `frontend/src/api/catalog.ts` – Abfragen und Änderungen der Katalogpflege.
+
+**Geändert**
+- `backend/app/catalog/{schemas,service}.py` – `TypeSummaryOut.versions`; `GET .../lines` und `.../options` liefern alle Versionen; `PackageIn.included_option_slugs` (Ausgabe `included_option_slugs`, unbekannte Option `422 catalog_reference_unknown`); `backend/tests/integration/test_catalog.py` (3 neue Fälle, jetzt 13), `backend/openapi.json`, `frontend/src/api/schema.d.ts`.
+- `frontend/src/App.tsx`, `pages/buero/BueroLayout.tsx`, `BueroStart.tsx`, `i18n/{de,fr}.json` – Routen `/buero/katalog/...`, Navigation, Übersetzungen (`catalog.*`, beide Sprachen deckungsgleich).
+- `docs/ANNAHMEN.md` (H10–H14), `AGENTS.md` (Stand), `UMSETZUNGSPLAN.md` (Statuszeile), `docs/PLAN_H1_HAUSKATALOG.md` (Umsetzungsstand).
+
+**Entschieden**
+- Nutzer: „erstelle erst eine Oberfläche für H1 – beachte alle Vorlagen und Vorgaben“; keine Rückfragen nötig, Plan H1 4.4/5 galt. Festlegungen der Umsetzung stehen als Annahmen in ANNAHMEN H10–H14 (nicht ausdrücklich bestätigt): Format `{edge, position}` für Eingang/Garagentor, links/rechts von der Straße aus gesehen, schematische Axonometrie, Umfang der Oberfläche.
+- Nutzer: „comitten und pushen“ – Commit `df4fa3d` gepusht (CI-Lauf 35398360953 bei Abschluss noch in Arbeit).
+
+**Ohne Dateiänderung**
+- Browserprüfung am lokalen Stack (Deutsch und Französisch): Import zweier Beispieltypen über das echte Formular (Rechteck `ligne`, L-Form `plateau`), Fassadenrollen-Vorschlag und Speichern, Eingang und Garagentor, Option `pv` und Linie `confort` (mit `enthalten_in`) angelegt und veröffentlicht, RE2020-Befund gespeichert und im Preiskatalog sichtbar, `ligne` veröffentlicht und gesperrt, Fehlermeldung bei ungültiger XLSX. Testdaten bleiben im lokalen Stack.
+- Beim Bau gefunden: Entwürfe standen in keiner Liste (H11), `enthalten_in` war über die API nicht pflegbar (H12), die Rollenvorschläge übersahen bei der L-Form die zweite Gartenkante (jetzt jede Gegenkante = Garten).
+- Nicht gelaufen: Playwright (E2E), die vollständige Backend-Suite (nur Katalog- und Domänentests, ruff und mypy über alles).
+
+**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/BETRIEB.md`, Datenmodell und Migrationen (keine neue Migration).
+
+**Memory:** unverändert (keine neue Rückmeldung zur Arbeitsweise).
+
+---
+
 ## 18.09.2026 – A Anfrage: Plan und Umsetzung (Backend und Frontend)
 
 **Neu**

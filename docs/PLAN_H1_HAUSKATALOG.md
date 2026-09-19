@@ -1,5 +1,7 @@
 # H1 Hauskatalog – Plan für die Umsetzung
 
+> **Umsetzungsstand 18.09.2026:** Arbeitsschritte 1–5 umgesetzt (Backend und Katalogpflege-Oberfläche `/buero/katalog`, ANNAHMEN H01–H14); Schritt 6 (fünf Platzhalter-Typen als echte Dateien) und der Betriebsabschnitt in `docs/BETRIEB.md` offen.
+>
 > Entwurf, noch nicht freigegeben. Wird wie G1–G3 durch Selbstprüfung (Kapitel 11) ergänzt, dann dem Nutzer vorgelegt. Mit der Freigabe („setze um“) gelten die Vorschläge dieses Plans als entschieden ([[feedback-plan-dann-umsetzen]]).
 
 ## 1. Ziel und Abgrenzung
