@@ -299,6 +299,128 @@
         "title": "ChapterCoverageOut",
         "type": "object"
       },
+      "CheckOut": {
+        "properties": {
+          "binding": {
+            "title": "Binding",
+            "type": "boolean"
+          },
+          "citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "edge_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edge Seq"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "measured": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "hint",
+              "unknown",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "zone_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Code"
+          }
+        },
+        "required": [
+          "code",
+          "kind",
+          "status",
+          "binding"
+        ],
+        "title": "CheckOut",
+        "type": "object"
+      },
       "CitationOut": {
         "description": "Herkunft eines Werts (L3): Seite und Zitat der Planunterlage, Prüfstatus, Link mit Seitensprung.",
         "properties": {
@@ -492,6 +614,179 @@
           "imported_at"
         ],
         "title": "CommuneOut",
+        "type": "object"
+      },
+      "ConfigurationOut": {
+        "properties": {
+          "boundary_options": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Boundary Options",
+            "type": "object"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementEvaluationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TypeFitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "free_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Reason"
+          },
+          "mode": {
+            "enum": [
+              "rules",
+              "free"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "rotations": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TypeRefOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "engine_version",
+          "mode",
+          "free_reason",
+          "type",
+          "placement",
+          "boundary_options",
+          "rotations",
+          "fit",
+          "evaluation",
+          "notices",
+          "updated_at"
+        ],
+        "title": "ConfigurationOut",
+        "type": "object"
+      },
+      "ConfigurationPatch": {
+        "description": "Teil-Update (JSON Merge Patch): nur gesendete Felder ändern sich, `null` löscht.",
+        "properties": {
+          "boundary_options": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary Options"
+          },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Slug"
+          }
+        },
+        "title": "ConfigurationPatch",
         "type": "object"
       },
       "ConfirmIn": {
@@ -972,6 +1267,80 @@
           "lotissement"
         ],
         "title": "CustomerOut",
+        "type": "object"
+      },
+      "EdgeMeasureOut": {
+        "properties": {
+          "contour": {
+            "enum": [
+              "facade",
+              "projection"
+            ],
+            "title": "Contour",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "measured_m": {
+            "title": "Measured M",
+            "type": "number"
+          },
+          "on_boundary": {
+            "title": "On Boundary",
+            "type": "boolean"
+          },
+          "on_boundary_allowed": {
+            "title": "On Boundary Allowed",
+            "type": "boolean"
+          },
+          "required_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required M"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "hint",
+              "unknown",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "kind",
+          "measured_m",
+          "required_m",
+          "contour",
+          "status",
+          "on_boundary",
+          "on_boundary_allowed",
+          "markers"
+        ],
+        "title": "EdgeMeasureOut",
         "type": "object"
       },
       "EdgeOut": {
@@ -2254,6 +2623,24 @@
         "title": "LocalOrigin",
         "type": "object"
       },
+      "LocalPointModel": {
+        "properties": {
+          "e": {
+            "title": "E",
+            "type": "number"
+          },
+          "n": {
+            "title": "N",
+            "type": "number"
+          }
+        },
+        "required": [
+          "e",
+          "n"
+        ],
+        "title": "LocalPointModel",
+        "type": "object"
+      },
       "LookupIn": {
         "description": "Genau eine Angabe: Punkt in WGS84, Punkt in Lambert-93 (aus der Adresssuche) oder Parzellennummer.",
         "properties": {
@@ -2966,6 +3353,90 @@
         "title": "PartOut",
         "type": "object"
       },
+      "PlacementAreaOut": {
+        "properties": {
+          "rotations": {
+            "items": {
+              "$ref": "#/components/schemas/RotationAreaOut"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "type_slug": {
+            "title": "Type Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type_slug",
+          "rotations"
+        ],
+        "title": "PlacementAreaOut",
+        "type": "object"
+      },
+      "PlacementEvaluationOut": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/EdgeMeasureOut"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "facade_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Facade Local",
+            "type": "array"
+          },
+          "projection_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Projection Local",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          },
+          "zone_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Code"
+          }
+        },
+        "required": [
+          "valid",
+          "checks",
+          "edges",
+          "facade_local",
+          "projection_local",
+          "zone_code"
+        ],
+        "title": "PlacementEvaluationOut",
+        "type": "object"
+      },
       "PlacementIn": {
         "properties": {
           "entrance": {
@@ -2994,6 +3465,40 @@
           }
         },
         "title": "PlacementIn",
+        "type": "object"
+      },
+      "PlacementOut": {
+        "properties": {
+          "origin": {
+            "$ref": "#/components/schemas/LocalPointModel"
+          },
+          "rotation_deg": {
+            "title": "Rotation Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "origin",
+          "rotation_deg"
+        ],
+        "title": "PlacementOut",
+        "type": "object"
+      },
+      "PlacementRequest": {
+        "properties": {
+          "origin": {
+            "$ref": "#/components/schemas/LocalPointModel"
+          },
+          "rotation_deg": {
+            "title": "Rotation Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "origin",
+          "rotation_deg"
+        ],
+        "title": "PlacementRequest",
         "type": "object"
       },
       "PlanDocumentOut": {
@@ -3083,6 +3588,41 @@
           "regulation_url"
         ],
         "title": "PlanOut",
+        "type": "object"
+      },
+      "PresetsOut": {
+        "properties": {
+          "presets": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PlacementOut"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "propertyNames": {
+              "enum": [
+                "street_near",
+                "set_back",
+                "garden_max"
+              ]
+            },
+            "title": "Presets",
+            "type": "object"
+          },
+          "type_slug": {
+            "title": "Type Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type_slug",
+          "presets"
+        ],
+        "title": "PresetsOut",
         "type": "object"
       },
       "PriceCatalogVersionOut": {
@@ -3655,6 +4195,38 @@
           "area_m2"
         ],
         "title": "RoomOut",
+        "type": "object"
+      },
+      "RotationAreaOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          },
+          "rotation_deg": {
+            "title": "Rotation Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "rotation_deg",
+          "rings_local",
+          "area_m2"
+        ],
+        "title": "RotationAreaOut",
         "type": "object"
       },
       "RuleDetailOut": {
@@ -4679,6 +5251,241 @@
         "title": "TypeBasePriceOut",
         "type": "object"
       },
+      "TypeFactsOut": {
+        "description": "Kennwerte des Typs für die Karte (Steckbrief, Spez. 5.4.6).",
+        "properties": {
+          "base_price_max_cents": {
+            "title": "Base Price Max Cents",
+            "type": "integer"
+          },
+          "base_price_min_cents": {
+            "title": "Base Price Min Cents",
+            "type": "integer"
+          },
+          "depth_m": {
+            "title": "Depth M",
+            "type": "number"
+          },
+          "eave_height_m": {
+            "title": "Eave Height M",
+            "type": "number"
+          },
+          "entrance": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrance"
+          },
+          "facade_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Facade Local",
+            "type": "array"
+          },
+          "facade_roles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Facade Roles",
+            "type": "object"
+          },
+          "footprint_m2": {
+            "title": "Footprint M2",
+            "type": "number"
+          },
+          "living_area_m2": {
+            "title": "Living Area M2",
+            "type": "number"
+          },
+          "pitch_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Deg"
+          },
+          "projection_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Projection Local",
+            "type": "array"
+          },
+          "ridge_direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge Direction"
+          },
+          "ridge_height_m": {
+            "title": "Ridge Height M",
+            "type": "number"
+          },
+          "roof_form": {
+            "title": "Roof Form",
+            "type": "string"
+          },
+          "rooms_text": {
+            "title": "Rooms Text",
+            "type": "string"
+          },
+          "storeys": {
+            "title": "Storeys",
+            "type": "string"
+          },
+          "width_m": {
+            "title": "Width M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "storeys",
+          "roof_form",
+          "pitch_deg",
+          "ridge_direction",
+          "ridge_height_m",
+          "eave_height_m",
+          "footprint_m2",
+          "width_m",
+          "depth_m",
+          "living_area_m2",
+          "rooms_text",
+          "base_price_min_cents",
+          "base_price_max_cents",
+          "facade_local",
+          "projection_local",
+          "facade_roles",
+          "entrance"
+        ],
+        "title": "TypeFactsOut",
+        "type": "object"
+      },
+      "TypeFitOut": {
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/TypeFactsOut"
+          },
+          "family": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Family"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "rotations": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "name",
+          "family",
+          "allowed",
+          "reasons",
+          "hints",
+          "rotations",
+          "suggestions",
+          "facts"
+        ],
+        "title": "TypeFitOut",
+        "type": "object"
+      },
+      "TypeRefOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "retired": {
+            "default": false,
+            "title": "Retired",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "name"
+        ],
+        "title": "TypeRefOut",
+        "type": "object"
+      },
       "TypeSummaryOut": {
         "properties": {
           "alternatives": {
@@ -5013,6 +5820,61 @@
           "published_at"
         ],
         "title": "TypeVersionRefOut",
+        "type": "object"
+      },
+      "TypesOut": {
+        "properties": {
+          "free_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Reason"
+          },
+          "mode": {
+            "enum": [
+              "rules",
+              "free"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "site_revision": {
+            "title": "Site Revision",
+            "type": "integer"
+          },
+          "types": {
+            "items": {
+              "$ref": "#/components/schemas/TypeFitOut"
+            },
+            "title": "Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "free_reason",
+          "notices",
+          "site_revision",
+          "types"
+        ],
+        "title": "TypesOut",
         "type": "object"
       },
       "ValidationError": {
@@ -6383,6 +7245,50 @@
         ]
       }
     },
+    "/api/v1/admin/projects/{project_id}/configuration": {
+      "get": {
+        "description": "Konfiguration für die Prüfung einer Anfrage; ohne Feature-Flag, nur mit Rolle.",
+        "operationId": "get_configuration_staff_api_v1_admin_projects__project_id__configuration_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Configuration Staff",
+        "tags": [
+          "configuration"
+        ]
+      }
+    },
     "/api/v1/admin/projects/{project_id}/envelope": {
       "get": {
         "description": "Baurahmen für die Prüfung einer Anfrage (Modul A); ohne Feature-Flag, nur mit Rolle.",
@@ -7694,6 +8600,283 @@
         "summary": "Get Project",
         "tags": [
           "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/catalog/types": {
+      "get": {
+        "description": "Veröffentlichte Typen mit Zulässigkeit, allen Gründen und Vorschlägen (Spez. 5.4.6).",
+        "operationId": "list_types_api_v1_projects__project_id__catalog_types_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TypesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Types",
+        "tags": [
+          "configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/configuration": {
+      "get": {
+        "operationId": "get_configuration_api_v1_projects__project_id__configuration_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Configuration",
+        "tags": [
+          "configuration"
+        ]
+      },
+      "patch": {
+        "description": "Typ, Lage oder Grenzschalter ändern. `If-Match` mit der Revision schützt vor überschriebenen\nÄnderungen (409). Ein gesperrter Typ oder eine Lage mit bindendem Verstoß wird nicht gespeichert (422).",
+        "operationId": "patch_configuration_api_v1_projects__project_id__configuration_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigurationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Configuration",
+        "tags": [
+          "configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/configuration/placement-area": {
+      "get": {
+        "description": "Fläche zulässiger Ursprünge je erlaubter Drehung; das Frontend prüft beim Ziehen lokal dagegen.",
+        "operationId": "get_placement_area_api_v1_projects__project_id__configuration_placement_area_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z][a-z0-9_]{1,59}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlacementAreaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Placement Area",
+        "tags": [
+          "configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/configuration/placement-presets": {
+      "post": {
+        "description": "Schnellstellungen `street_near`, `set_back`, `garden_max` (Spez. 5.3.5).",
+        "operationId": "post_placement_presets_api_v1_projects__project_id__configuration_placement_presets_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z][a-z0-9_]{1,59}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Placement Presets",
+        "tags": [
+          "configuration"
         ]
       }
     },

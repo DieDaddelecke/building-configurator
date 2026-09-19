@@ -864,5 +864,154 @@
       "publishHint": "À la prochaine modification, un nouveau brouillon sera créé.",
       "published": "Catalogue de prix version {{version}} publié."
     }
+  },
+  "configurator": {
+    "open": "Choisir ma maison",
+    "openHint": "Choisissez un type de maison et placez-le sur votre parcelle.",
+    "eyebrow": "Votre maison",
+    "title": "Votre maison sur la parcelle",
+    "intro": "Choisissez un type de maison, puis placez-la sur votre parcelle. Les vérifications reposent sur des règles interprétées automatiquement : c'est une simulation, sans valeur contractuelle.",
+    "back": "Retour au terrain",
+    "disabled": {
+      "eyebrow": "Bientôt disponible",
+      "title": "Le choix de la maison n'est pas encore ouvert",
+      "text": "Cette fonction est en cours d'essai interne."
+    },
+    "needSite": "Formez d'abord votre terrain pour choisir une maison.",
+    "steps": {
+      "label": "Étapes",
+      "type": "Type de maison",
+      "placement": "Implantation"
+    },
+    "mode": {
+      "manual_sketch": "Vous avez dessiné le terrain vous-même : aucune règle d'urbanisme n'est vérifiée. La maison peut être déplacée librement à l'intérieur du contour.",
+      "rules_unavailable": "Les règles de ce terrain ne sont pas disponibles : aucune règle d'urbanisme n'est vérifiée. La maison peut être déplacée librement à l'intérieur du terrain.",
+      "rules_in_progress": "Les règles de ce terrain sont en cours d'analyse. En attendant, aucune règle n'est vérifiée ; la vérification suivra automatiquement."
+    },
+    "types": {
+      "title": "Types de maison",
+      "intro": "Chaque carte indique si le type est possible sur votre parcelle. Un type non admissible affiche toutes ses raisons.",
+      "empty": "Aucun type de maison n'est publié pour le moment.",
+      "loadError": "Les types de maison n'ont pas pu être chargés.",
+      "allowed": "Possible sur votre parcelle",
+      "blocked": "Non admissible",
+      "select": "Choisir ce type",
+      "selected": "Type choisi",
+      "change": "Changer de type",
+      "reasons": "Pourquoi pas ?",
+      "hints": "À noter",
+      "suggestion": "Proposition : {{name}}",
+      "showSuggestion": "Voir {{name}}",
+      "fact": {
+        "footprint": "Emprise au sol",
+        "living": "Surface habitable",
+        "roof": "Toiture",
+        "ridge": "Hauteur au faîtage",
+        "eave": "Hauteur à l'égout",
+        "storeys": "Niveaux",
+        "size": "Dimensions"
+      },
+      "roof": {
+        "gable": "Toit à deux pans",
+        "hip": "Toit à quatre pans",
+        "flat": "Toit plat",
+        "complex": "Toiture complexe",
+        "other": "Autre forme"
+      },
+      "selectError": "Ce type ne peut pas être choisi.",
+      "commonHints": "À noter pour votre terrain"
+    },
+    "placement": {
+      "title": "Implantation",
+      "intro": "Faites glisser la maison sur le plan. Elle ne peut pas dépasser les limites autorisées ; le serveur vérifie chaque position enregistrée.",
+      "plan": "Plan de masse · implantation",
+      "planLabel": "Plan de la parcelle avec la maison",
+      "presets": "Positions rapides",
+      "preset": {
+        "street_near": "Près de la rue",
+        "set_back": "En retrait",
+        "garden_max": "Jardin maximal"
+      },
+      "noPreset": "Aucune position possible avec ces réglages.",
+      "rotate": "Tourner de 90°",
+      "rotation": "Orientation {{index}} sur {{count}}",
+      "keyboard": "Clavier : sélectionner la maison, flèches pour déplacer (Maj : 1 m), R pour tourner.",
+      "boundary": "Construire en limite",
+      "boundaryEdge": "Sur la limite : {{edge}}",
+      "boundaryHint": "Là où le règlement le permet, la maison peut toucher la limite au lieu de garder le retrait minimal.",
+      "distances": "Distances aux limites",
+      "column": {
+        "edge": "Limite",
+        "measured": "Distance",
+        "required": "Exigé"
+      },
+      "onBoundary": "sur la limite",
+      "unknownRule": "règle non déterminée",
+      "checks": "Vérifications",
+      "valid": "Toutes les règles vérifiées sont respectées.",
+      "violated": "Cette position ne respecte pas les règles :",
+      "saving": "Enregistrement…",
+      "saved": "Position enregistrée.",
+      "refused": "Position refusée.",
+      "conflict": "La configuration a changé entre-temps ; elle a été rechargée.",
+      "retired": "Ce type de maison a été retiré du catalogue ; votre choix reste enregistré.",
+      "next": "Prochaine étape : gamme, options et coût estimé. Elle n'est pas encore ouverte."
+    },
+    "edge": {
+      "street": "Voie ({{seq}})",
+      "side": "Limite latérale ({{seq}})",
+      "rear": "Limite de fond ({{seq}})",
+      "other": "Limite ({{seq}})"
+    },
+    "status": {
+      "pass": "respecté",
+      "fail": "non respecté",
+      "hint": "à noter",
+      "unknown": "non vérifiable",
+      "not_applicable": "sans objet"
+    },
+    "check": {
+      "setback_street": "Recul sur voie : {{measured}} m (minimum {{limit}} m)",
+      "setback_side": "Retrait latéral : {{measured}} m (minimum {{limit}} m)",
+      "setback_rear": "Retrait de fond : {{measured}} m (minimum {{limit}} m)",
+      "setback_street_unknown": "Recul sur voie : règle non déterminée, non vérifié",
+      "setback_side_unknown": "Retrait latéral : règle non déterminée, non vérifié",
+      "setback_rear_unknown": "Retrait de fond : règle non déterminée, non vérifié",
+      "setback_alignment": "Recul sur voie : alignement sur les constructions voisines, non vérifié",
+      "on_boundary_height": "Hauteur en limite : {{measured}} m (maximum {{limit}} m)",
+      "band_building": "La maison doit se situer dans la bande d'implantation ({{limit}} m depuis la voie)",
+      "band_facade": "La façade sur rue doit se situer à {{limit}} m au plus de la voie ({{measured}} m)",
+      "band_facade_unchecked": "Bande d'implantation : façade sur rue inconnue, non vérifié",
+      "band_unclear": "Une bande d'implantation existe ; son sens n'est pas précisé, non vérifié",
+      "roof_form": "Forme de toiture : {{measured}} (autorisé : {{limit}})",
+      "roof_flat": "Toit plat : {{limit}}",
+      "roof_pitch": "Pente de toiture : {{measured}}° (limite {{limit}}°)",
+      "roof_unknown": "Toiture : règle non déterminée, non vérifié",
+      "ridge_orientation": "Le faîtage doit être {{orientation}}",
+      "height_ridge": "Hauteur au faîtage : {{measured}} m (maximum {{limit}} m)",
+      "height_eave": "Hauteur à l'égout : {{measured}} m (maximum {{limit}} m)",
+      "height_storeys": "Niveaux : {{measured}} (maximum {{limit}})",
+      "height_unverifiable": "Hauteurs non vérifiables : {{reason}}",
+      "max_height_unknown": "Hauteur : règle non déterminée, non vérifié",
+      "footprint": "Emprise au sol : {{measured}} m² (maximum {{limit}} m²)",
+      "max_footprint_ratio_unknown": "Emprise au sol : règle non déterminée, non vérifié",
+      "no_build_area": "La maison touche une zone inconstructible",
+      "restricted_area": "La maison touche une zone soumise à des conditions particulières",
+      "outside_site": "La maison dépasse les limites du terrain",
+      "outside_outline": "La maison dépasse le contour dessiné",
+      "crosses_zones": "La maison chevauche deux zones ; elle doit se situer dans une seule zone",
+      "no_valid_position": "Ne peut être placé nulle part sur la parcelle avec ces règles",
+      "no_zone": "Aucune zone constructible n'est connue pour cette parcelle",
+      "facade_roles_missing": "Les façades de ce type ne sont pas encore qualifiées ; l'orientation vers la rue est approximative"
+    },
+    "orientation": {
+      "parallel_to_street": "parallèle à la voie",
+      "perpendicular_to_street": "perpendiculaire à la voie"
+    },
+    "reason": {
+      "street_level": "hauteur mesurée depuis le niveau de la rue",
+      "terrain_unavailable": "le terrain n'est pas connu",
+      "terrain_steep": "pente du terrain supérieure à 5 %"
+    }
   }
 }

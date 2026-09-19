@@ -864,5 +864,154 @@
       "publishHint": "Danach entsteht bei der nächsten Änderung ein neuer Entwurf.",
       "published": "Preiskatalog Version {{version}} veröffentlicht."
     }
+  },
+  "configurator": {
+    "open": "Haus wählen",
+    "openHint": "Wählen Sie einen Haustyp und stellen Sie ihn auf Ihr Grundstück.",
+    "eyebrow": "Ihr Haus",
+    "title": "Ihr Haus auf dem Grundstück",
+    "intro": "Wählen Sie einen Haustyp und stellen Sie ihn auf Ihr Grundstück. Die Prüfung beruht auf automatisch ausgewerteten Regeln: eine Simulation ohne Vertragswirkung.",
+    "back": "Zurück zum Grundstück",
+    "disabled": {
+      "eyebrow": "Bald verfügbar",
+      "title": "Die Hauswahl ist noch nicht freigeschaltet",
+      "text": "Diese Funktion wird gerade intern erprobt."
+    },
+    "needSite": "Bilden Sie zuerst Ihr Grundstück, um ein Haus zu wählen.",
+    "steps": {
+      "label": "Schritte",
+      "type": "Haustyp",
+      "placement": "Implantation"
+    },
+    "mode": {
+      "manual_sketch": "Sie haben das Grundstück selbst gezeichnet: Es werden keine Vorgaben des Bebauungsplans geprüft. Das Haus lässt sich frei innerhalb des Umrisses verschieben.",
+      "rules_unavailable": "Für dieses Grundstück liegen keine Regeln vor: Es werden keine Vorgaben des Bebauungsplans geprüft. Das Haus lässt sich frei innerhalb des Grundstücks verschieben.",
+      "rules_in_progress": "Die Regeln dieses Grundstücks werden gerade ausgewertet. Bis dahin wird keine Regel geprüft; die Prüfung folgt automatisch."
+    },
+    "types": {
+      "title": "Haustypen",
+      "intro": "Jede Karte zeigt, ob der Typ auf Ihrem Grundstück möglich ist. Ein nicht zulässiger Typ nennt alle Gründe.",
+      "empty": "Es ist noch kein Haustyp veröffentlicht.",
+      "loadError": "Die Haustypen konnten nicht geladen werden.",
+      "allowed": "Auf Ihrem Grundstück möglich",
+      "blocked": "Nicht zulässig",
+      "select": "Diesen Typ wählen",
+      "selected": "Gewählter Typ",
+      "change": "Typ wechseln",
+      "reasons": "Warum nicht?",
+      "hints": "Zu beachten",
+      "suggestion": "Vorschlag: {{name}}",
+      "showSuggestion": "{{name}} ansehen",
+      "fact": {
+        "footprint": "Grundfläche",
+        "living": "Wohnfläche",
+        "roof": "Dach",
+        "ridge": "Firsthöhe",
+        "eave": "Traufhöhe",
+        "storeys": "Geschosse",
+        "size": "Abmessungen"
+      },
+      "roof": {
+        "gable": "Satteldach",
+        "hip": "Walmdach",
+        "flat": "Flachdach",
+        "complex": "Zusammengesetztes Dach",
+        "other": "Andere Form"
+      },
+      "selectError": "Dieser Typ lässt sich nicht wählen.",
+      "commonHints": "Zu beachten für Ihr Grundstück"
+    },
+    "placement": {
+      "title": "Implantation",
+      "intro": "Ziehen Sie das Haus auf dem Plan. Über die zulässigen Grenzen hinaus lässt es sich nicht schieben; der Server prüft jede gespeicherte Lage.",
+      "plan": "Lageplan · Implantation",
+      "planLabel": "Plan des Grundstücks mit dem Haus",
+      "presets": "Schnellstellungen",
+      "preset": {
+        "street_near": "Straßennah",
+        "set_back": "Zurückversetzt",
+        "garden_max": "Garten maximal"
+      },
+      "noPreset": "Mit diesen Einstellungen ist keine Lage möglich.",
+      "rotate": "Um 90° drehen",
+      "rotation": "Ausrichtung {{index}} von {{count}}",
+      "keyboard": "Tastatur: Haus fokussieren, Pfeiltasten verschieben (mit Umschalt 1 m), R dreht um 90°.",
+      "boundary": "Auf der Grenze bauen",
+      "boundaryEdge": "Auf der Grenze: {{edge}}",
+      "boundaryHint": "Wo der Plan es erlaubt, darf das Haus die Grenze berühren, statt den Mindestabstand zu halten.",
+      "distances": "Abstände zu den Grenzen",
+      "column": {
+        "edge": "Grenze",
+        "measured": "Abstand",
+        "required": "Gefordert"
+      },
+      "onBoundary": "auf der Grenze",
+      "unknownRule": "Regel nicht ermittelt",
+      "checks": "Prüfungen",
+      "valid": "Alle geprüften Regeln sind eingehalten.",
+      "violated": "Diese Lage verletzt Regeln:",
+      "saving": "Wird gespeichert …",
+      "saved": "Lage gespeichert.",
+      "refused": "Lage abgelehnt.",
+      "conflict": "Die Konfiguration hat sich inzwischen geändert und wurde neu geladen.",
+      "retired": "Dieser Haustyp wurde aus dem Katalog genommen; Ihre Wahl bleibt gespeichert.",
+      "next": "Nächster Schritt: Linie, Optionen und geschätzte Kosten. Er ist noch nicht freigeschaltet."
+    },
+    "edge": {
+      "street": "Straße ({{seq}})",
+      "side": "Seitliche Grenze ({{seq}})",
+      "rear": "Hintere Grenze ({{seq}})",
+      "other": "Grenze ({{seq}})"
+    },
+    "status": {
+      "pass": "eingehalten",
+      "fail": "verletzt",
+      "hint": "zu beachten",
+      "unknown": "nicht prüfbar",
+      "not_applicable": "entfällt"
+    },
+    "check": {
+      "setback_street": "Abstand zur Straße: {{measured}} m (mindestens {{limit}} m)",
+      "setback_side": "Seitlicher Abstand: {{measured}} m (mindestens {{limit}} m)",
+      "setback_rear": "Abstand zur hinteren Grenze: {{measured}} m (mindestens {{limit}} m)",
+      "setback_street_unknown": "Abstand zur Straße: Regel nicht ermittelt, nicht geprüft",
+      "setback_side_unknown": "Seitlicher Abstand: Regel nicht ermittelt, nicht geprüft",
+      "setback_rear_unknown": "Abstand zur hinteren Grenze: Regel nicht ermittelt, nicht geprüft",
+      "setback_alignment": "Abstand zur Straße: Flucht der Nachbarbebauung, nicht geprüft",
+      "on_boundary_height": "Höhe an der Grenze: {{measured}} m (höchstens {{limit}} m)",
+      "band_building": "Das Haus muss im Bauband stehen ({{limit}} m von der Straße)",
+      "band_facade": "Die Straßenfassade darf höchstens {{limit}} m von der Straße entfernt sein ({{measured}} m)",
+      "band_facade_unchecked": "Bauband: Straßenfassade unbekannt, nicht geprüft",
+      "band_unclear": "Es gibt ein Bauband; seine Bedeutung ist nicht angegeben, nicht geprüft",
+      "roof_form": "Dachform: {{measured}} (zulässig: {{limit}})",
+      "roof_flat": "Flachdach: {{limit}}",
+      "roof_pitch": "Dachneigung: {{measured}}° (Grenze {{limit}}°)",
+      "roof_unknown": "Dach: Regel nicht ermittelt, nicht geprüft",
+      "ridge_orientation": "Der First muss {{orientation}} verlaufen",
+      "height_ridge": "Firsthöhe: {{measured}} m (höchstens {{limit}} m)",
+      "height_eave": "Traufhöhe: {{measured}} m (höchstens {{limit}} m)",
+      "height_storeys": "Geschosse: {{measured}} (höchstens {{limit}})",
+      "height_unverifiable": "Höhen nicht prüfbar: {{reason}}",
+      "max_height_unknown": "Höhe: Regel nicht ermittelt, nicht geprüft",
+      "footprint": "Grundfläche: {{measured}} m² (höchstens {{limit}} m²)",
+      "max_footprint_ratio_unknown": "Grundfläche: Regel nicht ermittelt, nicht geprüft",
+      "no_build_area": "Das Haus berührt eine Fläche, auf der nicht gebaut werden darf",
+      "restricted_area": "Das Haus berührt eine Fläche mit besonderen Bedingungen",
+      "outside_site": "Das Haus ragt über das Grundstück hinaus",
+      "outside_outline": "Das Haus ragt über den gezeichneten Umriss hinaus",
+      "crosses_zones": "Das Haus liegt in zwei Zonen; es muss in einer Zone stehen",
+      "no_valid_position": "Passt mit diesen Regeln nirgends auf das Grundstück",
+      "no_zone": "Für dieses Grundstück ist keine bebaubare Zone bekannt",
+      "facade_roles_missing": "Die Fassaden dieses Typs sind noch nicht zugewiesen; die Ausrichtung zur Straße ist ungefähr"
+    },
+    "orientation": {
+      "parallel_to_street": "parallel zur Straße",
+      "perpendicular_to_street": "senkrecht zur Straße"
+    },
+    "reason": {
+      "street_level": "Höhe wird ab Straßenniveau gemessen",
+      "terrain_unavailable": "das Gelände ist nicht bekannt",
+      "terrain_steep": "Geländeneigung über 5 %"
+    }
   }
 }

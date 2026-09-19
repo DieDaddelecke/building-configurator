@@ -6,6 +6,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 import app.catalog.models
+import app.configuration.models
 import app.envelope.models
 import app.inquiry.models
 import app.platform.models  # alle Modelle laden, damit Alembic sie vergleicht

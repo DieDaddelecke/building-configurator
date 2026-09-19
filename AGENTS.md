@@ -7,10 +7,10 @@ Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben
 Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 - Mockup und Fachdokumentation: fertig. Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
-- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1 (Backend) und A wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden (Plan Kapitel 9).
+- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1 und A wurden daraus beauftragt. D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden (Plan Kapitel 9).
 - R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
 - G1–G3 (Grundstück, Regelwerk, Baurahmen): umgesetzt, getestet, lokal intern freigeschaltet, gepusht. G1 zusätzlich um Weg E (freies Zeichnen ohne Kataster, ANNAHMEN G26–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (RW01–RW27); G3 über 200 echte Parzellen geprüft (BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
-- H1 Hauskatalog: Backend gepusht (`backend/app/catalog`, Katalogpflege-API unter `/admin/catalog`, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)); Katalogpflege-Oberfläche unter `/buero/katalog` umgesetzt und im Browser geprüft, noch nicht committet. Offen: die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien.
+- H1 Hauskatalog: Backend und Katalogpflege-Oberfläche umgesetzt, im Browser geprüft, gepusht (`backend/app/catalog`, API unter `/admin/catalog`, Oberfläche unter `/buero/katalog`, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)). Offen: die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien, Betriebsabschnitt.
 - A Anfrage: Backend und Frontend umgesetzt, im Browser geprüft, gepusht, CI grün (`backend/app/inquiry`, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)); lokal intern für `architect` freigeschaltet. Offen: Anfrage ohne Grundstück außerhalb des Einzugsgebiets, endgültige Rechtstexte.
 
 ## Dokumente
@@ -25,6 +25,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 | [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md) | Plan des Moduls G3: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Baurahmen |
 | [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md) | Plan des Moduls H1: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Hauskatalog |
 | [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md) | Plan des Moduls A: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit an der Anfrage |
+| [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md) | Plan des Moduls H2: Wirkung der Regeln, Drehung, Fläche zulässiger Ursprünge, Konfiguration, Prüfprotokoll | Arbeit am Konfigurator (Typwahl, Lage) |
 | [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen in der Umsetzung (Spez. 0 Punkt 7), je Modul ein Abschnitt | vor Code-Arbeit; neue Annahmen hier eintragen |
 | [docs/BETRIEB.md](docs/BETRIEB.md) | Betriebsanleitung: Ausliefern, Rückrollen, Zugang, Jobs, Mail, Wiederherstellung, Sicherheitsvorfall | Betrieb, Störungen |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung | Auslieferung, Arbeit an `deploy/unraid` |

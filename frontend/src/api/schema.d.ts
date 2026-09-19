@@ -485,6 +485,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/projects/{project_id}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Configuration Staff
+         * @description Konfiguration für die Prüfung einer Anfrage; ohne Feature-Flag, nur mit Rolle.
+         */
+        get: operations["get_configuration_staff_api_v1_admin_projects__project_id__configuration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/projects/{project_id}/envelope": {
         parameters: {
             query?: never;
@@ -971,6 +991,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/catalog/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Types
+         * @description Veröffentlichte Typen mit Zulässigkeit, allen Gründen und Vorschlägen (Spez. 5.4.6).
+         */
+        get: operations["list_types_api_v1_projects__project_id__catalog_types_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Configuration */
+        get: operations["get_configuration_api_v1_projects__project_id__configuration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Configuration
+         * @description Typ, Lage oder Grenzschalter ändern. `If-Match` mit der Revision schützt vor überschriebenen
+         *     Änderungen (409). Ein gesperrter Typ oder eine Lage mit bindendem Verstoß wird nicht gespeichert (422).
+         */
+        patch: operations["patch_configuration_api_v1_projects__project_id__configuration_patch"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/configuration/placement-area": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Placement Area
+         * @description Fläche zulässiger Ursprünge je erlaubter Drehung; das Frontend prüft beim Ziehen lokal dagegen.
+         */
+        get: operations["get_placement_area_api_v1_projects__project_id__configuration_placement_area_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/configuration/placement-presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Placement Presets
+         * @description Schnellstellungen `street_near`, `set_back`, `garden_max` (Spez. 5.3.5).
+         */
+        post: operations["post_placement_presets_api_v1_projects__project_id__configuration_placement_presets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/envelope": {
         parameters: {
             query?: never;
@@ -1291,6 +1393,37 @@ export interface components {
              */
             updated_at: string;
         };
+        /** CheckOut */
+        CheckOut: {
+            /** Binding */
+            binding: boolean;
+            citation?: components["schemas"]["CitationOut"] | null;
+            /** Code */
+            code: string;
+            /** Edge Seq */
+            edge_seq?: number | null;
+            /** Kind */
+            kind: string;
+            /** Limit */
+            limit?: number | string | null;
+            /** Measured */
+            measured?: number | string | null;
+            /** Params */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "fail" | "hint" | "unknown" | "not_applicable";
+            /** Unit */
+            unit?: string | null;
+            /** Zone Code */
+            zone_code?: string | null;
+        };
         /**
          * CitationOut
          * @description Herkunft eines Werts (L3): Seite und Zitat der Planunterlage, Prüfstatus, Link mit Seitensprung.
@@ -1349,6 +1482,57 @@ export interface components {
             name: string;
             /** Release */
             release: string;
+        };
+        /** ConfigurationOut */
+        ConfigurationOut: {
+            /** Boundary Options */
+            boundary_options: {
+                [key: string]: boolean;
+            };
+            /** Engine Version */
+            engine_version: string;
+            evaluation: components["schemas"]["PlacementEvaluationOut"] | null;
+            fit: components["schemas"]["TypeFitOut"] | null;
+            /** Free Reason */
+            free_reason: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "rules" | "free";
+            /** Notices */
+            notices: string[];
+            placement: components["schemas"]["PlacementOut"] | null;
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+            /** Revision */
+            revision: number;
+            /** Rotations */
+            rotations: number[];
+            /**
+             * Simulation
+             * @default true
+             */
+            simulation: boolean;
+            type: components["schemas"]["TypeRefOut"] | null;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /**
+         * ConfigurationPatch
+         * @description Teil-Update (JSON Merge Patch): nur gesendete Felder ändern sich, `null` löscht.
+         */
+        ConfigurationPatch: {
+            /** Boundary Options */
+            boundary_options?: {
+                [key: string]: boolean;
+            } | null;
+            placement?: components["schemas"]["PlacementRequest"] | null;
+            /** Type Slug */
+            type_slug?: string | null;
         };
         /** ConfirmIn */
         ConfirmIn: {
@@ -1517,6 +1701,33 @@ export interface components {
             name: string;
             /** Phone */
             phone: string | null;
+        };
+        /** EdgeMeasureOut */
+        EdgeMeasureOut: {
+            /**
+             * Contour
+             * @enum {string}
+             */
+            contour: "facade" | "projection";
+            /** Kind */
+            kind: string;
+            /** Markers */
+            markers: string[];
+            /** Measured M */
+            measured_m: number;
+            /** On Boundary */
+            on_boundary: boolean;
+            /** On Boundary Allowed */
+            on_boundary_allowed: boolean;
+            /** Required M */
+            required_m: number | null;
+            /** Seq */
+            seq: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "fail" | "hint" | "unknown" | "not_applicable";
         };
         /** EdgeOut */
         EdgeOut: {
@@ -1999,6 +2210,13 @@ export interface components {
             /** N */
             n: number;
         };
+        /** LocalPointModel */
+        LocalPointModel: {
+            /** E */
+            e: number;
+            /** N */
+            n: number;
+        };
         /**
          * LookupIn
          * @description Genau eine Angabe: Punkt in WGS84, Punkt in Lambert-93 (aus der Adresssuche) oder Parzellennummer.
@@ -2249,6 +2467,28 @@ export interface components {
             /** Zone Status */
             zone_status: string;
         };
+        /** PlacementAreaOut */
+        PlacementAreaOut: {
+            /** Rotations */
+            rotations: components["schemas"]["RotationAreaOut"][];
+            /** Type Slug */
+            type_slug: string;
+        };
+        /** PlacementEvaluationOut */
+        PlacementEvaluationOut: {
+            /** Checks */
+            checks: components["schemas"]["CheckOut"][];
+            /** Edges */
+            edges: components["schemas"]["EdgeMeasureOut"][];
+            /** Facade Local */
+            facade_local: number[][];
+            /** Projection Local */
+            projection_local: number[][];
+            /** Valid */
+            valid: boolean;
+            /** Zone Code */
+            zone_code: string | null;
+        };
         /** PlacementIn */
         PlacementIn: {
             /** Entrance */
@@ -2259,6 +2499,18 @@ export interface components {
             garage_door?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** PlacementOut */
+        PlacementOut: {
+            origin: components["schemas"]["LocalPointModel"];
+            /** Rotation Deg */
+            rotation_deg: number;
+        };
+        /** PlacementRequest */
+        PlacementRequest: {
+            origin: components["schemas"]["LocalPointModel"];
+            /** Rotation Deg */
+            rotation_deg: number;
         };
         /** PlanDocumentOut */
         PlanDocumentOut: {
@@ -2299,6 +2551,15 @@ export interface components {
             regulation_url: string | null;
             /** Title */
             title: string;
+        };
+        /** PresetsOut */
+        PresetsOut: {
+            /** Presets */
+            presets: {
+                [key: string]: components["schemas"]["PlacementOut"] | null;
+            };
+            /** Type Slug */
+            type_slug: string;
         };
         /** PriceCatalogVersionOut */
         PriceCatalogVersionOut: {
@@ -2517,6 +2778,15 @@ export interface components {
             name: string;
             /** Storey */
             storey: string;
+        };
+        /** RotationAreaOut */
+        RotationAreaOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Rings Local */
+            rings_local: number[][][];
+            /** Rotation Deg */
+            rotation_deg: number;
         };
         /** RuleDetailOut */
         RuleDetailOut: {
@@ -2839,6 +3109,86 @@ export interface components {
             /** Min Cents */
             min_cents: number;
         };
+        /**
+         * TypeFactsOut
+         * @description Kennwerte des Typs für die Karte (Steckbrief, Spez. 5.4.6).
+         */
+        TypeFactsOut: {
+            /** Base Price Max Cents */
+            base_price_max_cents: number;
+            /** Base Price Min Cents */
+            base_price_min_cents: number;
+            /** Depth M */
+            depth_m: number;
+            /** Eave Height M */
+            eave_height_m: number;
+            /** Entrance */
+            entrance: {
+                [key: string]: unknown;
+            } | null;
+            /** Facade Local */
+            facade_local: number[][];
+            /** Facade Roles */
+            facade_roles: {
+                [key: string]: string;
+            };
+            /** Footprint M2 */
+            footprint_m2: number;
+            /** Living Area M2 */
+            living_area_m2: number;
+            /** Pitch Deg */
+            pitch_deg: number | null;
+            /** Projection Local */
+            projection_local: number[][];
+            /** Ridge Direction */
+            ridge_direction: string | null;
+            /** Ridge Height M */
+            ridge_height_m: number;
+            /** Roof Form */
+            roof_form: string;
+            /** Rooms Text */
+            rooms_text: string;
+            /** Storeys */
+            storeys: string;
+            /** Width M */
+            width_m: number;
+        };
+        /** TypeFitOut */
+        TypeFitOut: {
+            /** Allowed */
+            allowed: boolean;
+            facts: components["schemas"]["TypeFactsOut"];
+            /** Family */
+            family: string | null;
+            /** Hints */
+            hints: components["schemas"]["CheckOut"][];
+            /** Name */
+            name: string;
+            /** Reasons */
+            reasons: components["schemas"]["CheckOut"][];
+            /** Rotations */
+            rotations: number[];
+            /** Slug */
+            slug: string;
+            /** Suggestions */
+            suggestions: string[];
+            /** Version */
+            version: number;
+        };
+        /** TypeRefOut */
+        TypeRefOut: {
+            /** Name */
+            name: string;
+            /**
+             * Retired
+             * @default false
+             */
+            retired: boolean;
+            /** Slug */
+            slug: string;
+            /** Version */
+            version: number;
+        };
         /** TypeSummaryOut */
         TypeSummaryOut: {
             /** Alternatives */
@@ -2957,6 +3307,27 @@ export interface components {
             status: "draft" | "review" | "published" | "retired";
             /** Version */
             version: number;
+        };
+        /** TypesOut */
+        TypesOut: {
+            /** Free Reason */
+            free_reason: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "rules" | "free";
+            /** Notices */
+            notices: string[];
+            /**
+             * Simulation
+             * @default true
+             */
+            simulation: boolean;
+            /** Site Revision */
+            site_revision: number;
+            /** Types */
+            types: components["schemas"]["TypeFitOut"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -3822,6 +4193,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobCreated"];
+                };
+            };
+        };
+    };
+    get_configuration_staff_api_v1_admin_projects__project_id__configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigurationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4713,6 +5115,171 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_types_api_v1_projects__project_id__catalog_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TypesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_configuration_api_v1_projects__project_id__configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigurationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_configuration_api_v1_projects__project_id__configuration_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfigurationPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigurationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_placement_area_api_v1_projects__project_id__configuration_placement_area_get: {
+        parameters: {
+            query?: {
+                type?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlacementAreaOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_placement_presets_api_v1_projects__project_id__configuration_placement_presets_post: {
+        parameters: {
+            query?: {
+                type?: string | null;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresetsOut"];
+                };
             };
             /** @description Validation Error */
             422: {

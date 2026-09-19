@@ -45,6 +45,7 @@ $$
 """
 
 CLEAN_TABLES = [
+    "configuration",
     "module_type_price",
     "package_type_price",
     "type_base_price",

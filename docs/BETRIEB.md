@@ -186,3 +186,28 @@ Keine neuen externen Dienste; Mail läuft über den bestehenden Weg (Abschnitt 5
 **Löschung eines Projekts mit Anfrage**
 
 `DELETE /api/v1/projects/<id>` liefert `409 deletion_requires_office`, sobald eine Anfrage besteht (Plan A 3.9, D6 noch offen). Es gibt noch keine Büro-Funktion für die Endlöschung danach; bis dahin händisch in der Datenbank, mit Audit-Eintrag.
+
+## 12. Konfigurator: Typen und Lage (Modul H2)
+
+Keine neuen externen Dienste und keine neuen Jobs. Zulässigkeit und Prüfung der Lage werden bei jedem Abruf aus Grundstück, Regeln und veröffentlichtem Katalog gerechnet; gespeichert werden nur der gewählte Typ (als Typversion), die Lage und die Grenzschalter (Tabelle `configuration`, Migration 0009, keine neue Sequenz).
+
+**Vor der Freischaltung (`flag-set configurator`)**
+
+1. Mindestens ein Typ muss veröffentlicht sein (Büro, `/buero/katalog`). Ohne Typen zeigt die Seite „Es ist noch kein Haustyp veröffentlicht“.
+2. Lokal zum Ansehen: `docker compose --profile dev run --rm backend-dev python -m tests.e2e_seed_types` legt drei erfundene Typen `demo_*` an. **Nie in Produktion.**
+3. Flag setzen: `docker compose exec api python -m app.cli flag-set configurator --role architect` (intern), später `--all` für die Beta.
+
+**Typ wird zu Unrecht gesperrt oder zugelassen**
+
+- Die Karte nennt jeden Grund mit dem Code der Prüfung (`GET /api/v1/projects/<id>/catalog/types`, Feld `reasons` mit Regelart, Seite und Zitat). Bindend ist nur eine wirksame Regel; was `unknown` ist, steht unter `hints`. Ursache eines falschen Sperrgrunds ist fast immer die Regel in G2: Zitat prüfen, Kapitel neu auswerten oder Korrektur für die Zone/das Projekt setzen (Abschnitt 9).
+- `no_valid_position`: Der Typ passt in keiner erlaubten Drehung auf die bebaubare Fläche. Der Baurahmen (Abschnitt 10) zeigt die Fläche; ein Haus von 12 × 8 m braucht mindestens diese Maße plus die Abstände.
+- Fehlen die Fassadenrollen am Typ (`facade_roles_missing`), richtet sich die Ausrichtung nach Modellnorden; im Büro unter `/buero/katalog` je Typ zuweisen (das geht nur an einem Entwurf, danach neue Version).
+- Höhenprüfungen sind `unknown`, solange das Gelände fehlt oder steiler als 5 % ist (`height_unverifiable`); das Gelände kommt über den Job `site_enrich` (Abschnitt 8).
+
+**Lage wird abgelehnt (`422 placement_violation`)**
+
+Die Antwort enthält alle Prüfungen mit Kante, Soll und Ist. `rotation_not_allowed` nennt die erlaubten Drehungen. `revision_conflict` heißt: Die Konfiguration wurde in einem anderen Tab geändert; die Oberfläche lädt neu.
+
+**Regelmäßig prüfen**
+
+Nach einem neuen Planstand, neuen Regeln (G2) oder einer neuen Katalogversion können gespeicherte Konfigurationen ungültig werden. Das ist beabsichtigt: `GET /projects/<id>/configuration` prüft neu und zeigt die Verstöße; gelöscht wird nichts.

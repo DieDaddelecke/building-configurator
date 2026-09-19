@@ -1,6 +1,6 @@
-# Emprise – Umsetzungsplan in Modulen
+ **Nach der Empfehlung genommen 19.09.2026 (H2), erweitert auf Grundstücke ohne verfügbare Regeln:** freier Modus im Umriss ohne Abstandsprüfung (ANNAHMEN HP02); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. | **Nach der Empfehlung genommen 19.09.2026 (Auftrag „erstelle den Hauskonfigurator“, H2):** nur wirksame Regeln sperren, Unbekanntes bleibt Hinweis (ANNAHMEN HP01); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |# Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1 (Backend) und A; D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 Backend umgesetzt (3.7, ANNAHMEN H01–H09, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), Frontend offen; A umgesetzt (3.6, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)), Anfrage ohne Grundstück außerhalb des Einzugsgebiets offen; D13 (H2 ohne Baurahmen) weiter offen
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1 und A; D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 umgesetzt: Backend und Katalogpflege-Oberfläche (3.7, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), die fünf Platzhalter-Typen als echte Dateien offen; A umgesetzt (3.6, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)), Anfrage ohne Grundstück außerhalb des Einzugsgebiets offen; D13 (H2 ohne Baurahmen) weiter offen
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -363,6 +363,8 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 **Abnahme:** Paritätsfälle Spez. 11.2, wobei der Firstrichtungsfall mit einem Satteldachtyp statt Plateau (Flachdach) geprüft wird; Eigenschaftstests (Spez. 11.1); Zulässigkeit für bis zu 20 Typen unter 3 s; `PATCH` p95 unter 800 ms.
 
 **Größe:** L (6–10 PW).
+
+**Umsetzungsstand 19.09.2026:** H2 nach [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md) umgesetzt (Backend `backend/app/configuration`, Oberfläche `/konfigurator`, ANNAHMEN HP01–HP20). Abweichungen: Terrasse, Carport und Zufahrt kommen mit H3, weil H1 an einer Option weder Art noch Maße kennt (HP03); `/buildable?height_m=` entfällt zugunsten der Fläche zulässiger Ursprünge je Drehung (HP04).
 
 ### 3.9 H3 – Konfiguration und Kosten (R2)
 

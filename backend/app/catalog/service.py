@@ -1,9 +1,11 @@
-"""Dienst des Moduls H1 (Plan H1 4.3). Nur für das Büro (`architect`, `catalog_admin`, `ops`)."""
+"""Dienst des Moduls H1 (Plan H1 4.3). Pflege nur für das Büro (`architect`, `catalog_admin`, `ops`); am
+Ende die Lesefunktionen für den Konfigurator (Modul H2)."""
 
 import hashlib
 import math
 import re
 import uuid
+from dataclasses import dataclass
 from datetime import date
 
 from shapely.geometry import Polygon
@@ -835,4 +837,55 @@ def set_energy_assessment(
         compliant=compliant,
         compliance_surcharge_cents=compliance_surcharge_cents,
         measures=measures,
+    )
+
+
+# --- Lesezugriff für den Konfigurator (Modul H2) -----------------------------------------------------
+
+
+@dataclass(frozen=True)
+class PublishedType:
+    """Veröffentlichte Typversion mit den Angaben der Typ-Identität, wie sie H2 braucht."""
+
+    slug: str
+    family: str | None
+    alternatives: list[str]
+    version: TypeVersionOut
+
+
+def published_types(db: Session) -> list[PublishedType]:
+    """Je Typ die jüngste veröffentlichte Version; Entwürfe und zurückgezogene Stände nie (Plan H1 3.9)."""
+    rows = db.execute(
+        select(BuildingType, BuildingTypeVersion)
+        .join(BuildingTypeVersion, BuildingTypeVersion.id == BuildingType.current_version_id)
+        .where(BuildingTypeVersion.status == "published")
+        .order_by(BuildingType.slug)
+    ).all()
+    return [
+        PublishedType(
+            slug=building_type.slug,
+            family=building_type.family,
+            alternatives=list(building_type.alternatives),
+            version=_version_out(version, building_type.slug),
+        )
+        for building_type, version in rows
+    ]
+
+
+def type_by_version_id(db: Session, version_id: uuid.UUID) -> PublishedType | None:
+    """Eine festgelegte Version, auch wenn sie inzwischen zurückgezogen ist (L4: eine Konfiguration behält
+    ihren Stand). Nur veröffentlichte oder zurückgezogene, nie Entwürfe."""
+    row = db.execute(
+        select(BuildingType, BuildingTypeVersion)
+        .join(BuildingTypeVersion, BuildingTypeVersion.building_type_id == BuildingType.id)
+        .where(BuildingTypeVersion.id == version_id, BuildingTypeVersion.status.in_(("published", "retired")))
+    ).first()
+    if row is None:
+        return None
+    building_type, version = row
+    return PublishedType(
+        slug=building_type.slug,
+        family=building_type.family,
+        alternatives=list(building_type.alternatives),
+        version=_version_out(version, building_type.slug),
     )

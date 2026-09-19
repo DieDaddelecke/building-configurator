@@ -16,6 +16,7 @@ import { KatalogTypen } from "./pages/buero/katalog/KatalogTypen";
 import { KeinZugang } from "./pages/buero/KeinZugang";
 import { Regeln, Regelwerk } from "./pages/buero/Regeln";
 import { GrundstueckSeite } from "./pages/grundstueck/GrundstueckSeite";
+import { KonfiguratorSeite } from "./pages/konfigurator/KonfiguratorSeite";
 import { Start } from "./pages/Start";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
@@ -35,6 +36,7 @@ function NichtGefunden() {
 export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },
   { path: "/grundstueck", element: <GrundstueckSeite /> },
+  { path: "/konfigurator", element: <KonfiguratorSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
   {
     path: "/buero",

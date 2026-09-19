@@ -305,6 +305,16 @@ def project_envelope(db: Session, project_id: uuid.UUID) -> EnvelopeOut:
     return build_envelope(db, project_id)[0]
 
 
+def derived(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeInput, Envelope | None]:
+    """Eingaben und Ableitung für Module, die auf dem Baurahmen aufbauen (H2): die reine Fachlogik statt der
+    Ausgabeform. Für Weg E (freies Zeichnen) gibt es keine Ableitung (`None`, D13)."""
+    site = site_service.envelope_site(db, project_id)
+    if site.origin == "manual_sketch":
+        return _manual_sketch_input(site), None
+    data, _rules = envelope_input(db, project_id, site=site)
+    return data, derive_envelope(data)
+
+
 def _out(
     db: Session,
     data: EnvelopeInput,
