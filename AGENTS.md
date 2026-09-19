@@ -4,37 +4,29 @@ Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben
 
 ## Stand (19.09.2026)
 
-Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
-
-- Mockup und Fachdokumentation: fertig. Spezifikation: Korrekturen aus der Prüfung vom 13.09.2026 und Anpassung an D11 noch nicht eingearbeitet.
-- Umsetzungsplan: als Ganzes nicht freigegeben; R0 (Modul P), G1, G2, G3, H1, A und H2 wurden daraus beauftragt (H3 und V stehen aus). D1 (bis zur Beta), D2 (G1 intern), D3, D4, D11 (G2 automatisch als Simulation, Büro prüft erst bei Anfrage) und D14 (Modul A bleibt Notausgang neben H2–V) sind entschieden; D12 und D13 sind nach der Empfehlung des Plans genommen, vom Nutzer nicht bestätigt (Plan Kapitel 9).
-- R0 Plattform: anbieterunabhängiger Teil umgesetzt und getestet; Betrieb bis zur Beta auf Unraid mit Authentik vorbereitet (`deploy/unraid/`), auf dem Server noch nicht ausgeliefert. Repository privat auf GitHub mit CI.
-- G1–G3 (Grundstück, Regelwerk, Baurahmen): umgesetzt, getestet, lokal intern freigeschaltet, gepusht. G1 zusätzlich um Weg E (freies Zeichnen ohne Kataster, ANNAHMEN G26–G30); G2 ohne Schlüssel der Claude API noch keine echte Auswertung (RW01–RW27); G3 über 200 echte Parzellen geprüft (BR01–BR15, [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md)).
-- H1 Hauskatalog und A Anfrage: umgesetzt, im Browser geprüft, gepusht, CI grün (`backend/app/catalog` mit Oberfläche `/buero/katalog`, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md); `backend/app/inquiry`, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)). Offen: die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien, Anfrage außerhalb des Einzugsgebiets, endgültige Rechtstexte.
-- H2 Zulässigkeit und Implantation: Backend (`backend/app/configuration`, Migration 0009, Flag `configurator`) und Kundenoberfläche `/konfigurator` umgesetzt, im Browser auf AD 65 geprüft, gepusht (`98fce8f`, CI-Lauf bei Abschluss offen; ANNAHMEN HP01–HP20, [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md)). Der Hauskonfigurator (R2) ist damit erst zu einem Drittel da: Linie, Optionen, Kosten (H3) und Übergabe (V) fehlen; die Anfrage kennt noch keine Konfiguration.
+Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetzt: R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1, H2; für den Hauskonfigurator (R2) fehlen H3 und V. Einzelheiten, offene Entscheidungen und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 ## Dokumente
 
 | Datei | Inhalt | Lesen, wenn … |
 |---|---|---|
-| [HANDOFF.md](HANDOFF.md) | Momentaufnahme: Stand, offene Entscheidungen und Arbeitspunkte, nächster Schritt, Stolperstellen | zu Beginn jeder Session |
-| [AENDERUNGEN.md](AENDERUNGEN.md) | Änderungsprotokoll je Session, neueste zuerst | zu Beginn jeder Session (neuester Eintrag) |
-| [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen, Prüfprotokoll | vor jeder Backend-Arbeit; Kapitel 0 regelt die Arbeitsweise |
-| [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, technische Umsetzung je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), offene Entscheidungen D1–D10, Prüfprotokoll | vor Planung oder Beginn eines Moduls; welche Spezifikationskapitel ein Modul braucht, steht im Modulabschnitt |
-| [README.md](README.md) | Aufbau des Repositorys, lokal starten, Prüfbefehle, Regeln für API-Änderungen | vor Code-Arbeit |
-| [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md) | Plan des Moduls G3: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Baurahmen |
-| [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md) | Plan des Moduls H1: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am Hauskatalog |
-| [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md) | Plan des Moduls A: fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit an der Anfrage |
-| [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md) | Plan des Moduls H2: Wirkung der Regeln, Drehung, Fläche zulässiger Ursprünge, Konfiguration, Prüfprotokoll | Arbeit am Konfigurator (Typwahl, Lage) |
-| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen in der Umsetzung (Spez. 0 Punkt 7), je Modul ein Abschnitt | vor Code-Arbeit; neue Annahmen hier eintragen |
-| [docs/BETRIEB.md](docs/BETRIEB.md) | Betriebsanleitung: Ausliefern, Rückrollen, Zugang, Jobs, Mail, Wiederherstellung, Sicherheitsvorfall | Betrieb, Störungen |
-| [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung | Auslieferung, Arbeit an `deploy/unraid` |
+| [HANDOFF.md](HANDOFF.md) | Momentaufnahme: Stand, offene Entscheidungen und Arbeitspunkte, nächster Schritt | zu Beginn jeder Session |
+| [AENDERUNGEN.md](AENDERUNGEN.md) | Änderungsprotokoll je Session, neueste zuerst | zu Beginn jeder Session (nur neuester Eintrag) |
+| [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen E1–E12, Prüfprotokoll mit offenen Korrekturen (Anhang E.4) | vor Backend-Arbeit kapitelweise nach Kapitel 0 Punkt 1 |
+| [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, Technik je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), Entscheidungen D1–D14, Prüfprotokoll | vor Planung oder Beginn eines Moduls; der Modulabschnitt nennt die nötigen Spezifikationskapitel |
+| `docs/PLAN_<Modul>.md` | Pläne der Module [G3](docs/PLAN_G3_BAURAHMEN.md), [H1](docs/PLAN_H1_HAUSKATALOG.md), [A](docs/PLAN_A_ANFRAGE.md), [H2](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md): fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am jeweiligen Modul |
+| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen der Umsetzung, je Modul ein Abschnitt mit IDs (A, G, RW, BR, H, AF, HP) | vor Code-Arbeit den Abschnitt des Moduls; neue Annahmen hier eintragen |
+| [README.md](README.md) | Aufbau, lokal starten, Prüfbefehle, Regeln für API-Änderungen, Stolperstellen | vor Code-Arbeit |
+| [docs/BETRIEB.md](docs/BETRIEB.md) | Module im Betrieb (Flags, Migrationen, Jobs, ausgehender Zugang), Ausliefern, Rückrollen, Zugang, Mail, Wiederherstellung, Sicherheitsvorfall, Störungen je Modul | Betrieb, Störungen, Freischalten |
+| [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung, Module | Auslieferung, Arbeit an `deploy/unraid` |
 | [infra/README.md](infra/README.md) | Anforderungen an einen späteren verwalteten Anbieter, Umgebungsvariablen, Proof-of-Concept-Liste | Wechsel des Hostings |
 | [Hauskonfigurator.jsx](Hauskonfigurator.jsx) | Mockup als einzelne React-Datei; Daten als Konstanten am Dateianfang | Frontend-Arbeit; Zuordnung zum Backend in Spezifikation 8.1 |
 | [emprise.html](emprise.html) | Aus der JSX erzeugte, eigenständige Seite | nie von Hand ändern, nur neu erzeugen |
-| [Dokumentation.html](Dokumentation.html) | Beschreibung des Mockups: Seitenaufbau, Ableitung der Regeln, Volumetrie, Material und Preise, Beispiel-Mail, Gestaltung (Farben, Schriften) | fachliche Logik oder Gestaltung des Mockups |
+| [Dokumentation.html](Dokumentation.html) | Beschreibung des Mockups (Stand 13.09.2026): Seitenaufbau, Ableitung der Regeln, Volumetrie, Material und Preise, Beispiel-Mail, Gestaltung | fachliche Logik oder Gestaltung des Mockups |
 | [tools/build-mockup.cjs](tools/build-mockup.cjs) | Erzeugt `emprise.html` aus der JSX | nach Änderungen am Mockup |
 | `C:\Users\sarah\Downloads\mockup-prompt.md` (außerhalb des Projekts) | Ursprünglicher Auftrag für das Mockup mit Beispieldaten und Regeln | nur zur Herkunft, falls noch vorhanden |
+
+Jeder Inhalt steht an einer Stelle; andere Dokumente verweisen darauf: Stand nur in HANDOFF, Entscheidungen in Plan 9 und Spez. 16, Festlegungen in ANNAHMEN, Betrieb in BETRIEB, Stolperstellen in README, offene Spezifikationskorrekturen in Spez. Anhang E.4.
 
 ## Rangfolge bei Widersprüchen
 
@@ -43,7 +35,7 @@ Details, offene Punkte und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 3. `Hauskonfigurator.jsx` für Verhalten und Aussehen der Oberfläche
 4. `Dokumentation.html` – beschreibt den Stand des Mockups und wird nicht automatisch nachgezogen
 
-Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (bisher R0, G1, G2, G3, H1, A) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in `docs/ANNAHMEN.md`.
+Für Zuschnitt, Reihenfolge und Infrastruktur beauftragter Module (HANDOFF 1) gilt `UMSETZUNGSPLAN.md` vor Kapitel 14 der Spezifikation. Abweichungen stehen in Plan Kapitel 7 und `docs/ANNAHMEN.md`.
 
 Die Leitplanken L1–L8 (Spezifikation 1.2) gelten auch für Änderungen am Frontend.
 

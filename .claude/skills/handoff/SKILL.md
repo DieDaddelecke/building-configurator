@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 **Ziel:** Eine neue Session kann ohne diesen Gesprächsverlauf weiterarbeiten. Alles, was nur im Chat steht – Ergebnisse, Entscheidungen, offene Fragen, verworfene Wege – steht danach in Dateien oder im Memory.
 
+**Eine Quelle je Inhalt** (AGENTS.md unter der Dokumententabelle): HANDOFF.md ist nur Momentaufnahme und wird jedes Mal neu geschrieben. Dauerhaftes gehört an seinen festen Ort und steht in HANDOFF höchstens als Verweis: Stolperstellen → README.md, Betrieb je Modul → docs/BETRIEB.md, Festlegungen → docs/ANNAHMEN.md, offene Spezifikationskorrekturen → Spezifikation Anhang E.4, Entscheidungen → Plan 9 bzw. Spez. 16.
+
 Sprache: Deutsch. Datum: heutiges Datum absolut (TT.MM.JJJJ). Nichts erfinden; Unklares als offene Frage in HANDOFF.md aufnehmen.
 
 ## 1. Bestandsaufnahme
@@ -31,11 +33,12 @@ Nur handeln, wenn der Fall eingetreten ist:
 | Entscheidung getroffen | In der Entscheidungstabelle (Spezifikation 16 bzw. Umsetzungsplan 9) als entschieden markieren: Datum, Ergebnis; betroffene Kapitel anpassen |
 | Umsetzungsplan freigegeben oder Abweichungen übernommen | Status im Kopf von `UMSETZUNGSPLAN.md`, Rangfolge und Stand in `AGENTS.md` anpassen |
 | Datei neu, umbenannt oder gelöscht | Dokumententabelle in `AGENTS.md` |
-| Code-Stand geändert | Stand in `AGENTS.md`; neue Annahmen in `docs/ANNAHMEN.md` (Spezifikation 0, Ort nach Plan 4.1) |
+| Code-Stand geändert | Stand in `HANDOFF.md`; `AGENTS.md` nur, wenn ein Modul fertig wird; neue Annahmen in `docs/ANNAHMEN.md` (Spezifikation 0, Ort nach Plan 4.1) |
+| Neue Stolperstelle, neuer Betriebsschritt, neue Spezifikationskorrektur | README „Stolperstellen“, BETRIEB (Modultabelle in Abschnitt 1), Spez. Anhang E.4 |
 | Arbeitsweise geändert | `CLAUDE.md` (Claude-spezifisch) bzw. `AGENTS.md` (für alle Agenten) |
 | Punkt aus `HANDOFF.md` 4 erledigt | Dort streichen, im Protokolleintrag nennen |
 
-Den Abschnitt „Stand“ in `AGENTS.md` kurz halten (höchstens 6 Punkte); Details gehören in `HANDOFF.md`.
+Den Abschnitt „Stand“ in `AGENTS.md` auf höchstens drei Sätze halten; Details gehören in `HANDOFF.md`.
 
 ## 3. `AENDERUNGEN.md` fortschreiben
 
@@ -44,12 +47,11 @@ Neuen Eintrag **oben** unter der Einleitung einfügen, frühere Einträge nicht 
 ```
 ## TT.MM.JJJJ – <Thema der Session>
 
-**Neu** – Datei – ein Satz
-**Geändert** – Datei – was
-**Gelöscht** – Datei – warum
+**Commits** – Kennungen (sobald vorhanden); die Dateiliste liefert `git show --stat`
+**Neu / Geändert / Gelöscht** – knapp, was und warum; Dateien nur nennen, wo es nicht aus dem Commit hervorgeht (Dokumente, Nicht-Committetes)
 **Entschieden** – Nr. – Ergebnis
 **Ohne Dateiänderung** – Ergebnisse nur aus dem Chat, mit Verweis, wo sie jetzt stehen
-**Unverändert** – wichtige Dateien, die bewusst nicht angefasst wurden
+**Unverändert** – nur, wenn es eine Aussage trägt (z. B. bewusst nicht angefasst)
 **Memory** – angelegt, geändert, gelöscht
 ```
 
@@ -65,10 +67,10 @@ Vollständig ersetzen – Momentaufnahme, keine Historie. Feste Gliederung:
 4. Offene Entscheidungen des Nutzers, priorisiert, mit Verweis auf die Tabelle
 5. Offene Arbeitspunkte, priorisiert, mit Datei und Kapitel; noch offene Punkte aus der vorigen Fassung übernehmen
 6. Empfohlener nächster Schritt
-7. Hinweise und Stolperstellen (Werkzeuge, Eigenheiten, was nicht funktioniert hat)
+7. Hinweise nur zu dieser Session; dauerhafte Stolperstellen in README.md eintragen
 8. Startprompt für die neue Session als Codeblock
 
-Höchstens etwa 150 Zeilen. Auf Dokumente und Kapitel verweisen statt Inhalte zu kopieren.
+Höchstens etwa 120 Zeilen. Auf Dokumente und Kapitel verweisen statt Inhalte zu kopieren.
 
 ## 5. Memory aktualisieren
 
@@ -84,7 +86,8 @@ Memory-Verzeichnis und Dateiformat stehen im Systemprompt der Session (Abschnitt
 1. Alle in `HANDOFF.md`, `AGENTS.md`, `CLAUDE.md` und im neuen Protokolleintrag genannten Dateien existieren.
 2. Kapitelverweise stimmen (Überschrift per Grep).
 3. Datum überall gleich; Stand in `AGENTS.md` widerspricht `HANDOFF.md` nicht.
-4. Keine offenen Punkte verloren: Jeder Punkt der vorigen `HANDOFF.md` ist erledigt (im Protokoll) oder weiter offen.
+4. Keine offenen Punkte verloren: die Abschnitte 3 (Entscheidungen), 4 (Arbeitspunkte) und 6 (Hinweise) gegen `git show HEAD:HANDOFF.md` abgleichen. Jeder Punkt ist erledigt (im Protokoll), weiter offen oder an seinen dauerhaften Ort verschoben.
+5. Jeder Verweis auf eine Liste oder einen Inhalt in einer anderen Datei („siehe …“) zeigt auf eine Stelle, an der er wirklich steht.
 
 ## 7. Abschluss
 

@@ -135,32 +135,14 @@ Die Frische der Sicherung prüft ein User Script: Alarm, wenn `last-success` äl
 - Mailversand braucht einen Anbieter (E2); bis dahin scheitern Mailjobs und werden wiederholt.
 - Vor dem öffentlichen Start von R1 wird über das Hosting neu entschieden (Plan 6.4).
 
-## 9. Hinweise für R1 (Modul G1)
+## 9. Module auf Unraid
 
-- `api` und `worker` brauchen ausgehenden Zugang zu `data.geopf.fr`, `cadastre.data.gouv.fr` (Weiterleitung auf `*.cloud.ovh.net`) und `georisques.gouv.fr`. Die Compose-Netze sperren ausgehenden Verkehr nicht; eine Firewall auf Unraid oder im Router muss ihn erlauben.
-- Einzugsgebiet in `.env` setzen: `CADASTRE_COMMUNES=["44209","44…"]` (INSEE-Codes, D1). Erstimport nach der Auslieferung: `docker compose exec api python -m app.cli cadastre-import`; danach aktualisiert der Worker wöchentlich. Freischaltung über das Feature-Flag `site_selection`, zuerst intern: `docker compose exec api python -m app.cli flag-set site_selection --role architect` (Plan 4.2); öffentlich später mit `--all`.
-- Speicher: grob 10–20 MB in PostGIS je Gemeinde in der Größe von Treillières (≈ 8.800 Parzellen).
-- Géorisques-Token nur, falls die Schnittstelle v1 abgeschaltet wird: dann in `compose.override.yaml` bei `api` und `worker` `EMPRISE_GEORISQUES_TOKEN` setzen. Nicht leer übergeben.
-- Weitere Einstellungen (Zeitlimits, Rate-Limits, Basis-URLs) haben Standardwerte in `backend/app/config.py`; Details in `docs/ANNAHMEN.md`, Abschnitt G1.
+Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in [docs/BETRIEB.md](../../docs/BETRIEB.md) Abschnitt 1; hier nur, was auf Unraid dazukommt.
 
-## 10. Hinweise für R1 (Modul G2)
-
-- Ausgehender Zugang zusätzlich zu `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr` und `api.anthropic.com`.
-- In `.env` `ANTHROPIC_API_KEY` und `RULES_BUDGET_MONTH_USD` setzen. Ohne Schlüssel importiert der Worker die Planstände trotzdem; die Kapitel stehen dann auf „gescheitert: not_configured“ und werden nach dem Eintragen innerhalb einer Stunde automatisch ausgewertet (Job `rules_housekeeping`); sofort mit `docker compose exec api python -m app.cli rules-extract --pending` (kostet Token, Größenordnung in BETRIEB 9).
-- Planstände prüft der Worker wöchentlich; sofort: `docker compose exec api python -m app.cli plu-import`.
-- Freischaltung über `rules_simulation`, zuerst intern: `docker compose exec api python -m app.cli flag-set rules_simulation --role architect`.
-- Speicher: das règlement écrit liegt im Objektspeicher (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben in PostGIS (wenige MB je Planstand).
-
-## 11. Hinweise für R1 (Modul G3)
-
-- **Migration 0005** legt die Tabelle `envelope_sheet` an und läuft beim Ausliefern mit.
-- **Kein neuer ausgehender Zugang.** G3 rechnet nur mit Daten aus der eigenen Datenbank.
-- **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core`; sie stecken im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren prüfen: `docker compose exec api python -c "import weasyprint"`.
-- **Freischalten** (intern für das Büro):
-
-  ```bash
-  docker compose exec api python -m app.cli flag-set envelope_simulation --role architect
-  ```
-
-- **Objektspeicher:** Steckbriefe liegen unter `envelope-sheets/`; sie werden mit dem Projekt gelöscht und sind in der Sicherung des Buckets enthalten.
+- **Ausgehender Zugang:** Die Compose-Netze sperren ausgehenden Verkehr nicht; eine Firewall auf Unraid oder im Router muss die Hosts aus BETRIEB 1 erlauben.
+- **`.env`** (Namen ohne Präfix `EMPRISE_`, `compose.yaml` setzt ihn): `CADASTRE_COMMUNES=["44209","44…"]` (INSEE-Codes, D1), `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD`. `EMPRISE_OFFICE_EMAIL` (Modul A) ist in `compose.yaml` und `.env.example` noch nicht verdrahtet (HANDOFF 4). Weitere Einstellungen (Zeitlimits, Rate-Limits, Basis-URLs) haben Standardwerte in `backend/app/config.py`, Details in `docs/ANNAHMEN.md`.
+- **Géorisques-Token** nur, falls die Schnittstelle v1 abgeschaltet wird: in `compose.override.yaml` bei `api` und `worker` `EMPRISE_GEORISQUES_TOKEN` setzen, nicht leer übergeben.
+- **Nach dem ersten Ausliefern:** `docker compose exec api python -m app.cli cadastre-import` (danach wöchentlich durch den Worker); Planstände sofort mit `plu-import` statt nach einer Woche. Ohne Schlüssel stehen die Kapitel auf „gescheitert: not_configured“ und werden nach dem Eintragen innerhalb einer Stunde ausgewertet (`rules_housekeeping`), sofort mit `rules-extract --pending` (kostet Token, Größenordnung in BETRIEB 9). Vor `inquiry`: `legal-seed` (BETRIEB 11). `staff-add` auch für die Katalogpflege (`catalog_admin` oder `architect`). Die Demo-Typen `demo_*` (`tests.e2e_seed_types`) **nie in Produktion**.
+- **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core` im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren: `docker compose exec api python -c "import weasyprint"`. Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (ANNAHMEN A27).
 - **Gegenprobe nach dem Ausliefern:** `docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 50` (0 Fehler erwartet).
+- **Speicher:** Kataster grob 10–20 MB in PostGIS je Gemeinde in der Größe von Treillières (≈ 8.800 Parzellen); das règlement écrit im Objektspeicher (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben wenige MB je Planstand in PostGIS; Steckbriefe unter `envelope-sheets/`, mit dem Projekt gelöscht und in der Sicherung des Buckets enthalten.

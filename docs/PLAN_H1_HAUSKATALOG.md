@@ -2,7 +2,7 @@
 
 > **Umsetzungsstand 18.09.2026:** Arbeitsschritte 1–5 umgesetzt (Backend und Katalogpflege-Oberfläche `/buero/katalog`, ANNAHMEN H01–H14); Schritt 6 (fünf Platzhalter-Typen als echte Dateien) und der Betriebsabschnitt in `docs/BETRIEB.md` offen.
 >
-> Entwurf, noch nicht freigegeben. Wird wie G1–G3 durch Selbstprüfung (Kapitel 11) ergänzt, dann dem Nutzer vorgelegt. Mit der Freigabe („setze um“) gelten die Vorschläge dieses Plans als entschieden ([[feedback-plan-dann-umsetzen]]).
+> Mit Selbstprüfung (Kapitel 11) vorgelegt und mit „Setze H1 um“ freigegeben (18.09.2026); die Vorschläge gelten damit als entschieden (Kapitel 9).
 
 ## 1. Ziel und Abgrenzung
 
@@ -111,12 +111,12 @@ flowchart LR
 ### 4.3 Backend
 
 - Modul `backend/app/catalog/` nach dem Muster der bestehenden Module (`domain/`, `models.py`, `schemas.py`, `service.py`, `api.py`).
-- Endpunkte nur für die Rolle `architect` (kein Kundenschritt in H1): Upload XLSX/DXF, Entwurf lesen/ändern, Fassadenrollen setzen, veröffentlichen, zurückziehen (`retired`). Preiskatalog-Versionen und Linien/Optionen separat pflegbar (nicht an einen Typ gebunden).
-- `openpyxl` für XLSX, `ezdxf` für DXF (beide bereits Abhängigkeiten aus G1/G3).
+- Endpunkte nur für das Büro (kein Kundenschritt in H1; umgesetzt: bearbeiten `architect` und `catalog_admin`, `ops` liest, H01, H14): Upload XLSX/DXF, Entwurf lesen/ändern, Fassadenrollen setzen, veröffentlichen, zurückziehen (`retired`). Preiskatalog-Versionen und Linien/Optionen separat pflegbar (nicht an einen Typ gebunden).
+- `openpyxl` für XLSX, `ezdxf` für DXF (umgesetzt: mit H1 neu aufgenommen, dazu `python-multipart`).
 
 ### 4.4 Frontend
 
-- Nur Büro-Oberfläche (`frontend/src/pages/buero/Katalog.tsx` o. Ä.), keine Kunden-Route – H2 legt die Kunden-Ansicht der Typkarten erst an.
+- Nur Büro-Oberfläche (umgesetzt: `frontend/src/pages/buero/katalog/`), keine Kunden-Route – H2 legt die Kunden-Ansicht der Typkarten erst an.
 - Axonometrie-Komponente aus dem Mockup portieren (3.6), damit die Vorschau beim Erfassen sofort sichtbar ist.
 
 ## 5. Arbeitsschritte
@@ -161,7 +161,7 @@ Ergänzt Umsetzungsplan Kapitel 7 (dort bereits: „Katalogdaten: XLSX/DXF statt
 | Nr. | Frage | Vorschlag |
 |---|---|---|
 | 1 | Echte ArchiCAD-Typdatenblätter vom Büro liegen noch nicht vor. Womit startet H1? | **Entschieden 17.09.2026:** Fünf Platzhalter-Typen (`draft`, erst nach Prüfung durch das Büro `published`) – die drei Mockup-Typen plus zwei neu erarbeitete (Anhang, Kapitel 12), damit der Katalog auch Erdgeschoss-only und drei Ebenen abdeckt. Traufhöhe von Plateau muss nachgetragen werden (Attika-Oberkante, im Mockup nicht beziffert) |
-| 2 | Wer pflegt den Katalog im Büro – dieselbe Rolle `architect` wie bei G2-Regelkorrekturen, oder eine neue Rolle `catalog_editor`? | `architect` weiterverwenden (kein neuer Rollenbedarf für R2 intern) |
+| 2 | Wer pflegt den Katalog im Büro – dieselbe Rolle `architect` wie bei G2-Regelkorrekturen, oder eine neue Rolle `catalog_editor`? | `architect` weiterverwenden (kein neuer Rollenbedarf für R2 intern). **Entschieden:** „architect ist okay“; beim Umsetzen um die vorhandene Rolle `catalog_admin` ergänzt (H01) |
 | 3 | Soll das Grundriss-PDF (3.6) schon in H1 im Dossier landen, oder bleibt es bis V/X4 rein internes Referenzdokument? | Rein intern in H1; Dossier-Inhalt ist V's Aufgabe (Spez. 5.10.5) |
 
 ## 10. Risiken

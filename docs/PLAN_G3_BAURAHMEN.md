@@ -212,7 +212,7 @@ Jeder Schritt endet mit grünen Prüfungen (ruff, mypy, pytest, ESLint, tsc, Bui
 | 3 | Frontend: Tabelle, Lageplan, Zustände, i18n, Komponententests, E2E „Kunde sieht Baurahmen“ | intern nutzbar hinter Flag | 4 T |
 | 4 | Robustheitslauf `envelope-check` auf ganz Treillières im lokalen Stack; Leistung messen; 12 zufällige Lagepläne durch die Entwicklung ansehen; Befunde beheben | Zahlen in ANNAHMEN, Freigabe intern | 1,5 T |
 | 5 | Steckbrief-PDF: WeasyPrint im Image, SVG, Vorlage, Job, Speicher, Download, Tests | PDF für jedes Grundstück | 3 T |
-| 6 | Dokumentation: ANNAHMEN (Abschnitt G3, E01 …), BETRIEB 10 (Baurahmen fehlt oder unplausibel, PDF scheitert), Unraid README 11 (Flag, Image), Hinweisschlüssel `notice.envelope_simulation`; Flag lokal für `architect` | Plan 4.1 Kriterien 9, 10 | 1 T |
+| 6 | Dokumentation: ANNAHMEN (Abschnitt G3, E01 …), BETRIEB 10 (Baurahmen fehlt oder unplausibel, PDF scheitert), Unraid README 9 (Flag, Image), Hinweisschlüssel `notice.envelope_simulation`; Flag lokal für `architect` | Plan 4.1 Kriterien 9, 10 | 1 T |
 
 Summe etwa 18 Tage (3,5–4 PW), innerhalb der Größe M aus Plan 3.5. Schritte 1–4 hängen nicht am API-Schlüssel; die Abnahme mit mehr als Zone Uh schon.
 
@@ -238,15 +238,15 @@ Summe etwa 18 Tage (3,5–4 PW), innerhalb der Größe M aus Plan 3.5. Schritte 
 1. Alle Tests aus 6.1 grün in CI.
 2. `envelope-check` über alle Parzellen von Treillières in ausgewerteten Zonen: 0 Ausnahmen, 0 ungültige Geometrien, `strict ⊆ lenient` überall; p95 von `GET /envelope` unter 300 ms.
 3. Steckbriefe für die realen Testgrundstücke aus G1 automatisch erzeugt, ohne Eingabe des Büros.
-4. Hinweise L7 auf Französisch und Deutsch; Flag `envelope_simulation` intern für `architect`; Log `envelope_derive_failed` als Alarm; BETRIEB 10.
-5. Nach Eintragen des API-Schlüssels und der Referenzmenge (HANDOFF 4.1): Robustheitslauf über alle Zonen wiederholen, Anteil `complete = false` und Teilflächen ohne Regeln in BETRIEB festhalten.
+4. Hinweise L7 auf Französisch und Deutsch; Flag `envelope_simulation` intern für `architect`; Log `envelope_derive_failed` als Alarm (im Code nicht angelegt, HANDOFF 4); BETRIEB 10.
+5. Nach Eintragen des API-Schlüssels und der Referenzmenge (HANDOFF, Arbeitspunkt „G2 und G3 abschließen“): Robustheitslauf über alle Zonen wiederholen, Anteil `complete = false` und Teilflächen ohne Regeln in BETRIEB festhalten.
 
 ---
 
 ## 7. Zusammenspiel mit späteren Modulen
 
-- **A:** Snapshot übernimmt die Antwort mit `input_hash`; das Büro sieht sie über `GET /admin/projects/{id}/envelope`; Mail hängt den Steckbrief an.
-- **H2:** nutzt `setbacks.py` und `derive.py` mit den Höhen der Konfiguration statt `H_max` (Spez. 5.3.4), prüft Bauband-Bedingung `facade` und Flucht `fixed`, rechnet Nebengebäude mit ihren Regeln. Den Endpunkt `/buildable?height_m=` legt H2 an.
+- **A:** Snapshot übernimmt die Antwort mit `input_hash`; das Büro sieht sie über `GET /admin/projects/{id}/envelope`; Mail hängt den Steckbrief an (umgesetzt: Link statt Anhang, AF01).
+- **H2:** nutzt `setbacks.py` und `derive.py` mit den Höhen der Konfiguration statt `H_max` (Spez. 5.3.4), prüft Bauband-Bedingung `facade` und Flucht `fixed`, rechnet Nebengebäude mit ihren Regeln. Den Endpunkt `/buildable?height_m=` legt H2 an (umgesetzt: entfällt, HP04).
 - **V:** DXF aus denselben Konturen in Lambert-93 und lokal.
 
 ---
@@ -259,8 +259,8 @@ Summe etwa 18 Tage (3,5–4 PW), innerhalb der Größe M aus Plan 3.5. Schritte 
 | Bauband `range` | Fassadenbedingung, keine Fläche (Spez. 5.2.4) | Parameter `band`; `building` begrenzt die Fläche | Wortlaut Zone Uh; Fläche sonst bis dreifach zu groß |
 | Cache | Tabelle `site_envelope`, ungültig bei neuer Revision oder Regelwerksversion | kein Cache; Hash über den Inhalt | Gelände, Projektkorrekturen und Rückfall ändern keine Nummer (Prüfprotokoll 1) |
 | Zone ohne Regeln | nicht behandelt | nicht in den Konturen, schraffiert | eine Zone N sähe sonst vollständig bebaubar aus |
-| Kante `other` | keine Regelart | größerer Abstand aus seitlich und hinten | vorsichtig, markiert |
-| Endpunkt `/buildable?height_m=` | Spez. 6.3 | erst H2 | ohne Haus keine Höhe |
+| Kante `other` | keine Regelart | größerer Abstand aus seitlich und hinten; umgesetzt: weiteste Auslegung der kleinere, engste der größere (BR03) | vorsichtig, markiert |
+| Endpunkt `/buildable?height_m=` | Spez. 6.3 | erst H2; umgesetzt: entfällt (HP04) | ohne Haus keine Höhe |
 | Höhenbezug Straße, m NGF | Spez. 5.9.4 | nur Angabe des Bezugs | G3 ohne externe Abfragen; Höhe an der Straße braucht den Höhendienst, H2 fragt unter dem Haus ab (G11) |
 
 ---
@@ -278,7 +278,7 @@ Summe etwa 18 Tage (3,5–4 PW), innerhalb der Größe M aus Plan 3.5. Schritte 
 
 ## 10. Risiken
 
-- **Qualität der Regeln** ist ungemessen (HANDOFF 4.1); G3 macht Lesefehler von G2 als Fläche sichtbar. Gegenmittel: Zitat je Wert, Robustheitslauf nach der Referenzmenge.
+- **Qualität der Regeln** ist ungemessen (HANDOFF, Arbeitspunkt „G2 und G3 abschließen“); G3 macht Lesefehler von G2 als Fläche sichtbar. Gegenmittel: Zitat je Wert, Robustheitslauf nach der Referenzmenge.
 - **Auslegungen** (Band über alle Straßen, Ausnahmen, Dérogations) sind vereinfacht; sie erscheinen als Hinweis, nicht als Fläche.
 - **Rechtliche Wirkung** der Bezeichnungen: „sicher bebaubar“ darf nicht als Zusage lesbar sein (Plan 6.9); Bezeichnungen und `notice.envelope_simulation` gehen zur Rechtsberatung.
 - **Zwei Zeichnungen** (React im Browser, SVG in Python für das PDF) können auseinanderlaufen. Gegenmittel: dieselbe Antwort als einzige Quelle, Snapshot-Test des SVG, schlichte Darstellung im PDF.
@@ -317,7 +317,7 @@ Nachgerechnet: Parität 20 − 2 × 3 = 14 m, 31 − 5 − 5 = 21 m, 294 m²; ru
 | Steckbrief | WeasyPrint im Worker | Druckansicht im Browser | kein PDF auf dem Server gebraucht würde; A braucht es für die Mail |
 | Lageplan im PDF | SVG in Python | SVG aus dem Browser hochladen | nie: der Server wäre nicht mehr maßgeblich (L5) und die Datei ungeprüft |
 | Zone ohne Regeln | nicht bebaubar | ohne Abzüge in `lenient` | viele Wohnzonen scheitern in G2 dauerhaft; dann verliert der Kunde zu viel |
-| Grundstückskanten `other` | größerer Abstand aus seitlich und hinten | Kante als `unknown` | die Referenzmenge zeigt, dass `other` meist Straßen am Rand des Einzugsgebiets sind |
+| Grundstückskanten `other` | größerer Abstand aus seitlich und hinten (umgesetzt: BR03) | Kante als `unknown` | die Referenzmenge zeigt, dass `other` meist Straßen am Rand des Einzugsgebiets sind |
 
 **Offene Risiken:** Qualität der Regeln (G2 ungemessen), Wortlaut der Bezeichnungen (Rechtsberatung), CNIG-Typliste ungeprüft.
 
@@ -335,8 +335,8 @@ Umgesetzt in einer Sitzung, alle Schritte aus Abschnitt 5. Die Empfehlungen zu E
 | 3 Oberfläche | `frontend/src/envelope` (Tabelle, Lageplan mit beiden Konturen, Bauband, Bauverbot, Markierungen), Einbau in die Grundstücksseite, Regeln als Herleitung, fr/de; 8 Komponententests, E2E erweitert |
 | 4 Robustheit | `app.cli envelope-check`; Lauf über 200 Parzellen der Zone Uh: 0 Fehler, p95 122 ms (BR12); Ansicht im Browser geprüft |
 | 5 Steckbrief | Job `envelope_sheet` mit WeasyPrint, SVG aus Python, Ablage je Prüfsumme, Download über die API |
-| 6 Dokumentation | ANNAHMEN BR01–BR15, BETRIEB 10, Unraid README 11, README, AGENTS |
+| 6 Dokumentation | ANNAHMEN BR01–BR15, BETRIEB 10, Unraid README 9, README, AGENTS |
 
 **Prüfungen:** Backend `ruff`, `ruff format`, `mypy`, 247 Tests grün (davon 37 für G3); Frontend `tsc`, ESLint, 34 Tests, Build grün.
 
-**Offen:** Die Abnahme mit mehr als Zone Uh und die Messung der Qualität hängen weiter am Schlüssel der Claude API (HANDOFF 4.1). Ohne ihn bleibt `band` in den vorhandenen Auswertungen leer, und die Konturen unterscheiden sich allein wegen dieser Auslegung (Hinweis `band_unclear`). Die Bezeichnungen der beiden Konturen gehen mit den Hinweistexten nach L7 in die rechtliche Prüfung (Plan 6.9).
+**Offen:** Die Abnahme mit mehr als Zone Uh und die Messung der Qualität hängen weiter am Schlüssel der Claude API (HANDOFF, Arbeitspunkt „G2 und G3 abschließen“). Ohne ihn bleibt `band` in den vorhandenen Auswertungen leer, und die Konturen unterscheiden sich allein wegen dieser Auslegung (Hinweis `band_unclear`). Die Bezeichnungen der beiden Konturen gehen mit den Hinweistexten nach L7 in die rechtliche Prüfung (Plan 6.9).

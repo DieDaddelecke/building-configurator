@@ -1,6 +1,6 @@
 # Emprise Backend – Spezifikation für die Umsetzung mit Claude Code
 
-> **Status:** Entwurf zur Umsetzung · **Stand:** 13.09.2026
+> **Status:** Entwurf zur Umsetzung · **Stand:** 13.09.2026 (Kapitel 0 und Anhang E.4: 19.09.2026)
 > **Bezug:** `Hauskonfigurator.jsx` (klickbares Frontend-Mockup), `Dokumentation.html` (Fachdokumentation des Mockups)
 > **Zielgruppe:** Claude Code als umsetzender Agent, Entwickler, Architekturbüro
 
@@ -10,14 +10,14 @@
 
 **Für Claude Code:**
 
-1. Lies das Dokument vollständig, bevor du Code schreibst. Die Kapitel hängen voneinander ab.
+1. Lies vor Code-Arbeit die Kapitel 0–2 und die Kapitel, die der Modulabschnitt im Umsetzungsplan nennt (Überschriften per Grep `^#{2,4} `); Verweise darin nachlesen, weil die Kapitel voneinander abhängen. Vollständig nur, wenn die Aufgabe das ganze Dokument betrifft (Entscheidung des Auftraggebers vom 19.09.2026).
 2. Kapitel 1 (Leitplanken) ist verbindlich. Kein Meilenstein darf eine Leitplanke verletzen.
 3. Arbeite die Meilensteine aus Kapitel 14 in der angegebenen Reihenfolge ab. Jeder Meilenstein hat Abnahmekriterien; ein Meilenstein ist erst fertig, wenn seine Tests grün sind.
 4. Kapitel 16 listet Entscheidungen, die der Auftraggeber treffen muss. Triff sie nicht selbst. Wenn ein Meilenstein eine offene Entscheidung berührt, frage nach oder implementiere hinter einer Konfigurationsoption mit dem dort genannten Vorschlag als Standard.
 5. Alle externen Endpunkte in Kapitel 9 sind beim Start gegen die aktuelle Dokumentation der Anbieter zu prüfen. Kapsle jede externe Schnittstelle in einem Adapter mit aufgezeichneten Testantworten.
 6. Für die Anbindung von Claude (PLU-Auswertung) die Skill `claude-api` laden und deren Vorgaben zu SDK, Modell und Fehlerbehandlung befolgen.
-7. Wenn du eine Annahme triffst, die hier nicht gedeckt ist, dokumentiere sie in `backend/docs/ANNAHMEN.md` mit Datum und Begründung.
-8. Anhang E protokolliert die Logikprüfung dieses Dokuments. Die dort genannten Korrekturen sind im Text bereits eingearbeitet; Anhang E erklärt, warum.
+7. Wenn du eine Annahme triffst, die hier nicht gedeckt ist, dokumentiere sie in `docs/ANNAHMEN.md` (Umsetzungsplan 4.1) mit Datum und Begründung.
+8. Anhang E protokolliert die Logikprüfung dieses Dokuments. Die Korrekturen aus E.1–E.3 sind im Text eingearbeitet; E.4 listet die noch nicht eingearbeiteten. Abweichungen der Umsetzung stehen in `UMSETZUNGSPLAN.md` Kapitel 7 und in `docs/ANNAHMEN.md`; für beauftragte Module gilt der Umsetzungsplan vor Kapitel 14.
 
 **Sprachregelung:** Dieses Dokument ist deutsch. Code, Datenbank, API und Commit-Nachrichten sind englisch. Fachbegriffe werden über das Glossar in Kapitel 2 zugeordnet. Erzeugte Dokumente für Kunden und Büro sind zweisprachig vorzubereiten (Französisch, Deutsch).
 
@@ -1595,3 +1595,27 @@ Nach der ersten Fassung wurde das Dokument vollständig gegengelesen. Die folgen
 - Gelände über 5 % Neigung: nur Status `unknown`, keine Berechnung.
 - Exakte Wortlaute und Artikelnummern französischer Flächendefinitionen und Schwellen: vor Umsetzung zu prüfen (5.8.2, 5.8.4).
 - Aktuelle Endpunkte der französischen Geodienste: vor Umsetzung zu prüfen (Kapitel 9).
+
+### E.4 Offene Korrekturen (noch nicht eingearbeitet)
+
+S1–S13 aus der Prüfung vom 13.09.2026, S14 nach D11 (14.09.2026), S15–S17 aus der Umsetzung von H2 (19.09.2026). Dazu kommen die Abweichungen in Umsetzungsplan Kapitel 7, die bei Freigabe des Plans hier einzuarbeiten sind.
+
+| Nr. | Befund | Stelle | Gelöst im Plan (13.09.) | Stand 19.09.2026 |
+|---|---|---|---|---|
+| S1 | Ligne-Neigung `atan(2,8/4,0)` = 34,99° < 35° → ohne Winkeltoleranz gesperrt | Spez. 11.3, Anhang C | ja, Plan 3.7 | in H1 umgesetzt (Toleranz 0,1°, Plan H1 3.5) |
+| S2 | Firstrichtungstest mit Plateau sinnlos (Flachdach hat keinen First) | Spez. 11.2, D7 | ja, Plan 3.8 | in H2 mit Satteldachtyp getestet (Plan H2 10.1 Nr. 1) |
+| S3 | „Gespeicherte Konfigurationen sind immer auswahlgültig“ stimmt nicht → Neuprüfung beim Absenden | Spez. 5.10.2 Punkt 1 | ja, Plan 3.10 | H2 prüft bei jedem Abruf neu (HP13); Neuprüfung beim Absenden kommt mit V |
+| S4 | Zulässigkeit mit Einzelabweichungen sperrt Typen fälschlich, wenn nur zwei Gruppen gemeinsam passen | Spez. 5.4.6 | teilweise, Plan 3.8; automatische Erkennung zusammenwirkender Gruppen fehlt noch | ruht: H1 hat keine Variantengruppen (H02) |
+| S5 | Zustände für E-Mail-Bestätigung und `dossier_failed` fehlen; Projekt- und Übergabestatus vermischt | Spez. 5.10.1, 5.10.2 | teilweise (Code vor Absenden, Plan 3.6); Zustandsautomat offen | Code vor Absenden in A umgesetzt; Zustandsautomat offen (V) |
+| S6 | Preise und RE2020-Bewertungen an Typversion gekoppelt | Spez. 4.3 | ja, Plan 3.7 | in H1 umgesetzt (H05) |
+| S7 | Rückfall auf Entwurfsregeln zeigt ungeprüfte Regeln beim Kunden | Spez. 4.4 | ja, Plan 3.4 | durch D11 überholt |
+| S8 | Traufhöhe an Wandaußenseite gemessen; viele PLU messen am Tiefpunkt der Traufe (bis ca. 0,35 m Unterschied) → Messpunkt als Regelparameter | Spez. 5.4.3 | nein | offen |
+| S9 | Queue `sandbox` „ohne Netzwerk“ braucht DB und Objektspeicher → „ohne Internetzugang“ | Spez. 7 | nein (Plan X2 formuliert richtig) | offen (Queues noch nicht eingeführt, A20) |
+| S10 | Löschrecht `DELETE /projects/{id}` kollidiert mit Aufbewahrung beim Büro | Spez. 6.3, 10.2 | nein | vorläufig entschärft: `409` nach einer Anfrage (Plan A 3.9), D6 offen |
+| S11 | Paritätstest Lärche in M1 nur zufällig gleich gerundet (Pauschale vs. `finish_delta`) | Spez. 11.2 | teilweise, Plan 3.9 | offen (H3) |
+| S12 | Flachdach-Testmodell nennt „Firsthöhe“ statt Attikahöhe | Spez. 11.3 | nein | offen |
+| S13 | Spezifikation (~60.000 Tokens) aufteilen: Kerndokument plus Dokument je Modul; Anhang E auslagern | Spez. gesamt | nein | nicht aufgeteilt; seit 19.09.2026 kapitelweise gelesen (Kapitel 0 Punkt 1) |
+| S14 | Leitplanken L2 und L6, 3.4, 4.2 (`rule_set`), 5.2.3 Schritt 5, 5.2.5, 5.9.1, 5.10.2 an D11 anpassen | siehe Befund | Plan 7, ANNAHMEN RW-Abschnitt | offen |
+| S15 | `/buildable?height_m=` entfällt; ersetzt durch die Fläche zulässiger Ursprünge je Drehung (`GET /projects/{id}/configuration/placement-area`) | Spez. 6.3, 8.1, 8.2, 11.5 | – | HP04 |
+| S16 | Rastersuche ersetzt durch die Fläche zulässiger Ursprünge; Drehung in festen Schritten | Spez. 5.3.4–5.3.6 | Plan 3.8, 7 | in H2 umgesetzt (Plan H2 3.2, 3.3) |
+| S17 | `placement` wird in Lambert-93 gespeichert, die API nimmt und liefert lokale Meter | Spez. 4.4, 6.1 | – | HP12 |

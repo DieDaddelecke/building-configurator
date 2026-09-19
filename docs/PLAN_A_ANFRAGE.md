@@ -1,5 +1,7 @@
 # A – Anfrage – Plan für die Umsetzung
 
+> **Umgesetzt am 18.09.2026** (Backend und Frontend); Abweichungen in Kapitel 8 und ANNAHMEN AF01–AF12, nicht umgesetzt: Anfrage außerhalb des Einzugsgebiets (3.6, AF11).
+
 ## 1. Ziel und Abgrenzung
 
 Aus einem simulierten Grundstück (G1) mit oder ohne Baurahmen (G3) eine Anfrage an das Architekturbüro machen,
@@ -279,7 +281,7 @@ Aus Umsetzungsplan 3.6:
 - Eine Korrektur des Büros für ein Projekt (Rule-Override) ändert die Simulation anderer Projekte nicht; für
   die Zone (neue `rule_set_version`) gilt sie für spätere Simulationen; der Snapshot der bereits gestellten
   Anfrage bleibt in beiden Fällen unverändert (Snapshot ist eine Kopie, keine Referenz).
-- Anfrage ohne Baurahmen (außerhalb Einzugsgebiet und Weg E) funktioniert bis zur Bestätigungsseite.
+- Anfrage ohne Baurahmen (außerhalb Einzugsgebiet und Weg E) funktioniert bis zur Bestätigungsseite (außerhalb des Einzugsgebiets nicht umgesetzt, AF11).
 - `review_queue(require_inquiry=True)` zeigt kein Projekt ohne `inquiry`-Zeile.
 - Produktionsreife-Kriterien (Umsetzungsplan 4.1): Rate-Limit-Punkt gilt hier für zwei neue öffentliche
   Endpunkte (`contact`, `confirm`).
@@ -314,7 +316,7 @@ Aus Umsetzungsplan 3.6:
 ## 10. Risiken
 
 - **E2 (Mailanbieter) ist noch offen** – lokal läuft alles über Mailpit, das ändert an diesem Plan nichts;
-  erst bei der Auslieferung auf Unraid relevant (bestehender Punkt in HANDOFF Abschnitt 3/4.3).
+  erst bei der Auslieferung auf Unraid relevant (bestehender Punkt in HANDOFF, Abschnitte 3 und 4 „Auslieferung und Betrieb“).
 - **D6 (Datenschutzrolle Emprise↔Büro) ungeklärt** – 3.9/8 wurden bewusst so eng gefasst, dass eine spätere
   Entscheidung sie nur lockern, nicht neu bauen muss.
 - **Vorläufige Rechtstexte**: Bis zur Rechtsberatung trägt Emprise das Risiko eines noch nicht geprüften

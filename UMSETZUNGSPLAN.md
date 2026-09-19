@@ -1,6 +1,6 @@
- **Nach der Empfehlung genommen 19.09.2026 (H2), erweitert auf Grundstücke ohne verfügbare Regeln:** freier Modus im Umriss ohne Abstandsprüfung (ANNAHMEN HP02); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. | **Nach der Empfehlung genommen 19.09.2026 (Auftrag „erstelle den Hauskonfigurator“, H2):** nur wirksame Regeln sperren, Unbekanntes bleibt Hinweis (ANNAHMEN HP01); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |# Emprise – Umsetzungsplan in Modulen
+# Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1 und A; D1–D4, D11 und D14 entschieden (Kapitel 9) · **Stand:** 18.09.2026, H1 umgesetzt: Backend und Katalogpflege-Oberfläche (3.7, ANNAHMEN H01–H14, [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md)), die fünf Platzhalter-Typen als echte Dateien offen; A umgesetzt (3.6, ANNAHMEN AF01–AF12, [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md)), Anfrage ohne Grundstück außerhalb des Einzugsgebiets offen; D13 (H2 ohne Baurahmen) weiter offen
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1, A und H2; Entscheidungen in Kapitel 9 · **Stand:** 19.09.2026 · Umsetzungsstand je Modul: [HANDOFF.md](HANDOFF.md) Abschnitt 1; Festlegungen der Umsetzung: [docs/ANNAHMEN.md](docs/ANNAHMEN.md); Modulpläne: `docs/PLAN_<Modul>.md`
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -135,7 +135,7 @@ backend/app/
   configuration/   H3
 ```
 
-Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `domain/` hängt nicht von FastAPI, SQLAlchemy oder der Queue ab (Spez. 12).
+Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `domain/` hängt nicht von FastAPI, SQLAlchemy oder der Queue ab (Spez. 12). Umgesetzt liegt H2 in `configuration/` (ein Paket `placement/` gibt es nicht); laut Plan H2 4.1 erweitern H3 und V dasselbe Paket.
 
 **Abnahme:** Leere Anwendung läuft in Staging und Produktion; Auslieferung und Rückrollen per Pipeline vorgeführt; Wiederherstellung einer Sicherung in Staging vorgeführt; Alarm bei Ausfall kommt an; Anmeldung Büro mit MFA; Übersetzung fr/de wirksam.
 
@@ -209,14 +209,9 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Größe:** M (2–4 PW) – kein Kataster, keine Nachbarparzellen, keine Kantenklassifikation und keine externen Dienste, aber ein eigenes interaktives Zeichen- und Bemaßungswerkzeug (Frontend) mit serverseitigem Polygonaufbau und Schließungslogik (Backend) ist mehr als reine Datenverdrahtung.
 
-**Offen (vor R2, siehe D13):** Wie H2 (Zulässigkeit und Implantation) mit einem Grundstück ohne Baurahmen umgeht.
+**H2 ohne Baurahmen (D13):** nach Empfehlung genommen, freier Modus im Umriss (ANNAHMEN HP02).
 
-**Umgesetzt am 17.09.2026:** Festlegungen in `docs/ANNAHMEN.md` G26–G30. Gegenüber diesem Abschnitt geändert:
-
-- `PUT …/site` erweitert (nicht ein zweiter Endpunkt): entweder `parcel_idus` oder `edges` (Länge, Azimut je Kante) mit Pflichtfeld `address_label`, nach demselben Muster wie `LookupIn._exactly_one` (G27).
-- Ein bestehendes Grundstück anderer Herkunft wird nicht überschrieben (`409 site_origin_mismatch`); dafür ist ein neues Projekt vorgesehen, wie hier beschrieben (G28).
-- Zeichenfläche als eigenes Werkzeug (`FreiesZeichnen.tsx`), keine Wiederverwendung von `GrundstueckPruefen` für die Ansicht danach (`ManuelleZeichnungAnsicht`): keine Kanten, kein Gelände, keine Risiken zu zeigen (G30).
-- Abnahme erfüllt: Bemaßung ergibt exakt das eingegebene Polygon, Selbstüberschneidung abgelehnt, G2/G3 nachweislich nicht aufgerufen (kein Job, kein Steckbrief), Hinweistext sichtbar getrennt. Backend 262 Tests, Frontend 40 Tests; im Browser geprüft (Zeichnen, Bemaßen mit Live-Vorschau, Fehlerfall, Deutsch/Französisch).
+**Umgesetzt am 17.09.2026**, Abnahme erfüllt. Abweichungen von diesem Abschnitt (ANNAHMEN G26–G30): `PUT …/site` erweitert statt eines zweiten Endpunkts (`parcel_idus` oder `edges`, G27); ein Grundstück anderer Herkunft wird nicht überschrieben (`409 site_origin_mismatch`, G28); eigene Ansicht `ManuelleZeichnungAnsicht` statt `GrundstueckPruefen` (G30).
 
 ### 3.4 G2 – Regelwerk (R1)
 
@@ -290,18 +285,11 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Größe:** M (3–5 PW).
 
-**Umgesetzt am 16.09.2026** nach [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md); Festlegungen in `docs/ANNAHMEN.md` BR01–BR15. Gegenüber diesem Abschnitt geändert:
-
-- Statt `B(0)` und `B(H_max)` zwei Konturen, die jede mehrdeutige Regel am günstigsten bzw. am strengsten auslegen (Höhe, Bauen auf der Grenze, Bauband, Kantenart, einschränkende Vorgaben). Ohne mehrdeutige Regel sind beide gleich (BR01).
-- Das Bauband einer Straße wirkt auf die Fläche, wenn der Text das ganze Gebäude meint; G2 liefert dafür den Parameter `band` (BR02, Kapitel 7).
-- Kein Zwischenspeicher `site_envelope`: Neuberechnung je Abruf (gemessen p95 122 ms), Prüfsumme über den **Inhalt** der Eingaben statt über Revisions- und Versionsnummern, weil Gelände, Projektkorrekturen und der Rückfall-Planstand keine Nummer ändern (BR07).
-- Teilflächen ohne ausgewertete Regeln oder mit Grundflächenzahl 0 liegen in keiner Kontur (BR04); Wirkung überlagernder Vorgaben nach CNIG-Typ (BR05).
-- Kein Höhenbezug auf Straßenniveau und keine Angabe in m NGF: G3 fragt keine externen Dienste ab (BR09).
-- Abnahme erfüllt: Parität 294 m², Rechenbeispiele D4 und D10, Eigenschaftstests, Mehrzonenfall, Bauverbotsfläche, markierte Kante ohne Abstand, p95 unter 300 ms, Steckbriefe automatisch erzeugt.
+**Umgesetzt am 16.09.2026** nach [docs/PLAN_G3_BAURAHMEN.md](docs/PLAN_G3_BAURAHMEN.md), Abnahme erfüllt. Abweichungen von diesem Abschnitt (ANNAHMEN BR01–BR15): zwei Konturen (weiteste und engste Auslegung jeder mehrdeutigen Regel: Höhe, Bauen auf der Grenze, Bauband, Kantenart, einschränkende Vorgaben; ohne mehrdeutige Regel gleich) statt `B(0)`/`B(H_max)` (BR01); Bauband als Fläche über den G2-Parameter `band` (BR02); kein Zwischenspeicher `site_envelope`, Prüfsumme über den Inhalt der Eingaben (BR07); Teilflächen ohne Regeln oder mit Grundflächenzahl 0 in keiner Kontur (BR04); Vorgaben nach CNIG-Typ (BR05); kein Höhenbezug auf Straßenniveau und keine Angabe in m NGF (BR09).
 
 ### 3.6 A – Anfrage (R1)
 
-**Stand 18.09.2026:** umgesetzt und getestet, Abweichungen in [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md) 8 und ANNAHMEN AF01–AF12; nicht umgesetzt: Anfrage ohne Grundstück außerhalb des Einzugsgebiets (AF11).
+**Umgesetzt am 18.09.2026** nach [docs/PLAN_A_ANFRAGE.md](docs/PLAN_A_ANFRAGE.md); Abweichungen dort in Kapitel 8 und in ANNAHMEN AF01–AF12; nicht umgesetzt: Anfrage ohne Grundstück außerhalb des Einzugsgebiets (AF11).
 
 **Zweck:** Aus dem Bebaubarkeitscheck eine verwertbare Anfrage an das Büro. Bleibt nach H1–H3 als Notausgang bestehen (D14): schnellere Anfrage ohne Konfiguration, auch mit gültigem Baurahmen.
 
@@ -323,6 +311,8 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 **Größe:** M (3–5 PW), einschließlich Prüfansicht der Simulation.
 
 ### 3.7 H1 – Hauskatalog (R2)
+
+**Umgesetzt am 18.09.2026** (Backend und Katalogpflege-Oberfläche) nach [docs/PLAN_H1_HAUSKATALOG.md](docs/PLAN_H1_HAUSKATALOG.md); Abweichungen in ANNAHMEN H01–H14; offen: die fünf Platzhalter-Typen als echte Dateien.
 
 **Zweck:** Pflegbarer, versionierter Katalog ohne IFC-Import.
 
@@ -364,7 +354,7 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Größe:** L (6–10 PW).
 
-**Umsetzungsstand 19.09.2026:** H2 nach [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md) umgesetzt (Backend `backend/app/configuration`, Oberfläche `/konfigurator`, ANNAHMEN HP01–HP20). Abweichungen: Terrasse, Carport und Zufahrt kommen mit H3, weil H1 an einer Option weder Art noch Maße kennt (HP03); `/buildable?height_m=` entfällt zugunsten der Fläche zulässiger Ursprünge je Drehung (HP04).
+**Umgesetzt am 19.09.2026:** H2 nach [docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md) umgesetzt (Backend `backend/app/configuration`, Oberfläche `/konfigurator`, ANNAHMEN HP01–HP20). Abweichungen: Terrasse, Carport und Zufahrt kommen mit H3, weil H1 an einer Option weder Art noch Maße kennt (HP03); `/buildable?height_m=` entfällt zugunsten der Fläche zulässiger Ursprünge je Drehung (HP04).
 
 ### 3.9 H3 – Konfiguration und Kosten (R2)
 
@@ -658,7 +648,7 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | **Bauband an der Straße** | `setback_street` mit `range` ist nur eine Bedingung an die Straßenfassade, keine Flächenbedingung (Spez. 5.2.4) | Parameter `band`: Meint der Text den ganzen Hauptbaukörper („bande d'implantation“), begrenzt das Band die bebaubare Fläche; meint er nur die Fassade, bleibt es eine Bedingung für H2; ohne Angabe gilt es nur in der engsten Auslegung, mit Hinweis | Wortlaut der Zone Uh in Treillières: „hors bande d'implantation, les constructions nouvelles ne sont pas autorisées“. Ohne Unterscheidung wäre die Fläche dreifach zu groß (3.5, BR02) |
 | **Bebaubare Fläche** | `B(0)` und `B(H_max)` je nach Höhe (Spez. 5.3.1) | Zwei Konturen als weiteste und engste Auslegung **jeder** mehrdeutigen Regel | Unsicherheit entsteht auch aus Grenzbebauung, Bauband, Kantenart und fehlenden Werten; sichtbar machen statt schätzen (D11, BR01) |
 | Höhenbezug Straßenniveau, Angabe in m NGF | Spez. 5.9.4 | Nur der Bezug wird genannt, keine absolute Höhe | G3 fragt keine externen Dienste ab; H2 fragt ohnehin Punkte unter dem Haus nach (BR09) |
-| Endpunkt `/buildable?height_m=` | Spez. 6.3 | Erst mit H2 | Ohne Haus gibt es keine Höhe; G3 liefert beide Konturen (BR01) |
+| Endpunkt `/buildable?height_m=` | Spez. 6.3 | Entfällt; H2 liefert die Fläche zulässiger Ursprünge je Drehung (HP04) | Ohne Haus gibt es keine Höhe; G3 liefert beide Konturen (BR01) |
 | Lagesuche | Rastersuche 0,25 m | Fläche erlaubter Ursprünge je Drehung; Raster als Rückfall | Leistungsziele erreichbar, exakte Vorschau |
 | Drehung | beliebig | R2 in festen Schritten | Voraussetzung für die Flächenmethode |
 | Jobs | Celery, Redis, Outbox, Dispatcher | PostgreSQL-Queue | Weniger Bausteine, transaktional |
@@ -705,8 +695,8 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 | D9 | Vier-Augen-Prinzip bei Regelfreigabe (Spez. E6) | **Entfällt mit D11** (keine Regelfreigabe mehr) |
 | D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto |
 | D11 | Herkunft und Verbindlichkeit der Regeln | **Entschieden 14.09.2026:** G2 arbeitet vollautomatisch und ist nicht auf Eingaben des Büros angewiesen. Das Ergebnis ist eine unverbindliche Simulation, nicht kontraktuell. Das Büro prüft die fertige Simulation erst, nachdem der Kunde Kontakt aufgenommen hat (3.4, 3.6, Kapitel 7) |
-| D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden |
-| D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden |
+| D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (Auftrag „erstelle den Hauskonfigurator“, H2):** nur wirksame Regeln sperren, Unbekanntes bleibt Hinweis (ANNAHMEN HP01); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |
+| D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (H2), erweitert auf Grundstücke ohne verfügbare Regeln:** freier Modus im Umriss ohne Abstandsprüfung (ANNAHMEN HP02); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |
 | D14 | Bleibt A (Anfrage direkt nach G3, ohne Konfiguration) bestehen, sobald H1–H3 und V den vollständigen Weg G3 → Konfigurator → V anbieten? | **Entschieden 17.09.2026:** Ja, dauerhaft als Notausgang, auch mit gültigem Baurahmen. Regelweg bleibt G3 → H2 → H3 → V mit einer Anfrage erst nach vollständiger Konfiguration (Spez. 3.4); A daneben als schnellerer Weg ohne Konfiguration. V erweitert dieselbe Anfrage, falls der Kunde nachträglich konfiguriert |
 
 ---
@@ -811,4 +801,4 @@ Nach dem Ausarbeiten wurde der neue Abschnitt gegengelesen. Die Fehler unten sin
 | Schließung des Polygons | Letzte Kante automatisch berechnet, nicht frei bemaßbar | Alle Kanten frei bemaßbar, Server meldet Schließungsfehler zur Korrektur | Nutzer eher inkrementell nachbessern als eine berechnete Kante akzeptieren – aufwändigere Oberfläche (Fehlermeldung je Versuch statt automatischer Schließung) |
 | Adresspflicht | Pflicht | Optional, nur wenn eine Anfrage folgt | reine Kostenschätzungen ohne jede Ortsangabe gewünscht sind; widerspricht der Nutzerentscheidung vom 17.09.2026 |
 
-**Offenes Risiko:** D13 (H2-Verhalten ohne Baurahmen) ist erst vor H2 zu entscheiden; bis dahin bleibt offen, ob der Konfigurator (R2) auf einem manuell gezeichneten Grundstück irgendeine Prüfung anbietet oder ausschließlich die freie Fläche.
+**Offenes Risiko:** D13 (H2-Verhalten ohne Baurahmen) ist erst vor H2 zu entscheiden; bis dahin bleibt offen, ob der Konfigurator (R2) auf einem manuell gezeichneten Grundstück irgendeine Prüfung anbietet oder ausschließlich die freie Fläche. *Erledigt 19.09.2026: D13 nach Empfehlung genommen (ANNAHMEN HP02).*

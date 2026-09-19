@@ -60,5 +60,5 @@ Ergebnis je Punkt in diese Tabelle eintragen; Grundlage für D3.
 - Täglicher Dump in die zweite Region als geplanter Container-Job – nach D3.
 - Uptime-Dienst mit Alarmen auf `/api/health/ready` und `/api/health/jobs`, Fehler-Tracking-Konto – nach D5.
 - Domain, Maildomain mit SPF/DKIM/DMARC – Kapitel 8 des Plans (R0, Emprise).
-- Schutz des Hauptzweigs und Pflicht-Pull-Requests im Repository-Dienst – nach Anlage des Remote-Repositorys.
+- Schutz des Hauptzweigs und Pflicht-Pull-Requests im Repository-Dienst: Das Remote besteht seit 14.09.2026 (GitHub, privat), der Zweigschutz ist offen (HANDOFF 4).
 - Die OpenAPI-Oberfläche `/api/v1/docs` lädt Skripte von einem CDN und wird durch die CSP des Web-Containers blockiert; in Staging über die API direkt oder gar nicht nutzen.

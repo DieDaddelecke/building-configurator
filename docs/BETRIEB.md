@@ -1,6 +1,6 @@
 # Betriebsanleitung
 
-Typische Störungen und Handgriffe (Plan 6.8). Stand R0. Befehle mit `docker compose exec api …` gelten lokal; beim Anbieter läuft derselbe Befehl als einmaliger Container-Job mit dem Image der laufenden Version.
+Einrichten der Module, typische Störungen und Handgriffe (Plan 6.8). Befehle mit `docker compose exec api …` gelten lokal; beim Anbieter läuft derselbe Befehl als einmaliger Container-Job mit dem Image der laufenden Version.
 
 ## 1. Überblick
 
@@ -14,7 +14,19 @@ Typische Störungen und Handgriffe (Plan 6.8). Stand R0. Befehle mit `docker com
 | Objektspeicher | Dateien, privat, versioniert | `GET /api/v1/admin/ops/status` → `storage_ok` |
 | Mail | Transaktionsmails über SMTP | `POST /api/v1/admin/ops/test-mail` |
 
-Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder Datenbank gestört“; `/api/health/jobs` ≠ 200 → „Worker steht oder ist überlastet“.
+Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder Datenbank gestört“; `/api/health/jobs` ≠ 200 → „Worker steht oder ist überlastet“. Dazu Alarme auf Log-Einträge (Fehler-Tracking): `rules_extract_failed` (Kapitel gescheitert, Abschnitt 9), `rules_budget_exceeded` (Monatsbudget der Claude API erreicht), `road_import_implausible` (Straßenachsen, Abschnitt 8). Das in Plan G3 6.2 genannte `envelope_derive_failed` ist im Code nicht angelegt.
+
+**Module im Betrieb.** Migrationen laufen beim Ausliefern mit (Job `migrate`). Freischalten über Feature-Flags (Plan 4.2): intern `python -m app.cli flag-set <flag> --role architect`, Beta für eingeladene Projekte über die Admin-API (für `inquiry` und `configurator` war `--all` für die Beta genannt), öffentlich `--all`, abschalten `--off`; jede Änderung steht im `audit_log`. `envelope_simulation` setzt `site_selection` und `rules_simulation` voraus (Plan G3 4.2).
+
+| Modul | Migration | Flag | Jobs (Rhythmus) | Ausgehender Zugang von API und Worker | Vor dem Freischalten |
+|---|---|---|---|---|---|
+| P | 0001 | – | `mail_send`, `retention_cleanup` (täglich), `housekeeping` (stündlich) | SMTP-Anbieter (E2) | `staff-add` (3), SMTP (5) |
+| G1 | 0002, 0006 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
+| G2 | 0003, 0004 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
+| G3 | 0005 | `envelope_simulation` | `envelope_sheet` | – | WeasyPrint im Image (10) |
+| H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
+| A | 0008 | `inquiry` | `mail_send` | – | Büro-Postfach, `legal-seed` (11) |
+| H2 | 0009 | `configurator` | – | – | ein veröffentlichter Typ (12) |
 
 ## 2. Ausliefern und Rückrollen
 
@@ -77,8 +89,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 
 1. Einzugsgebiet setzen: `EMPRISE_CADASTRE_COMMUNES='["44209"]'` (INSEE-Codes; Entscheidung D1).
 2. Erstimport: `python -m app.cli cadastre-import` (ohne Internet: `--from-dir <ordner> --release <stand>`). Danach prüft der Worker wöchentlich auf neue Stände.
-3. Freischalten über das Flag `site_selection`: intern `python -m app.cli flag-set site_selection --role architect`, später Beta für Projekte (Admin-API) und öffentlich `flag-set site_selection --all`; abschalten mit `--off` (Plan 4.2). Jede Änderung steht im `audit_log`.
-4. Ausgehender Zugang für API und Worker: `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`. Browser der Besucher laden Kartenkacheln von `data.geopf.fr`.
+3. Flag und ausgehender Zugang: Tabelle in Abschnitt 1.
 
 **Stand prüfen:** `GET /api/v1/admin/cadastre/imports` (Rolle `ops`): letzter Import je Gemeinde mit Stand, Anzahl Parzellen, Gebäude, Straßenachsen (`roads = -1`: Achsen fehlen, siehe unten) und Fehler.
 
@@ -97,7 +108,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 - Gelände oder Risiken `unavailable`: Hinweis „nicht abgefragt“ beim Grundstück. Sobald der Dienst wieder antwortet: `POST /api/v1/admin/sites/enrich-retry` (Rolle `ops`) stößt alle betroffenen Grundstücke erneut an. Auch unerwartete Antworten und ein Zeitlimit enden nach dem letzten Versuch als `unavailable`; bleibt eine Abfrage ohne wartenden Job auf „wird abgefragt“ stehen (Worker verloren), setzt `site_housekeeping` (alle 6 h) sie nach 30 Minuten auf `unavailable`.
 - Adressvorschläge liegen 24 h im Arbeitsspeicher des API-Prozesses, nicht in der Datenbank (Annahme G22); nach einem Neustart fragt die API die Géoplateforme erneut.
 
-**Prüfliste im Büro:** `/buero/grundstuecke` zeigt Grundstücke mit unbestätigten Kundenkorrekturen zuerst. Solange eine Kundenkorrektur unbestätigt ist, ist der Baurahmen nicht bindend.
+**Prüfliste im Büro:** `/buero/grundstuecke` zeigt nur Projekte mit Anfrage (AF04), Grundstücke mit unbestätigten Kundenkorrekturen zuerst. Solange eine Kundenkorrektur unbestätigt ist, ist der Baurahmen nicht bindend.
 
 ## 9. Regelwerk (Modul G2)
 
@@ -105,8 +116,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 
 1. Schlüssel der Claude API und Monatsbudget setzen: `EMPRISE_ANTHROPIC_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). An die API gehen nur öffentliche Planunterlagen (L8).
 2. Planstände importiert der Worker beim ersten Start und danach wöchentlich (`plu_import`); sofort: `python -m app.cli plu-import` (ohne Internet: `--from-dir`). Jedes Zonenkapitel wird danach als Job `rules_extract` ausgewertet.
-3. Freischalten über `rules_simulation`: intern `python -m app.cli flag-set rules_simulation --role architect`, später Beta und `--all` (Plan 4.2).
-4. Ausgehender Zugang für API und Worker zusätzlich: `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `data.geopf.fr`, `api.anthropic.com`.
+3. Flag und ausgehender Zugang: Tabelle in Abschnitt 1.
 
 **Stand prüfen:** `/buero/regeln` bzw. `GET /api/v1/admin/rules/coverage`: je Gemeinde Planstand und Status, je Kapitel Sektoren, Status mit Grund, Läufe, Kosten, offene Pflichtwerte je Sektor; oben Monatskosten und Budget.
 
@@ -176,7 +186,7 @@ Keine neuen externen Dienste; Mail läuft über den bestehenden Weg (Abschnitt 5
    ```
 
    Ohne diese Texte scheitert `POST .../inquiry/confirm` mit `503 legal_text_missing`. Endgültiger Wortlaut nach Rechtsberatung: neue Version über `POST /admin/legal-texts` veröffentlichen, keine Codeänderung nötig.
-3. Flag setzen: `docker compose exec api python -m app.cli flag-set inquiry --role architect` (intern), später `--all` für die Beta.
+3. Flag `inquiry` setzen (Abschnitt 1).
 
 **Anfrage kommt nicht beim Büro an**
 
@@ -195,7 +205,7 @@ Keine neuen externen Dienste und keine neuen Jobs. Zulässigkeit und Prüfung de
 
 1. Mindestens ein Typ muss veröffentlicht sein (Büro, `/buero/katalog`). Ohne Typen zeigt die Seite „Es ist noch kein Haustyp veröffentlicht“.
 2. Lokal zum Ansehen: `docker compose --profile dev run --rm backend-dev python -m tests.e2e_seed_types` legt drei erfundene Typen `demo_*` an. **Nie in Produktion.**
-3. Flag setzen: `docker compose exec api python -m app.cli flag-set configurator --role architect` (intern), später `--all` für die Beta.
+3. Flag `configurator` setzen (Abschnitt 1).
 
 **Typ wird zu Unrecht gesperrt oder zugelassen**
 

@@ -1,6 +1,53 @@
 # Änderungsprotokoll
 
-Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. Der aktuelle Stand steht in [HANDOFF.md](HANDOFF.md).
+Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. Der aktuelle Stand steht in [HANDOFF.md](HANDOFF.md). Einträge bis 18.09.2026 sind verdichtet: welche Dateien ein Commit geändert hat, zeigt `git show --stat <commit>`.
+
+---
+
+## 19.09.2026 – Dokumentation verdichtet
+
+**Auftrag:** Nutzer: Dokumentation optimieren, Dateien zusammenlegen, Dopplungen vermeiden, Ausführungen komprimieren, keine Informationen verlieren, gründlich und mit Selbstprüfung. Erst Plan nach vollständiger Durchsicht aller Dokumente, dann Umsetzung.
+
+**Entschieden** (Nutzer, 19.09.2026)
+- Die Spezifikation wird kapitelweise gelesen: Kapitel 0–2 und die im Modulabschnitt des Umsetzungsplans genannten Kapitel. Beantwortet die seit 13.09.2026 offene Frage zum Lesen großer Dokumente (Spez. 0 Punkt 1, CLAUDE.md Punkt 4).
+- Ältere Einträge dieses Protokolls verdichten: Dateilisten durch Commit-Kennungen ersetzen; Entscheidungen, Befunde und Messwerte bleiben.
+- Den Ausgangsstand vorher sichern: Commit `7cecdb5` (Hand-off-Dokumente der H2-Session), nicht gepusht.
+
+**Grundsatz:** Jeder Inhalt steht an einer Stelle (AGENTS.md unter der Dokumententabelle). Dateinamen, Kapitelnummern und IDs bleiben unverändert, weil der Code über 300-mal darauf verweist (`Spez. 5.3.4`, `Plan H1 3.5`, `BR03`). Keine ganzen Dateien zusammengelegt: Modulpläne werden je Modul gelesen und vom Code per Dateiname referenziert; zusammengelegt würde der nötige Kontext größer.
+
+**Geändert**
+- `CLAUDE.md` – Leseregeln: neuester Protokolleintrag, Spezifikation kapitelweise, große Dokumente (auch ANNAHMEN) nur abschnittsweise.
+- `AGENTS.md` – Stand auf drei Sätze; Dokumententabelle (Modulpläne in einer Zeile, D1–D14, E1–E12, Anhang E.4, README mit Stolperstellen); Grundsatz „eine Quelle je Inhalt“; Rangfolge ohne feste Modulliste.
+- `HANDOFF.md` – ohne Dopplungen zu AGENTS und AENDERUNGEN; Stolperstellen nach README; zurückgeholte und neue Arbeitspunkte (4.1, 4.5, 4.7, 4.9).
+- `README.md` – Aufbau mit allen Modulpaketen; Start mit allen Flags, `legal-seed` und Demo-Typen; Prüfbefehle vereinheitlicht; API-Regeln ergänzt (Modellnamen, Trigger, Jobarten, Sequenzen); neuer Abschnitt **Stolperstellen** aus allen 13 Fassungen von HANDOFF.md.
+- `BACKEND_SPEZIFIKATION.md` – Kapitel 0 Punkt 1 (kapitelweise), 7 (Pfad `docs/ANNAHMEN.md`), 8 (Verweis auf Abweichungen); neuer Anhang **E.4** mit den offenen Korrekturen S1–S17.
+- `UMSETZUNGSPLAN.md` – Zeile 1 repariert: Die Vermerke zu D12/D13 standen seit `98fce8f` vor der Überschrift, jetzt in Kapitel 9. Kopfzeile verdichtet, Blöcke „Umgesetzt“ in 3.3, 3.5–3.8 auf je einen Absatz mit IDs; Hinweis zum Paket `configuration/` (3.2); Kapitel 7: `/buildable` entfällt (HP04); 10.4: D13 erledigt.
+- `docs/ANNAHMEN.md` – Einleitungen ohne Testzahlen und Erzählung, Einträge gestrafft, Bezüge der H2-Einträge eindeutig („Plan H2 …“); **H01 korrigiert** (Befunde); G04 um Lotissement-Straßen als „voie“ ergänzt (aus HANDOFF `cc48386`); G18, A11, RW13, RW16, G21 mit Verweis auf den heutigen Stand.
+- `docs/BETRIEB.md` – Abschnitt 1 mit Tabelle „Module im Betrieb“ (Migration, Flag, Jobs, ausgehender Zugang, Voraussetzungen) und Log-Alarmen; damit erledigt: HANDOFF 4.5 Punkt 4 (Betrieb für H1). Abschnitte 8, 9, 11, 12 ohne die dorthin gewanderten Schritte.
+- `deploy/unraid/README.md` – Abschnitte 9–11 zu „9. Module auf Unraid“ zusammengelegt (nur Unraid-Eigenes, Verweis auf BETRIEB 1).
+- `infra/README.md` – Abschnitt 4: Remote besteht, Zweigschutz offen.
+- `docs/PLAN_G3_BAURAHMEN.md`, `PLAN_H1_HAUSKATALOG.md`, `PLAN_A_ANFRAGE.md`, `PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md` – veraltete Stellen mit Kurzverweis auf die geltende Festlegung (AF01, HP04, BR03, H01, AF11, HP16); Kopfzeilen von H1 und A.
+- `.claude/skills/handoff/SKILL.md` – Dauerhaftes nie nur in HANDOFF; Protokolleinträge mit Commit statt Dateiliste; Prüfschritte gegen verlorene Punkte.
+- `AENDERUNGEN.md` – Einträge vom 18.09. bis 14.09. verdichtet; der H2-Eintrag und die Einträge bis 13.09. (vor Git) bleiben wörtlich.
+
+**Befunde der Durchsicht**
+- **Verloren:** Die Liste S1–S13 der Spezifikationskorrekturen stand nur noch in `git show 1f4b646:HANDOFF.md`, S14 in `91e84f6:HANDOFF.md`; HANDOFF verwies seit 14.09. auf „AENDERUNGEN 14.09.“, wo sie nie stand. Jetzt Spez. Anhang E.4, ergänzt um S15–S17 aus H2.
+- **Verloren:** rund 15 Stolperstellen früherer HANDOFF-Fassungen (u. a. Playwright unter Windows, Corepack aus dem Wurzelordner, `python` als Store-Platzhalter, `ruff format`, `# type: ignore` in `claude.py`, parallele Sessions, Massentests, `FakeExtractor`); am Code geprüft und nach README übernommen. Bewusst nicht übernommen, weil erledigt oder anderswo geregelt: erster Hand-off von Hand (Eintrag 13.09.), „Modul A übersprungen“, einzelne CI-Läufe (`8cf8a27`, `596e075`, `11a6e64`), „große Dokumente kapitelweise lesen“ (jetzt CLAUDE.md), Ordnername `Codex_Projet` und Rolle von AGENTS/CLAUDE, Commit nur auf Aufforderung (Memory).
+- **Verloren:** offene Punkte Playwright für Weg E, Log-Alarme `rules_extract_failed`/`rules_budget_exceeded`/`road_import_implausible`, Lotissement-Straßen als „voie“, alter Test-Stack `emprise-g1` (Container und Volume bestehen noch); zurück in HANDOFF, BETRIEB 1 und G04. Ebenso Einzelheiten zu offenen Punkten (XLSX-Vorlage „bisher nur Beschreibung im Importformular“, Löschung „danach Weiterleitung auf `/`“, Hinweis zur Empfehlung bei RW19) und der Befund zum Import von `plateau` (Eintrag 18.09., H1-Oberfläche).
+- **H01 widersprach dem Code:** Seit `596e075` bearbeiten laut `catalog/api.py` (`Editor`) `architect` und `catalog_admin`, `ops` liest; H01 sagte „`catalog_admin` statt `architect`, `architect`/`ops` lesen mit“. H01 korrigiert; der Docstring in `catalog/api.py` steht als Arbeitspunkt in HANDOFF 4.5.
+- **Nebenbefunde im Code (nicht geändert):** `EMPRISE_OFFICE_EMAIL` fehlt in `deploy/unraid/compose.yaml` und `.env.example`; das Log `envelope_derive_failed` aus Plan G3 6.2 gibt es nicht (HANDOFF 4.7, 4.9).
+- CI-Lauf 35427795221 zu `98fce8f` (H2) und 35398360953 zu `df4fa3d` (H1-Oberfläche) sind grün.
+
+**Selbstprüfung**
+- Token-Vergleich aller Dokumente und Memory-Dateien gegen `7cecdb5` (Backtick-Codes, IDs, Zahlen mit Einheit, URLs, Pfade, Commits; Skript im Scratchpad): von 3.016 Tokens fehlten vor diesem Eintrag 150. Davon 132 aus den verdichteten Protokolleinträgen: alle 101 Pfade stehen in den genannten Commits (`git log --name-only`), die übrigen sind Bezeichner, die im Code stehen, oder Testzahlen, die umformuliert erhalten sind. Die 18 übrigen sind begründet: korrigierte Pfade (`backend/docs/ANNAHMEN.md`, `pages/buero/Katalog.tsx`), die alte Leseregel (`^#{2,3}`, „6 Punkte“), in README oder BETRIEB zusammengeführte Befehle, das erledigte `gh run list`.
+- Beim Wort-Diff von ANNAHMEN gefundene weggefallene Nuancen wiederhergestellt (H10, H11, H12, AF02, AF03, G29, G30, BR07) und im Protokoll die Zuordnung der Tests zu den Prüfbefunden (A1–A4, E15, E19, F22).
+- Verweise: 0 kaputte Links; alle 145 IDs der ANNAHMEN definiert, keine referenzierte ID fehlt; alle Kapitelverweise aus Code und Doku auf Spezifikation, Umsetzungsplan, Modulpläne, BETRIEB und HANDOFF lösen sich auf (einziger Rest: `Spez. 5.1.4.6` im Code meint 5.1.4 Punkt 6). Unraid-Verweise auf die früheren Abschnitte 10/11 auf 9 umgestellt; flüchtige HANDOFF-Abschnittsnummern in Plan G3 und Plan A durch Namen ersetzt.
+- Größen (Bytes; Summe aller Dokumente 573.538 → 572.318, weil README, Spezifikation und dieser Eintrag wachsen): HANDOFF 18.762 → 13.697, AGENTS 7.452 → 5.446, AENDERUNGEN 46.816 → 40.019 (mit diesem Eintrag von rund 8.000), ANNAHMEN 67.680 → 64.331, Umsetzungsplan 79.852 → 78.806; gewachsen README (3.967 → 13.762, Stolperstellen) und Spezifikation (120.886 → 124.704, Anhang E.4).
+- Pflichtkontext je Session (CLAUDE, AGENTS, MEMORY-Index, HANDOFF, neuester Eintrag): rund 33 KB → rund 26 KB; das Ziel von 20 KB ist nicht erreicht, weil HANDOFF 18 offene Entscheidungen und neun Gruppen offener Arbeitspunkte trägt. Backend-Sessions lesen statt der ganzen Spezifikation (125 KB) Kapitel 0–2 (7 KB) plus die Modulkapitel, statt ganz ANNAHMEN (64 KB) den Abschnitt des Moduls (5–16 KB).
+
+**Unverändert:** `Dokumentation.html`, `emprise.html`, `Hauskonfigurator.jsx` (kein Artefakt neu veröffentlicht); der normative Text der Spezifikation (nur Kapitel 0 und Anhang E.4).
+
+**Memory:** `feedback-plan-dann-umsetzen` und `project-hosting-unraid` verdichtet (Repo-Fakten per Verweis); neu `feedback-kompakte-dokumentation`.
 
 ---
 
@@ -39,263 +86,153 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ## 18.09.2026 – H1: Katalogpflege-Oberfläche
 
-**Neu**
-- `frontend/src/pages/buero/katalog/` – Büro-Oberfläche der Katalogpflege: `KatalogLayout` (Rahmen mit Reitern), `KatalogTypen` (Typenliste, Import XLSX + DXF), `KatalogTyp` (Typstand), `KatalogLinienOptionen`, `KatalogPreise`, `katalog.test.tsx` (11 Fälle).
-- `frontend/src/katalog/` – `geometrie.ts` (Kanten, Vorschlag der Fassadenrollen, Platzierung; `geometrie.test.ts`, 8 Fälle), `Grundriss.tsx` (Umriss mit Rollen, Eingang, Garagentor), `Axonometrie.tsx` (Plan H1 3.6, clientseitig), `TypFormulare.tsx` (Rollen, Lage, RE2020, Grundriss-PDF), `bausteine.tsx` (Beträge, Statusmarke, Fehleranzeige, Rechte).
-- `frontend/src/api/catalog.ts` – Abfragen und Änderungen der Katalogpflege.
+**Commits:** `df4fa3d`, Hand-off `4423903`; CI-Lauf 35398360953 grün.
 
-**Geändert**
-- `backend/app/catalog/{schemas,service}.py` – `TypeSummaryOut.versions`; `GET .../lines` und `.../options` liefern alle Versionen; `PackageIn.included_option_slugs` (Ausgabe `included_option_slugs`, unbekannte Option `422 catalog_reference_unknown`); `backend/tests/integration/test_catalog.py` (3 neue Fälle, jetzt 13), `backend/openapi.json`, `frontend/src/api/schema.d.ts`.
-- `frontend/src/App.tsx`, `pages/buero/BueroLayout.tsx`, `BueroStart.tsx`, `i18n/{de,fr}.json` – Routen `/buero/katalog/...`, Navigation, Übersetzungen (`catalog.*`, beide Sprachen deckungsgleich).
-- `docs/ANNAHMEN.md` (H10–H14), `AGENTS.md` (Stand), `UMSETZUNGSPLAN.md` (Statuszeile), `docs/PLAN_H1_HAUSKATALOG.md` (Umsetzungsstand).
+**Umfang:** Büro-Oberfläche `/buero/katalog` in `frontend/src/pages/buero/katalog/` (Typenliste mit Import XLSX + DXF, Typstand, Linien und Optionen, Preise; 11 Tests) und `frontend/src/katalog/` (Kanten, Vorschlag der Fassadenrollen, Platzierung mit 8 Tests; Grundriss mit Rollen, Eingang, Garagentor; Axonometrie nach Plan H1 3.6, clientseitig; Formulare für Rollen, Lage, RE2020, Grundriss-PDF); `frontend/src/api/catalog.ts`; Routen, Navigation, Übersetzungen `catalog.*` in beiden Sprachen. Backend: `TypeSummaryOut.versions`, `GET .../lines` und `.../options` mit allen Versionen, `PackageIn.included_option_slugs` (unbekannte Option `422 catalog_reference_unknown`), Katalogtests jetzt 13. ANNAHMEN H10–H14, Plan-Statuszeilen.
 
 **Entschieden**
-- Nutzer: „erstelle erst eine Oberfläche für H1 – beachte alle Vorlagen und Vorgaben“; keine Rückfragen nötig, Plan H1 4.4/5 galt. Festlegungen der Umsetzung stehen als Annahmen in ANNAHMEN H10–H14 (nicht ausdrücklich bestätigt): Format `{edge, position}` für Eingang/Garagentor, links/rechts von der Straße aus gesehen, schematische Axonometrie, Umfang der Oberfläche.
-- Nutzer: „comitten und pushen“ – Commit `df4fa3d` gepusht (CI-Lauf 35398360953 bei Abschluss noch in Arbeit).
+- Nutzer: „erstelle erst eine Oberfläche für H1 – beachte alle Vorlagen und Vorgaben“; keine Rückfragen nötig, Plan H1 4.4/5 galt. Festlegungen der Umsetzung als Annahmen H10–H14 (nicht ausdrücklich bestätigt): Format `{edge, position}` für Eingang/Garagentor, links/rechts von der Straße aus gesehen, schematische Axonometrie, Umfang der Oberfläche.
+- Nutzer: „comitten und pushen“.
 
 **Ohne Dateiänderung**
 - Browserprüfung am lokalen Stack (Deutsch und Französisch): Import zweier Beispieltypen über das echte Formular (Rechteck `ligne`, L-Form `plateau`), Fassadenrollen-Vorschlag und Speichern, Eingang und Garagentor, Option `pv` und Linie `confort` (mit `enthalten_in`) angelegt und veröffentlicht, RE2020-Befund gespeichert und im Preiskatalog sichtbar, `ligne` veröffentlicht und gesperrt, Fehlermeldung bei ungültiger XLSX. Testdaten bleiben im lokalen Stack.
 - Beim Bau gefunden: Entwürfe standen in keiner Liste (H11), `enthalten_in` war über die API nicht pflegbar (H12), die Rollenvorschläge übersahen bei der L-Form die zweite Gartenkante (jetzt jede Gegenkante = Garten).
-- Nicht gelaufen: Playwright (E2E), die vollständige Backend-Suite (nur Katalog- und Domänentests, ruff und mypy über alles).
+- Import von `plateau` (Flachdach): Neigungsprüfung entfällt, nur der Raumflächen-Hinweis erscheint (Plan H1 3.5); die 75–95 %-Warnung trifft beide Beispieltypen, weil die Beispielräume kurz sind (aus HANDOFF `4423903`).
+- Nicht gelaufen: Playwright, die vollständige Backend-Suite (nur Katalog- und Domänentests, ruff und mypy über alles).
 
-**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/BETRIEB.md`, Datenmodell und Migrationen (keine neue Migration).
-
-**Memory:** unverändert (keine neue Rückmeldung zur Arbeitsweise).
+**Memory:** unverändert.
 
 ---
 
 ## 18.09.2026 – A Anfrage: Plan und Umsetzung (Backend und Frontend)
 
-**Neu**
-- `docs/PLAN_A_ANFRAGE.md` – Plan des Moduls A mit Selbstprüfung (Prüfprotokoll 11): Ablauf, E-Mail-Code, Snapshot, Vorgangsnummer, Lotissement-Frage, Anfrage ohne Baurahmen, Zustände, Export und Löschung, Rechtstexte.
-- `backend/app/inquiry/` – Modul A: `models.py` (`customer`, `inquiry`, `consent`), `schemas.py`, `service.py` (Kontakt, Codebestätigung, Snapshot, Export, Löschung, Büro-Sicht), `api.py`, `texts.py` (vorläufige Rechtstexte fr/de).
-- `backend/migrations/versions/0008_inquiry.py` – Tabellen, Sequenz `inquiry_number_seq` (mit eigenem `GRANT`), Trigger `consent_append_only`/`consent_no_truncate`.
-- `backend/tests/integration/test_inquiry.py` – 12 Fälle: Ablauf, beide Einwilligungen, falscher Code, Versuchsgrenze, Rate-Limit je E-Mail, Weg E, Export, Löschung vor und nach der Anfrage, Büro-Liste/-Detail/Status, Rollen.
-- `frontend/src/api/inquiry.ts`, `frontend/src/inquiry/AnfrageFormular.tsx`, `DatenschutzAktionen.tsx`, `anfrageFormular.test.tsx` (3 Fälle) – Kundenstrecke.
-- `frontend/src/pages/buero/Anfragen.tsx`, `AnfrageDetail.tsx` – Büro-Liste mit Statusfilter und Detailseite (Kontakt, Status, Baurahmen, Kanten, Regeln).
+**Commits:** `d66ee11`, Hand-off `6fae882`; CI-Lauf 35389397303 grün.
 
-**Geändert**
-- `backend/app/site/service.py` – `review_queue(require_inquiry=True)`: Grundstücks-Prüfliste zeigt nur Projekte mit Anfrage (G21).
-- `backend/app/envelope/api.py` – `POST`/`GET /admin/projects/{id}/envelope/sheet` für das Büro; `frontend/src/api/envelope.ts`, `frontend/src/envelope/Baurahmen.tsx` – Steckbrief-Knopf auch für `rolle="architect"`.
-- `backend/app/platform/legal.py` – `publish()` aus dem Endpunkt herausgelöst; `rate_limit.py` – `check_value` (Schlüssel je E-Mail); `config.py` – `office_email`, `inquiry_*`; `cli.py` – `legal-seed`; `main.py`, `migrations/env.py`, `locales/{de,fr}.json` (Mailvorlagen, Fehlertexte), `pyproject.toml`/`uv.lock` (`email-validator`), `openapi.json`, `tests/conftest.py`, `tests/integration/test_site.py` (Hilfe `stub_inquiry`, neue Aussage „ohne Anfrage unsichtbar“).
-- `frontend/src/pages/grundstueck/GrundstueckSeite.tsx`, `pages/buero/BueroLayout.tsx`, `pages/buero/Grundstuecke.tsx` (Exporte `Detail`, `ProjektRegeln`, `Fehler`), `App.tsx`, `i18n/{de,fr}.json`, `api/schema.d.ts`.
-- `UMSETZUNGSPLAN.md` (Status, Hinweis in 3.6), `AGENTS.md` (Stand, Dokumententabelle), `docs/ANNAHMEN.md` (Abschnitt „A – Anfrage“, AF01–AF12), `docs/BETRIEB.md` (Abschnitt 11).
+**Umfang:** `docs/PLAN_A_ANFRAGE.md` (Plan mit Selbstprüfung); `backend/app/inquiry/` (Kontakt, Codebestätigung, Snapshot, Export, Löschung, Büro-Sicht, vorläufige Rechtstexte fr/de in `texts.py`); Migration `0008_inquiry.py` (`customer`, `inquiry`, `consent`, Sequenz `inquiry_number_seq` mit eigenem `GRANT`, Trigger `consent_append_only`/`consent_no_truncate`); 12 Integrationsfälle. Frontend: Kundenstrecke (`AnfrageFormular.tsx`, `DatenschutzAktionen.tsx`, 3 Tests), Büro-Liste mit Statusfilter und Detailseite (`Anfragen.tsx`, `AnfrageDetail.tsx`). Geändert: `review_queue(require_inquiry=True)` (G21), Büro-Routen für den Steckbrief, `legal.publish()`, `rate_limit.check_value`, CLI `legal-seed`, `email-validator`. ANNAHMEN AF01–AF12, BETRIEB 11, Plan 3.6.
 
 **Entschieden**
-- Nutzer: „setze modul A um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`): Steckbrief nur als Link (kein Mailanhang), Löschung nach einer Anfrage gesperrt (`409`, D6 offen), vorläufige Rechtstexte selbst entworfen. Alle als Annahmen in ANNAHMEN AF01–AF05 festgehalten, keine ausdrückliche Bestätigung des Nutzers.
-- Nutzer: „comitte und pushe“ – Commit `d66ee11` gepusht, CI-Lauf 35389397303 grün.
+- Nutzer: „setze modul A um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`): Steckbrief nur als Link (kein Mailanhang), Löschung nach einer Anfrage gesperrt (`409`, D6 offen), vorläufige Rechtstexte selbst entworfen. Alle als Annahmen AF01–AF05, keine ausdrückliche Bestätigung des Nutzers.
+- Nutzer: „comitte und pushe“.
 
 **Ohne Dateiänderung**
-- Beim Bau gefundene und behobene Fehler: fehlender `GRANT` auf die neue Sequenz (`permission denied for sequence`, jetzt in Migration und ANNAHMEN AF07); zwei G1-Tests setzten Projekte ohne Anfrage voraus (angepasst); `unwrap` erwartet Nutzdaten und scheitert an `204` (Löschroute umgangen).
-- Browserprüfung am lokalen Stack: Kontakt → Code aus Mailpit → Bestätigung → `EMP-2026-000001` → Büro-Liste → Detail → Statuswechsel → Export. Die Löschung mit `window.confirm` ließ sich im Browser nicht auslösen (Dialog wurde abgebrochen); nur im Backend-Test geprüft.
-- Beim Handoff aufgefallen (jetzt in ANNAHMEN AF11 und PLAN_A 3.6): Adressen außerhalb des Einzugsgebiets haben keine Anfragestrecke; der Hinweis `site.outside` verspricht sie.
+- Beim Bau gefunden und behoben: fehlender `GRANT` auf die neue Sequenz (`permission denied for sequence`, AF07); zwei G1-Tests setzten Projekte ohne Anfrage voraus (angepasst); `unwrap` erwartet Nutzdaten und scheitert an `204` (Löschroute umgangen).
+- Browserprüfung: Kontakt → Code aus Mailpit → Bestätigung → `EMP-2026-000001` → Büro-Liste → Detail → Statuswechsel → Export. Die Löschung mit `window.confirm` ließ sich im Browser nicht auslösen (Dialog abgebrochen); nur im Backend-Test geprüft.
+- Beim Handoff aufgefallen: Adressen außerhalb des Einzugsgebiets haben keine Anfragestrecke, der Hinweis `site.outside` verspricht sie (AF11, Plan A 3.6).
 - E2E (Playwright) lokal nicht gelaufen; die CI war grün.
-
-**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/PLAN_H1_HAUSKATALOG.md`, `deploy/unraid/`, `platform/tasks.py` (Aufbewahrung greift über `status = 'submitted'`, AF10).
 
 **Memory:** `feedback-plan-dann-umsetzen` ergänzt (Commit und Push nur auf Aufforderung).
 
-**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: „Modul A nachholen?“ (Abschnitt 3, 4.4, 5), H1 4.1 Punkt 5 (lokaler Stack neu gebaut, Migrationen 0007 und 0008 angewendet). Alle übrigen Punkte bleiben offen; neu: Anfrage außerhalb des Einzugsgebiets (AF11), Zugangslink und Antwortvorlage aus Plan 3.6 (AF12), endgültige Rechtstexte, Büro-Postfach, Test zur Aufbewahrung (AF10), Abstimmung mit dem Büro zur Anfragebearbeitung.
+**Hand-off:** erledigt „Modul A nachholen?“ und der Neubau des lokalen Stacks (Migrationen 0007, 0008); neu offen: AF11, AF12 (Zugangslink, Antwortvorlage), endgültige Rechtstexte, Büro-Postfach, Test zur Aufbewahrung (AF10), Abstimmung mit dem Büro zur Anfragebearbeitung.
 
 ---
 
 ## 18.09.2026 – H1 Hauskatalog: Plan und Backend-Umsetzung
 
-**Neu**
-- `docs/PLAN_H1_HAUSKATALOG.md` – Plan des Moduls H1: fachliche Festlegungen (XLSX/DXF-Erfassung ohne IFC, Konsistenzprüfung, Preismodell, Veröffentlichungszustände), Architektur, Arbeitsschritte, Prüfprotokoll, Anhang mit den fünf Platzhalter-Typen (Kapitel 12: neu erarbeitet Carré und Attique, gegen `REGELWERK`/`BEBAUBARE_FLAECHE` aus dem Mockup geprüft).
-- `backend/app/catalog/` – Modul H1: `domain/` (`tolerances`, `consistency` – Neigungsprüfung nur `gable`/`hip`, Raumflächen-Warnschwelle; `xlsx` – Typdatenblatt mit drei Blättern; `dxf` – Umriss aus zwei Layern), `models.py` (Typen/Linien/Optionen/Preiskatalog als Identität+Version), `schemas.py`, `service.py`, `api.py` (nur `/admin/catalog/...`, kein Kundenschritt).
-- `backend/migrations/versions/0007_catalog.py` – neue Tabellen sowie der bedingte Trigger `forbid_published_modification` (blockt UPDATE/DELETE nur bei `status = 'published'`, L4).
-- `backend/tests/unit/test_catalog_domain.py` (18 Fälle: XLSX-Schema, DXF-Umriss, Neigungsprüfung gegen alle fünf Platzhalter-Typen), `backend/tests/integration/test_catalog.py` (10 Fälle: Rollen, Import, Konsistenzsperre, Veröffentlichung inkl. Trigger per Rohzugriff, Preisübernahme, RE2020).
+**Commits:** `596e075`, Hand-off `25bcf64`; CI-Lauf 35308790615 grün.
 
-**Geändert**
-- `UMSETZUNGSPLAN.md` – Entscheidung D14 (Kapitel 9), Ergänzung zu Modul A (2.1, 3.6): bleibt Notausgang neben dem Weg G3 → H2 → H3 → V.
-- `AGENTS.md` – Dokumententabelle um `docs/PLAN_H1_HAUSKATALOG.md` ergänzt.
-- `docs/ANNAHMEN.md` – Abschnitt „H1 – Hauskatalog“ (H01–H09), u. a. Rolle `catalog_admin` statt `architect`, RE2020 nicht im Typdatenblatt, Trigger-Entwurf.
-- `backend/app/main.py`, `migrations/env.py`, `platform/locales/{de,fr}.json`, `pyproject.toml` (openpyxl, ezdxf, python-multipart), `uv.lock`, `tests/conftest.py` (neue Tabellen in `CLEAN_TABLES`), `openapi.json`, `frontend/src/api/schema.d.ts` – Verdrahtung, Abhängigkeiten, generierte Dateien.
+**Umfang:** `docs/PLAN_H1_HAUSKATALOG.md` (fachliche Festlegungen: XLSX/DXF-Erfassung ohne IFC, Konsistenzprüfung, Preismodell, Veröffentlichungszustände; Anhang Kapitel 12 mit den neu erarbeiteten Typen Carré und Attique, gegen `REGELWERK`/`BEBAUBARE_FLAECHE` aus dem Mockup geprüft). `backend/app/catalog/` (`domain/`: `tolerances`, `consistency` – Neigungsprüfung nur `gable`/`hip`, Raumflächen-Warnschwelle; `xlsx` – Typdatenblatt mit drei Blättern; `dxf` – Umriss aus zwei Layern; Modelle als Identität + Version; API nur `/admin/catalog/...`), Migration `0007_catalog.py` mit bedingtem Trigger `forbid_published_modification`, Tests (18 Domänen-, 10 Integrationsfälle). Abhängigkeiten openpyxl, ezdxf, python-multipart. Plan: D14 (Kapitel 9), Ergänzung zu A (2.1, 3.6). ANNAHMEN H01–H09.
 
 **Entschieden**
-- D14: Modul A (Anfrage direkt nach G3, ohne Konfiguration) bleibt dauerhaft als Notausgang bestehen, auch mit gültigem Baurahmen und auch nachdem H1–H3 und V den vollständigen Weg anbieten.
+- D14: Modul A (Anfrage direkt nach G3, ohne Konfiguration) bleibt dauerhaft als Notausgang bestehen, auch mit gültigem Baurahmen und nachdem H1–H3 und V den vollständigen Weg anbieten.
 - H1-Plan Kapitel 9 Punkt 1: Start mit fünf Platzhalter-Typen statt drei (Nutzer: „erarbeite 5 Mockup Typen“).
-- H1-Plan Kapitel 9 Punkt 2: zunächst „architect ist okay“ freigegeben, während der Umsetzung als Rechercheversehen erkannt und auf `catalog_admin` korrigiert (H01) – der Nutzer hat diese Korrektur nicht gesondert bestätigt, sie steht als Annahme im Protokoll.
+- H1-Plan Kapitel 9 Punkt 2: zunächst „architect ist okay“, beim Umsetzen um die Rolle `catalog_admin` ergänzt (H01, am 19.09. richtiggestellt) – vom Nutzer nicht gesondert bestätigt.
 - H1-Plan Kapitel 9 Punkt 3: Grundriss-PDF bleibt rein intern in H1 (Nutzer: „ja“).
-- Nutzer: „Setze H1 um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`); Backend umgesetzt, committet (`596e075`).
-- Nutzer: „push it“ – gepusht, CI grün (Lauf 35308790615).
+- Nutzer: „Setze H1 um“ – Empfehlungen des Plans gelten als entschieden (`feedback-plan-dann-umsetzen`). Nutzer: „push it“.
 
 **Ohne Dateiänderung**
-- Nachgeholte CI-Prüfung für den zu Sessionbeginn bereits committeten, aber laut `HANDOFF.md` fälschlich als „nicht gepusht“ vermerkten Stand (`11a6e64`/`a37e76d`, G1 Weg E): tatsächlich schon gepusht, CI-Lauf 35258574782 grün; Vermerk in `HANDOFF.md` korrigiert.
-- Klärung auf Nachfrage: Es gibt kein Modul „G4“, die G-Kette endet bei G3; Modul-Landkarte (A, H1–H3, V, X2–X5) und der Inhalt von Modul A im Detail erläutert.
-- Nutzer erinnerte an die ursprünglich geplante Reihenfolge (Kunde konfiguriert frei, Anfrage erst am Ende) – abgeglichen mit dem Gesamtablauf der Spezifikation (3.4) und als für R2 weiterhin gültig bestätigt; daraus D14.
+- Nachgeholte CI-Prüfung für den laut HANDOFF fälschlich als „nicht gepusht“ vermerkten Stand `11a6e64`/`a37e76d` (G1 Weg E): schon gepusht, CI-Lauf 35258574782 grün; Vermerk korrigiert.
+- Klärung auf Nachfrage: Es gibt kein Modul „G4“, die G-Kette endet bei G3; Modul-Landkarte (A, H1–H3, V, X2–X5) und Modul A im Detail erläutert.
+- Nutzer erinnerte an die ursprünglich geplante Reihenfolge (Kunde konfiguriert frei, Anfrage erst am Ende) – mit dem Gesamtablauf der Spezifikation (3.4) abgeglichen und für R2 bestätigt; daraus D14.
 
-**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/BETRIEB.md` (H1 hat keine Hintergrundjobs oder externen Dienste – Abschnitt folgt, sobald etwas Betriebliches zu dokumentieren ist), `deploy/unraid/`.
-
-**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: Push-Punkt 5.1 (war tatsächlich schon erledigt, nur der Vermerk fehlte). Alle Punkte aus 4.1–4.5 der vorigen Fassung bleiben offen und stehen unten erneut; neu hinzugekommen: H1-Frontend (Katalogpflege-Oberfläche) und die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien.
+**Hand-off:** erledigt Push-Punkt 5.1 (war schon erledigt, nur der Vermerk fehlte); neu offen: H1-Frontend und die fünf Platzhalter-Typen als echte XLSX/DXF-Dateien.
 
 ---
 
 ## 17.09.2026 – G1: Weg E, Grundstück frei zeichnen ohne Kataster
 
-**Neu**
-- `backend/app/site/domain/manual.py` – Polygon aus `n − 1` bemaßten Kanten (Länge, Azimut) bauen und prüfen (Selbstüberschneidung, Mindest-/Höchstfläche und -kantenlänge); die letzte Kante schließt automatisch.
-- `backend/migrations/versions/0006_manual_sketch.py` – Spalten `site.origin` (`parcel`/`manual_sketch`), `site.address_label`.
-- `frontend/src/site/FreiesZeichnen.tsx` – Zeichen- und Bemaßungswerkzeug: Punkte auf freiem Koordinatenraster klicken, Kantenlängen mit Live-Vorschau bearbeiten, Adresse als Pflichtfeld.
-- `frontend/src/site/manual.ts`, `manual.test.ts` – Geometrie fürs Frontend (Azimut, Punkte ↔ Kanten, Fläche), rein zur Vorschau; der Server prüft (L5).
+**Commits:** `11a6e64`, Hand-off `a37e76d`; Push zunächst nicht beauftragt (später gepusht, CI-Lauf 35258574782 grün).
 
-**Geändert**
-- `backend/app/site/schemas.py` – `SiteIn` nimmt entweder `parcel_idus` oder `edges` (+ `address_label` Pflicht dabei), wie `LookupIn._exactly_one`; `SiteOut` um `origin`, `address_label`.
-- `backend/app/site/service.py` – `form_manual_site`, eigene schlanke `load_site`-Ausgabe für `manual_sketch` (keine Kanten, kein Gelände, keine Risiken, keine Umgebung); Sperre gegen Wechsel der Herkunft am selben Projekt (`site_origin_mismatch`, 409); `EnvelopeSite.origin` für G3.
-- `backend/app/site/api.py` – `PUT …/site` verzweigt nach `edges`/`parcel_idus`.
-- `backend/app/site/domain/tolerances.py` – `MANUAL_MIN_EDGES`/`MAX_EDGES`, `MANUAL_MIN_EDGE_M`/`MAX_EDGE_M`, `MANUAL_MIN_AREA_M2`/`MAX_AREA_M2`.
-- `backend/app/envelope/service.py` – `build_envelope`/`project_envelope` liefern für `manual_sketch` sofort `status = unavailable, reason = manual_sketch`, **ohne** `rules_service.envelope_rules` aufzurufen (G2 entfällt, D13); `request_sheet`/`sheet_bytes` lehnen mit `409 sheet_unavailable_manual_sketch` ab.
-- `backend/app/platform/locales/{de,fr}.json` – `problem.manual_polygon_invalid`, `problem.site_origin_mismatch`, `problem.sheet_unavailable_manual_sketch`.
-- `frontend/src/api/site.ts` – `useFormManualSite`; `frontend/src/pages/grundstueck/GrundstueckSeite.tsx` – Umschalter „selbst zeichnen“, eigene schlanke Ergebnisansicht `ManuelleZeichnungAnsicht` (kein Baurahmen-/Regeln-Abschnitt für Weg E).
-- `frontend/src/i18n/{de,fr}.json` – Texte `site.manual.*`, Hinweis `site.notices.manual_sketch`.
-- `backend/openapi.json`, `frontend/src/api/schema.d.ts` – neu erzeugt.
-- `backend/tests/unit/test_site_domain.py`, `integration/test_site.py`, `integration/test_envelope.py` – Domäne (Schließung, Selbstüberschneidung, Eigenschaftstest), Endpunkt, Zusammenspiel mit G3. Backend insgesamt 262 Tests, alle grün.
-- `frontend/src/pages/grundstueck/grundstueck-seite.test.tsx` – Umschalter, Ergebnisansicht ohne Baurahmen/Regeln. Frontend insgesamt 40 Tests, alle grün.
-- `UMSETZUNGSPLAN.md` – Zusatz zu 3.3 (Zweck, Umfang, Daten, Ablauf, Abnahme, Größe), Abweichung in Kapitel 7, offene Entscheidung D13 (Kapitel 9), Prüfprotokoll 10.4 (vier gefundene und behobene Logikfehler, u. a. dass ein vollständig bemaßtes Polygon mathematisch überbestimmt ist), Status im Kopf.
-- `docs/ANNAHMEN.md` – Abschnitt „G1 – Weg E“ (G26–G30).
+**Umfang:** `backend/app/site/domain/manual.py` (Polygon aus `n − 1` bemaßten Kanten mit Länge und Azimut, letzte Kante schließt automatisch; Selbstüberschneidung, Mindest-/Höchstfläche und -kantenlänge), Migration `0006_manual_sketch.py` (`site.origin`, `site.address_label`), `SiteIn` mit `parcel_idus` oder `edges` wie `LookupIn._exactly_one`, `form_manual_site`, Sperre `site_origin_mismatch` (409); G3 liefert für `manual_sketch` sofort `status = unavailable, reason = manual_sketch`, **ohne** `rules_service.envelope_rules` (D13), Steckbrief `409 sheet_unavailable_manual_sketch`; Fehlertexte `problem.manual_polygon_invalid`, `problem.site_origin_mismatch`, `problem.sheet_unavailable_manual_sketch`. Frontend: `FreiesZeichnen.tsx` (Punkte auf freiem Raster, Kantenlängen mit Live-Vorschau, Adresse Pflicht), `manual.ts` mit Test, Umschalter „selbst zeichnen“, `ManuelleZeichnungAnsicht`, Texte `site.manual.*` und `site.notices.manual_sketch`. Backend 262 Tests, Frontend 40 Tests. Plan 3.3 (Zusatz), 7, 9 (D13), 10.4 (vier behobene Logikfehler, u. a. das überbestimmte Polygon); ANNAHMEN G26–G30.
 
 **Entschieden**
-- Nutzer: Idee zum freien Zeichnen ausarbeiten, dann in `UMSETZUNGSPLAN.md` (3.3) fassen, dann umsetzen – Empfehlungen des Plans gelten damit als entschieden (`feedback-plan-dann-umsetzen`): Zusatz zu G1 statt eigenem Modul, freies Koordinatenraster ohne Kartenbezug, Adresse Pflicht.
-- Nutzer: „so viel wie möglich lokal, keine Drittanbieter“ – auf Nachfrage präzisiert: Mailversand (E2) darf ein EU-Drittanbieter sein (Brevo/Scaleway TEM), kein Eigenbetrieb; die Claude API ist als Kernfunktion ausdrücklich ausgenommen. Betrifft nur die Abwägung künftiger Infrastrukturentscheidungen, E2 selbst (welcher Anbieter) bleibt offen.
-- Nutzer: committen (`11a6e64`); Push nicht beauftragt.
+- Nutzer: Idee zum freien Zeichnen ausarbeiten, in `UMSETZUNGSPLAN.md` (3.3) fassen, dann umsetzen – Empfehlungen gelten damit als entschieden: Zusatz zu G1 statt eigenem Modul, freies Koordinatenraster ohne Kartenbezug, Adresse Pflicht.
+- Nutzer: „so viel wie möglich lokal, keine Drittanbieter“ – auf Nachfrage präzisiert: Mailversand (E2) darf ein EU-Drittanbieter sein (Brevo/Scaleway TEM), kein Eigenbetrieb; die Claude API ist als Kernfunktion ausgenommen. Betrifft nur die Abwägung künftiger Infrastrukturentscheidungen; welcher Anbieter (E2), bleibt offen.
+- Nutzer: committen; Push nicht beauftragt.
 
-**Ohne Dateiänderung**
-- Browserprüfung von Weg E am lokalen Stack: Zeichnen, Bemaßen mit Live-Vorschau (Längenänderung aktualisiert Umriss und Fläche sofort), Absenden, Ergebnisansicht, Selbstüberschneidung vom Server abgelehnt, Deutsch/Französisch. Dabei zwei Befunde gefunden und noch in dieser Session behoben: Label „Surface (cadastre)“ für ein Grundstück ohne Kataster (jetzt eigenes Label), ungerundete Klickkoordinaten in den Bemaßungsfeldern (jetzt auf 0,1 m/0,1° gerundet).
-
-**Unverändert:** `BACKEND_SPEZIFIKATION.md` (S1–S14 weiter offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `docs/PLAN_G3_BAURAHMEN.md`, `docs/BETRIEB.md`, `deploy/unraid/`.
+**Ohne Dateiänderung:** Browserprüfung von Weg E am lokalen Stack (Zeichnen, Bemaßen mit Live-Vorschau, Absenden, Ergebnisansicht, Selbstüberschneidung vom Server abgelehnt, Deutsch/Französisch). Zwei Befunde noch in der Session behoben: Label „Surface (cadastre)“ für ein Grundstück ohne Kataster (jetzt eigenes Label), ungerundete Klickkoordinaten in den Bemaßungsfeldern (jetzt 0,1 m/0,1°).
 
 **Memory:** `project-hosting-unraid` präzisiert (Mail als EU-Drittanbieter akzeptiert, Claude API ausgenommen von „keine Drittanbieter“).
 
-**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts (Weg E kam als neue Idee dazu, nicht aus Abschnitt 4 der vorigen Fassung). Alle Punkte aus 4.1–4.5 der vorigen Fassung bleiben offen und stehen unten erneut; neu hinzugekommen: D13 (H2 ohne Baurahmen für Weg E, vor R2 zu entscheiden), Weg E im Browser durch das Büro/echte Kunden ausprobieren lassen.
+**Hand-off:** aus der vorigen Fassung nichts erledigt; neu: D13 (H2 ohne Baurahmen für Weg E), Weg E durch das Büro oder echte Kunden ausprobieren lassen.
 
 ---
 
 ## 16.09.2026 – G3 Baurahmen: Plan und Umsetzung
 
-**Neu**
-- `docs/PLAN_G3_BAURAHMEN.md` – Plan des Moduls G3 mit fachlichen Festlegungen, Architektur, Arbeitsschritten, Prüfprotokoll und Stand der Umsetzung (Abschnitt 12).
-- `backend/app/envelope/` – Modul G3: `domain/` (`inputs`, `setbacks`, `bands`, `heights`, `overlays`, `local`, `derive`, `tolerances`; `ENGINE_VERSION g3-1.0.0`), `models.py`, `schemas.py`, `service.py`, `api.py`, `jobs.py` (`envelope_sheet`), `sheet.py` (HTML und Lageplan-SVG des Steckbriefs).
-- `backend/migrations/versions/0005_envelope.py` – Tabelle `envelope_sheet` (Projekt, Prüfsumme, Speicherschlüssel).
-- `backend/tests/` – `envelope_support.py`, `unit/test_envelope_domain.py` (24 Fälle: Parität, D4, D10, Bauband, Grenzbebauung, fehlende Werte, Zonen, Vorgaben, Höhen, Eigenschaftstests), `integration/test_envelope.py` (13 Fälle gegen PostGIS).
-- `frontend/src/api/envelope.ts`, `frontend/src/envelope/` (`Baurahmen.tsx`, `BaurahmenPlan.tsx`, `format.ts`, `baurahmen.test.tsx`, Fixture aus der echten API-Antwort für AD 65).
+**Commits:** `2dfbc88` (G3), `b8cae60` (Nacharbeiten); CI vollständig grün.
 
-**Geändert**
-- `backend/app/rules/domain/kinds.py`, `extraction.py`, `__init__.py` – Parameter `setback_street.band` (`building` oder `facade`), Prompt dazu, `PROMPT_VERSION g2-prompt-3`, `ENGINE_VERSION g2-1.2.0`.
-- `backend/app/rules/service.py` – `envelope_rules`/`resolve_rules`: dieselbe Auswahl von Planstand, Zonen und Korrekturen wie `project_rules`, zusätzlich Geometrie der Teilflächen und Vorgaben.
-- `backend/app/site/service.py` – `envelope_site` als Eingabe für G3 (Umriss, Kanten, Gelände, Warnungen).
-- `backend/app/cli.py` – `envelope-check` (Robustheitslauf über echte Parzellen, rollt jede Transaktion zurück).
-- `backend/app/config.py` (Rate-Limits), `main.py`, `registry.py`, `migrations/env.py`, `platform/locales/*.json` (Steckbrief- und Baurahmentexte), `Dockerfile` (WeasyPrint mit Pango und DejaVu), `pyproject.toml`/`uv.lock` (weasyprint), `openapi.json`.
-- `backend/tests/rules_support.py`, `unit/test_rules_domain.py`, `integration/test_rules.py` – `band` in der aufgezeichneten Antwort und in den Erwartungen.
-- `frontend/src/pages/grundstueck/GrundstueckSeite.tsx` – Baurahmen zwischen Grundstück und Regeln; Regeln als aufklappbare Herleitung, sobald der Baurahmen sichtbar ist.
-- `frontend/src/i18n/*.json`, `api/schema.d.ts`, `e2e/rules.spec.ts` (Baurahmen und Steckbrief im Kundenpfad).
-- `docs/ANNAHMEN.md` (Abschnitt G3, BR01–BR15), `docs/BETRIEB.md` (Abschnitt 10), `deploy/unraid/README.md` (Abschnitt 11), `README.md`, `AGENTS.md`, `UMSETZUNGSPLAN.md` (Status, 3.5 „Umgesetzt“, Kapitel 7 mit vier neuen Abweichungen).
+**Umfang:** `docs/PLAN_G3_BAURAHMEN.md` (Plan mit Stand der Umsetzung in Abschnitt 12). `backend/app/envelope/` (`domain/`: `inputs`, `setbacks`, `bands`, `heights`, `overlays`, `local`, `derive`, `tolerances`; `ENGINE_VERSION g3-1.0.0`; Job `envelope_sheet`, `sheet.py` mit HTML und Lageplan-SVG), Migration `0005_envelope.py` (`envelope_sheet`), Tests (24 Einheits-, 13 Integrationsfälle). Frontend `frontend/src/envelope/` (Tabelle, Lageplan, Fixture aus der echten API-Antwort für AD 65); Baurahmen zwischen Grundstück und Regeln, Regeln als Herleitung; E2E um Baurahmen und Steckbrief. G2: Parameter `setback_street.band`, `PROMPT_VERSION g2-prompt-3`, `ENGINE_VERSION g2-1.2.0`, `envelope_rules`/`resolve_rules` mit derselben Auswahl wie `project_rules`; G1: `envelope_site`; CLI `envelope-check`; WeasyPrint mit Pango und DejaVu im `Dockerfile`. ANNAHMEN BR01–BR15, BETRIEB 10, Unraid README (heute Abschnitt 9), Plan 3.5 und Kapitel 7 (vier neue Abweichungen).
 
 **Entschieden**
-- Nutzer: G3 nach dem Plan umsetzen; die Empfehlungen des Plans zu E-G3-1 bis E-G3-4 gelten damit als entschieden – Teilflächen ohne Regeln nicht bebaubar, Wirkung der CNIG-Vorgaben, G2-Erweiterung vor dem API-Schlüssel, Steckbrief in G3.
-- Nutzer: committen und pushen (`2dfbc88` G3, `b8cae60` Nacharbeiten); CI vollständig grün.
+- Nutzer: G3 nach dem Plan umsetzen; die Empfehlungen zu E-G3-1 bis E-G3-4 gelten damit als entschieden – Teilflächen ohne Regeln nicht bebaubar, Wirkung der CNIG-Vorgaben, G2-Erweiterung vor dem API-Schlüssel, Steckbrief in G3.
+- Nutzer: committen und pushen.
 
 **Ohne Dateiänderung**
-- Messung mit `envelope-check` über 200 Parzellen der Zone Uh: 0 Ausnahmen, 0 ungültige Geometrien, 133 `ok`, 42 `partial`, 25 `unavailable`, Median 75 ms, p95 122 ms. Die 25 ohne Baurahmen liegen in Zonen ohne ausgewertetes Kapitel (kein API-Schlüssel), die 42 ohne Fläche sind Parzellen von 10 bis 160 m². Werte stehen in ANNAHMEN BR12.
-- Browserprüfung des Kundenpfads am lokalen Stack (Zone Uh, AD 65): Tabelle, Lageplan mit beiden Konturen, Bauband, Hinweise, Steckbrief. Die dort gespeicherte Auswertung stammt aus der Zeit vor dem Parameter `band` und zeigt deshalb zu Recht `band_unclear` (826 m² weiteste, 211 m² engste Auslegung).
-- Zwei Befunde aus Ende-zu-Ende-Läufen behoben: Der Steckbrief-Job übersprang jeden Auftrag mit veralteter Prüfsumme und kam nie zum Ziel, solange das Gelände noch eintraf; die Oberfläche verlangte für jeden Versuch einen neuen Klick (ANNAHMEN BR10).
-- Verworfen: Heuristik für das Bauband nach Banddicke statt eines Parameters in G2 – vor dem API-Schlüssel kostet die saubere Lösung nichts (Plan G3 11.2).
+- Messung mit `envelope-check` über 200 Parzellen der Zone Uh (BR12, BR07): 0 Ausnahmen, 0 ungültige Geometrien, 133 `ok`, 42 `partial`, 25 `unavailable`, Median 75 ms, p95 122 ms.
+- Browserprüfung des Kundenpfads (Zone Uh, AD 65): Tabelle, Lageplan mit beiden Konturen, Bauband, Hinweise, Steckbrief. Die gespeicherte Auswertung stammt aus der Zeit vor dem Parameter `band` und zeigt deshalb zu Recht `band_unclear` (826 m² weiteste, 211 m² engste Auslegung).
+- Zwei Befunde aus Ende-zu-Ende-Läufen behoben: Der Steckbrief-Job übersprang jeden Auftrag mit veralteter Prüfsumme und kam nie zum Ziel, solange das Gelände noch eintraf; die Oberfläche verlangte für jeden Versuch einen neuen Klick (BR10).
+- Verworfen: Heuristik für das Bauband nach Banddicke statt eines Parameters in G2 (Plan G3 11.2).
+- Spezifikation: Anpassungen S1–S14 weiter offen; die vier neuen Abweichungen stehen in Plan 7.
 
-**Unverändert:** `BACKEND_SPEZIFIKATION.md` (Anpassungen S1–S14 weiter offen; die vier neuen Abweichungen stehen in Plan 7), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+**Memory:** `feedback-plan-dann-umsetzen` neu.
 
-**Memory:** `feedback-plan-dann-umsetzen` neu (Empfehlungen eines eigenen Plans gelten mit dem Auftrag zur Umsetzung als entschieden).
-
-**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: alle G3-Punkte aus 4.3 (Zonenstatus und Warnungen, Vorrang spezifischer Regeln, Wirkung überlagernder Vorgaben, Standard-Geschosshöhen, Abstände `unknown` markieren, unsichere Straßenkanten). Offen bleiben der API-Schlüssel (4.1), Unraid (4.2), die Spezifikationskorrekturen (4.4) und die Oberflächenprüfung der Büro-Knöpfe aus G2.
+**Hand-off:** erledigt alle G3-Punkte (Zonenstatus und Warnungen, Vorrang spezifischer Regeln, Wirkung überlagernder Vorgaben, Standard-Geschosshöhen, Abstände `unknown` markieren, unsichere Straßenkanten). Offen blieben API-Schlüssel, Unraid, Spezifikationskorrekturen und die Oberflächenprüfung der Büro-Knöpfe aus G2.
 
 ---
 
 ## 14.09.2026 – Prüfung von G1 und G2 und Behebung aller 23 Befunde
 
-**Neu**
-- `backend/migrations/versions/0004_rules_robustness.py` – nur neue Spalten: Rückfall-Planstand je Gemeinde, Version der Schranken je Kapitel, Teil je Aufruf; Status `multiple_regulations`.
+**Commits:** `13092f9` (Nacharbeiten), Hand-off `b2545db` und `7c426bd`; CI am 15.09.2026 vollständig grün.
 
-**Geändert**
-- `backend/app/rules/domain/text.py` – Zitatprüfung: Zahl nach Auslassung, Reihenfolge der Abschnitte, Verneinungswörter, Formeln für „nicht geregelt“, Prozent/Kehrwert nur je Parameterart (RW24, RW25).
-- `backend/app/rules/domain/assess.py` – Sektor-Zuordnung über Satzteile, `not_regulated` nur mit Formel, Gegenprüfung (`claim_for`, `verify`) statt Abgleich zweier gleicher Läufe (RW19).
-- `backend/app/rules/domain/extraction.py`, `kinds.py`, `chapters.py`, `__init__.py` – Schema und Aufgabe der Gegenprüfung, Prüfsumme über Prompts, Bauband bei Mindestabstand mit Obergrenze, Kapitelende trotz Artikeleinträgen, `ENGINE_VERSION g2-1.1.0`, `PROMPT_VERSION g2-prompt-2`.
-- `backend/app/rules/extract.py` – Aufrufe in Teilen mit Wiederverwendung, Aufteilung bei `max_tokens`, Budget vor jedem Aufruf, Zeitbudget des Jobs, Neubewertung ohne Aufruf, kein Hängenbleiben auf `extracting` (RW22, RW26).
-- `backend/app/rules/plan_import.py` – Planstand am Ort aktualisieren statt löschen (`--force`, geändertes Datum), Rückfall auf den vorigen Planstand, mehrere Reglement-Dateien nicht auswerten, `chapter_too_long` ohne Aufruf (RW20, RW21, RW23).
-- `backend/app/rules/service.py`, `jobs.py`, `schemas.py`, `models.py` – Kunden sehen vorigen Planstand als `outdated`, Warnung `zone_coverage_incomplete` mit `uncovered_share`, Projektkorrektur spezifisch vor allgemein, Büro-Auswertung ohne Doppeljob, Job `rules_housekeeping` (stündlich), `rules_extract` bis 5 Versuche, `ExtractIn.force` Standard `false`.
-- `backend/app/integrations/claude.py` (Gegenprüfung, SDK ohne Wiederholung), `gpu.py` (`regulation_files`), `georisques.py` (unerwartete Antwort als Dienstfehler).
-- `backend/app/site/domain/edges.py`, `domain/__init__.py`, `service.py` – Hauptstraße nach Sicherheit, dann Länge; `ENGINE_VERSION g1-1.1.0` (G23).
-- `backend/app/site/jobs.py`, `cadastre_import.py`, `api.py` – `site_enrich` endet nie auf `pending`, `site_housekeeping` räumt hängende Abfragen auf, unplausibel wenige Straßenachsen behalten die bisherigen, Adress-Cache nur im Arbeitsspeicher (G22, G24, G25).
-- `backend/app/cli.py` (Hilfetexte), `backend/openapi.json`.
-- `backend/tests/` – `unit/test_rules_domain.py` (neu gegliedert, Fälle A1–A4, E15, E19, F22), `unit/test_rules_integrations.py`, `unit/test_site_domain.py`, `unit/test_site_integrations.py`, `integration/test_rules.py` (Planstand erneuern, Rückfall, Aufteilung, Neubewertung, Abbruch, Zeitbudget, Wiederaufnahme, Abdeckung, Korrekturvorrang), `integration/test_site.py`, `rules_support.py` (`FakeExtractor` bildet Gegenprüfungen). Backend 196 Tests.
-- `frontend/src/rules/format.ts` (jeder Parameter, nie leerer Wert), `RegelnSimulation.tsx` (Status „veraltet“, Warnungen mit Anteil), `pages/buero/Regeln.tsx` („Erneut versuchen“ ohne `force`, „Neu auswerten“ mit Rückfrage, Rückfall-Planstand), `api/rules.ts`, `api/site.ts` (alte Regeln nach Parzellenwechsel verwerfen), `i18n/*.json`, `api/schema.d.ts`, `rules/regeln.test.tsx`. Frontend 26 Tests.
-- `docs/ANNAHMEN.md` – G22–G25, RW19–RW27, Verweise in G13, G21, RW06–RW08, RW11, RW12, RW18.
-- `docs/BETRIEB.md` – Abschnitte 8 und 9 (Wiederaufnahme, Fehlergründe, Planstand erneuern, Rückfall).
-- `deploy/unraid/README.md` – Abschnitt 10: Auswertung nach Eintragen des Schlüssels automatisch.
-- `AGENTS.md`, `HANDOFF.md`.
+**Umfang:** Migration `0004_rules_robustness.py` (nur neue Spalten: Rückfall-Planstand je Gemeinde, Version der Schranken je Kapitel, Teil je Aufruf; Status `multiple_regulations`). G2: verschärfte Zitatprüfung (`text.py`, RW24, RW25), Gegenprüfung statt zweier gleicher Läufe (`assess.py`, `claim_for`, `verify`, RW19), Aufrufe in Teilen mit Wiederverwendung, Aufteilung bei `max_tokens`, Budget vor jedem Aufruf, Zeitbudget (`extract.py`, RW22, RW26), Planstand am Ort aktualisieren und Rückfall (`plan_import.py`, RW20, RW21, RW23), Kunden sehen den vorigen Planstand als `outdated`, `zone_coverage_incomplete`, Korrekturvorrang, Job `rules_housekeeping` (stündlich), `rules_extract` bis 5 Versuche, `ExtractIn.force` Standard `false` (RW27); `ENGINE_VERSION g2-1.1.0`, `PROMPT_VERSION g2-prompt-2`. G1: Hauptstraße nach Sicherheit, dann Länge (`edges.py`, `ENGINE_VERSION g1-1.1.0`, G23), `site_enrich` endet nie auf `pending`, Achsen bleiben bei unplausibler Antwort, Adress-Cache nur im Arbeitsspeicher (G22, G24, G25). Frontend: jeder Parameter mit Wert, Status „veraltet“, Warnungen mit Anteil, Büro-Knöpfe „Erneut versuchen“ (ohne `force`) und „Neu auswerten“ (mit Rückfrage), alte Regeln nach Parzellenwechsel verwerfen. `unit/test_rules_domain.py` neu gegliedert (Befunde A1–A4, E15, E19, F22), `rules_support.py`: `FakeExtractor` bildet Gegenprüfungen. Backend 196 Tests, Frontend 26 Tests. ANNAHMEN G22–G25, RW19–RW27; BETRIEB 8, 9; Unraid README (heute Abschnitt 9).
 
-**Entschieden**
-- Nutzer: alle 23 Befunde der Prüfung mit den vorgeschlagenen Lösungsansätzen umsetzen. Daraus die Abweichung vom Plan 3.4: Gegenprüfung statt zweitem gleichem Lauf (RW19).
+**Entschieden:** Nutzer: alle 23 Befunde mit den vorgeschlagenen Lösungsansätzen umsetzen. Daraus die Abweichung vom Plan 3.4: Gegenprüfung statt zweitem gleichem Lauf (RW19).
 
 **Ohne Dateiänderung**
-- Prüfung von G1 und G2 mit 23 Befunden in sechs Gruppen (A Zitatprüfung, B Datenverlust/hängende Zustände, C Kanten, D Kosten, E Anzeige/Planerkennung, F Kleines); stehen jetzt je als Annahme (G22–G25, RW19–RW27) und als Test.
+- Prüfung von G1 und G2 mit 23 Befunden in sechs Gruppen (A Zitatprüfung, B Datenverlust/hängende Zustände, C Kanten, D Kosten, E Anzeige/Planerkennung, F Kleines); jeder steht als Annahme (G22–G25, RW19–RW27) und als Test.
 - Im API-Container nachgestellt (vor der Behebung): „… 2 m“ belegte 2 m gegen Text 5 m; Zitat ohne „ne … pas“ Ähnlichkeit 0,961 und `allow_on_boundary` wirksam; `not_regulated` mit beliebigem Satz; Wert des Sektors Uba für Ub belegt; `min_m 0,5` über „H/2“; Hauptstraße = 20-m-Kante mit Sicherheit 0,55 statt 12-m-Front mit 0,95. Verworfen: Verdacht, schmale Grundstücke bekämen zu wenige Geländestichproben (nachgestellt, trifft nicht zu).
 - Lokaler Stack neu gebaut, Migration 0004 auf den Daten von Treillières: Abdeckung und Regeln vorhandener Grundstücke fehlerfrei, Kapitelgrenzen mit der neuen Inhaltsverzeichnis-Logik unverändert (12 Kapitel), `rules_housekeeping` läuft.
 
-**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `UMSETZUNGSPLAN.md` (Abweichung RW19 steht in ANNAHMEN), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`, `frontend/e2e/`.
-
-**Hand-off:** HANDOFF.md neu geschrieben; aus der vorigen Fassung erledigt: nichts aus Abschnitt 4 (die Punkte hängen am API-Schlüssel und an Unraid). 4.1 Punkt 1 vereinfacht: Kapitel werden nach Eintragen des Schlüssels automatisch ausgewertet. Auf Wunsch des Nutzers committet und gepusht (`13092f9` Nacharbeiten, `b2545db` Hand-off); CI am 15.09.2026 vollständig grün. Der rote Lauf des vorigen Hand-off-Commits `8cf8a27` war ein Netzfehler beim Caddy-Bau im Security-Job (HANDOFF 6).
+**Hand-off:** aus Abschnitt 4 nichts erledigt (die Punkte hängen am API-Schlüssel und an Unraid); 4.1 Punkt 1 vereinfacht: Kapitel werden nach Eintragen des Schlüssels automatisch ausgewertet. Auf Wunsch committet und gepusht. Der rote Lauf des vorigen Hand-off-Commits `8cf8a27` war ein Netzfehler beim Caddy-Bau im Security-Job.
 
 ---
 
 ## 14.09.2026 – G2 Regelwerk als automatische Simulation (Session `building-configurator-a7`, Fortsetzung)
 
-**Neu**
-- `backend/app/rules/` – Modul G2: `domain/` (Regelarten mit Plausibilitätsgrenzen, Zitat- und Zahlenprüfung, Kapitelsuche, Prompt und Ausgabeschema, Schranken und Abgleich zweier Läufe), `pdf.py` (pypdf), `plan_import.py`, `extract.py`, `service.py`, `api.py`, `jobs.py` (`plu_import` wöchentlich, `rules_extract`), `models.py`.
-- `backend/app/integrations/gpu.py` (API Carto GPU, Dokumente, Dateien), `backend/app/integrations/claude.py` (Claude API, Streaming, strukturierte Ausgabe, Kosten).
-- `backend/migrations/versions/0003_rules.py` – Planstände, Planunterlagen, Seiten, Zonen, Vorgaben, Kapitel, Läufe, Regelwerke, Regeln (UPDATE gesperrt), Projektkorrekturen.
-- `backend/tests/` – `unit/test_rules_domain.py`, `unit/test_rules_integrations.py`, `integration/test_rules.py`, `rules_support.py`, `e2e_seed_rules.py`, `fixtures/rules/` (GPU-Antworten, Textschicht des règlement, README).
-- `frontend/src/api/rules.ts`, `frontend/src/rules/` (Anzeige als Simulation, Formatierung, Tests, Fixture), `frontend/src/pages/buero/Regeln.tsx`, `frontend/e2e/rules.spec.ts`.
+**Commits:** `a59911d` (Plan D11), `91e84f6` (G2), Hand-off `8cf8a27`; CI grün.
 
-**Geändert**
-- `UMSETZUNGSPLAN.md` – G2 vollautomatisch als Simulation (D11): Grundsatz 7, 2.1–2.3, 3.1, 3.4 neu, 3.5, 3.6, 3.8, 3.10, 3.11 (X1 entfällt), 4.2, 5, 6.2–6.11, 7, 8, 9 (D9 entfällt, D11 entschieden, D12 neu), Prüfprotokoll 10.3; Status: G2 beauftragt.
-- `backend/app/config.py` (GPU, Claude API, Budget, leere Schlüssel = nicht gesetzt), `cli.py` (`plu-import`, `rules-extract`), `main.py`, `registry.py`, `migrations/env.py`, `integrations/http.py` (POST, Zeitlimit je Aufruf), `site/service.py` (`site_footprint` für andere Module), `platform/locales/*.json`, `pyproject.toml`/`uv.lock` (anthropic, pypdf), `openapi.json`, `tests/conftest.py`.
-- `frontend/` – `App.tsx`, `GrundstueckSeite.tsx`, `Grundstuecke.tsx` (Regeln und Korrektur je Projekt), `BueroLayout.tsx`, `BueroStart.tsx`, `GrundstueckPruefen.tsx` (`useNotices` exportiert), `i18n/*.json`, `schema.d.ts`.
-- `compose.yaml`, `deploy/unraid/compose.yaml`, `deploy/unraid/.env.example`, `deploy/unraid/README.md` (Abschnitt 10), `.github/workflows/ci.yml` (E2E spielt Planstand und Auswertung ein).
-- `docs/ANNAHMEN.md` (RW01–RW18), `docs/BETRIEB.md` (Abschnitt 9), `README.md`, `AGENTS.md`, `HANDOFF.md`.
+**Umfang:** `backend/app/rules/` (Regelarten mit Plausibilitätsgrenzen, Zitat- und Zahlenprüfung, Kapitelsuche, Prompt und Ausgabeschema, Schranken und Abgleich zweier Läufe; `pdf.py` mit pypdf, `plan_import.py`, `extract.py`, Jobs `plu_import` wöchentlich und `rules_extract`), Adapter `gpu.py` (API Carto GPU, Dokumente, Dateien) und `claude.py` (Streaming, strukturierte Ausgabe, Kosten), Migration `0003_rules.py` (Planstände, Planunterlagen, Seiten, Zonen, Vorgaben, Kapitel, Läufe, Regelwerke, Regeln mit UPDATE-Sperre, Projektkorrekturen), Tests mit `fixtures/rules/` und `e2e_seed_rules.py`. Frontend: Anzeige als Simulation, Büro `Regeln.tsx`, Regeln und Korrektur je Projekt, E2E `rules.spec.ts`. CLI `plu-import`, `rules-extract`; `site_footprint` für andere Module; Abhängigkeiten anthropic, pypdf; Compose, Unraid-Stack, CI (E2E spielt Planstand und Auswertung ein). Plan für D11 überarbeitet: Grundsatz 7, 2.1–2.3, 3.1, 3.4 neu, 3.5, 3.6, 3.8, 3.10, 3.11 (X1 entfällt), 4.2, 5, 6.2–6.11, 7, 8, 9 (D9 entfällt, D11 entschieden, D12 neu), Prüfprotokoll 10.3. ANNAHMEN RW01–RW18, BETRIEB 9.
 
-**Entschieden**
-- D11 – G2 darf nicht auf Eingaben des Büros angewiesen sein; das Ergebnis ist eine nicht kontraktuelle Simulation; das Büro prüft erst nach der Kontaktaufnahme.
+**Entschieden:** D11 – G2 darf nicht auf Eingaben des Büros angewiesen sein; das Ergebnis ist eine nicht kontraktuelle Simulation; das Büro prüft erst nach der Kontaktaufnahme.
 
 **Ohne Dateiänderung**
 - GPU live geprüft: Treillières gehört zum PLUi Erdre et Gesvres (`DU_244400503`); am Gemeinderand kommen Zonen von Nantes Métropole mit; Dateien unter `data.geopf.fr/annexes/gpu/documents`; `urlfic` verweist teils auf ältere Stände (RW01, RW02).
 - Zitatprüfung am echten Text: Ähnlichkeit allein ließ einen falschen Zahlenwert als belegt durch; Zahlenprüfung ergänzt (RW07).
-- Live-Import ohne Schlüssel und Browserprüfung (Kundenseite, Abdeckung, Regelwerk, Korrektur je Projekt); gefundene Anzeigefehler behoben (zentrierte Zeilenköpfe, feste Seitenabkürzung, Reihenfolge, überholter Hinweistext, Beschriftung „wirksam“).
+- Live-Import ohne Schlüssel und Browserprüfung (Kundenseite, Abdeckung, Regelwerk, Korrektur je Projekt); behobene Anzeigefehler: zentrierte Zeilenköpfe, feste Seitenabkürzung, Reihenfolge, überholter Hinweistext, Beschriftung „wirksam“.
 - Selbstprüfung: doppelte Auswertung eines laufenden Kapitels, Wiederholung nach Absturz, Hinweise auf Englisch; behoben (RW08, RW12).
-
-**Unverändert:** `BACKEND_SPEZIFIKATION.md` (Anpassung an D11 als S14 offen), `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+- Spezifikation: Anpassung an D11 als S14 offen (heute Spez. Anhang E.4).
 
 **Memory:** `feedback-pruefung-erst-bei-anfrage` um D11 erweitert.
 
-**Hand-off:** HANDOFF.md neu geschrieben; erledigt aus der vorigen Fassung: Commit-Entscheidung (Nutzer: nach dem Hand-off committen und pushen; Commits `a59911d` Plan D11, `91e84f6` G2, CI grün), G2 umsetzen. Neu offen: Schlüssel der Claude API, Referenzmenge (HANDOFF 4.1), G2 auf Unraid, Anpassung der Spezifikation S14.
+**Hand-off:** erledigt Commit-Entscheidung (nach dem Hand-off committen und pushen) und G2; neu offen: Schlüssel der Claude API, Referenzmenge, G2 auf Unraid, S14.
 
 ---
 
 ## 14.09.2026 – G1 Grundstück (Session `building-configurator-a7`, parallel zu R0/Unraid)
 
-**Neu**
-- `backend/app/site/` – Modul G1: Fachlogik (`domain/`: Grundstück bilden, Kanten zerlegen und einordnen mit Nachbarparzellen und BD-TOPO-Straßenachsen, Gelände), Modelle, Import je Gemeinde mit Plausibilitätsprüfung (`cadastre_import.py`), Anwendungsfälle, API, Jobs `site_enrich`, `cadastre_import` (wöchentlich), `site_housekeeping`.
-- `backend/app/integrations/` – `http.py`, `geoplateforme.py` (Geokodierung, Höhen), `georisques.py`, `etalab_cadastre.py`, `ign_bdtopo.py`.
-- `backend/migrations/versions/0002_site.py` – `ref_*`, `site`, `parcel`, `site_edge`, `terrain`, `site_risk`, `geocode_cache`.
-- `backend/tests/` – `unit/test_site_domain.py`, `unit/test_site_integrations.py`, `integration/test_site.py`, `fixtures/site/` (echte Daten Treillières mit README).
-- `frontend/src/components/karte/Katasterkarte.tsx` (MapLibre 6), `frontend/src/site/` (Lageplan, Kantenliste, Parzellenwahl, Prüfansicht), `frontend/src/api/site.ts`, `frontend/src/pages/grundstueck/`, `frontend/src/pages/buero/Grundstuecke.tsx`, Tests; `frontend/e2e/site.spec.ts`.
+**Commits:** `c606387` (R0-Nacharbeiten), `cc48386` (G1), `50c6bc7` (CI), `dcef07a` (Images), Hand-off `e00f2a6`.
 
-**Geändert**
-- `backend/app/cli.py` – Befehle `cadastre-import`, `flag-set`.
-- `backend/app/config.py`, `main.py`, `registry.py`, `platform/locales/*.json`, `platform/logging.py` (HTTP-Bibliotheken ohne URL-Logs), `migrations/env.py`, `pyproject.toml`/`uv.lock` (shapely, hypothesis), `openapi.json`, `tests/conftest.py`, `tests/integration/test_access_policies.py`, `test_flags_legal_audit.py`.
-- `frontend/` – `App.tsx`, `Start.tsx` (Einstieg hinter Flag), `BueroLayout.tsx`, `BueroStart.tsx`, `PlanSvg.tsx`, `index.css` (`.field`), `i18n/*.json`, `vite.config.ts` (`EMPRISE_API_URL`), `package.json`/`pnpm-lock.yaml` (maplibre-gl, @types/geojson), `schema.d.ts`, `Caddyfile` (CSP: `data.geopf.fr`, `worker-src 'self'`).
-- `.github/workflows/ci.yml` – E2E importiert Kataster-Ausschnitt.
-- `docs/ANNAHMEN.md` – Abschnitt G1 (G01–G21). `docs/BETRIEB.md` – Abschnitt 8. `README.md` – G1 lokal starten, E2E-Voraussetzung. `deploy/unraid/README.md` – `flag-set` in Abschnitt 9.
-- `UMSETZUNGSPLAN.md` – 3.3 Abnahme ohne Testmenge, 3.6 Grenzprüfung bei Anfrage, 8 Testmenge gestrichen, 9 D1 und D2 entschieden. Danach **G2 überarbeitet (D11):** Grundsatz 7 „Simulation vor Prüfung“, 3.4 vollautomatische Regelauswertung per Claude mit Schranken statt Freigabe, 3.5 Standard-Geschosshöhen und `unknown`-Abstände, 3.6 Prüfung der Simulation bei Anfrage, X1 entfällt, Infrastruktur 6.x, Abweichungen 7 (Leitplanken L2/L6), Inhalte 8, D9 entfällt, D12 neu, Prüfprotokoll 10.3.
-- `AGENTS.md` – Stand G1 und Entscheidungen.
+**Umfang:** `backend/app/site/` (Grundstück bilden, Kanten mit Nachbarparzellen und BD-TOPO-Straßenachsen einordnen, Gelände; Import je Gemeinde mit Plausibilitätsprüfung in `cadastre_import.py`; Jobs `site_enrich`, `cadastre_import` wöchentlich, `site_housekeeping`), Adapter in `backend/app/integrations/` (`http.py`, `geoplateforme.py`, `georisques.py`, `etalab_cadastre.py`, `ign_bdtopo.py`), Migration `0002_site.py` (`ref_*`, `site`, `parcel`, `site_edge`, `terrain`, `site_risk`, `geocode_cache`), Tests mit echten Daten von Treillières (`fixtures/site/`). Frontend: `Katasterkarte.tsx` (MapLibre 6), `frontend/src/site/` (Lageplan, Kantenliste, Parzellenwahl, Prüfansicht), Grundstücksseite, Büro-Prüfliste `Grundstuecke.tsx`, E2E `site.spec.ts`; `PlanSvg`, CSP für `data.geopf.fr` und `worker-src 'self'`. CLI `cadastre-import`, `flag-set`; HTTP-Bibliotheken ohne URL-Logs. ANNAHMEN G01–G21, BETRIEB 8, README, Unraid README. Plan: 3.3 Abnahme ohne Testmenge, 3.6 Grenzprüfung bei Anfrage, 8 Testmenge gestrichen, 9 D1 und D2; danach G2 für D11 überarbeitet (Eintrag oben).
 
 **Entschieden**
 - D1 – Bis zur Beta nur Treillières (44209).
@@ -303,42 +240,28 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 - Einordnung von Lotissement-Straßen (eigene Parzelle = Straße), Eck- und Pfeifenstielgrundstücken bestätigt.
 - Keine Abnahme-Testmenge von 40 Grundstücken; der Architekt prüft die Grenzen erst beim Eingang einer Anfrage (Modul A).
 - D11 – G2 darf nicht auf Eingaben des Büros angewiesen sein; Regeln entstehen automatisch, das Ergebnis ist eine nicht kontraktuelle Simulation; das Büro prüft erst nach der Kontaktaufnahme.
-- Commits getrennt nach R0-Nacharbeiten (`c606387`) und G1 (`cc48386`).
-- Repository: privates GitHub-Repo `DieDaddelecke/building-configurator` als `origin`, `main` gepusht.
-- Erster CI-Lauf: Backend (111 Tests), Frontend und E2E grün nach Korrektur von `ci.yml` (pnpm-Version, Trivy-Action per SHA). Trivy fand HIGH-Lücken in den Basis-Images → `backend/Dockerfile` mit Debian-Updates, `frontend/Dockerfile` mit selbst gebautem Caddy (ANNAHMEN A27). Danach alle CI-Jobs grün.
+- Commits getrennt nach R0-Nacharbeiten und G1. Repository: privates GitHub-Repo `DieDaddelecke/building-configurator` als `origin`, `main` gepusht.
+- Erster CI-Lauf: Backend (111 Tests), Frontend und E2E grün nach Korrektur von `ci.yml` (pnpm-Version, Trivy-Action per SHA). Trivy fand HIGH-Lücken in den Basis-Images → `backend/Dockerfile` mit Debian-Updates, `frontend/Dockerfile` mit selbst gebautem Caddy (A27). Danach alle CI-Jobs grün.
 
 **Ohne Dateiänderung**
-- Externe Dienste am 14.09.2026 live geprüft: Géoplateforme (Geokodierung, Höhen, WMTS, WFS BD TOPO), Etalab je Gemeinde (Stand 2026-06-01), Géorisques v1 ohne Token, v2 mit Token (ANNAHMEN G-Einleitung, G12, G13).
-- Echte Daten: Regel ohne Straßenachsen versagt bei Lotissements; Stichprobe 300 Parzellen: Eckgrundstücke 38 % → 17 % nach neuer Regel, zwei Zeichnungsraster durchgesehen (G04, G05).
+- Externe Dienste am 14.09.2026 live geprüft: Géoplateforme (Geokodierung, Höhen, WMTS, WFS BD TOPO), Etalab je Gemeinde (Stand 2026-06-01), Géorisques v1 ohne Token, v2 mit Token (G12, G13).
+- Echte Daten: Die Regel ohne Straßenachsen versagt bei Lotissements; Stichprobe 300 Parzellen: Eckgrundstücke 38 % → 17 % nach neuer Regel, zwei Zeichnungsraster durchgesehen (G04, G05).
 - Leistung lokal: Parzelle am Punkt p95 17 ms, Grundstück bilden p95 98 ms, Import Treillières 12 s (G20).
 - Browsertest und E2E fanden Fehler: Parzellenwahl verlor Eingaben bei Projektanlage, leere Umgebungsringe im Lageplan, Koordinaten in HTTP-Logs; behoben. Selbstprüfung: Doppelklick beim ersten Grundstück, unbegrenzter Adress-Cache, verrauschte Büro-Prüfliste; behoben.
 - Lizenzen und Abfragegrenzen der Géoplateforme (G13, G17).
 - Lokaler Stack `emprise` mit G1 neu gebaut, Treillières importiert, `site_selection` für `architect` gesetzt, im Browser geprüft.
 
-**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
-
 **Memory:** `feedback-pruefung-erst-bei-anfrage` angelegt und um D11 erweitert; `project-hosting-unraid` um GitHub als Repository ergänzt.
 
-**Hand-off:** HANDOFF.md auf Basis der Fassung der R0-Session neu geschrieben; erledigt aus der vorigen Fassung: D1, G1 abschließen, Prüfung der Kartendienst-Bedingungen (HANDOFF 4.4 Punkt 2).
+**Hand-off:** auf Basis der Fassung der R0-Session neu geschrieben; erledigt D1, G1 abschließen, Prüfung der Kartendienst-Bedingungen.
 
 ---
 
 ## 14.09.2026 – R0 Plattform, Betrieb auf Unraid mit Authentik
 
-**Neu**
-- Git-Repository (`main`), erster Commit `1f4b646` mit allen Dokumenten und R0.
-- `backend/` – FastAPI-Plattform (Modul P): OIDC-Anmeldung Büro mit MFA-Prüfung, Rollen, Projekt-Cookie, CSRF, Zugriffsregel je Route (per Test erzwungen), Audit-Log und Rechtstexte unveränderlich, Job-Queue in PostgreSQL, Mail, S3, Feature-Flags, Rate-Limits, Fehler nach RFC 9457 auf fr/de, Gesundheitsprüfungen, CLI; Migration `0001`; 50 Tests.
-- `frontend/` – Vite, React, TypeScript, Tailwind, i18n fr/de; Gestaltung, Planblatt und Maßketten aus dem Mockup; Startseite, Büro-Rahmen `/buero`; Caddy-Web-Container mit CSP; 7 Unit-Tests, 3 Playwright-Tests.
-- `compose.yaml` – lokale Umgebung mit PostGIS, MinIO, Mailpit, OIDC-Testdienst, migrate, api, worker, web.
-- `.github/workflows/ci.yml`, `renovate.json` – CI und Abhängigkeitspflege (CI noch nie gelaufen).
-- `README.md`, `docs/ANNAHMEN.md` (A1–A26), `docs/BETRIEB.md`, `infra/README.md`, `infra/local/*`.
-- `deploy/unraid/` – Emprise-Stack für Unraid (PostGIS, SeaweedFS, migrate, api, worker, web, backup), `deploy.sh` mit Rückrollen, Authentik-Stack mit Blueprint, Anleitung.
+**Commits:** `1f4b646` (Repository mit allen Dokumenten und R0); die Nacharbeiten danach (`storage-init`, `trusted_proxies`, Hinweis nach MFA-Einrichtung, `.gitignore`) in `c606387`.
 
-**Geändert**
-- `UMSETZUNGSPLAN.md` – Status im Kopf; Kapitel 9: D3 und D4 entschieden.
-- `AGENTS.md` – Stand, Dokumententabelle, Hinweis zur Geltung des Plans für beauftragte Module.
-- `.claude/skills/handoff/SKILL.md` – Ort der Annahmen `docs/ANNAHMEN.md`.
-- Nach dem Commit, noch nicht committet: `backend/app/cli.py` (`storage-init`), `compose.yaml`, `ci.yml`, `frontend/Caddyfile` (trusted_proxies), `frontend/src/i18n/*.json` (Hinweis nach MFA-Einrichtung), `.gitignore`, `README.md`, Dokumente oben.
+**Umfang:** `backend/` als FastAPI-Plattform (Modul P): OIDC-Anmeldung Büro mit MFA-Prüfung, Rollen, Projekt-Cookie, CSRF, Zugriffsregel je Route (per Test erzwungen), Audit-Log und Rechtstexte unveränderlich, Job-Queue in PostgreSQL, Mail, S3, Feature-Flags, Rate-Limits, Fehler nach RFC 9457 auf fr/de, Gesundheitsprüfungen, CLI; Migration `0001`; 50 Tests. `frontend/`: Vite, React, TypeScript, Tailwind, i18n fr/de; Gestaltung, Planblatt und Maßketten aus dem Mockup; Startseite, Büro-Rahmen `/buero`; Caddy-Web-Container mit CSP; 7 Unit-Tests, 3 Playwright-Tests. `compose.yaml` (PostGIS, MinIO, Mailpit, OIDC-Testdienst, migrate, api, worker, web), CI und `renovate.json` (CI noch nie gelaufen), README, ANNAHMEN A1–A26, BETRIEB, `infra/README.md` und `infra/local/*`. `deploy/unraid/`: Emprise-Stack (PostGIS, SeaweedFS, migrate, api, worker, web, backup), `deploy.sh` mit Rückrollen, Authentik-Stack mit Blueprint, Anleitung. Plan: Status, D3 und D4; AGENTS: Stand, Dokumententabelle, Geltung des Plans für beauftragte Module; SKILL: Ort der Annahmen `docs/ANNAHMEN.md`.
 
 **Entschieden**
 - D3 – Hosting bis zur Beta selbst betrieben auf Unraid; vor öffentlichem R1 neu entscheiden.
@@ -347,18 +270,16 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 - Vorläufige Adresse `https://building-configurator.aslani.work`; Reverse Proxy auf Unraid vorhanden.
 
 **Ohne Dateiänderung**
-- Procrastinate: transaktionale Job-Anlage mit psycopg 3 nicht belegbar → eigene Queue (ANNAHMEN A2).
-- Authentik: `amr: mfa` nur mit bereits eingerichtetem Gerät; 2026 verlangt `grant_types`; Passkey ohne Passwort = `user` (ANNAHMEN A23–A25).
+- Procrastinate: transaktionale Job-Anlage mit psycopg 3 nicht belegbar → eigene Queue (A2).
+- Authentik: `amr: mfa` nur mit bereits eingerichtetem Gerät; 2026 verlangt `grant_types`; Passkey ohne Passwort = `user` (A23–A25).
 - SeaweedFS 3.97: Bucket, Versionierung, signierte URLs geprüft (A22).
 - Selbstprüfung: `/ready` hätte nach Rückrollen 503 gemeldet → `migration_state` eingeführt (BETRIEB 2). Sicherung enthielt `spatial_ref_sys` → ausgeschlossen, Wiederherstellung fehlerfrei (BETRIEB 6).
-- DNS 14.09.2026: `building-configurator.aslani.work` existiert noch nicht; `aslani.work` liegt bei Cloudflare (HANDOFF 2 und 3).
-- Parallele Session `building-configurator-a7` setzt G1 um; Dateien abgestimmt, Stand in HANDOFF 1.
-
-**Unverändert:** `BACKEND_SPEZIFIKATION.md`, `Hauskonfigurator.jsx`, `emprise.html`, `Dokumentation.html`.
+- DNS 14.09.2026: `building-configurator.aslani.work` existiert noch nicht; `aslani.work` liegt bei Cloudflare.
+- Parallele Session `building-configurator-a7` setzt G1 um; Dateien abgestimmt.
 
 **Memory:** `project-hosting-unraid` angelegt (D3/D4, keine Microsoft-/Google-Dienste, Cloudflare-Hinweis).
 
-**Hand-off:** `/handoff` erstmals als Befehl aufgerufen und ausgeführt (Punkt aus HANDOFF 4.2 erledigt).
+**Hand-off:** `/handoff` erstmals als Befehl aufgerufen und ausgeführt.
 
 ---
 

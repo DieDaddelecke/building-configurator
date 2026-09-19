@@ -102,14 +102,14 @@ domain/
   house.py       Typ als reine Datenklasse (Umrisse, Höhen, Dach, Rollen)
   geometry.py    Drehen und Verschieben, Überstreichen, Sperrflächen (3.3)
   rotations.py   erlaubte Drehungen (3.2)
-  type_checks.py Prüfungen des Typs (3.5)
+  type_checks.py Prüfungen des Typs (3.5)   [umgesetzt als checks.py; dazu context.py, tolerances.py]
   surface.py     Fläche zulässiger Ursprünge je Drehung
   placement.py   Prüfung einer Lage je Kante (Spez. 5.3.4)
   presets.py     Schnellstellungen
   fit.py         Zulässigkeit und Vorschläge je Typ
 ```
 
-`domain/` kennt weder Datenbank noch API. Eingabe ist `EnvelopeInput` aus G3, dazu `HouseType`. Der Dienst holt beides über `envelope.service.envelope_input` und `catalog.service` (Module rufen einander nur über `service` auf, Plan 3.2).
+`domain/` kennt weder Datenbank noch API. Eingabe ist `EnvelopeInput` aus G3, dazu `HouseType`. Der Dienst holt beides über `envelope.service.envelope_input` (umgesetzt: `derived`, HP16) und `catalog.service` (Module rufen einander nur über `service` auf, Plan 3.2).
 
 ### 4.2 Datenmodell
 
