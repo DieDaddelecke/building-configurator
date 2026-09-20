@@ -4,14 +4,51 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 19.09.2026 – H3: Konfiguration und Kosten (Plan und Umsetzung)
+
+**Auftrag:** Startprompt des Hand-offs: Stand zusammenfassen, Priorität-1-Entscheidungen nennen, HP03, D12/D13 und die Maße von Terrasse und Carport erfragen, danach H3 nach Umsetzungsplan 3.9 mit Selbstprüfung planen und umsetzen; CI-Lauf 35431041895 prüfen.
+
+**Commits:** keine. Alles liegt uncommittet im Arbeitsbaum (H3 und die Dokumente der beiden Vorsessions); `main` steht weiter auf `a5fc5e3`.
+
+**Neu**
+- `docs/PLAN_H3_KONFIGURATION_KOSTEN.md` – Plan mit Selbstprüfung (10.1 Entwurf, 10.1a Bau, 10.2 Alternativen, 10.3 Grenzen) und Abnahmeergebnis (6).
+- `backend/app/configuration/domain/` – `options`, `outbuildings`, `areas`, `compliance`, `costs`, `energy`, `orientation`, `design` (`type_part`, `site_part`, `evaluate_design`); `outputs.py`; `backend/app/catalog/domain/offer.py`, `options.py`; Migration `0010_configuration_options.py`.
+- Frontend: `Linien`, `Optionen`, `Kostenleiste`, `Nebenbauten`, `Vorentwurf` unter `frontend/src/configuration/`, Schritte in `KonfiguratorSeite.tsx`, Felder in `KatalogLinienOptionen.tsx`, Texte in `i18n/{de,fr}.json`.
+- Tests: `test_design_domain.py` (58), `test_configuration_options.py` (24), `optionen-linien.test.tsx` (29), `katalog-linien-optionen.test.tsx` (5), Erweiterung von `konfigurator-seite.test.tsx`.
+
+**Geändert**
+- `catalog/service.py`: `offer_for_type`, Arten und Maße von Optionen, Veröffentlichung von Linie und Option nur aus `draft`/`review` mit `current_version_id` = höchste veröffentlichte Version, **neuer Preiskatalog-Entwurf übernimmt die Zeilen der veröffentlichten Version** (H1-Lücke, Plan H3 10.1a Nr. 12). `configuration/service.py`, `schemas.py`, `api.py`, `domain/surface.py` (`building_kind`, `use_bands`, `allow_assumed`), `domain/house.py` (Garagentor), `ENGINE_VERSION = "h3-1.0.0"`. Problemtexte `invalid_selection`, `selection_blocked`, `version_not_publishable`.
+- `backend/tests/e2e_seed_types.py` legt zusätzlich Linien, Optionen, Preise (erfunden), RE2020-Befund und veröffentlichten Preiskatalog an; `openapi.json`, `schema.d.ts` neu erzeugt.
+- Dokumente: `docs/ANNAHMEN.md` (HK01–HK17; HP01–HP03 als bestätigt), `docs/BETRIEB.md` (Modultabelle, Abschnitt 13), `UMSETZUNGSPLAN.md` (3.9 umgesetzt, Kapitel 7, D8/D10/D12/D13), `AGENTS.md` (Stand, Dokumententabelle), `README.md` (Stolperstellen, Demo-Daten, Browserprüfung).
+
+**Entschieden** (Nutzer, 19.09.2026)
+- HP03 bleibt: Terrasse, Carport und Zufahrt kommen mit H3.
+- D12 und D13 bestätigt.
+- Terrasse: 3 m tief, Breite der Gartenfassade, Preis je m². Carport: beide Größen (einstellig 3 × 5 m, zweistellig 6 × 5 m) als zwei Optionen.
+- **Nach Empfehlung genommen, nicht gefragt:** D8 (nur Wortlaut der Spanne), D10 (netto gespeichert, brutto angezeigt, 20 %); beides HK10, umkehrbar.
+
+**Ohne Dateiänderung**
+- CI-Lauf 35431041895 zu `a5fc5e3` grün (security, frontend, backend, e2e).
+- Browserprüfung am lokalen Stack (AD 65, Deutsch und Französisch): Linie, Optionen mit Preisen, Ausschluss der Carports, Vorentwurf, Kostenleiste. Fand zwei Fehler, die die Rechteck-Tests nicht fanden: Carport hinter dem Haus mit Zufahrt durch das Haus, Carport überlappt Terrasse (beide behoben, Plan H3 10.1a Nr. 15–16).
+- Messung lokal (AD 65 mit Terrasse und Carport): `GET …/configuration` 13–79 ms, `GET …/catalog/options` 14–36 ms; Plan H3 6.
+- Volllauf: Backend 444 Tests (vorher 362), Frontend 132 (vorher 91), ruff, mypy, Typprüfung, Lint, Build grün. Playwright lief nicht.
+- Lokaler Stack: Migration 0010 angewendet, Demo-Katalog eingespielt, Flags nach der Prüfung wieder nur für `architect`.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Ablauf mit gezielten Fragen vor Plan und Umsetzung; ungefragte Entscheidungen gelten als nach Empfehlung genommen).
+
+---
+
 ## 19.09.2026 – Dokumentation verdichtet
 
 **Auftrag:** Nutzer: Dokumentation optimieren, Dateien zusammenlegen, Dopplungen vermeiden, Ausführungen komprimieren, keine Informationen verlieren, gründlich und mit Selbstprüfung. Erst Plan nach vollständiger Durchsicht aller Dokumente, dann Umsetzung.
 
+**Commits:** `7cecdb5` (Sicherung des Ausgangsstands), `a5fc5e3` (Verdichtung), beide auf `main` gepusht; CI-Lauf 35431041895 bei Abschluss noch in Arbeit.
+
 **Entschieden** (Nutzer, 19.09.2026)
 - Die Spezifikation wird kapitelweise gelesen: Kapitel 0–2 und die im Modulabschnitt des Umsetzungsplans genannten Kapitel. Beantwortet die seit 13.09.2026 offene Frage zum Lesen großer Dokumente (Spez. 0 Punkt 1, CLAUDE.md Punkt 4).
 - Ältere Einträge dieses Protokolls verdichten: Dateilisten durch Commit-Kennungen ersetzen; Entscheidungen, Befunde und Messwerte bleiben.
-- Den Ausgangsstand vorher sichern: Commit `7cecdb5` (Hand-off-Dokumente der H2-Session), nicht gepusht.
+- Den Ausgangsstand vorher sichern: Commit `7cecdb5` (Hand-off-Dokumente der H2-Session).
+- Nutzer: „comitte und pushe“ – `a5fc5e3` committet und zusammen mit `7cecdb5` gepusht.
 
 **Grundsatz:** Jeder Inhalt steht an einer Stelle (AGENTS.md unter der Dokumententabelle). Dateinamen, Kapitelnummern und IDs bleiben unverändert, weil der Code über 300-mal darauf verweist (`Spez. 5.3.4`, `Plan H1 3.5`, `BR03`). Keine ganzen Dateien zusammengelegt: Modulpläne werden je Modul gelesen und vom Code per Dateiname referenziert; zusammengelegt würde der nötige Kontext größer.
 
@@ -48,6 +85,8 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 **Unverändert:** `Dokumentation.html`, `emprise.html`, `Hauskonfigurator.jsx` (kein Artefakt neu veröffentlicht); der normative Text der Spezifikation (nur Kapitel 0 und Anhang E.4).
 
 **Memory:** `feedback-plan-dann-umsetzen` und `project-hosting-unraid` verdichtet (Repo-Fakten per Verweis); neu `feedback-kompakte-dokumentation`.
+
+**Hand-off:** HANDOFF nach dem Push nachgezogen (Git-Stand, nächster Schritt, Startprompt); aus der Fassung in `a5fc5e3` erledigt: Abschnitt 5 Punkt 1 (committen und pushen). Alle übrigen Punkte bleiben offen.
 
 ---
 
