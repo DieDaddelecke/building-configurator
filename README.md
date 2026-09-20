@@ -27,7 +27,7 @@ docker compose exec api python -m app.cli staff-add ops@emprise.local ops archit
 
 Der Worker importiert beim ersten Start selbst das Kataster von Treillières (G1) und den Planstand aus dem Géoportail de l’Urbanisme (G2); Internetzugang nötig, von Hand `cadastre-import` bzw. `plu-import`. Ausgewertet werden die Zonenkapitel nur mit Schlüssel der Claude API (`EMPRISE_ANTHROPIC_API_KEY` in der Shell oder in einer `.env` neben `compose.yaml`; Budget `EMPRISE_RULES_BUDGET_MONTH_USD`, lokal standardmäßig 20 $).
 
-Module intern für Architekten freischalten (Flags je Modul: [BETRIEB.md](docs/BETRIEB.md) Abschnitt 1), vorläufige Rechtstexte für die Anfrage veröffentlichen und erfundene Demo-Typen für den Konfigurator anlegen (`demo_*`, nie in Produktion):
+Module intern für Architekten freischalten (Flags je Modul: [BETRIEB.md](docs/BETRIEB.md) Abschnitt 1), vorläufige Rechtstexte für die Anfrage veröffentlichen und erfundene Demo-Daten für den Konfigurator anlegen (Typen `demo_*`, Linien, Optionen, Preise und veröffentlichter Preiskatalog; nie in Produktion):
 
 ```bash
 for f in site_selection rules_simulation envelope_simulation inquiry configurator; do docker compose exec api python -m app.cli flag-set $f --role architect; done
@@ -81,9 +81,11 @@ cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e
 
 1. Endpunkt mit genau einer Zugriffsregel aus `app/platform/auth/context.py` versehen (`public`, `require_roles`, `require_project_access`, `checked_in_handler`). Ein Test durchläuft alle Routen (`iter_route_contexts`); neue **öffentliche** Routen in `test_access_policies.py` eintragen, Projekt- und Rollenrouten brauchen keinen Eintrag.
 2. `python -m app.cli openapi openapi.json` im Backend-Container, danach im Ordner `frontend` `corepack pnpm run api:types`; `test_committed_openapi_matches_code` prüft die committete Datei. Pydantic-Modellnamen über alle Module eindeutig halten: gleiche Namen (`PlacementIn` in Katalog und H2) benennt OpenAPI um, das bricht die generierten Frontend-Typen. Listenfelder in Antwortmodellen ohne Standardwert lassen, sonst werden sie im Frontend-Typ optional.
+   Felder mit Standardwert in einem Anfragekörper (`ModuleIn.kind`, `PackageIn.regulatory`) sind im erzeugten TypeScript-Typ Pflicht; Aufrufer müssen sie senden (Katalogpflege).
 3. Datenbankänderungen nur über Alembic: `alembic revision --autogenerate -m "…"`, prüfen, abwärtskompatibel halten. `pytest` enthält `alembic check`. Neue Sequenzen brauchen ein eigenes `GRANT` in der Migration (AF07); `TRUNCATE … RESTART IDENTITY` setzt `inquiry_number_seq` nicht zurück, Tests erwarten keine feste Nummer.
 4. Unveränderliche Tabellen: bedingt `forbid_published_modification` (nur bei `status = 'published'`, H1), unbedingt `forbid_modification` (`audit_log`, `legal_text`, `consent`) bzw. `rule_no_update` (`rule`); `inquiry` hat bewusst keinen Trigger.
 5. Neue Jobarten: Wer `enqueue` aufruft (auch die CLI), muss `app.registry` importieren, sonst „Unbekannte Jobart“; `app/rules` importiert `app.rules.jobs` lokal in den Funktionen (sonst Importzyklus).
+6. Neue oder geänderte Texte von Prüfungen: Das Dossier-PDF (V) benutzt dieselben Sätze wie der Konfigurator. Nach einer Änderung an `configurator.check`, `…reason`, `…orientation`, `…material`, `types.roof`, `…edge`, `…status`, `…compass`, `design.area` oder `site.risks` in `frontend/src/i18n/*.json` einmal `node tools/sync-check-texts.cjs` laufen lassen; `check-texte.test.ts` prüft den Abgleich (`--check` meldet ihn ohne zu schreiben).
 
 ## Stolperstellen
 
@@ -91,6 +93,8 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 
 **Windows und Werkzeuge**
 - Docker Desktop beendet sich gelegentlich; Start `C:\Users\sarah\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe`, dann `docker info` abwarten.
+- Der vollständige Backend-Lauf dauert 4–11 Minuten. Wird die Ausgabe umgeleitet oder läuft der Befehl im Hintergrund, `docker compose run -T` benutzen, sonst fehlt die Ausgabe von `pytest`; Werkzeugaufrufe über 10 Minuten wandern von selbst in den Hintergrund, das Ergebnis steht dann in der Ausgabedatei der Aufgabe.
+- Große Dateien mit dem Schreibwerkzeug anlegen, nicht mit einem Heredoc im Bash-Werkzeug: bestimmte Zeichenfolgen brechen dort mit „unexpected EOF“ ab.
 - Lokal gibt es kein Python (`python` im Host ist ein Store-Platzhalter, `python3` fehlt): Backend-Befehle immer im Container. `backend-dev` sieht nur `backend/`, nicht `frontend/`, und nutzt die Umgebungsvariablen des lokalen Stacks: Skripte wie `python -m tests.e2e_seed_types` laufen gegen die lokale Datenbank `emprise`; pytest legt eine eigene Testdatenbank an.
 - Git-Bash: `MSYS_NO_PATHCONV=1` nur vor `docker …`-Befehlen mit Linux-Pfaden (`docker -v`, `docker exec -w`, `docker compose … run`). Vor `corepack pnpm …` zerbricht die Variable den Pfad zu `corepack.js` („Cannot find module C:\c\Program Files…“); tritt der Fehler trotzdem auf, PowerShell nehmen. `corepack pnpm …` nur im Ordner `frontend` (aus dem Wurzelordner zieht Corepack pnpm 12 und bricht ab).
 - Heredocs und `node -e "…"` im Bash-Werkzeug zerbrechen an einer ungeraden Zahl von Apostrophen (französische Zitate), an Backticks und `$$` (ein `$$` in einer Migration wurde zu `$`). Längere Dateien mit dem Write-Werkzeug schreiben oder als Skript im Scratchpad ablegen und mit `node` ausführen; Git-Bash-`/tmp` ist nicht das `C:\tmp` von Node; Skripte nicht `inspect.py` nennen (verdeckt die Standardbibliothek).
@@ -117,14 +121,17 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 - H1: Der Preiskatalog ist ein Entwurf je Region (`default`), wird bei Bedarf automatisch angelegt (erster Typ-Import, Linie oder Option, `GET .../price-catalog/draft`) und mit `POST /admin/catalog/price-catalog/publish` als Ganzes veröffentlicht.
 
 **Frontend**
-- `unwrap` scheitert an `204` ohne Rumpf (`useDeleteProject` umgeht das).
+- `unwrap` scheitert an `204` ohne Rumpf (`useDeleteProject` umgeht das); Endpunkte mit `202` geben deshalb einen kleinen Rumpf zurück (`/access/request`).
+- Vitest läuft über Vite: `new URL(…, import.meta.url)` wird zum Asset-Import und Pfade außerhalb von `frontend` werden abgelehnt (`Denied ID`). Dateien des Backends im Test über `resolve(process.cwd(), "../backend/…")` lesen (`check-texte.test.ts`).
 - i18n ist verschachtelt (`inquiry.contact.name`), die Backend-Übersetzungen sind flach (`problem.…`) mit `{param}` statt `{{param}}`.
 - Datei-Uploads: `openapi-fetch` mit `bodySerializer: () => formData` und Platzhalter-Rumpf (`frontend/src/api/catalog.ts`); Content-Type nicht setzen.
 - React-Hooks-Lint (Version 7): keine Ref-Zugriffe beim Rendern, keine `setState`-Effekte; `Implantation` baut deshalb mit `key={revision}` neu auf.
 - E2E unter Windows: Chromium von Playwright löst `oidc.localhost` nicht auf; Tests mit Büro-Anmeldung laufen nur in der CI. Lokal nur der Kundenpfad: Flags per `flag-set … --all`, `corepack pnpm exec playwright test -g Kunde`, danach wieder `--role architect`.
 
 **Browserprüfung**
+- Geometrie von Nebenbauten und Lage immer am echten, schiefen Grundstück AD 65 ansehen (Konfigurator, Schritt Vorentwurf): Die Rechteck-Tests (20 × 31 m) fanden weder den Carport hinter dem Haus mit Zufahrt durch das Haus noch die Überlappung von Carport und Terrasse (Plan H3 10.1a).
 - Login `http://localhost:8080/api/v1/auth/staff/login` (Mock-OIDC ohne Eingabe, `ops@emprise.local` mit `architect` und `ops`, landet unter `/buero`); wer im selben Browser als `architect` angemeldet ist, sieht auch auf `/grundstueck` die Flags dieser Rolle. Danach `/grundstueck`: „Saisir la référence cadastrale“ (Section `AD`, Nummer `65`), „Valider le terrain“, „Choisir ma maison“.
 - `left_click_drag` löst das Ziehen aus. Dateien in Formulare per `javascript_tool` (`DataTransfer` auf dem Dateifeld); die Daten über die Web-Ebene bereitstellen (`docker cp` nach `emprise-web-1:/srv/`, dann gleicher Ursprung; fremde Ursprünge blockt die CSP). `window.confirm` wird abgebrochen: vorher `window.confirm = () => true`. Ein Klick auf die App-Sprache wechselt sie für die ganze Sitzung.
 - Screenshots von `localhost` funktionieren, von `file://` nicht; Lagepläne zur Prüfung mit matplotlib im Container als PNG erzeugen und ansehen.
+- Modul V: Der Bestätigungscode steht in Mailpit (`curl -s "http://localhost:8025/api/v1/search?query=to:<adresse>"`, dann `/api/v1/message/<id>`); der Zugangslink der Kundenmail endet auf `/zugang#t=<Token>`. Dateien einer Fassung liegen im Objektspeicher: `docker compose exec api python -c "…storage.get_bytes(f['storage_key'])…"` und `docker cp`; PDFs lassen sich mit dem Lesewerkzeug ansehen, DXF mit `ezdxf` (matplotlib fehlt im Image).
 - Mockup `emprise.html` (`file:///…`): Bedienung und Auslesen per `find` und `javascript_tool`; Typkarten sind keine `<button>`, sondern Elemente mit `role=button`; die Kontaktprüfung meldet Fehler erst beim Klick auf „Vorentwurf zur Prüfung übergeben“.

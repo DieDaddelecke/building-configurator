@@ -14,7 +14,7 @@ Einrichten der Module, typische Störungen und Handgriffe (Plan 6.8). Befehle mi
 | Objektspeicher | Dateien, privat, versioniert | `GET /api/v1/admin/ops/status` → `storage_ok` |
 | Mail | Transaktionsmails über SMTP | `POST /api/v1/admin/ops/test-mail` |
 
-Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder Datenbank gestört“; `/api/health/jobs` ≠ 200 → „Worker steht oder ist überlastet“. Dazu Alarme auf Log-Einträge (Fehler-Tracking): `rules_extract_failed` (Kapitel gescheitert, Abschnitt 9), `rules_budget_exceeded` (Monatsbudget der Claude API erreicht), `road_import_implausible` (Straßenachsen, Abschnitt 8). Das in Plan G3 6.2 genannte `envelope_derive_failed` ist im Code nicht angelegt.
+Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder Datenbank gestört“; `/api/health/jobs` ≠ 200 → „Worker steht oder ist überlastet“. Dazu Alarme auf Log-Einträge (Fehler-Tracking): `rules_extract_failed` (Kapitel gescheitert, Abschnitt 9), `rules_budget_exceeded` (Monatsbudget der Claude API erreicht), `road_import_implausible` (Straßenachsen, Abschnitt 8), `dossier_failed` (Dossier einer Fassung endgültig gescheitert, Abschnitt 14). Das in Plan G3 6.2 genannte `envelope_derive_failed` ist im Code nicht angelegt.
 
 **Module im Betrieb.** Migrationen laufen beim Ausliefern mit (Job `migrate`). Freischalten über Feature-Flags (Plan 4.2): intern `python -m app.cli flag-set <flag> --role architect`, Beta für eingeladene Projekte über die Admin-API (für `inquiry` und `configurator` war `--all` für die Beta genannt), öffentlich `--all`, abschalten `--off`; jede Änderung steht im `audit_log`. `envelope_simulation` setzt `site_selection` und `rules_simulation` voraus (Plan G3 4.2).
 
@@ -27,6 +27,8 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
 | A | 0008 | `inquiry` | `mail_send` | – | Büro-Postfach, `legal-seed` (11) |
 | H2 | 0009 | `configurator` | – | – | ein veröffentlichter Typ (12) |
+| H3 | 0010 | `configurator` (dasselbe Flag) | – | – | veröffentlichter Preiskatalog mit Linien, Optionen und Preisen netto (13) |
+| V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (14) |
 
 ## 2. Ausliefern und Rückrollen
 
@@ -221,3 +223,63 @@ Die Antwort enthält alle Prüfungen mit Kante, Soll und Ist. `rotation_not_allo
 **Regelmäßig prüfen**
 
 Nach einem neuen Planstand, neuen Regeln (G2) oder einer neuen Katalogversion können gespeicherte Konfigurationen ungültig werden. Das ist beabsichtigt: `GET /projects/<id>/configuration` prüft neu und zeigt die Verstöße; gelöscht wird nichts.
+
+## 13. Konfigurator: Linie, Optionen und Kosten (Modul H3)
+
+Keine neuen externen Dienste und keine neuen Jobs, dasselbe Flag `configurator` wie H2. Auswahl, Nebenbauten, Flächen, Prüfungen, Energie und Kosten werden bei jedem Abruf gerechnet; gespeichert werden nur die Versionen von Linie und Optionen (`configuration.package_version_id`, `configuration.modules`). Migration `0010` ergänzt Spalten mit Standardwert, das Rückrollen auf das vorige Image bleibt möglich.
+
+**Vor dem Freischalten von Linie, Optionen und Kosten**
+
+1. **Preiskatalog veröffentlichen** (`/buero/katalog/preise`, „Preiskatalog veröffentlichen“). Ohne veröffentlichten Katalog gibt es weder wählbare Linien noch Optionen noch Kosten; der Konfigurator sagt das ausdrücklich („Es ist noch kein Preiskatalog veröffentlicht“). Ein Import (XLSX) schreibt in den **Entwurf**; nach der Veröffentlichung entsteht beim nächsten Import ein neuer Entwurf, der die Zeilen der veröffentlichten Version übernimmt.
+2. **Preise netto (HT) eintragen.** Angezeigt wird brutto mit dem Satz des Katalogs (20 %, `vat_rate_default`). Wer brutto einträgt, bekommt 20 % zu viel im Korridor. Terrasse: der Wert je Typ gilt **je m²**; alle anderen Optionen sind ein fester Aufschlag.
+3. **Linien und Optionen veröffentlichen** (`/buero/katalog/linien-optionen`) und im Blatt „Preise“ des Typdatenblatts (XLSX) je Linie und Option eine Zeile führen. Eine Option ohne Zeile für den Typ erscheint für diesen Typ nicht (Anwendbarkeit).
+4. **Art und Maße** einer Option: `terrace` (Tiefe, Höhe über Gelände, Versiegelungsfaktor) und `carport` (Stellplätze, Breite, Tiefe, Höhe). Zwei Carports (einstellig, zweistellig) sind zwei Optionen; sie schließen sich von selbst aus. **Material** von Fassade und Dach an Option und Linie nur, wenn die Regelprüfung es nutzen soll.
+5. **RE2020-Befund** je Typ und Linie (Formular auf der Seite des Typs unter `/buero/katalog`; `PUT /api/v1/admin/catalog/types/<typ>/energy-assessment/<linie>`): ohne Befund steht „Wärmeschutznachweis erforderlich“ und es gibt keinen Aufpreis.
+6. Fassadenrollen der Typen zuweisen (H2): ohne Rolle `garden` ist keine Terrasse möglich (`no_garden_facade`).
+7. Lokal zum Ansehen: `docker compose --profile dev run --rm backend-dev python -m tests.e2e_seed_types` legt zusätzlich Linien, Optionen, Preise (erfunden) und einen veröffentlichten Preiskatalog an. **Nie in Produktion.**
+
+**Keine Kosten oder kein Korridor**
+
+`GET /api/v1/projects/<id>/configuration`, Feld `costs`: `available = false` mit `reason`. `catalog_unavailable` heißt: kein veröffentlichter Preiskatalog (Schritt 1). `base_price_missing`: für den Typ gibt es weder eine Zeile im Katalog noch einen Basispreis an der Typversion.
+
+**Option nicht wählbar (`blocked`) oder abgelehnt**
+
+`GET /api/v1/projects/<id>/catalog/options` nennt je Option den Zustand und die Gründe: `excluded_by` (Ausschluss), ein bindender Verstoß mit Code (`annex_footprint`, `footprint_total`, `unsealed_min`, `no_garden_facade`, `terrace_outside_site`, `no_valid_position`, `facade_material`, `roof_material`). Bindend ist nur eine wirksame Regel oder eine geometrische Gewissheit; `unknown` und `carport_setback_*` sind Hinweise. `PATCH` lehnt mit `invalid_selection` (Auswahl passt nicht zum Katalog) oder `selection_blocked` (neuer bindender Verstoß) ab. `no_valid_position` beim Carport: neben dem Haus ist kein erreichbarer Platz; das Haus zur Seite ziehen oder den kleineren Carport wählen.
+
+**Katalogpflege: Veröffentlichung**
+
+Linie und Option lassen sich nur aus `draft`/`review` veröffentlichen (`409 version_not_publishable`); eine später veröffentlichte ältere Version verdrängt die neuere nicht.
+
+## 14. Vorentwurf-Übergabe (Modul V)
+
+Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit Snapshot und Dossier) und `inquiry_message`, die Spalten `consent.submission_id` und `customer.locale`, die Zustände `rueckfrage` und `zurueckgezogen` (Migration `0011`) und der Job `dossier_generate` (PDF fr/de und DXF, 2–4 s lokal). Dateien liegen im Objektspeicher unter `dossiers/<Projekt>/<Fassung>/`. Plan und Festlegungen: [PLAN_V_VORENTWURF_UEBERGABE.md](PLAN_V_VORENTWURF_UEBERGABE.md), ANNAHMEN VU01–VU16.
+
+**Vor dem Freischalten (`flag-set submission`)**
+
+1. H3 muss laufen (veröffentlichter Preiskatalog, Abschnitt 13) und A eingerichtet sein (Büro-Postfach `EMPRISE_OFFICE_EMAIL`, Abschnitt 11).
+2. `docker compose exec api python -m app.cli legal-seed` veröffentlicht zusätzlich `notice.design_confirmation` und `consent.transmission_design` (vorläufig, wie A). Ohne sie scheitert die Übergabe mit `503 legal_text_missing`.
+3. Flag `submission` setzen; „Mein Vorgang“ (`/vorgang`) und der Zugangslink funktionieren auch mit `inquiry` allein.
+
+**Rückrollen:** Die Migration erweitert nur. Ein zurückgerolltes Image kennt die Zustände `rueckfrage` und `zurueckgezogen` nicht; die Anfragenliste des Büros scheitert dann an solchen Vorgängen, bis das neue Image wieder läuft.
+
+**Dossier fehlt oder ist gescheitert**
+
+- `dossier_status = pending`: Job `dossier_generate` in `/api/v1/admin/ops/status` prüfen; der Worker muss laufen (WeasyPrint und `ezdxf` im Image).
+- `failed` nach drei Versuchen (Log `dossier_failed`, Fehler in `submission.dossier_error`): Ursache beheben, dann im Anfrage-Detail „Dossier neu erzeugen“ (`POST /api/v1/admin/projects/<id>/submissions/<n>/dossier`). Das Dossier entsteht allein aus dem Snapshot; es zeigt immer die übergebene Fassung.
+- Der Kunde merkt vom Fehler nichts; seine Fassung und die Mails sind schon unterwegs.
+
+**Übergabe abgelehnt**
+
+- `409 review_changed`: Seit dem Anzeigen hat sich etwas geändert (`changes`: `site`, `rules`, `catalog`, `configuration`, `result`, `engine`). Beabsichtigt; die Oberfläche lädt neu und der Kunde übergibt erneut.
+- `409 deviations_not_acknowledged`: bindende Verstöße (meist nach einem Regel- oder Katalogwechsel); der Kunde muss „mit Abweichungen übergeben“ bestätigen.
+- `409 submission_incomplete`: Typ, Lage oder (wenn der Katalog Linien anbietet) Linie fehlen.
+
+**Nachrichten und Zustände:** Eine Nachricht des Büros setzt `neu`/`in_bearbeitung` auf `rueckfrage` und schickt dem Kunden Text und Zugangslink; eine Antwort des Kunden setzt `rueckfrage` auf `in_bearbeitung`. `zurueckgezogen` setzt nur der Kunde; eine neue Fassung öffnet den Vorgang wieder (`neu`). Gelöscht wird nichts (D6).
+
+**Zugangslink:** 30 Tage gültig (`EMPRISE_ACCESS_LINK_DAYS`), signiert mit `EMPRISE_SECRET_KEY` (ein neuer Schlüssel macht alle Links ungültig). Das Einlösen gibt ein neues Projekt-Cookie aus; andere Geräte des Kunden brauchen dann ebenfalls den Link. Wer keinen gültigen Link hat, fordert auf `/vorgang` einen neuen an (Mail `access_link`, nur an bestätigte Adressen mit Vorgang).
+
+**DXF in ArchiCAD übernehmen** (vom Büro noch nicht erprobt, Plan V 6)
+
+- `…_local.dxf`: Einheit Meter; der Ursprung (0, 0) ist der Punkt auf der Ebene `ORIGINE`, seine Lambert-93-Koordinaten stehen im Text auf der Ebene `TEXTE`. In ArchiCAD „Ablage > Interoperabilität > Zusammenführen“ (DXF), Einheit Meter, Einfügepunkt = Projektnullpunkt; der Plan liegt dann im lokalen System des Projekts.
+- `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
+- Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.

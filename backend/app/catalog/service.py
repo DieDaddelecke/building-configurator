@@ -5,6 +5,7 @@ import hashlib
 import math
 import re
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 
@@ -14,6 +15,19 @@ from sqlalchemy.orm import Session
 
 from app.catalog.domain.consistency import check_roof_pitch, check_room_area_share
 from app.catalog.domain.dxf import FootprintDxfInvalid, read_footprints
+from app.catalog.domain.offer import (
+    BasePrice,
+    EnergyFinding,
+    OptionOffer,
+    PackageOffer,
+    TypeOffer,
+)
+from app.catalog.domain.options import (
+    GEOMETRY_MODE,
+    OptionParamsInvalid,
+    normalize_params,
+    normalize_regulatory,
+)
 from app.catalog.domain.xlsx import TypeWorkbookInvalid, read_type_workbook
 from app.catalog.models import (
     BuildingType,
@@ -461,12 +475,21 @@ def _package_version_out(db: Session, version: PackageVersion, slug: str) -> Pac
         label_fr=version.label_fr,
         scope=version.scope,
         included_option_slugs=_option_slugs(db, version.included_module_ids),
+        regulatory=dict(version.regulatory),
         published_at=version.published_at,
     )
 
 
+def _regulatory(raw: dict[str, str]) -> dict[str, str]:
+    try:
+        return normalize_regulatory(raw)
+    except OptionParamsInvalid as exc:
+        raise Problem(422, "validation_error", detail=str(exc)) from None
+
+
 def create_package_version(db: Session, slug: str, body: PackageIn, actor_id: str) -> PackageVersionOut:
     _check_slug(slug)
+    regulatory = _regulatory(body.regulatory)
     package = db.execute(select(Package).where(Package.slug == slug).with_for_update()).scalar_one_or_none()
     if package is None:
         package = Package(slug=slug, created_by=actor_id)
@@ -497,6 +520,7 @@ def create_package_version(db: Session, slug: str, body: PackageIn, actor_id: st
         label_fr=body.label_fr,
         scope=body.scope,
         included_module_ids=[m.id for m in modules],
+        regulatory=regulatory,
         created_by=actor_id,
     )
     db.add(version)
@@ -515,10 +539,25 @@ def publish_package_version(db: Session, slug: str, version_no: int, actor_id: s
     ).scalar_one_or_none()
     if version is None:
         raise Problem(404, "not_found")
+    if version.status == "published":
+        return _package_version_out(db, version, slug)
+    if version.status not in ("draft", "review"):
+        raise Problem(409, "version_not_publishable")
     version.status = "published"
     version.published_at = utcnow()
     version.published_by = actor_id
-    package.current_version_id = version.id
+    db.flush()
+    # Die jüngste veröffentlichte Version gilt; ein später veröffentlichter älterer Entwurf verdrängt sie
+    # nicht
+    package.current_version_id = (
+        db.execute(
+            select(PackageVersion.id)
+            .where(PackageVersion.package_id == package.id, PackageVersion.status == "published")
+            .order_by(PackageVersion.version.desc())
+        )
+        .scalars()
+        .first()
+    )
     db.commit()
     return _package_version_out(db, version, slug)
 
@@ -546,12 +585,20 @@ def _module_version_out(version: ModuleVersion, slug: str) -> ModuleVersionOut:
         label_de=version.label_de,
         label_fr=version.label_fr,
         excludes_slugs=version.excludes_slugs,
+        kind=version.kind,
+        params=dict(version.params),
+        regulatory=dict(version.regulatory),
         published_at=version.published_at,
     )
 
 
 def create_module_version(db: Session, slug: str, body: ModuleIn, actor_id: str) -> ModuleVersionOut:
     _check_slug(slug)
+    try:
+        params = normalize_params(body.kind, body.params)
+    except OptionParamsInvalid as exc:
+        raise Problem(422, "validation_error", detail=str(exc)) from None
+    regulatory = _regulatory(body.regulatory)
     module = db.execute(select(Module).where(Module.slug == slug).with_for_update()).scalar_one_or_none()
     if module is None:
         module = Module(slug=slug, created_by=actor_id)
@@ -572,6 +619,10 @@ def create_module_version(db: Session, slug: str, body: ModuleIn, actor_id: str)
         label_de=body.label_de,
         label_fr=body.label_fr,
         excludes_slugs=body.excludes_slugs,
+        kind=body.kind,
+        geometry_mode=GEOMETRY_MODE[body.kind],
+        params=params,
+        regulatory=regulatory,
         created_by=actor_id,
     )
     db.add(version)
@@ -588,10 +639,23 @@ def publish_module_version(db: Session, slug: str, version_no: int, actor_id: st
     ).scalar_one_or_none()
     if version is None:
         raise Problem(404, "not_found")
+    if version.status == "published":
+        return _module_version_out(version, slug)
+    if version.status not in ("draft", "review"):
+        raise Problem(409, "version_not_publishable")
     version.status = "published"
     version.published_at = utcnow()
     version.published_by = actor_id
-    module.current_version_id = version.id
+    db.flush()
+    module.current_version_id = (
+        db.execute(
+            select(ModuleVersion.id)
+            .where(ModuleVersion.module_id == module.id, ModuleVersion.status == "published")
+            .order_by(ModuleVersion.version.desc())
+        )
+        .scalars()
+        .first()
+    )
     db.commit()
     return _module_version_out(version, slug)
 
@@ -623,16 +687,62 @@ def _draft_price_catalog(db: Session, actor_id: str) -> PriceCatalogVersion:
         ).scalar_one()
         + 1
     )
+    previous = db.get(PriceCatalogVersion, catalog.current_version_id) if catalog.current_version_id else None
     draft = PriceCatalogVersion(
         price_catalog_id=catalog.id,
         version=next_version,
         status="draft",
         valid_from=date.today(),
+        vat_rate_default=previous.vat_rate_default if previous else 0.20,
         created_by=actor_id,
     )
     db.add(draft)
     db.flush()
+    if previous is not None:
+        _copy_price_rows(db, previous.id, draft.id, actor_id)
     return draft
+
+
+def _copy_price_rows(db: Session, source_id: uuid.UUID, target_id: uuid.UUID, actor_id: str) -> None:
+    """Ein neuer Entwurf übernimmt die Preise der veröffentlichten Version, sonst verlöre die Veröffentlichung
+    die Preise aller Typen, die nicht neu importiert wurden (Plan H3 10.1a Nr. 12)."""
+    for base in db.execute(
+        select(TypeBasePrice).where(TypeBasePrice.price_catalog_version_id == source_id)
+    ).scalars():
+        db.add(
+            TypeBasePrice(
+                price_catalog_version_id=target_id,
+                building_type_id=base.building_type_id,
+                min_cents=base.min_cents,
+                max_cents=base.max_cents,
+                created_by=actor_id,
+            )
+        )
+    for package in db.execute(
+        select(PackageTypePrice).where(PackageTypePrice.price_catalog_version_id == source_id)
+    ).scalars():
+        db.add(
+            PackageTypePrice(
+                price_catalog_version_id=target_id,
+                package_id=package.package_id,
+                building_type_id=package.building_type_id,
+                surcharge_cents=package.surcharge_cents,
+                created_by=actor_id,
+            )
+        )
+    for module in db.execute(
+        select(ModuleTypePrice).where(ModuleTypePrice.price_catalog_version_id == source_id)
+    ).scalars():
+        db.add(
+            ModuleTypePrice(
+                price_catalog_version_id=target_id,
+                module_id=module.module_id,
+                building_type_id=module.building_type_id,
+                surcharge_cents=module.surcharge_cents,
+                created_by=actor_id,
+            )
+        )
+    db.flush()
 
 
 def _apply_type_base_price(
@@ -889,3 +999,172 @@ def type_by_version_id(db: Session, version_id: uuid.UUID) -> PublishedType | No
         alternatives=list(building_type.alternatives),
         version=_version_out(version, building_type.slug),
     )
+
+
+# --- Angebot für einen Typ (Modul H3) ------------------------------------------------------------------
+
+
+def offer_for_type(
+    db: Session,
+    published: PublishedType,
+    *,
+    package_version_id: uuid.UUID | None = None,
+    module_version_ids: Sequence[uuid.UUID] = (),
+) -> TypeOffer:
+    """Linien, Optionen, Preise und RE2020-Befunde, die für einen Typ gelten (Plan H3 3.1, 4.1).
+
+    Angeboten wird, was im **veröffentlichten** Preiskatalog eine Zeile für den Typ hat (Plan H1 3.2); ohne
+    veröffentlichten Katalog ist nichts anwendbar. Je Slug gilt die jüngste veröffentlichte Version; eine
+    gespeicherte Version (auch zurückgezogen) ersetzt sie, damit eine Konfiguration ihren Stand behält (L4).
+    Optionen, die eine angebotene Linie enthält, stehen auch ohne Preiszeile im Angebot (sie wirken, kosten
+    aber nichts).
+    """
+    building_type = _building_type(db, published.slug)
+    pcv = _published_price_catalog(db)
+    base: BasePrice | None = None
+    package_prices: dict[uuid.UUID, int] = {}
+    module_prices: dict[uuid.UUID, int] = {}
+    if pcv is not None:
+        row = db.execute(
+            select(TypeBasePrice).where(
+                TypeBasePrice.price_catalog_version_id == pcv.id,
+                TypeBasePrice.building_type_id == building_type.id,
+            )
+        ).scalar_one_or_none()
+        if row is not None:
+            base = BasePrice(row.min_cents, row.max_cents, "catalog")
+        elif published.version.base_price_min_cents > 0:
+            base = BasePrice(
+                published.version.base_price_min_cents, published.version.base_price_max_cents, "type_version"
+            )
+        package_prices = {
+            p.package_id: p.surcharge_cents
+            for p in db.execute(
+                select(PackageTypePrice).where(
+                    PackageTypePrice.price_catalog_version_id == pcv.id,
+                    PackageTypePrice.building_type_id == building_type.id,
+                )
+            ).scalars()
+        }
+        module_prices = {
+            m.module_id: m.surcharge_cents
+            for m in db.execute(
+                select(ModuleTypePrice).where(
+                    ModuleTypePrice.price_catalog_version_id == pcv.id,
+                    ModuleTypePrice.building_type_id == building_type.id,
+                )
+            ).scalars()
+        }
+
+    packages = _package_offers(db, package_version_id, package_prices, pcv is not None)
+    included = {
+        slug for p in packages if p.offered or p.version_id == str(package_version_id) for slug in p.included
+    }
+    options = _option_offers(db, module_version_ids, module_prices, included)
+    findings = [
+        EnergyFinding(
+            package_slug=slug,
+            climate_zone=a.climate_zone,
+            verdict=a.verdict,
+            compliant=a.compliant,
+            surcharge_cents=a.compliance_surcharge_cents,
+            measures=a.measures,
+        )
+        for a, slug in db.execute(
+            select(EnergyAssessment, Package.slug)
+            .join(Package, Package.id == EnergyAssessment.package_id)
+            .where(EnergyAssessment.building_type_id == building_type.id)
+        ).all()
+    ]
+    return TypeOffer(
+        catalog_version_id=str(pcv.id) if pcv else None,
+        catalog_version=pcv.version if pcv else None,
+        vat_rate=float(pcv.vat_rate_default) if pcv else 0.0,
+        base=base,
+        packages=tuple(packages),
+        options=tuple(options),
+        energy=tuple(findings),
+    )
+
+
+def _published_price_catalog(db: Session) -> PriceCatalogVersion | None:
+    catalog = db.execute(
+        select(PriceCatalog).where(PriceCatalog.region == DEFAULT_PRICE_REGION)
+    ).scalar_one_or_none()
+    if catalog is None or catalog.current_version_id is None:
+        return None
+    pcv = db.get(PriceCatalogVersion, catalog.current_version_id)
+    return pcv if pcv is not None and pcv.status == "published" else None
+
+
+def _package_offers(
+    db: Session, stored_id: uuid.UUID | None, prices: dict[uuid.UUID, int], has_catalog: bool
+) -> list[PackageOffer]:
+    rows = db.execute(
+        select(Package, PackageVersion)
+        .join(PackageVersion, PackageVersion.id == Package.current_version_id)
+        .where(PackageVersion.status == "published")
+    ).all()
+    chosen: dict[str, tuple[Package, PackageVersion]] = {p.slug: (p, v) for p, v in rows}
+    if stored_id is not None:
+        stored = db.execute(
+            select(Package, PackageVersion)
+            .join(PackageVersion, PackageVersion.package_id == Package.id)
+            .where(PackageVersion.id == stored_id, PackageVersion.status.in_(("published", "retired")))
+        ).first()
+        if stored is not None:
+            chosen[stored[0].slug] = (stored[0], stored[1])
+    return [
+        PackageOffer(
+            slug=package.slug,
+            version_id=str(version.id),
+            version=version.version,
+            status=version.status,
+            label_de=version.label_de,
+            label_fr=version.label_fr,
+            scope=tuple(version.scope),
+            included=tuple(_option_slugs(db, version.included_module_ids)),
+            regulatory=dict(version.regulatory),
+            surcharge_cents=prices.get(package.id) if has_catalog else None,
+        )
+        for package, version in sorted(chosen.values(), key=lambda pv: pv[0].slug)
+    ]
+
+
+def _option_offers(
+    db: Session, stored_ids: Sequence[uuid.UUID], prices: dict[uuid.UUID, int], included: set[str]
+) -> list[OptionOffer]:
+    rows = db.execute(
+        select(Module, ModuleVersion)
+        .join(ModuleVersion, ModuleVersion.id == Module.current_version_id)
+        .where(ModuleVersion.status == "published")
+    ).all()
+    chosen: dict[str, tuple[Module, ModuleVersion]] = {m.slug: (m, v) for m, v in rows}
+    if stored_ids:
+        for module, version in db.execute(
+            select(Module, ModuleVersion)
+            .join(ModuleVersion, ModuleVersion.module_id == Module.id)
+            .where(ModuleVersion.id.in_(list(stored_ids)), ModuleVersion.status.in_(("published", "retired")))
+        ).all():
+            chosen[module.slug] = (module, version)
+    return [
+        OptionOffer(
+            slug=module.slug,
+            version_id=str(version.id),
+            version=version.version,
+            status=version.status,
+            kind=version.kind,
+            label_de=version.label_de,
+            label_fr=version.label_fr,
+            params=dict(version.params),
+            regulatory=dict(version.regulatory),
+            excludes=tuple(version.excludes_slugs),
+            price_cents=prices.get(module.id),
+        )
+        for module, version in sorted(chosen.values(), key=lambda mv: mv[0].slug)
+        if module.id in prices or module.slug in included or version.id in set(stored_ids)
+    ]
+
+
+def package_by_slug(db: Session, slug: str) -> Package | None:
+    return db.execute(select(Package).where(Package.slug == slug)).scalar_one_or_none()

@@ -119,6 +119,8 @@ class PackageVersion(UuidPk, Created, Base):
     included_module_ids: Mapped[list[uuid.UUID]] = mapped_column(
         ARRAY(UUID(as_uuid=True)), server_default=text("'{}'")
     )
+    regulatory: Mapped[dict[str, str]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    """Materialklassen der Linie für die Regelprüfung (`facade_material`, `roof_material`, Plan H3 3.2)."""
     published_at: Mapped[datetime | None] = mapped_column()
     published_by: Mapped[str | None] = mapped_column(String(200))
 
@@ -147,6 +149,11 @@ class ModuleVersion(UuidPk, Created, Base):
     label_fr: Mapped[str] = mapped_column(String(120))
     geometry_mode: Mapped[str] = mapped_column(String(20), server_default=text("'none'"))
     excludes_slugs: Mapped[list[str]] = mapped_column(ARRAY(String(60)), server_default=text("'{}'"))
+    kind: Mapped[str] = mapped_column(String(20), server_default=text("'plain'"))
+    """`plain`, `terrace`, `carport` (Plan H3 3.2). Die Art legt Geometrie und Einheit des Preises fest."""
+    params: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    """Maße der Art, geprüft und mit Standardwerten gefüllt (`domain.options.normalize_params`)."""
+    regulatory: Mapped[dict[str, str]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
     published_at: Mapped[datetime | None] = mapped_column()
     published_by: Mapped[str | None] = mapped_column(String(200))
 
@@ -154,6 +161,7 @@ class ModuleVersion(UuidPk, Created, Base):
         UniqueConstraint("module_id", "version", name="uq_module_version_module_version"),
         CheckConstraint(f"status IN {VERSION_STATUSES}", name="status_known"),
         CheckConstraint("geometry_mode IN ('none','parametric','ifc_variant')", name="geometry_mode_known"),
+        CheckConstraint("kind IN ('plain','terrace','carport')", name="kind_known"),
     )
 
 

@@ -16,6 +16,7 @@ from app.configuration import service
 from app.configuration.schemas import (
     ConfigurationOut,
     ConfigurationPatch,
+    OptionsOut,
     PlacementAreaOut,
     PresetsOut,
     TypesOut,
@@ -94,6 +95,17 @@ def patch_configuration(
     Änderungen (409). Ein gesperrter Typ oder eine Lage mit bindendem Verstoß wird nicht gespeichert (422)."""
     _limit(request, "configuration_write")
     return service.patch_configuration(db, project_id, body, if_match=_revision(if_match), actor="customer")
+
+
+@router.get("/projects/{project_id}/catalog/options", response_model=OptionsOut, dependencies=[Feature])
+def get_options(
+    request: Request,
+    project_id: uuid.UUID = Depends(require_project_access),
+    db: Session = Depends(get_db),
+) -> OptionsOut:
+    """Linien und Optionen des gewählten Typs mit Preis, Zustand und Gründen (Plan H3 4.3)."""
+    _limit(request, "configuration_options")
+    return service.options_catalog(db, project_id)
 
 
 @router.get(

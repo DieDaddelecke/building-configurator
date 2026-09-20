@@ -417,14 +417,18 @@
       "simulationFallback": "Je reconnais qu'il s'agit d'une simulation non contractuelle et non vérifiée.",
       "transmissionFallback": "J'accepte que mes informations soient transmises à l'agence d'architecture.",
       "simulation_confirmation": "Confirmation : simulation non contractuelle",
-      "transmission_office": "Consentement à la transmission"
+      "transmission_office": "Consentement à la transmission",
+      "design_confirmation": "Confirmation : esquisse non contractuelle",
+      "transmission_design": "Consentement à la transmission du pré-projet"
     },
     "status": {
       "neu": "nouvelle",
       "in_bearbeitung": "en cours",
       "beantwortet": "répondue",
       "geschlossen": "clôturée",
-      "summary": "Demande {{number}} · Statut : {{status}}"
+      "summary": "Demande {{number}} · Statut : {{status}}",
+      "rueckfrage": "question posée",
+      "zurueckgezogen": "retirée"
     },
     "lotissement": {
       "yes": "oui",
@@ -535,7 +539,37 @@
       "created": "Reçue",
       "back": "Retour à la liste",
       "detailTitle": "Demande d'un projet",
-      "consents": "Consentements"
+      "consents": "Consentements",
+      "design": "Pré-projet",
+      "designCount": "{{count}} version(s)",
+      "noDesign": "–",
+      "versions": "Versions",
+      "version": "Version {{sequence}}",
+      "current": "actuelle",
+      "superseded": "remplacée",
+      "changedSince": "La configuration du client a changé depuis cette version (révision {{revision}}).",
+      "deviations": "{{count}} écarts, confirmés par le client",
+      "noDeviations": "aucun écart",
+      "openPoints": "{{count}} points non vérifiés",
+      "retired": "élément de catalogue retiré depuis",
+      "type": "Modèle",
+      "package": "Gamme",
+      "options": "Options",
+      "costs": "Fourchette de coût",
+      "noCosts": "pas de fourchette de coût",
+      "dossier": {
+        "pending": "Dossier en cours de création …",
+        "ready": "Dossier",
+        "failed": "Échec du dossier : {{error}}"
+      },
+      "regenerate": "Recréer le dossier",
+      "messages": "Messages au client",
+      "noMessages": "Pas encore de messages.",
+      "customer": "Client",
+      "office": "Agence",
+      "message": "Message au client",
+      "send": "Envoyer",
+      "sendHint": "Le client reçoit le message par e-mail avec un lien d'accès ; une demande ouverte passe en « question posée »."
     },
     "homeTitle": "Bienvenue",
     "homeIntro": "Modules en service. Les suivants apparaîtront ici dès leur activation.",
@@ -822,7 +856,7 @@
       }
     },
     "lo": {
-      "intro": "Les gammes et les options valent pour tous les types. Les exclusions et « inclus dans la gamme » ne sont que saisis ici ; ils ne sont appliqués qu'à la configuration. Modifier signifie créer un nouveau brouillon.",
+      "intro": "Les gammes et options valent pour tous les modèles. Les exclusions et « comprise dans la gamme » s'appliquent dans la configuration ; deux options du même genre (deux carports) s'excluent toujours. Modifier signifie créer un nouveau brouillon.",
       "linesTitle": "Gammes d'équipement",
       "optionsTitle": "Options",
       "noLines": "Aucune gamme créée.",
@@ -842,7 +876,30 @@
       "draftCreated": "Brouillon version {{version}} créé.",
       "editAsNew": "Modifier comme nouvelle version",
       "publish": "Publier",
-      "publishConfirm": "Publier « {{name}} » version {{version}} ? Cette version ne pourra plus être modifiée."
+      "publishConfirm": "Publier « {{name}} » version {{version}} ? Cette version ne pourra plus être modifiée.",
+      "kind": "Genre",
+      "kinds": {
+        "plain": "Sans géométrie (supplément fixe)",
+        "terrace": "Terrasse (prix au m²)",
+        "carport": "Carport (supplément fixe)"
+      },
+      "kindShort": {
+        "plain": "",
+        "terrace": "Terrasse",
+        "carport": "Carport"
+      },
+      "depth": "Profondeur (m)",
+      "width": "Largeur (m)",
+      "height": "Hauteur (m)",
+      "heightAboveTerrain": "Hauteur au-dessus du terrain (m)",
+      "sealingFactor": "Facteur d'imperméabilisation (0–1)",
+      "spaces": "Places",
+      "terraceHint": "La terrasse suit la longueur de la façade jardin ; le prix par modèle vaut par m².",
+      "carportHint": "Le carport se place côté rue ; le prix par modèle est un supplément fixe.",
+      "facadeMaterial": "Matériau de la façade",
+      "roofMaterial": "Matériau de la toiture",
+      "noMaterial": "non renseigné",
+      "materialHint": "Sert uniquement à la vérification des règles ; sans indication elle reste « non vérifiable »."
     },
     "prices": {
       "intro": "Les prix viennent de la feuille « Preise » des fiches techniques et sont liés au type, pas à une version. Seuls les composants et fourchettes s'affichent ; la fourchette de prix n'est calculée qu'à la configuration.",
@@ -881,7 +938,10 @@
     "steps": {
       "label": "Étapes",
       "type": "Type de maison",
-      "placement": "Implantation"
+      "placement": "Implantation",
+      "package": "Gamme",
+      "options": "Options",
+      "design": "Avant-projet"
     },
     "mode": {
       "manual_sketch": "Vous avez dessiné le terrain vous-même : aucune règle d'urbanisme n'est vérifiée. La maison peut être déplacée librement à l'intérieur du contour.",
@@ -955,7 +1015,7 @@
       "refused": "Position refusée.",
       "conflict": "La configuration a changé entre-temps ; elle a été rechargée.",
       "retired": "Ce type de maison a été retiré du catalogue ; votre choix reste enregistré.",
-      "next": "Prochaine étape : gamme, options et coût estimé. Elle n'est pas encore ouverte."
+      "next": "Si l'implantation vous convient, passez à la gamme de finition."
     },
     "edge": {
       "street": "Voie ({{seq}})",
@@ -1002,7 +1062,24 @@
       "crosses_zones": "La maison chevauche deux zones ; elle doit se situer dans une seule zone",
       "no_valid_position": "Ne peut être placé nulle part sur la parcelle avec ces règles",
       "no_zone": "Aucune zone constructible n'est connue pour cette parcelle",
-      "facade_roles_missing": "Les façades de ce type ne sont pas encore qualifiées ; l'orientation vers la rue est approximative"
+      "facade_roles_missing": "Les façades de ce type ne sont pas encore qualifiées ; l'orientation vers la rue est approximative",
+      "footprint_total": "Emprise avec carport et terrasse : {{measured}} m² (maximum {{limit}} m²)",
+      "unsealed_min": "Surface non imperméabilisée : {{measured}} m² (minimum {{limit}} m²)",
+      "unsealed_min_unknown": "Surface non imperméabilisée : règle non déterminée, non vérifiée",
+      "annex_footprint": "Annexe « {{subject}} » : {{measured}} m² (maximum {{limit}} m²)",
+      "annex_height": "Annexe « {{subject}} » : {{measured}} m de haut (maximum {{limit}} m)",
+      "annex_unknown": "Annexe « {{subject}} » : règle non déterminée, non vérifiée",
+      "carport_setback_assumed": "Carport « {{subject}} » : le règlement ne fixe pas de retraits pour les annexes ; ceux de la maison servent d'hypothèse",
+      "carport_setback_relaxed": "Carport « {{subject}} » : avec les retraits de la maison, aucun emplacement accessible ; il est placé sans ces retraits, le cabinet le vérifiera",
+      "parking": "Stationnement : {{measured}} proposé(s), {{limit}} exigé(s)",
+      "parking_not_shown": "Stationnement non justifié : ni carport ni porte de garage",
+      "parking_not_checked": "Stationnement : la règle dépend de la surface et n'est pas vérifiée",
+      "facade_material": "Façade « {{subject}} » : {{measured}} (prescription : {{limit}})",
+      "roof_material": "Toiture « {{subject}} » : {{measured}} (prescription : {{limit}})",
+      "material_unknown": "« {{subject}} » : matériau non indiqué, non vérifié",
+      "no_garden_facade": "Terrasse « {{subject}} » : ce modèle n'a pas de façade jardin",
+      "terrace_outside_site": "La terrasse « {{subject}} » dépasse du terrain",
+      "no_valid_position_option": "« {{subject}} » ne trouve pas de place sur le terrain"
     },
     "orientation": {
       "parallel_to_street": "parallèle à la voie",
@@ -1011,7 +1088,210 @@
     "reason": {
       "street_level": "hauteur mesurée depuis le niveau de la rue",
       "terrain_unavailable": "le terrain n'est pas connu",
-      "terrain_steep": "pente du terrain supérieure à 5 %"
+      "terrain_steep": "pente du terrain supérieure à 5 %",
+      "missing": "absente du règlement",
+      "per_area": "selon la surface"
+    },
+    "next": "Continuer",
+    "previous": "Retour",
+    "package": {
+      "title": "Gamme de finition",
+      "intro": "La gamme fixe les matériaux et les équipements. La fourchette de coût ci-dessous s'ajuste immédiatement.",
+      "select": "Choisir {{name}}",
+      "selected": "Choisie",
+      "surcharge": "+ env. {{amount}}",
+      "included": "dans le prix de base",
+      "scope": "Prestations",
+      "includes": "Comprend en plus : {{options}}",
+      "unavailable": "Aucun prix n'est encore disponible ; gammes et options ne sont pas encore sélectionnables.",
+      "retired": "Cette gamme a été retirée du catalogue ; votre choix est conservé.",
+      "error": "Cette gamme ne peut pas être choisie.",
+      "empty": "Aucune gamme n'est proposée pour ce modèle."
+    },
+    "energy": {
+      "title": "RE2020",
+      "zone": "Zone climatique {{zone}}",
+      "compliant": "Le constat est positif pour cette gamme : {{verdict}}",
+      "action": "{{verdict}}. Pour la conformité il faut : {{measures}}. Supplément {{amount}}, inclus dans la fourchette.",
+      "actionNoPrice": "{{verdict}}. Mesures : {{measures}}.",
+      "not_assessed": "Aucun constat pour cette gamme. Une étude thermique est nécessaire ; la plateforme ne calcule pas la RE2020."
+    },
+    "options": {
+      "title": "Matériaux et options",
+      "intro": "À côté de chaque option figure son coût supplémentaire. Ce que la gamme comprend déjà n'est pas compté deux fois.",
+      "outdoor": "Aménagements extérieurs",
+      "other": "Autres options",
+      "included": "comprise dans la gamme",
+      "blocked": "Impossible",
+      "perM2": "{{unit}} par m²",
+      "area": "{{area}} m²",
+      "empty": "Aucune option n'est proposée pour ce modèle.",
+      "error": "Ce choix n'est pas possible.",
+      "reason": {
+        "excluded_by": "Exclut « {{other}} »",
+        "not_offered": "Non proposée pour ce modèle",
+        "unknown_option": "Absente du catalogue",
+        "unknown_package": "Absente du catalogue",
+        "catalog_unavailable": "Aucun prix n'est encore disponible"
+      },
+      "kind": {
+        "terrace": "Terrasse",
+        "carport": "Carport"
+      }
+    },
+    "design": {
+      "title": "Votre avant-projet",
+      "intro": "Toutes les informations sur une feuille. Chaque point reste modifiable, vos autres choix sont conservés. Une simulation sans valeur contractuelle, pas un examen de permis de construire.",
+      "plan": "Plan de situation",
+      "planLabel": "Plan du terrain avec maison, terrasse, carport et accès",
+      "change": "Modifier",
+      "site": "Terrain",
+      "type": "Modèle",
+      "package": "Gamme de finition",
+      "noPackage": "Aucune gamme choisie",
+      "options": "Options",
+      "noOptions": "Aucune option choisie",
+      "placement": "Implantation",
+      "areas": "Surfaces",
+      "orientation": "Orientation",
+      "checks": "Vérifications",
+      "noChecks": "Aucune vérification disponible.",
+      "convergenceNote": "Orientation géographique ; la convergence des méridiens de {{deg}}° est prise en compte.",
+      "facade": {
+        "garden": "Façade jardin",
+        "street": "Façade rue"
+      },
+      "area": {
+        "site": "Terrain",
+        "house": "Emprise de la maison",
+        "carport": "Carport",
+        "terrace": "Terrasse",
+        "driveway": "Accès",
+        "paths": "Cheminements (forfait)",
+        "emprise": "Emprise totale",
+        "sealed": "Imperméabilisée",
+        "unsealed": "Non imperméabilisée"
+      },
+      "next": "La transmission de l'avant-projet au cabinet d'architecture suivra dans une prochaine étape. D'ici là, vous pouvez envoyer une demande depuis la page du terrain.",
+      "request": "Vers la demande"
+    },
+    "costs": {
+      "title": "Fourchette de coût · estimation, sans engagement",
+      "range": "env. {{min}} – {{max}}",
+      "gross": "TTC",
+      "net": "HT",
+      "unavailable": "La fourchette de coût n'est pas encore disponible : {{reason}}",
+      "reason": {
+        "catalog_unavailable": "Aucun catalogue de prix n'est encore publié.",
+        "base_price_missing": "Le prix de base de ce modèle est manquant."
+      },
+      "details": "Afficher les postes",
+      "energy": "Conformité RE2020",
+      "included": "compris",
+      "perM2": "{{quantity}} m² × {{unit}}",
+      "hint": "Aucun engagement : la fourchette repose sur des fourchettes de prix fixes du catalogue et sera vérifiée par le cabinet.",
+      "plus": "+ env. {{amount}}",
+      "plusRange": "+ env. {{min}} – {{max}}"
+    },
+    "compass": {
+      "n": "nord",
+      "ne": "nord-est",
+      "e": "est",
+      "se": "sud-est",
+      "s": "sud",
+      "sw": "sud-ouest",
+      "w": "ouest",
+      "nw": "nord-ouest"
+    },
+    "plan_layers": {
+      "terrace": "Terrasse",
+      "carport": "Carport",
+      "driveway": "Accès"
+    },
+    "material": {
+      "render": "enduit",
+      "wood": "bois",
+      "brick": "brique",
+      "stone": "pierre",
+      "concrete": "béton",
+      "metal": "métal",
+      "glass": "verre",
+      "slate": "ardoise",
+      "clay_tile": "tuile de terre cuite",
+      "zinc": "zinc",
+      "composite": "composite",
+      "vegetation": "végétalisation",
+      "other": "autre"
     }
+  },
+  "submission": {
+    "title": "Transmettre le pré-projet",
+    "intro": "L'agence reçoit ce pré-projet avec plan de masse, vérification des règles et fourchette de coût sous forme de dossier (PDF et DXF). À l'envoi, Emprise recalcule tout ; si quelque chose a changé entre-temps, vous le voyez avant.",
+    "existing": "La demande {{number}} existe déjà ; cette transmission y sera ajoutée comme nouvelle version.",
+    "deviations": {
+      "title": "Écarts aux règles",
+      "intro": "Le pré-projet ne respecte pas ces règles de la simulation. Vous pouvez tout de même le transmettre pour vérification.",
+      "confirm": "Transmettre avec écarts pour vérification"
+    },
+    "designFallback": "J'ai pris connaissance que le pré-projet est une esquisse non contractuelle et que la fourchette de coût est une estimation.",
+    "transmissionFallback": "J'accepte que mes données et le pré-projet soient transmis à l'agence d'architecture.",
+    "submit": "Transmettre le pré-projet",
+    "submitWithCode": "Confirmer le code et transmettre",
+    "changed": {
+      "title": "L'évaluation a changé depuis l'affichage",
+      "intro": "Veuillez vérifier à nouveau le pré-projet ci-dessus, puis le transmettre.",
+      "site": "Terrain (limites ou relief)",
+      "rules": "Règles du PLU",
+      "catalog": "Catalogue ou catalogue de prix",
+      "configuration": "Votre sélection (modifiée dans une autre fenêtre)",
+      "result": "Résultat de la vérification ou des coûts",
+      "engine": "Version du moteur d'Emprise"
+    },
+    "incomplete": "Il manque encore pour la transmission : {{missing}}",
+    "missing": {
+      "type": "modèle",
+      "placement": "implantation",
+      "package": "gamme"
+    },
+    "done": {
+      "title": "Pré-projet transmis",
+      "text": "Demande {{number}}, version {{sequence}}. L'agence étudie le pré-projet et vous recontacte ; une confirmation avec lien d'accès vous a été envoyée par e-mail.",
+      "link": "Voir ma demande"
+    },
+    "disabled": "La transmission arrive bientôt. En attendant, votre demande parvient à l'agence depuis la page du terrain :"
+  },
+  "case": {
+    "title": "Ma demande",
+    "intro": "Statut de votre demande, versions transmises avec leur dossier et messages de l'agence d'architecture.",
+    "summary": "Demande {{number}} · statut : {{status}}",
+    "versions": "Versions",
+    "version": "Version {{sequence}} du {{date}}",
+    "current": "actuelle",
+    "superseded": "remplacée",
+    "deviations": "{{count}} écarts confirmés",
+    "dossierPending": "Dossier en cours de création …",
+    "dossierFailed": "Le dossier suit ; votre transmission est enregistrée.",
+    "noVersions": "Pas encore de version issue du configurateur.",
+    "messages": "Messages",
+    "noMessages": "Pas encore de messages.",
+    "office": "Agence d'architecture",
+    "you": "Vous",
+    "reply": "Message à l'agence",
+    "send": "Envoyer",
+    "withdraw": "Retirer la demande",
+    "withdrawConfirm": "Retirer vraiment la demande ? L'agence est informée ; rien n'est supprimé.",
+    "withdrawn": "La demande est retirée. Une nouvelle transmission depuis le configurateur la rouvre.",
+    "none": "Aucune demande n'est connue sur cet appareil.",
+    "toConfigurator": "Vers le configurateur"
+  },
+  "access": {
+    "title": "Accès à votre demande",
+    "redeeming": "Vérification du lien d'accès …",
+    "invalid": "Le lien est invalide ou expiré.",
+    "requestTitle": "Demander un nouveau lien d'accès",
+    "requestIntro": "Indiquez l'adresse e-mail de votre demande. Si une demande existe, vous recevez un nouveau lien (valable 30 jours).",
+    "email": "E-mail",
+    "send": "Demander un lien",
+    "sent": "Si une demande existe pour cette adresse, un lien vous a été envoyé."
   }
 }

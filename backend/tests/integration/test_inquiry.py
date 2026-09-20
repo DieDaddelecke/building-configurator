@@ -114,7 +114,14 @@ def test_contact_then_confirm_creates_inquiry(
     assert number.startswith("EMP-") and confirm.json()["status"] == "submitted"
 
     mine = client.get(f"/api/v1/projects/{project}/inquiry").json()
-    assert mine == {"exists": True, "number": number, "status": "neu"}
+    assert mine == {
+        "exists": True,
+        "number": number,
+        "status": "neu",
+        "submissions": [],
+        "messages": [],
+        "can_withdraw": True,
+    }
 
     db_session.expire_all()
     project_row = db_session.get(Project, project)

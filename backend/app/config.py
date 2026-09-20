@@ -103,6 +103,15 @@ class Settings(BaseSettings):
     inquiry_contact_limit_per_hour_email: int = 5
     inquiry_confirm_limit_per_hour_ip: int = 20
 
+    # Vorentwurf-Übergabe (V, docs/PLAN_V_VORENTWURF_UEBERGABE.md 3.11)
+    submission_limit_per_hour_ip: int = 20
+    message_limit_per_hour_ip: int = 30
+    access_link_days: int = 30
+    """Gültigkeit des Zugangslinks in Kundenmails (Spez. 5.10.7)."""
+    access_redeem_limit_per_hour_ip: int = 20
+    access_request_limit_per_hour_ip: int = 5
+    access_request_limit_per_hour_email: int = 3
+
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15

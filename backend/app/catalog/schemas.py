@@ -6,6 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from app.catalog.domain.options import OptionKind
+
 VersionStatus = Literal["draft", "review", "published", "retired"]
 RoofForm = Literal["gable", "hip", "flat", "complex"]
 
@@ -103,6 +105,8 @@ class PackageVersionOut(BaseModel):
     scope: list[str]
     included_option_slugs: list[str]
     """Optionen, die diese Linie ohne Aufpreis enthält (Mockup `enthalten_in`, Plan H1 5 Schritt 4)."""
+    regulatory: dict[str, str]
+    """Materialklassen der Linie für die Regelprüfung (Plan H3 3.2)."""
     published_at: datetime | None
 
 
@@ -111,6 +115,7 @@ class PackageIn(BaseModel):
     label_fr: str
     scope: list[str] = []
     included_option_slugs: list[str] = []
+    regulatory: dict[str, str] = {}
 
 
 class ModuleVersionOut(BaseModel):
@@ -122,6 +127,10 @@ class ModuleVersionOut(BaseModel):
     label_de: str
     label_fr: str
     excludes_slugs: list[str]
+    kind: OptionKind
+    """`plain` (fester Aufschlag), `terrace` (Preis je m²), `carport` (Plan H3 3.2)."""
+    params: dict[str, Any]
+    regulatory: dict[str, str]
     published_at: datetime | None
 
 
@@ -129,6 +138,11 @@ class ModuleIn(BaseModel):
     label_de: str
     label_fr: str
     excludes_slugs: list[str] = []
+    kind: OptionKind = "plain"
+    params: dict[str, Any] = {}
+    """Maße der Art: Terrasse `depth_m`, `height_above_terrain_m`, `sealing_factor`; Carport `spaces`,
+    `width_m`, `depth_m`, `height_m`. Standardwerte werden gefüllt."""
+    regulatory: dict[str, str] = {}
 
 
 class TypeBasePriceOut(BaseModel):

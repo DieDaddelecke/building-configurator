@@ -18,6 +18,8 @@ import { Regeln, Regelwerk } from "./pages/buero/Regeln";
 import { GrundstueckSeite } from "./pages/grundstueck/GrundstueckSeite";
 import { KonfiguratorSeite } from "./pages/konfigurator/KonfiguratorSeite";
 import { Start } from "./pages/Start";
+import { VorgangSeite } from "./pages/vorgang/VorgangSeite";
+import { ZugangSeite } from "./pages/vorgang/ZugangSeite";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
 
@@ -37,6 +39,8 @@ export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },
   { path: "/grundstueck", element: <GrundstueckSeite /> },
   { path: "/konfigurator", element: <KonfiguratorSeite /> },
+  { path: "/vorgang", element: <VorgangSeite /> },
+  { path: "/zugang", element: <ZugangSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
   {
     path: "/buero",

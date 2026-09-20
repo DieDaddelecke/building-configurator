@@ -1,17 +1,20 @@
 /** Büro: Anfrage-Detail (Modul A, Plan 3.6/3.8) – stellt zusammen, was G1/G2/G3 einzeln schon prüfen lassen:
- * Kontakt, Status, Grundstück mit Kanten, Regeln mit Zitat, Baurahmen. Kein neuer Prüfmechanismus. */
+ * Kontakt, Status, Grundstück mit Kanten, Regeln mit Zitat, Baurahmen. Kein neuer Prüfmechanismus. Modul V
+ * ergänzt die übergebenen Fassungen mit Dossier und die Nachrichten an den Kunden. */
 
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { useStaffEnvelope } from "../../api/envelope";
-import { useSetInquiryStatus, useStaffInquiry, type InquiryStatus } from "../../api/inquiry";
+import { useSetInquiryStatus, useStaffInquiry, type InquiryStatus, type OfficeStatus } from "../../api/inquiry";
 import { useStaffSite } from "../../api/site";
 import { Baurahmen } from "../../envelope/Baurahmen";
 import { Kopf } from "../../components/Kopf";
+import { Fassungen, Nachrichten } from "./AnfrageFassungen";
 import { Detail as GrundstueckDetail, Fehler, ProjektRegeln } from "./Grundstuecke";
 
-const STATUSES: InquiryStatus[] = ["neu", "in_bearbeitung", "beantwortet", "geschlossen"];
+/** Zustände, die das Büro setzt; `zurueckgezogen` setzt nur der Kunde (V 3.8). */
+const STATUSES: InquiryStatus[] = ["neu", "in_bearbeitung", "rueckfrage", "beantwortet", "geschlossen"];
 
 function Kontakt({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
@@ -27,11 +30,11 @@ function Kontakt({ projectId }: { projectId: string }) {
         <select
           className="field"
           value={data.status}
-          onChange={(e) => setStatus.mutate(e.target.value as InquiryStatus)}
+          onChange={(e) => setStatus.mutate(e.target.value as OfficeStatus)}
           disabled={setStatus.isPending}
         >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
+          {(data.status === "zurueckgezogen" ? [...STATUSES, data.status] : STATUSES).map((s) => (
+            <option key={s} value={s} disabled={s === "zurueckgezogen"}>
               {t(`inquiry.status.${s}`)}
             </option>
           ))}
@@ -60,12 +63,14 @@ function Kontakt({ projectId }: { projectId: string }) {
         ))}
       </dl>
       <ul className="m-0 p-0 list-none text-sm t-mute" aria-label={t("office.inquiries.consents")}>
-        {data.consents.map((c) => (
-          <li key={c.kind}>
+        {data.consents.map((c, index) => (
+          <li key={`${c.kind}-${index}`}>
             {t(`inquiry.consents.${c.kind}`)} · {new Date(c.confirmed_at).toLocaleString()}
           </li>
         ))}
       </ul>
+      <Fassungen projectId={projectId} data={data} />
+      <Nachrichten projectId={projectId} data={data} />
     </div>
   );
 }

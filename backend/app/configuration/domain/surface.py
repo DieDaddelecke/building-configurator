@@ -50,6 +50,8 @@ class EdgeRequirement:
     on_boundary_max_height_m: float | None = None
     setback_kind: str | None = None
     citation: Citation | None = None
+    assumed: bool = False
+    """Nebenbau ohne eigene Regel: der Abstand des Hauptbaus dient nur als Annahme für den Vorschlag."""
 
 
 def house_heights(house: HouseType) -> Heights:
@@ -57,15 +59,28 @@ def house_heights(house: HouseType) -> Heights:
 
 
 def edge_requirement(
-    edge: EdgeInput, part: PartContext, house: HouseType, boundary_options: BoundaryOptions
+    edge: EdgeInput,
+    part: PartContext,
+    house: HouseType,
+    boundary_options: BoundaryOptions,
+    building_kind: str = "main",
+    allow_assumed: bool = True,
 ) -> EdgeRequirement:
     """Abstand einer Kante für dieses Haus in dieser Teilfläche (Spez. 5.3.2, 5.3.4).
 
     Die Regel wird mit den Höhen des Typs gerechnet, nicht mit der Höchsthöhe der Zone. Bei einer Kante
     `other` kommen zwei Regeln in Betracht: es gilt die mildere, damit keine gültige Lage verloren geht
     (Plan G3 ANNAHMEN BR03); die Kante ist als unklar markiert.
+
+    `building_kind` wählt die Regeln eines Nebenbaus (`annex`). Fehlt dafür jede Regel, ist der Abstand
+    unbekannt; mit `allow_assumed` gilt dann der des Hauptbaus als Annahme (`assumed`, Plan H3 3.4), damit ein
+    Vorschlag nicht auf der Grenze steht.
     """
-    setbacks = setbacks_for_edge(edge, part.rules, house_heights(house), part.zone_code)
+    setbacks = setbacks_for_edge(edge, part.rules, house_heights(house), part.zone_code, building_kind)
+    assumed = False
+    if building_kind != "main" and allow_assumed and all(s.status == "missing" for s in setbacks):
+        setbacks = setbacks_for_edge(edge, part.rules, house_heights(house), part.zone_code, "main")
+        assumed = True
     chosen = bool(boundary_options.get(edge.seq))
     values: list[tuple[float, Setback, bool]] = []
     unknown: Setback | None = None
@@ -86,6 +101,7 @@ def edge_requirement(
             reason=(unknown.reason if unknown else None) or "missing",
             markers=sorted({m for s in setbacks for m in s.markers}),
             setback_kind=unknown.kind if unknown else None,
+            assumed=False,
         )
     pick = min(values, key=lambda v: v[0]) if edge.kind == "other" else max(values, key=lambda v: v[0])
     distance, setback, on_boundary = pick
@@ -106,6 +122,7 @@ def edge_requirement(
         on_boundary_max_height_m=float(height) if isinstance(height, int | float) else None,
         setback_kind=setback.kind,
         citation=setback.citation,
+        assumed=assumed,
     )
 
 
@@ -139,11 +156,15 @@ def part_surface(
     boundary_options: BoundaryOptions,
     *,
     exact: bool = False,
+    building_kind: str = "main",
+    use_bands: bool = True,
+    allow_assumed: bool = True,
 ) -> BaseGeometry:
     """Alle Ursprünge, bei denen das Haus in `part` zulässig steht (lokale Meter).
 
     `exact = False` lässt 0,01 m Toleranz zu (Aussage „passt“, Ziehen), `exact = True` rechnet mit den
-    Abständen selbst (Schnellstellungen).
+    Abständen selbst (Schnellstellungen). Ein Nebenbau (`building_kind = annex`) hat eigene Abstände und
+    kein Bauband (Plan H3 3.4).
     """
     projection = turn(house.projection, rotation_deg)
     facade = turn(house.facade, rotation_deg)
@@ -151,7 +172,7 @@ def part_surface(
         return Polygon()
     area = erode(part.polygon, projection)
     for edge in ctx.edges:
-        req = edge_requirement(edge, part, house, boundary_options)
+        req = edge_requirement(edge, part, house, boundary_options, building_kind, allow_assumed)
         if req.distance_m is None or req.distance_m <= 0:
             continue
         moving = projection if req.contour == "projection" else facade
@@ -159,7 +180,8 @@ def part_surface(
         area = area.difference(keep_distance(edge.geometry, moving, distance))
         if area.is_empty:
             return Polygon()
-    area = _apply_bands(area, house, part, rotation_deg, projection)
+    if use_bands:
+        area = _apply_bands(area, house, part, rotation_deg, projection)
     if ctx.no_build is not None and not area.is_empty:
         area = area.difference(touching(ctx.no_build, projection))
     return clean(area)

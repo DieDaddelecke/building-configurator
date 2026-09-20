@@ -23,6 +23,7 @@ import { Nordpfeil, strich, txt } from "../components/plan/Masskette";
 import { Planblatt } from "../components/plan/Planblatt";
 import { PlanSvg, boundsOf, polygonPath, ringPath, toSvg, type LocalPoint } from "../components/plan/PlanSvg";
 import { EDGE_COLORS, formatNumber, midpoint } from "../site/geo";
+import { Nebenbauten } from "./Nebenbauten";
 import { checkText, edgeName, requiredText, sortChecks, STATUS_TONE } from "./format";
 import { GRID_M, centroid, dragTo, nearestInside, originKeepingCentre, placeRing, type Pt, type Ring } from "./geometry";
 
@@ -42,9 +43,11 @@ interface ImplantationProps {
   site: SiteOut;
   configuration: ConfigurationOut;
   envelope?: EnvelopeOut | null;
+  /** Bezeichnungen von Linien und Optionen für die Texte der Prüfungen (Plan H3 4.4) */
+  names?: Record<string, string>;
 }
 
-export function Implantation({ projectId, site, configuration, envelope = null }: ImplantationProps) {
+export function Implantation({ projectId, site, configuration, envelope = null, names = {} }: ImplantationProps) {
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
   const type = configuration.type;
@@ -254,7 +257,7 @@ export function Implantation({ projectId, site, configuration, envelope = null }
               {refusedChecks.length > 0 && (
                 <ul className="m-0 mt-1 pl-5 flex flex-col gap-1">
                   {refusedChecks.map((check, index) => (
-                    <li key={`${check.code}-${index}`}>{checkText(check, t, lng)}</li>
+                    <li key={`${check.code}-${index}`}>{checkText(check, t, lng, names)}</li>
                   ))}
                 </ul>
               )}
@@ -268,7 +271,7 @@ export function Implantation({ projectId, site, configuration, envelope = null }
           {!patch.isPending && !problem && failing.length > 0 && (
             <ul className="m-0 mt-1 pl-5 flex flex-col gap-1">
               {failing.map((check, index) => (
-                <li key={`${check.code}-${index}`}>{checkText(check, t, lng)}</li>
+                <li key={`${check.code}-${index}`}>{checkText(check, t, lng, names)}</li>
               ))}
             </ul>
           )}
@@ -311,7 +314,7 @@ export function Implantation({ projectId, site, configuration, envelope = null }
             <ul className="m-0 mt-2 pl-5 flex flex-col gap-1" data-testid="pruefungen">
               {sorted.map((check: CheckOut, index) => (
                 <li key={`${check.code}-${check.edge_seq ?? ""}-${index}`} className={STATUS_TONE[check.status]}>
-                  {checkText(check, t, lng)} <span className="t-faint">· {t(`configurator.status.${check.status}`)}</span>
+                  {checkText(check, t, lng, names)} <span className="t-faint">· {t(`configurator.status.${check.status}`)}</span>
                 </li>
               ))}
             </ul>
@@ -363,6 +366,7 @@ export function Implantation({ projectId, site, configuration, envelope = null }
                 </g>
               );
             })}
+            <Nebenbauten outbuildings={configuration.outbuildings} size={size} />
             {house && (
               <g
                 data-testid="haus"

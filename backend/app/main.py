@@ -18,6 +18,7 @@ from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
 from app.platform.problems import install_problem_handlers
 from app.rules import api as rules_api
 from app.site import api as site_api
+from app.submission import api as submission_api
 
 API_V1 = "/api/v1"
 
@@ -61,6 +62,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         catalog_api,
         configuration_api,
         inquiry_api,
+        submission_api,
     ):
         v1.include_router(module.router)
     app.include_router(v1)

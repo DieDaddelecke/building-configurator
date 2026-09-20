@@ -171,7 +171,25 @@ def fingerprint(data: EnvelopeInput) -> str:
     Nicht über Revisions- und Versionsnummern: Gelände trifft ohne neue Revision ein, Projektkorrekturen
     und der Wechsel auf den Rückfall-Planstand erzeugen keine neue Regelwerksversion.
     """
-    payload = {
+    return "sha256:" + _digest(_fingerprint_payload(data))
+
+
+def fingerprint_parts(data: EnvelopeInput) -> dict[str, str]:
+    """Dieselbe Prüfsumme in zwei Teilen: Grundstück (Umriss, Kanten, Gelände) und Regeln (Zonen, Vorgaben).
+    Der Prüfstempel der Übergabe (V 3.3) benennt damit, was sich geändert hat."""
+    payload = _fingerprint_payload(data)
+    rules = {key: payload[key] for key in ("zones", "constraints", "rules_status")}
+    # 12 Zeichen wie die übrigen Teile des Stempels (`configuration/review.py`)
+    return {"site": _digest(payload["site"])[:12], "rules": _digest(rules)[:12]}
+
+
+def _digest(payload: object) -> str:
+    raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _fingerprint_payload(data: EnvelopeInput) -> dict[str, Any]:
+    return {
         "engine": ENGINE_VERSION,
         "site": {
             "outline": _geometry_key(data.site.polygon),
@@ -212,8 +230,6 @@ def fingerprint(data: EnvelopeInput) -> str:
         ),
         "rules_status": [data.rules_status, data.rules_reason, round(data.uncovered_share, 4)],
     }
-    raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
-    return "sha256:" + hashlib.sha256(raw.encode()).hexdigest()
 
 
 def _geometry_key(geometry: BaseGeometry) -> str:

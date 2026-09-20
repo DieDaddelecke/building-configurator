@@ -4,4 +4,5 @@ import app.envelope.jobs
 import app.platform.mail
 import app.platform.tasks
 import app.rules.jobs
-import app.site.jobs  # noqa: F401
+import app.site.jobs
+import app.submission.jobs  # noqa: F401

@@ -8,7 +8,7 @@ storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
-legal-seed                     Vorläufige Einwilligungstexte des Moduls A veröffentlichen (Plan A 3.10)
+legal-seed                     Vorläufige Einwilligungstexte (A, V) veröffentlichen (Plan A 3.10, V 3.5)
 rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 """
@@ -188,14 +188,15 @@ def cmd_flag_set(args: argparse.Namespace) -> None:
 
 
 def cmd_legal_seed(args: argparse.Namespace) -> None:
-    """Vorläufige Einwilligungstexte des Moduls A veröffentlichen, falls noch keine Version besteht
-    (docs/PLAN_A_ANFRAGE.md 3.10). Endgültiger Wortlaut folgt später über `POST /admin/legal-texts`."""
+    """Vorläufige Einwilligungstexte der Module A und V veröffentlichen, falls noch keine Version besteht
+    (docs/PLAN_A_ANFRAGE.md 3.10, PLAN_V 3.5). Endgültiger Wortlaut folgt über `POST /admin/legal-texts`."""
     from app.inquiry.texts import PROVISIONAL_TEXTS
     from app.platform import legal
     from app.platform.models import LegalText
+    from app.submission.texts import PROVISIONAL_TEXTS as DESIGN_TEXTS
 
     with get_sessionmaker()() as session:
-        for key, locale, title, body in PROVISIONAL_TEXTS:
+        for key, locale, title, body in [*PROVISIONAL_TEXTS, *DESIGN_TEXTS]:
             exists = session.execute(
                 select(LegalText.id).where(LegalText.key == key, LegalText.locale == locale)
             ).first()

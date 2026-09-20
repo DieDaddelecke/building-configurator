@@ -60,3 +60,10 @@ body { background: var(--paper); margin: 0; }
 @keyframes einblenden { from { opacity: 0 } to { opacity: 1 } }
 .anim-seite { animation: einblenden .35s ease-out both; }
 @media (prefers-reduced-motion: reduce) { .anim-seite { animation: none; } }
+
+/* Auswahlkasten der Optionen (Plan H3 4.4): angehakt = gewählt, getönt = in der Linie enthalten */
+.kasten { display: inline-block; position: relative; flex: none; width: 1.15rem; height: 1.15rem; border: 1px solid var(--line-strong); background: var(--sheet); }
+.kasten[data-an="true"] { background: var(--accent); border-color: var(--accent); }
+.kasten[data-an="true"]::after, .kasten[data-inkl="true"]::after { content: ""; position: absolute; left: 0.32rem; top: 0.08rem; width: 0.3rem; height: 0.6rem; border: solid var(--accent-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.kasten[data-inkl="true"] { background: var(--accent-tint); border-color: var(--accent); }
+.kasten[data-inkl="true"]::after { border-color: var(--accent); }

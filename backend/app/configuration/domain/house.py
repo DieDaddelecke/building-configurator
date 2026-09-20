@@ -36,6 +36,8 @@ class HouseType:
     """Kantenindex → `street`, `garden`, `side_left`, `side_right`; leer, solange nicht zugewiesen."""
     family: str | None = None
     alternatives: tuple[str, ...] = ()
+    garage_door: tuple[int, float] | None = None
+    """`(Kantenindex, Anteil 0–1 vom Kantenanfang)` auf der Fassade (Plan H1 3.1, ANNAHMEN H10)."""
 
     @property
     def is_flat(self) -> bool:
@@ -65,13 +67,24 @@ def role_edges(house: HouseType, role: str) -> list[tuple[int, Point, Point]]:
     return [edge for edge in edges_of(house.facade) if house.facade_roles.get(edge[0]) == role]
 
 
-def street_normal_model_deg(house: HouseType) -> float | None:
-    """Azimut der Außennormalen der Straßenfassade im Modell (längste Kante mit Rolle `street`)."""
-    edges = role_edges(house, "street")
+def role_normal_model_deg(house: HouseType, role: str) -> float | None:
+    """Azimut der Außennormalen der längsten Kante mit dieser Rolle im Modell."""
+    edges = role_edges(house, role)
     if not edges:
         return None
     _, a, b = max(edges, key=lambda e: math.dist(e[1], e[2]))
     return (azimuth_deg(b[0] - a[0], b[1] - a[1]) + 90.0) % 360.0
+
+
+def street_normal_model_deg(house: HouseType) -> float | None:
+    """Azimut der Außennormalen der Straßenfassade im Modell (längste Kante mit Rolle `street`)."""
+    return role_normal_model_deg(house, "street")
+
+
+def longest_role_edge(house: HouseType, role: str) -> tuple[int, Point, Point] | None:
+    """Längste Fassadenkante mit dieser Rolle: Kantenindex und Endpunkte im Modell."""
+    edges = role_edges(house, role)
+    return max(edges, key=lambda e: math.dist(e[1], e[2])) if edges else None
 
 
 def ridge_axis_model_deg(house: HouseType) -> float | None:

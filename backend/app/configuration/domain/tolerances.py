@@ -25,3 +25,15 @@ PRESET_TIE_M = 0.05
 
 STORAGE_DECIMALS = 3
 """Stellen beim Ausgeben von Koordinaten in Metern."""
+
+# Terrasse, Carport, Zufahrt und Flächen (Plan H3 3.3–3.5, Spez. 5.9.3)
+DRIVEWAY_WIDTH_M = 3.0
+"""Breite der Zufahrt zum Carport oder Garagentor."""
+PATHS_LUMP_M2 = 10.0
+"""Wege: Pauschale (Spez. 5.9.3, Standard); der Preiskatalog trägt das Feld nicht (Plan H3 3.5)."""
+TERRACE_COUNTS_ABOVE_M = 0.6
+"""Eine Terrasse zählt zur Grundfläche, wenn sie höher liegt (Spez. 5.5.5); die Regel kann es ändern."""
+AREA_DECIMALS = 2
+"""Stellen bei Flächen in m² in den Antworten."""
+OUTBUILDING_CLEARANCE_M = 0.5
+"""Abstand zwischen Carport und Haus: der Carport berührt das Haus nicht (Plan H3 3.4)."""

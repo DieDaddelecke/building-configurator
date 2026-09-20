@@ -1,6 +1,61 @@
 {
   "components": {
     "schemas": {
+      "AccessRedeemIn": {
+        "properties": {
+          "token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "AccessRedeemIn",
+        "type": "object"
+      },
+      "AccessRedeemOut": {
+        "properties": {
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "title": "AccessRedeemOut",
+        "type": "object"
+      },
+      "AccessRequestIn": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "AccessRequestIn",
+        "type": "object"
+      },
+      "AccessRequestOut": {
+        "properties": {
+          "status": {
+            "const": "accepted",
+            "default": "accepted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "AccessRequestOut",
+        "type": "object"
+      },
       "AddressOut": {
         "properties": {
           "city": {
@@ -80,6 +135,67 @@
           "kind"
         ],
         "title": "ArchitectEdgeIn",
+        "type": "object"
+      },
+      "AreasOut": {
+        "properties": {
+          "carport_m2": {
+            "title": "Carport M2",
+            "type": "number"
+          },
+          "driveway_m2": {
+            "title": "Driveway M2",
+            "type": "number"
+          },
+          "emprise_m2": {
+            "title": "Emprise M2",
+            "type": "number"
+          },
+          "house_m2": {
+            "title": "House M2",
+            "type": "number"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/PartAreasOut"
+            },
+            "title": "Parts",
+            "type": "array"
+          },
+          "paths_m2": {
+            "title": "Paths M2",
+            "type": "number"
+          },
+          "sealed_m2": {
+            "title": "Sealed M2",
+            "type": "number"
+          },
+          "site_m2": {
+            "title": "Site M2",
+            "type": "number"
+          },
+          "terrace_m2": {
+            "title": "Terrace M2",
+            "type": "number"
+          },
+          "unsealed_m2": {
+            "title": "Unsealed M2",
+            "type": "number"
+          }
+        },
+        "required": [
+          "site_m2",
+          "house_m2",
+          "carport_m2",
+          "terrace_m2",
+          "driveway_m2",
+          "paths_m2",
+          "emprise_m2",
+          "sealed_m2",
+          "unsealed_m2",
+          "parts"
+        ],
+        "title": "AreasOut",
         "type": "object"
       },
       "BandOut": {
@@ -616,14 +732,90 @@
         "title": "CommuneOut",
         "type": "object"
       },
+      "ComplianceOut": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "fail": {
+            "title": "Fail",
+            "type": "integer"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "unknown": {
+            "title": "Unknown",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "checks",
+          "fail",
+          "hint",
+          "unknown",
+          "passed"
+        ],
+        "title": "ComplianceOut",
+        "type": "object"
+      },
       "ConfigurationOut": {
         "properties": {
+          "areas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AreasOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "boundary_options": {
             "additionalProperties": {
               "type": "boolean"
             },
             "title": "Boundary Options",
             "type": "object"
+          },
+          "compliance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ComplianceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "costs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CostsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "energy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnergyStatusOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "engine_version": {
             "title": "Engine Version",
@@ -675,6 +867,26 @@
             "title": "Notices",
             "type": "array"
           },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrientationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outbuildings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutbuildingsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "placement": {
             "anyOf": [
               {
@@ -690,6 +902,17 @@
             "title": "Project Id",
             "type": "string"
           },
+          "review_stamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Stamp"
+          },
           "revision": {
             "title": "Revision",
             "type": "integer"
@@ -700,6 +923,16 @@
             },
             "title": "Rotations",
             "type": "array"
+          },
+          "selection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SelectionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "simulation": {
             "default": true,
@@ -742,7 +975,15 @@
           "fit",
           "evaluation",
           "notices",
-          "updated_at"
+          "updated_at",
+          "selection",
+          "outbuildings",
+          "areas",
+          "compliance",
+          "energy",
+          "costs",
+          "orientation",
+          "review_stamp"
         ],
         "title": "ConfigurationOut",
         "type": "object"
@@ -763,6 +1004,31 @@
               }
             ],
             "title": "Boundary Options"
+          },
+          "option_slugs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Slugs"
+          },
+          "package_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Slug"
           },
           "placement": {
             "anyOf": [
@@ -1144,6 +1410,219 @@
         "title": "ContourOut",
         "type": "object"
       },
+      "CostItemOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "base",
+              "package",
+              "option",
+              "energy"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label_de": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label De"
+          },
+          "label_fr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Fr"
+          },
+          "max_cents": {
+            "title": "Max Cents",
+            "type": "integer"
+          },
+          "min_cents": {
+            "title": "Min Cents",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "unit_price_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Cents"
+          }
+        },
+        "required": [
+          "code",
+          "kind",
+          "slug",
+          "label_de",
+          "label_fr",
+          "min_cents",
+          "max_cents",
+          "included",
+          "quantity",
+          "unit",
+          "unit_price_cents",
+          "source"
+        ],
+        "title": "CostItemOut",
+        "type": "object"
+      },
+      "CostsOut": {
+        "description": "Kostenkorridor (Spez. 5.6.5): nur Spannen, kein Feld, das als Gesamtpreis lesbar ist (L1).",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "catalog_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Version"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "display_basis": {
+            "const": "gross",
+            "default": "gross",
+            "title": "Display Basis",
+            "type": "string"
+          },
+          "gross": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CostItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "net": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "vat_rate": {
+            "title": "Vat Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "available",
+          "reason",
+          "net",
+          "gross",
+          "vat_rate",
+          "display",
+          "catalog_version",
+          "items"
+        ],
+        "title": "CostsOut",
+        "type": "object"
+      },
       "CoverageOut": {
         "properties": {
           "budget_month_usd": {
@@ -1267,6 +1746,51 @@
           "lotissement"
         ],
         "title": "CustomerOut",
+        "type": "object"
+      },
+      "DrivewayOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "length_m": {
+            "title": "Length M",
+            "type": "number"
+          },
+          "polygon_local": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polygon Local"
+          },
+          "source": {
+            "enum": [
+              "carport",
+              "garage"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "polygon_local",
+          "length_m",
+          "area_m2"
+        ],
+        "title": "DrivewayOut",
         "type": "object"
       },
       "EdgeMeasureOut": {
@@ -1564,6 +2088,72 @@
           "measures"
         ],
         "title": "EnergyAssessmentOut",
+        "type": "object"
+      },
+      "EnergyStatusOut": {
+        "properties": {
+          "climate_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Climate Zone"
+          },
+          "measures": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measures"
+          },
+          "status": {
+            "enum": [
+              "compliant",
+              "action",
+              "not_assessed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "surcharge_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surcharge Cents"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          }
+        },
+        "required": [
+          "status",
+          "climate_zone",
+          "verdict",
+          "measures",
+          "surcharge_cents"
+        ],
+        "title": "EnergyStatusOut",
         "type": "object"
       },
       "EnvelopeEdgeOut": {
@@ -1865,8 +2455,10 @@
                 "enum": [
                   "neu",
                   "in_bearbeitung",
+                  "rueckfrage",
                   "beantwortet",
-                  "geschlossen"
+                  "geschlossen",
+                  "zurueckgezogen"
                 ],
                 "type": "string"
               },
@@ -1875,6 +2467,13 @@
               }
             ],
             "title": "Inquiry Status"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Messages",
+            "type": "array"
           },
           "project_created_at": {
             "format": "date-time",
@@ -1897,6 +2496,13 @@
               }
             ],
             "title": "Snapshot"
+          },
+          "submissions": {
+            "items": {
+              "$ref": "#/components/schemas/ExportSubmissionOut"
+            },
+            "title": "Submissions",
+            "type": "array"
           }
         },
         "required": [
@@ -1906,9 +2512,49 @@
           "consents",
           "inquiry_number",
           "inquiry_status",
-          "snapshot"
+          "snapshot",
+          "submissions",
+          "messages"
         ],
         "title": "ExportOut",
+        "type": "object"
+      },
+      "ExportSubmissionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "title": "Snapshot",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence",
+          "status",
+          "created_at",
+          "snapshot",
+          "files"
+        ],
+        "title": "ExportSubmissionOut",
         "type": "object"
       },
       "ExtractIn": {
@@ -2214,6 +2860,17 @@
       },
       "InquiryDetailOut": {
         "properties": {
+          "configuration_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Revision"
+          },
           "consents": {
             "items": {
               "$ref": "#/components/schemas/ConsentOut"
@@ -2228,6 +2885,13 @@
           },
           "customer": {
             "$ref": "#/components/schemas/CustomerOut"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Messages",
+            "type": "array"
           },
           "number": {
             "title": "Number",
@@ -2251,11 +2915,20 @@
             "enum": [
               "neu",
               "in_bearbeitung",
+              "rueckfrage",
               "beantwortet",
-              "geschlossen"
+              "geschlossen",
+              "zurueckgezogen"
             ],
             "title": "Status",
             "type": "string"
+          },
+          "submissions": {
+            "items": {
+              "$ref": "#/components/schemas/StaffSubmissionOut"
+            },
+            "title": "Submissions",
+            "type": "array"
           },
           "updated_at": {
             "format": "date-time",
@@ -2272,7 +2945,10 @@
           "snapshot",
           "snapshot_schema_version",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "submissions",
+          "messages",
+          "configuration_revision"
         ],
         "title": "InquiryDetailOut",
         "type": "object"
@@ -2295,6 +2971,33 @@
           "customer_name": {
             "title": "Customer Name",
             "type": "string"
+          },
+          "deviation_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation Count"
+          },
+          "dossier_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "ready",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dossier Status"
           },
           "has_envelope": {
             "title": "Has Envelope",
@@ -2322,11 +3025,17 @@
             "enum": [
               "neu",
               "in_bearbeitung",
+              "rueckfrage",
               "beantwortet",
-              "geschlossen"
+              "geschlossen",
+              "zurueckgezogen"
             ],
             "title": "Status",
             "type": "string"
+          },
+          "submissions": {
+            "title": "Submissions",
+            "type": "integer"
           },
           "updated_at": {
             "format": "date-time",
@@ -2343,6 +3052,9 @@
           "lotissement",
           "has_envelope",
           "customer_corrections",
+          "submissions",
+          "deviation_count",
+          "dossier_status",
           "created_at",
           "updated_at"
         ],
@@ -2355,6 +3067,7 @@
             "enum": [
               "neu",
               "in_bearbeitung",
+              "rueckfrage",
               "beantwortet",
               "geschlossen"
             ],
@@ -2766,6 +3479,55 @@
         "title": "ManualEdgeIn",
         "type": "object"
       },
+      "MessageIn": {
+        "properties": {
+          "body": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "MessageIn",
+        "type": "object"
+      },
+      "MessageOut": {
+        "properties": {
+          "author": {
+            "enum": [
+              "customer",
+              "office"
+            ],
+            "title": "Author",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "body",
+          "created_at"
+        ],
+        "title": "MessageOut",
+        "type": "object"
+      },
       "ModuleIn": {
         "properties": {
           "excludes_slugs": {
@@ -2776,6 +3538,16 @@
             "title": "Excludes Slugs",
             "type": "array"
           },
+          "kind": {
+            "default": "plain",
+            "enum": [
+              "plain",
+              "terrace",
+              "carport"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "label_de": {
             "title": "Label De",
             "type": "string"
@@ -2783,6 +3555,20 @@
           "label_fr": {
             "title": "Label Fr",
             "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Params",
+            "type": "object"
+          },
+          "regulatory": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Regulatory",
+            "type": "object"
           }
         },
         "required": [
@@ -2829,6 +3615,15 @@
             "title": "Id",
             "type": "string"
           },
+          "kind": {
+            "enum": [
+              "plain",
+              "terrace",
+              "carport"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "label_de": {
             "title": "Label De",
             "type": "string"
@@ -2842,6 +3637,11 @@
             "title": "Module Id",
             "type": "string"
           },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
           "published_at": {
             "anyOf": [
               {
@@ -2853,6 +3653,13 @@
               }
             ],
             "title": "Published At"
+          },
+          "regulatory": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Regulatory",
+            "type": "object"
           },
           "slug": {
             "title": "Slug",
@@ -2882,6 +3689,9 @@
           "label_de",
           "label_fr",
           "excludes_slugs",
+          "kind",
+          "params",
+          "regulatory",
           "published_at"
         ],
         "title": "ModuleVersionOut",
@@ -2889,9 +3699,20 @@
       },
       "MyInquiryOut": {
         "properties": {
+          "can_withdraw": {
+            "title": "Can Withdraw",
+            "type": "boolean"
+          },
           "exists": {
             "title": "Exists",
             "type": "boolean"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageOut"
+            },
+            "title": "Messages",
+            "type": "array"
           },
           "number": {
             "anyOf": [
@@ -2910,8 +3731,10 @@
                 "enum": [
                   "neu",
                   "in_bearbeitung",
+                  "rueckfrage",
                   "beantwortet",
-                  "geschlossen"
+                  "geschlossen",
+                  "zurueckgezogen"
                 ],
                 "type": "string"
               },
@@ -2920,12 +3743,74 @@
               }
             ],
             "title": "Status"
+          },
+          "submissions": {
+            "items": {
+              "$ref": "#/components/schemas/MySubmissionOut"
+            },
+            "title": "Submissions",
+            "type": "array"
           }
         },
         "required": [
-          "exists"
+          "exists",
+          "submissions",
+          "messages",
+          "can_withdraw"
         ],
         "title": "MyInquiryOut",
+        "type": "object"
+      },
+      "MySubmissionOut": {
+        "description": "Fassung aus Sicht des Kunden: ohne Prüfdetails des Büros, mit den PDFs (V 3.7).",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deviation_count": {
+            "title": "Deviation Count",
+            "type": "integer"
+          },
+          "dossier_status": {
+            "enum": [
+              "pending",
+              "ready",
+              "failed"
+            ],
+            "title": "Dossier Status",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionFileOut"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence",
+          "status",
+          "created_at",
+          "deviation_count",
+          "dossier_status",
+          "files"
+        ],
+        "title": "MySubmissionOut",
         "type": "object"
       },
       "OpsStatus": {
@@ -2976,6 +3861,311 @@
         "title": "OpsStatus",
         "type": "object"
       },
+      "OptionChoiceOut": {
+        "properties": {
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "excludes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Excludes",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "plain",
+              "terrace",
+              "carport"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/SelectionReasonOut"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "selected",
+              "included",
+              "available",
+              "blocked"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "kind",
+          "label_de",
+          "label_fr",
+          "excludes",
+          "state",
+          "price",
+          "reasons",
+          "checks"
+        ],
+        "title": "OptionChoiceOut",
+        "type": "object"
+      },
+      "OptionsOut": {
+        "properties": {
+          "catalog_available": {
+            "title": "Catalog Available",
+            "type": "boolean"
+          },
+          "display_basis": {
+            "const": "gross",
+            "default": "gross",
+            "title": "Display Basis",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionChoiceOut"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/components/schemas/PackageChoiceOut"
+            },
+            "title": "Packages",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "type_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Slug"
+          },
+          "vat_rate": {
+            "title": "Vat Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type_slug",
+          "catalog_available",
+          "vat_rate",
+          "packages",
+          "options"
+        ],
+        "title": "OptionsOut",
+        "type": "object"
+      },
+      "OrientationOut": {
+        "properties": {
+          "convergence_deg": {
+            "title": "Convergence Deg",
+            "type": "number"
+          },
+          "facades": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Facades",
+            "type": "object"
+          }
+        },
+        "required": [
+          "convergence_deg",
+          "facades"
+        ],
+        "title": "OrientationOut",
+        "type": "object"
+      },
+      "OutbuildingOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "depth_m": {
+            "title": "Depth M",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "terrace",
+              "carport"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "placed": {
+            "title": "Placed",
+            "type": "boolean"
+          },
+          "polygon_local": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Polygon Local"
+          },
+          "setback": {
+            "anyOf": [
+              {
+                "enum": [
+                  "known",
+                  "assumed",
+                  "relaxed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setback"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "spaces": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spaces"
+          },
+          "width_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width M"
+          }
+        },
+        "required": [
+          "slug",
+          "kind",
+          "placed",
+          "polygon_local",
+          "area_m2",
+          "width_m",
+          "depth_m"
+        ],
+        "title": "OutbuildingOut",
+        "type": "object"
+      },
+      "OutbuildingsOut": {
+        "properties": {
+          "carport": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutbuildingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "driveways": {
+            "items": {
+              "$ref": "#/components/schemas/DrivewayOut"
+            },
+            "title": "Driveways",
+            "type": "array"
+          },
+          "terrace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutbuildingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "terrace",
+          "carport",
+          "driveways"
+        ],
+        "title": "OutbuildingsOut",
+        "type": "object"
+      },
       "OverlayOut": {
         "properties": {
           "category": {
@@ -3016,6 +4206,68 @@
         "title": "OverlayOut",
         "type": "object"
       },
+      "PackageChoiceOut": {
+        "properties": {
+          "energy": {
+            "$ref": "#/components/schemas/EnergyStatusOut"
+          },
+          "included_option_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Included Option Slugs",
+            "type": "array"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "price": {
+            "$ref": "#/components/schemas/PriceOut"
+          },
+          "retired": {
+            "title": "Retired",
+            "type": "boolean"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scope",
+            "type": "array"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "label_de",
+          "label_fr",
+          "scope",
+          "included_option_slugs",
+          "price",
+          "selected",
+          "retired",
+          "energy"
+        ],
+        "title": "PackageChoiceOut",
+        "type": "object"
+      },
       "PackageIn": {
         "properties": {
           "included_option_slugs": {
@@ -3033,6 +4285,14 @@
           "label_fr": {
             "title": "Label Fr",
             "type": "string"
+          },
+          "regulatory": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Regulatory",
+            "type": "object"
           },
           "scope": {
             "default": [],
@@ -3112,6 +4372,13 @@
             ],
             "title": "Published At"
           },
+          "regulatory": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Regulatory",
+            "type": "object"
+          },
           "scope": {
             "items": {
               "type": "string"
@@ -3148,6 +4415,7 @@
           "label_fr",
           "scope",
           "included_option_slugs",
+          "regulatory",
           "published_at"
         ],
         "title": "PackageVersionOut",
@@ -3267,6 +4535,39 @@
           "geometry_geojson"
         ],
         "title": "ParcelSummary",
+        "type": "object"
+      },
+      "PartAreasOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "emprise_m2": {
+            "title": "Emprise M2",
+            "type": "number"
+          },
+          "sealed_m2": {
+            "title": "Sealed M2",
+            "type": "number"
+          },
+          "unsealed_m2": {
+            "title": "Unsealed M2",
+            "type": "number"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "area_m2",
+          "emprise_m2",
+          "sealed_m2",
+          "unsealed_m2"
+        ],
+        "title": "PartAreasOut",
         "type": "object"
       },
       "PartOut": {
@@ -3722,6 +5023,56 @@
         "title": "PriceCatalogVersionOut",
         "type": "object"
       },
+      "PriceOut": {
+        "description": "Preis einer Linie oder Option in Cent, brutto (Anzeigebasis, D10). Kein Gesamtpreis (L1).",
+        "properties": {
+          "basis": {
+            "enum": [
+              "fixed",
+              "per_m2"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "max_cents": {
+            "title": "Max Cents",
+            "type": "integer"
+          },
+          "min_cents": {
+            "title": "Min Cents",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit_price_cents": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Cents"
+          }
+        },
+        "required": [
+          "basis",
+          "min_cents",
+          "max_cents"
+        ],
+        "title": "PriceOut",
+        "type": "object"
+      },
       "ProjectOut": {
         "properties": {
           "created_at": {
@@ -4092,6 +5443,24 @@
           "assumptions"
         ],
         "title": "ProvenanceOut",
+        "type": "object"
+      },
+      "RangeOut": {
+        "properties": {
+          "max_cents": {
+            "title": "Max Cents",
+            "type": "integer"
+          },
+          "min_cents": {
+            "title": "Min Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min_cents",
+          "max_cents"
+        ],
+        "title": "RangeOut",
         "type": "object"
       },
       "RiskOut": {
@@ -4678,6 +6047,105 @@
         "title": "RulesImportIn",
         "type": "object"
       },
+      "SelectionOut": {
+        "properties": {
+          "dropped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dropped",
+            "type": "array"
+          },
+          "included_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Included Slugs",
+            "type": "array"
+          },
+          "invalid": {
+            "items": {
+              "$ref": "#/components/schemas/SelectionReasonOut"
+            },
+            "title": "Invalid",
+            "type": "array"
+          },
+          "option_slugs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Option Slugs",
+            "type": "array"
+          },
+          "package_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Slug"
+          },
+          "package_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Version"
+          }
+        },
+        "required": [
+          "package_slug",
+          "package_version",
+          "option_slugs",
+          "included_slugs",
+          "invalid",
+          "dropped"
+        ],
+        "title": "SelectionOut",
+        "type": "object"
+      },
+      "SelectionReasonOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "other": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "SelectionReasonOut",
+        "type": "object"
+      },
       "SessionInfo": {
         "properties": {
           "project_id": {
@@ -5159,6 +6627,362 @@
           "roles"
         ],
         "title": "StaffInfo",
+        "type": "object"
+      },
+      "StaffSubmissionOut": {
+        "properties": {
+          "configuration_revision": {
+            "title": "Configuration Revision",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deviation_count": {
+            "title": "Deviation Count",
+            "type": "integer"
+          },
+          "deviations_acknowledged": {
+            "title": "Deviations Acknowledged",
+            "type": "boolean"
+          },
+          "dossier_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dossier Error"
+          },
+          "dossier_status": {
+            "enum": [
+              "pending",
+              "ready",
+              "failed"
+            ],
+            "title": "Dossier Status",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionFileOut"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "open_points": {
+            "title": "Open Points",
+            "type": "integer"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SubmissionSummaryOut"
+          }
+        },
+        "required": [
+          "sequence",
+          "status",
+          "created_at",
+          "configuration_revision",
+          "deviations_acknowledged",
+          "deviation_count",
+          "open_points",
+          "dossier_status",
+          "dossier_error",
+          "files",
+          "summary"
+        ],
+        "title": "StaffSubmissionOut",
+        "type": "object"
+      },
+      "SubmissionFileOut": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "pdf",
+              "dxf"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "locale",
+          "variant",
+          "size_bytes"
+        ],
+        "title": "SubmissionFileOut",
+        "type": "object"
+      },
+      "SubmissionSummaryOut": {
+        "description": "Zusammenfassung einer Fassung aus ihrem Snapshot, für die Liste im Büro.",
+        "properties": {
+          "catalog_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Version"
+          },
+          "costs_display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deviations": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Deviations",
+            "type": "array"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SummaryOptionOut"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "package_label_de": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Label De"
+          },
+          "package_label_fr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Package Label Fr"
+          },
+          "site_origin": {
+            "anyOf": [
+              {
+                "enum": [
+                  "parcel",
+                  "manual_sketch"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Origin"
+          },
+          "type_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Name"
+          },
+          "type_retired": {
+            "title": "Type Retired",
+            "type": "boolean"
+          },
+          "type_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type Version"
+          },
+          "vat_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Rate"
+          }
+        },
+        "required": [
+          "type_name",
+          "type_version",
+          "type_retired",
+          "package_label_de",
+          "package_label_fr",
+          "options",
+          "costs_display",
+          "vat_rate",
+          "catalog_version",
+          "deviations",
+          "site_origin"
+        ],
+        "title": "SubmissionSummaryOut",
+        "type": "object"
+      },
+      "SubmitIn": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{6}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "design_confirmation": {
+            "title": "Design Confirmation",
+            "type": "boolean"
+          },
+          "deviations_acknowledged": {
+            "default": false,
+            "title": "Deviations Acknowledged",
+            "type": "boolean"
+          },
+          "review_stamp": {
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Review Stamp",
+            "type": "string"
+          },
+          "transmission_design": {
+            "title": "Transmission Design",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "review_stamp",
+          "design_confirmation",
+          "transmission_design"
+        ],
+        "title": "SubmitIn",
+        "type": "object"
+      },
+      "SubmitOut": {
+        "properties": {
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "const": "submitted",
+            "default": "submitted",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "sequence"
+        ],
+        "title": "SubmitOut",
+        "type": "object"
+      },
+      "SummaryOptionOut": {
+        "properties": {
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "label_de": {
+            "title": "Label De",
+            "type": "string"
+          },
+          "label_fr": {
+            "title": "Label Fr",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "label_de",
+          "label_fr",
+          "included"
+        ],
+        "title": "SummaryOptionOut",
         "type": "object"
       },
       "TerrainOut": {
@@ -6189,6 +8013,90 @@
         ]
       }
     },
+    "/api/v1/access/redeem": {
+      "post": {
+        "description": "Zugangslink aus einer Kundenmail einlösen; setzt ein neues Projekt-Cookie (V 3.9).",
+        "operationId": "redeem_access_link_api_v1_access_redeem_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessRedeemIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRedeemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Redeem Access Link",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/access/request": {
+      "post": {
+        "description": "Neuen Zugangslink per Mail anfordern; die Antwort verrät nicht, ob die Adresse bekannt ist.",
+        "operationId": "request_access_link_api_v1_access_request_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessRequestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Access Link",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
     "/api/v1/admin/cadastre/imports": {
       "get": {
         "description": "Letzter Import je Gemeinde: Stand, Anzahl, Fehler (Plan 6.8 „Alter der Katasterdaten“).",
@@ -7116,8 +9024,10 @@
                   "enum": [
                     "neu",
                     "in_bearbeitung",
+                    "rueckfrage",
                     "beantwortet",
-                    "geschlossen"
+                    "geschlossen",
+                    "zurueckgezogen"
                   ],
                   "type": "string"
                 },
@@ -7510,6 +9420,60 @@
         ]
       }
     },
+    "/api/v1/admin/projects/{project_id}/inquiry/messages": {
+      "post": {
+        "description": "Nachricht an den Kunden; ein offener Vorgang wechselt auf `rueckfrage` (V 3.8).",
+        "operationId": "post_office_message_api_v1_admin_projects__project_id__inquiry_messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Office Message",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
     "/api/v1/admin/projects/{project_id}/rule-overrides": {
       "get": {
         "operationId": "get_project_overrides_api_v1_admin_projects__project_id__rule_overrides_get",
@@ -7890,6 +9854,119 @@
         "summary": "Patch Edge Architect",
         "tags": [
           "site"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/submissions/{sequence}/dossier": {
+      "post": {
+        "description": "Gescheitertes Dossier neu erzeugen lassen (V 3.7).",
+        "operationId": "regenerate_dossier_api_v1_admin_projects__project_id__submissions__sequence__dossier_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sequence",
+            "required": true,
+            "schema": {
+              "title": "Sequence",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Regenerate Dossier",
+        "tags": [
+          "submission"
+        ]
+      }
+    },
+    "/api/v1/admin/projects/{project_id}/submissions/{sequence}/files/{name}": {
+      "get": {
+        "operationId": "download_file_staff_api_v1_admin_projects__project_id__submissions__sequence__files__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sequence",
+            "required": true,
+            "schema": {
+              "title": "Sequence",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_.-]{1,120}$",
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download File Staff",
+        "tags": [
+          "submission"
         ]
       }
     },
@@ -8603,6 +10680,50 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/catalog/options": {
+      "get": {
+        "description": "Linien und Optionen des gewählten Typs mit Preis, Zustand und Gründen (Plan H3 4.3).",
+        "operationId": "get_options_api_v1_projects__project_id__catalog_options_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Options",
+        "tags": [
+          "configuration"
+        ]
+      }
+    },
     "/api/v1/projects/{project_id}/catalog/types": {
       "get": {
         "description": "Veröffentlichte Typen mit Zulässigkeit, allen Gründen und Vorschlägen (Spez. 5.4.6).",
@@ -9054,6 +11175,7 @@
     },
     "/api/v1/projects/{project_id}/inquiry": {
       "get": {
+        "description": "Eigener Vorgang mit Fassungen und Nachrichten; `exists = false` ohne Vorgang.",
         "operationId": "get_my_inquiry_api_v1_projects__project_id__inquiry_get",
         "parameters": [
           {
@@ -9196,6 +11318,103 @@
           }
         },
         "summary": "Submit Contact",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/inquiry/messages": {
+      "post": {
+        "operationId": "post_customer_message_api_v1_projects__project_id__inquiry_messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInquiryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Customer Message",
+        "tags": [
+          "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/inquiry/withdraw": {
+      "post": {
+        "description": "Vorgang zurückziehen (V 3.8); es wird nichts gelöscht.",
+        "operationId": "withdraw_inquiry_api_v1_projects__project_id__inquiry_withdraw_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyInquiryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Withdraw Inquiry",
         "tags": [
           "inquiry"
         ]
@@ -9469,6 +11688,121 @@
         "summary": "Patch Edge Customer",
         "tags": [
           "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/submission": {
+      "post": {
+        "description": "Vorentwurf übergeben (V 3.2). `409 review_changed`: Die Auswertung hat sich seit dem Anzeigen\ngeändert (`changes`, neuer `review_stamp`); `409 deviations_not_acknowledged`: bindende Verstöße ohne\nBestätigung; `409 submission_incomplete`: Typ, Lage oder Linie fehlen.",
+        "operationId": "submit_api_v1_projects__project_id__submission_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit",
+        "tags": [
+          "submission"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/submissions/{sequence}/files/{name}": {
+      "get": {
+        "description": "PDF einer eigenen Fassung; DXF-Dateien gibt es nur für das Büro.",
+        "operationId": "download_own_file_api_v1_projects__project_id__submissions__sequence__files__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sequence",
+            "required": true,
+            "schema": {
+              "title": "Sequence",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_.-]{1,120}$",
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Own File",
+        "tags": [
+          "submission"
         ]
       }
     },

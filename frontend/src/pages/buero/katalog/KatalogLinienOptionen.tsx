@@ -1,7 +1,8 @@
 /**
  * Büro: Ausstattungslinien und Optionen, unabhängig von einzelnen Typen (Plan H1 5 Schritt 4). Ausschlüsse
- * (`excludes`) und „enthalten in Linie“ sind hier nur Daten; durchgesetzt werden sie erst in H3.
- * Eine Änderung erzeugt immer eine neue Version (L4); veröffentlichte Stände bleiben unverändert.
+ * (`excludes`) und „enthalten in Linie“ gelten in der Konfiguration (H3); dazu Art und Maße einer Option
+ * (Terrasse, Carport) und das Material für die Regelprüfung (Plan H3 3.2). Eine Änderung erzeugt immer eine
+ * neue Version (L4); veröffentlichte Stände bleiben unverändert.
  */
 
 import { useState, type FormEvent, type ReactNode } from "react";
@@ -25,6 +26,44 @@ type Staff = components["schemas"]["StaffInfo"];
 
 const SLUG_PATTERN = "^[a-z][a-z0-9_]{1,59}$";
 const lines = (text: string) => text.split("\n").map((line) => line.trim()).filter(Boolean);
+
+/** Materialklassen der Regeln (Spez. 4.1); dieselbe Liste kennt das Backend. */
+const MATERIALS = ["render", "wood", "brick", "stone", "concrete", "metal", "glass", "slate", "clay_tile", "zinc", "composite", "vegetation", "other"] as const;
+type OptionKind = ModuleVersionOut["kind"];
+const KINDS: readonly OptionKind[] = ["plain", "terrace", "carport"];
+
+type Regulatory = { facade_material: string; roof_material: string };
+const regulatoryOf = (source?: Record<string, string>): Regulatory => ({
+  facade_material: source?.facade_material ?? "",
+  roof_material: source?.roof_material ?? "",
+});
+const regulatoryBody = (value: Regulatory): Record<string, string> =>
+  Object.fromEntries(Object.entries(value).filter(([, material]) => material !== ""));
+
+/** Material von Fassade und Dach für die Regelprüfung; ohne Angabe bleibt die Prüfung „nicht prüfbar“. */
+function MaterialAuswahl({ value, onChange }: { value: Regulatory; onChange: (next: Regulatory) => void }) {
+  const { t } = useTranslation();
+  const select = (key: keyof Regulatory, label: string) => (
+    <label className="flex flex-col gap-1">
+      {label}
+      <select className="field" value={value[key]} onChange={(e) => onChange({ ...value, [key]: e.target.value })}>
+        <option value="">{t("catalog.lo.noMaterial")}</option>
+        {MATERIALS.map((material) => (
+          <option key={material} value={material}>
+            {t(`configurator.material.${material}`)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  return (
+    <>
+      {select("facade_material", t("catalog.lo.facadeMaterial"))}
+      {select("roof_material", t("catalog.lo.roofMaterial"))}
+      <span className="text-xs t-mute md:col-span-2">{t("catalog.lo.materialHint")}</span>
+    </>
+  );
+}
 
 /** Auswahl mehrerer Slugs als Kontrollkästchen; leere Auswahl ist zulässig. */
 function Auswahl({ legend, options, selected, onChange }: { legend: string; options: string[]; selected: string[]; onChange: (next: string[]) => void }) {
@@ -63,11 +102,21 @@ function LinienFormular({ optionSlugs, initial, onDone }: LinienFormularProps) {
   const [labelFr, setLabelFr] = useState(initial?.label_fr ?? "");
   const [scope, setScope] = useState((initial?.scope ?? []).join("\n"));
   const [included, setIncluded] = useState(initial?.included_option_slugs ?? []);
+  const [regulatory, setRegulatory] = useState(regulatoryOf(initial?.regulatory));
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     create.mutate(
-      { slug, body: { label_de: labelDe, label_fr: labelFr, scope: lines(scope), included_option_slugs: included } },
+      {
+        slug,
+        body: {
+          label_de: labelDe,
+          label_fr: labelFr,
+          scope: lines(scope),
+          included_option_slugs: included,
+          regulatory: regulatoryBody(regulatory),
+        },
+      },
       {
         onSuccess: () => {
           if (!initial) {
@@ -76,6 +125,7 @@ function LinienFormular({ optionSlugs, initial, onDone }: LinienFormularProps) {
             setLabelFr("");
             setScope("");
             setIncluded([]);
+            setRegulatory(regulatoryOf());
           }
           onDone?.();
         },
@@ -106,6 +156,7 @@ function LinienFormular({ optionSlugs, initial, onDone }: LinienFormularProps) {
       <div className="md:col-span-2">
         <Auswahl legend={t("catalog.lo.included")} options={optionSlugs} selected={included} onChange={setIncluded} />
       </div>
+      <MaterialAuswahl value={regulatory} onChange={setRegulatory} />
       <div className="md:col-span-2 flex items-center gap-3">
         <button type="submit" className="btn btn-primary" disabled={create.isPending}>
           {initial ? t("catalog.lo.newVersion") : t("catalog.lo.createLine")}
@@ -124,11 +175,47 @@ function OptionFormular({ optionSlugs, initial, onDone }: { optionSlugs: string[
   const [labelDe, setLabelDe] = useState(initial?.label_de ?? "");
   const [labelFr, setLabelFr] = useState(initial?.label_fr ?? "");
   const [excludes, setExcludes] = useState(initial?.excludes_slugs ?? []);
+  const [kind, setKind] = useState<OptionKind>(initial?.kind ?? "plain");
+  const [regulatory, setRegulatory] = useState(regulatoryOf(initial?.regulatory));
+  const [dims, setDims] = useState<Record<string, string>>(
+    Object.fromEntries(Object.entries(initial?.params ?? {}).map(([key, value]) => [key, String(value)])),
+  );
+  const dim = (key: string, fallback: string) => dims[key] ?? fallback;
+
+  const params = (): Record<string, number> => {
+    if (kind === "terrace") {
+      return {
+        depth_m: Number(dim("depth_m", "3")),
+        height_above_terrain_m: Number(dim("height_above_terrain_m", "0.3")),
+        sealing_factor: Number(dim("sealing_factor", "1")),
+      };
+    }
+    if (kind === "carport") {
+      const spaces = Number(dim("spaces", "1"));
+      return {
+        spaces,
+        width_m: Number(dim("width_m", String(3 * spaces))),
+        depth_m: Number(dim("depth_m", "5")),
+        height_m: Number(dim("height_m", "2.7")),
+      };
+    }
+    return {};
+  };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     create.mutate(
-      { slug, body: { label_de: labelDe, label_fr: labelFr, excludes_slugs: excludes } },
+      {
+        slug,
+        body: {
+          label_de: labelDe,
+          label_fr: labelFr,
+          excludes_slugs: excludes,
+          kind,
+          params: params(),
+          regulatory: regulatoryBody(regulatory),
+        },
+      },
       {
         onSuccess: () => {
           if (!initial) {
@@ -136,6 +223,9 @@ function OptionFormular({ optionSlugs, initial, onDone }: { optionSlugs: string[
             setLabelDe("");
             setLabelFr("");
             setExcludes([]);
+            setKind("plain");
+            setDims({});
+            setRegulatory(regulatoryOf());
           }
           onDone?.();
         },
@@ -158,6 +248,59 @@ function OptionFormular({ optionSlugs, initial, onDone }: { optionSlugs: string[
         {t("catalog.lo.labelFr")}
         <input className="field" value={labelFr} onChange={(e) => setLabelFr(e.target.value)} required />
       </label>
+      <label className="flex flex-col gap-1">
+        {t("catalog.lo.kind")}
+        <select className="field" value={kind} onChange={(e) => setKind(e.target.value as OptionKind)}>
+          {KINDS.map((option) => (
+            <option key={option} value={option}>
+              {t(`catalog.lo.kinds.${option}`)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <span className="hidden md:block" />
+      {kind === "terrace" && (
+        <>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.depth")}
+            <input className="field" type="number" step="0.1" min="0.5" max="6" value={dim("depth_m", "3")} onChange={(e) => setDims({ ...dims, depth_m: e.target.value })} />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.heightAboveTerrain")}
+            <input className="field" type="number" step="0.05" min="0" max="3" value={dim("height_above_terrain_m", "0.3")} onChange={(e) => setDims({ ...dims, height_above_terrain_m: e.target.value })} />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.sealingFactor")}
+            <input className="field" type="number" step="0.05" min="0" max="1" value={dim("sealing_factor", "1")} onChange={(e) => setDims({ ...dims, sealing_factor: e.target.value })} />
+          </label>
+          <span className="text-xs t-mute self-end">{t("catalog.lo.terraceHint")}</span>
+        </>
+      )}
+      {kind === "carport" && (
+        <>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.spaces")}
+            <select className="field" value={dim("spaces", "1")} onChange={(e) => setDims({ ...dims, spaces: e.target.value })}>
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.width")}
+            <input className="field" type="number" step="0.1" min="2" max="12" value={dim("width_m", String(3 * Number(dim("spaces", "1"))))} onChange={(e) => setDims({ ...dims, width_m: e.target.value })} />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.depth")}
+            <input className="field" type="number" step="0.1" min="2" max="10" value={dim("depth_m", "5")} onChange={(e) => setDims({ ...dims, depth_m: e.target.value })} />
+          </label>
+          <label className="flex flex-col gap-1">
+            {t("catalog.lo.height")}
+            <input className="field" type="number" step="0.1" min="2" max="4" value={dim("height_m", "2.7")} onChange={(e) => setDims({ ...dims, height_m: e.target.value })} />
+          </label>
+          <span className="text-xs t-mute md:col-span-2">{t("catalog.lo.carportHint")}</span>
+        </>
+      )}
+      <MaterialAuswahl value={regulatory} onChange={setRegulatory} />
       <div className="md:col-span-2">
         <Auswahl legend={t("catalog.lo.excludes")} options={optionSlugs.filter((s) => s !== slug)} selected={excludes} onChange={setExcludes} />
       </div>
@@ -289,7 +432,18 @@ export function KatalogLinienOptionen() {
               key={versions[0]!.slug}
               versions={versions}
               editable={editable}
-              detail={(v) => (v.excludes_slugs.length ? `${t("catalog.lo.excludesShort")}: ${v.excludes_slugs.join(", ")}` : "")}
+              detail={(v) =>
+                [
+                  v.kind !== "plain"
+                    ? `${t(`catalog.lo.kindShort.${v.kind}`)} ${Object.entries(v.params)
+                        .map(([key, value]) => `${key} ${String(value)}`)
+                        .join(", ")}`
+                    : "",
+                  v.excludes_slugs.length ? `${t("catalog.lo.excludesShort")}: ${v.excludes_slugs.join(", ")}` : "",
+                ]
+                  .filter(Boolean)
+                  .join(" — ")
+              }
               publish={(v) => publishModule.mutate({ slug: v.slug, version: v.version })}
               publishing={publishModule.isPending}
               form={(latest, close) => <OptionFormular key={latest.id} optionSlugs={optionSlugs} initial={latest} onDone={close} />}

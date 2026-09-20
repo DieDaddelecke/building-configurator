@@ -4,6 +4,7 @@ from typing import Any
 
 from shapely.geometry import Polygon
 
+from app.catalog.domain.offer import BasePrice, EnergyFinding, OptionOffer, PackageOffer, TypeOffer
 from app.configuration.domain.context import SiteContext, build_context
 from app.configuration.domain.house import HouseType
 from app.envelope.domain.derive import derive_envelope
@@ -117,3 +118,110 @@ def ub_with(**overrides: dict[str, Any]) -> list[Any]:
         else:
             result.append(base)
     return result
+
+
+# ---------------------------------------------------------------------------
+# H3: Angebot des Katalogs (Linien, Optionen, Preise) als Datenklassen
+# ---------------------------------------------------------------------------
+
+
+def package_offer(
+    slug: str,
+    surcharge_eur: int | None = 0,
+    *,
+    included: tuple[str, ...] = (),
+    regulatory: dict[str, str] | None = None,
+    status: str = "published",
+) -> PackageOffer:
+    return PackageOffer(
+        slug=slug,
+        version_id=f"{slug}-v1",
+        version=1,
+        status=status,
+        label_de=slug.capitalize(),
+        label_fr=slug.capitalize(),
+        included=included,
+        regulatory=regulatory or {},
+        surcharge_cents=None if surcharge_eur is None else surcharge_eur * 100,
+    )
+
+
+def option_offer(
+    slug: str,
+    price_eur: int | None = 1000,
+    *,
+    kind: str = "plain",
+    params: dict[str, Any] | None = None,
+    excludes: tuple[str, ...] = (),
+    regulatory: dict[str, str] | None = None,
+    status: str = "published",
+) -> OptionOffer:
+    defaults: dict[str, Any] = {}
+    if kind == "terrace":
+        defaults = {"depth_m": 3.0, "height_above_terrain_m": 0.3, "sealing_factor": 1.0}
+    if kind == "carport":
+        defaults = {"spaces": 1, "width_m": 3.0, "depth_m": 5.0, "height_m": 2.7}
+    return OptionOffer(
+        slug=slug,
+        version_id=f"{slug}-v1",
+        version=1,
+        status=status,
+        kind=kind,
+        label_de=slug,
+        label_fr=slug,
+        params={**defaults, **(params or {})},
+        regulatory=regulatory or {},
+        excludes=excludes,
+        price_cents=None if price_eur is None else price_eur * 100,
+    )
+
+
+def type_offer(
+    packages: tuple[PackageOffer, ...] = (),
+    options: tuple[OptionOffer, ...] = (),
+    *,
+    energy: tuple[EnergyFinding, ...] = (),
+    base_eur: tuple[int, int] | None = (328_000, 362_000),
+    vat_rate: float = 0.0,
+    catalog: bool = True,
+) -> TypeOffer:
+    """Angebot wie in der Parität des Mockups (Spez. 11.2): Ligne 328.000 – 362.000 €, ohne Mehrwertsteuer."""
+    return TypeOffer(
+        catalog_version_id="catalog-v1" if catalog else None,
+        catalog_version=1 if catalog else None,
+        vat_rate=vat_rate,
+        base=BasePrice(base_eur[0] * 100, base_eur[1] * 100, "catalog") if base_eur else None,
+        packages=packages,
+        options=options,
+        energy=energy,
+    )
+
+
+def mockup_offer(vat_rate: float = 0.0) -> TypeOffer:
+    """Linien und Optionen des Mockups mit ihren Aufpreisen (`Hauskonfigurator.jsx`), RE2020 nur für Base."""
+    return type_offer(
+        packages=(
+            package_offer("base", 0),
+            package_offer("confort", 34_000, included=("ziegel_dach",)),
+            package_offer(
+                "signature",
+                71_000,
+                included=("holz_sued", "holz_voll", "ziegel_dach", "fenster_sued", "pv"),
+            ),
+        ),
+        options=(
+            option_offer("holz_sued", 12_400, excludes=("holz_voll",)),
+            option_offer("holz_voll", 28_900, excludes=("holz_sued",)),
+            option_offer("ziegel_eg", 19_700),
+            option_offer("ziegel_dach", 4_200),
+            option_offer("fenster_sued", 8_600),
+            option_offer("pv", 11_200),
+            option_offer("terrasse", 9_800),
+            option_offer("keller", 47_000),
+        ),
+        energy=(
+            EnergyFinding("base", "H2b", "Bbio knapp verfehlt", False, 950_000, "Dämmung und Lüftung"),
+            EnergyFinding("confort", "H2b", "erfüllt", True),
+        ),
+        vat_rate=vat_rate,
+    )

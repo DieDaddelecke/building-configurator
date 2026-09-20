@@ -16,6 +16,19 @@ export type PlacementOut = components["schemas"]["PlacementOut"];
 export type PlacementAreaOut = components["schemas"]["PlacementAreaOut"];
 export type PresetsOut = components["schemas"]["PresetsOut"];
 export type PresetName = keyof PresetsOut["presets"];
+export type OptionsOut = components["schemas"]["OptionsOut"];
+export type PackageChoiceOut = components["schemas"]["PackageChoiceOut"];
+export type OptionChoiceOut = components["schemas"]["OptionChoiceOut"];
+export type SelectionReasonOut = components["schemas"]["SelectionReasonOut"];
+export type SelectionOut = components["schemas"]["SelectionOut"];
+export type CostsOut = components["schemas"]["CostsOut"];
+export type CostItemOut = components["schemas"]["CostItemOut"];
+export type PriceOut = components["schemas"]["PriceOut"];
+export type AreasOut = components["schemas"]["AreasOut"];
+export type ComplianceOut = components["schemas"]["ComplianceOut"];
+export type OutbuildingsOut = components["schemas"]["OutbuildingsOut"];
+export type OrientationOut = components["schemas"]["OrientationOut"];
+export type EnergyStatusOut = components["schemas"]["EnergyStatusOut"];
 
 export const CONFIGURATOR_FLAG = "configurator";
 
@@ -32,8 +45,15 @@ export function problemOf(error: unknown): ConfigurationProblem | null {
   return error instanceof ApiError ? (error.problem as ConfigurationProblem) : null;
 }
 
+/** Gründe eines abgelehnten `PATCH` von Linie oder Optionen (`invalid_selection`, Plan H3 3.1). */
+export function selectionReasons(error: unknown): SelectionReasonOut[] {
+  const problem = problemOf(error);
+  return problem?.code === "invalid_selection" ? ((problem.reasons ?? []) as unknown as SelectionReasonOut[]) : [];
+}
+
 const typesKey = (projectId: string) => ["configuration", projectId, "types"] as const;
 const configurationKey = (projectId: string) => ["configuration", projectId, "current"] as const;
+const optionsKey = (projectId: string) => ["configuration", projectId, "options"] as const;
 const areaKey = (projectId: string, slug: string, options: string) =>
   ["configuration", projectId, "area", slug, options] as const;
 
@@ -52,6 +72,16 @@ export function useConfiguration(projectId: string | null | undefined, enabled: 
     enabled: Boolean(projectId) && enabled,
     queryFn: async () =>
       unwrap(await api.GET("/api/v1/projects/{project_id}/configuration", { params: { path: { project_id: projectId! } } })),
+  });
+}
+
+/** Linien und Optionen des gewählten Typs mit Preis, Zustand und Gründen (Plan H3 4.3). */
+export function useOptions(projectId: string | null | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: optionsKey(projectId ?? ""),
+    enabled: Boolean(projectId) && enabled,
+    queryFn: async () =>
+      unwrap(await api.GET("/api/v1/projects/{project_id}/catalog/options", { params: { path: { project_id: projectId! } } })),
   });
 }
 
@@ -83,7 +113,7 @@ export function usePresets(projectId: string) {
   });
 }
 
-/** Ändert Typ, Lage oder Grenzschalter. `revision` geht als `If-Match` mit (Spez. 6.1). */
+/** Ändert Typ, Lage, Grenzschalter, Linie oder Optionen. `revision` geht als `If-Match` mit (Spez. 6.1). */
 export function usePatchConfiguration(projectId: string) {
   const client = useQueryClient();
   return useMutation({
@@ -97,6 +127,7 @@ export function usePatchConfiguration(projectId: string) {
     onSuccess: (data) => {
       client.setQueryData(configurationKey(projectId), data);
       void client.invalidateQueries({ queryKey: ["configuration", projectId, "area"] });
+      void client.invalidateQueries({ queryKey: optionsKey(projectId) });
       void client.invalidateQueries({ queryKey: typesKey(projectId) });
     },
     onError: (error) => {

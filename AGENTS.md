@@ -4,7 +4,7 @@ Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben
 
 ## Stand (19.09.2026)
 
-Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetzt: R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1, H2; für den Hauskonfigurator (R2) fehlen H3 und V. Einzelheiten, offene Entscheidungen und nächster Schritt: [HANDOFF.md](HANDOFF.md).
+Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetzt: R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1, H2, H3 und V; damit ist der Hauskonfigurator (R2) fachlich vollständig. Einzelheiten, offene Entscheidungen und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 ## Dokumente
 
@@ -14,8 +14,8 @@ Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetz
 | [AENDERUNGEN.md](AENDERUNGEN.md) | Änderungsprotokoll je Session, neueste zuerst | zu Beginn jeder Session (nur neuester Eintrag) |
 | [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen E1–E12, Prüfprotokoll mit offenen Korrekturen (Anhang E.4) | vor Backend-Arbeit kapitelweise nach Kapitel 0 Punkt 1 |
 | [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, Technik je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), Entscheidungen D1–D14, Prüfprotokoll | vor Planung oder Beginn eines Moduls; der Modulabschnitt nennt die nötigen Spezifikationskapitel |
-| `docs/PLAN_<Modul>.md` | Pläne der Module [G3](docs/PLAN_G3_BAURAHMEN.md), [H1](docs/PLAN_H1_HAUSKATALOG.md), [A](docs/PLAN_A_ANFRAGE.md), [H2](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md): fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am jeweiligen Modul |
-| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen der Umsetzung, je Modul ein Abschnitt mit IDs (A, G, RW, BR, H, AF, HP) | vor Code-Arbeit den Abschnitt des Moduls; neue Annahmen hier eintragen |
+| `docs/PLAN_<Modul>.md` | Pläne der Module [G3](docs/PLAN_G3_BAURAHMEN.md), [H1](docs/PLAN_H1_HAUSKATALOG.md), [A](docs/PLAN_A_ANFRAGE.md), [H2](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md), [H3](docs/PLAN_H3_KONFIGURATION_KOSTEN.md), [V](docs/PLAN_V_VORENTWURF_UEBERGABE.md): fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am jeweiligen Modul |
+| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen der Umsetzung, je Modul ein Abschnitt mit IDs (A, G, RW, BR, H, AF, HP, HK) | vor Code-Arbeit den Abschnitt des Moduls; neue Annahmen hier eintragen |
 | [README.md](README.md) | Aufbau, lokal starten, Prüfbefehle, Regeln für API-Änderungen, Stolperstellen | vor Code-Arbeit |
 | [docs/BETRIEB.md](docs/BETRIEB.md) | Module im Betrieb (Flags, Migrationen, Jobs, ausgehender Zugang), Ausliefern, Rückrollen, Zugang, Mail, Wiederherstellung, Sicherheitsvorfall, Störungen je Modul | Betrieb, Störungen, Freischalten |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung, Module | Auslieferung, Arbeit an `deploy/unraid` |
@@ -24,6 +24,7 @@ Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetz
 | [emprise.html](emprise.html) | Aus der JSX erzeugte, eigenständige Seite | nie von Hand ändern, nur neu erzeugen |
 | [Dokumentation.html](Dokumentation.html) | Beschreibung des Mockups (Stand 13.09.2026): Seitenaufbau, Ableitung der Regeln, Volumetrie, Material und Preise, Beispiel-Mail, Gestaltung | fachliche Logik oder Gestaltung des Mockups |
 | [tools/build-mockup.cjs](tools/build-mockup.cjs) | Erzeugt `emprise.html` aus der JSX | nach Änderungen am Mockup |
+| [tools/sync-check-texts.cjs](tools/sync-check-texts.cjs) | Übernimmt die Texte der Prüfungen aus dem Frontend in die Übersetzungen des Backends (Dossier-PDF) | nach Änderungen an diesen Texten (README „Änderungen an der API“) |
 | `C:\Users\sarah\Downloads\mockup-prompt.md` (außerhalb des Projekts) | Ursprünglicher Auftrag für das Mockup mit Beispieldaten und Regeln | nur zur Herkunft, falls noch vorhanden |
 
 Jeder Inhalt steht an einer Stelle; andere Dokumente verweisen darauf: Stand nur in HANDOFF, Entscheidungen in Plan 9 und Spez. 16, Festlegungen in ANNAHMEN, Betrieb in BETRIEB, Stolperstellen in README, offene Spezifikationskorrekturen in Spez. Anhang E.4.

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 import { ApiError } from "../api/client";
 import {
@@ -22,7 +23,7 @@ const EMPTY_CONTACT: ContactIn = {
   lotissement: "unknown",
 };
 
-function Fehler({ error }: { error: unknown }) {
+export function Fehler({ error }: { error: unknown }) {
   const { t } = useTranslation();
   return (
     <p role="alert" className="t-alert m-0">
@@ -55,7 +56,7 @@ function TriConfirm({
   );
 }
 
-function KontaktFormular({ projectId, onSent }: { projectId: string; onSent: (body: ContactIn) => void }) {
+export function KontaktFormular({ projectId, onSent }: { projectId: string; onSent: (body: ContactIn) => void }) {
   const { t } = useTranslation();
   const [body, setBody] = useState<ContactIn>(EMPTY_CONTACT);
   const submit = useSubmitContact(projectId);
@@ -218,6 +219,9 @@ export function AnfrageFormular({ projectId }: { projectId: string }) {
       <div className="flex flex-col gap-2">
         <h2 className="eyebrow m-0">{t("inquiry.title")}</h2>
         <p className="m-0">{t("inquiry.status.summary", { number: mine.data.number, status: t(`inquiry.status.${mine.data.status}`) })}</p>
+        <Link className="link self-start" to="/vorgang">
+          {t("submission.done.link")}
+        </Link>
       </div>
     );
   }

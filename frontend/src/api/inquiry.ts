@@ -13,10 +13,11 @@ export type ExportOut = components["schemas"]["ExportOut"];
 export type InquiryListItem = components["schemas"]["InquiryListItem"];
 export type InquiryDetailOut = components["schemas"]["InquiryDetailOut"];
 export type InquiryStatus = InquiryListItem["status"];
+export type OfficeStatus = components["schemas"]["InquiryPatchIn"]["status"];
 
 export const INQUIRY_FLAG = "inquiry";
 
-const myInquiryKey = (projectId: string) => ["inquiry", projectId] as const;
+export const myInquiryKey = (projectId: string) => ["inquiry", projectId] as const;
 
 export function useMyInquiry(projectId: string | null | undefined, enabled: boolean) {
   return useQuery({
@@ -86,7 +87,7 @@ export function useInquiries(status: InquiryStatus | "" = "") {
   });
 }
 
-const staffInquiryKey = (projectId: string) => ["admin", "inquiry", projectId] as const;
+export const staffInquiryKey = (projectId: string) => ["admin", "inquiry", projectId] as const;
 
 export function useStaffInquiry(projectId: string) {
   return useQuery({
@@ -101,7 +102,7 @@ export function useStaffInquiry(projectId: string) {
 export function useSetInquiryStatus(projectId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (status: InquiryStatus) =>
+    mutationFn: async (status: OfficeStatus) =>
       unwrap(
         await api.PATCH("/api/v1/admin/projects/{project_id}/inquiry", {
           params: { path: { project_id: projectId } },

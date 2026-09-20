@@ -27,5 +27,9 @@ class Configuration(UuidPk, Created, Base):
     """`{origin_e, origin_n, rotation_deg}`; Lambert-93 wie Spez. 4.4, die API rechnet in lokale Meter um."""
     boundary_options: Mapped[dict[str, bool]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
     """Kantennummer (als Text) → Bauen auf der Grenze (Plan H2 3.4)."""
+    package_version_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("package_version.id"))
+    """Gewählte Ausstattungslinie als Version (L4, Plan H3 3.1)."""
+    modules: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    """Ausdrücklich gewählte Optionen `{module_version_id}` (Spez. 4.4); die der Linie kommen dazu."""
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_by: Mapped[str | None] = mapped_column(String(200))

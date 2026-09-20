@@ -25,6 +25,9 @@ PUBLIC_ROUTES = {
     ("GET", "/api/v1/geocode"),
     ("GET", "/api/v1/cadastre/service-area"),
     ("GET", "/api/v1/cadastre/parcels"),
+    # V: Zugangslink aus der Kundenmail, mit Rate-Limit (Plan V 3.9)
+    ("POST", "/api/v1/access/redeem"),
+    ("POST", "/api/v1/access/request"),
 }
 
 

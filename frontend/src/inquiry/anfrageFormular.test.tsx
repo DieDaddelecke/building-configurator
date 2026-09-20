@@ -2,13 +2,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ConfirmIn, ContactIn, MyInquiryOut } from "../api/inquiry";
 import i18n from "../i18n";
 import { AnfrageFormular } from "./AnfrageFormular";
 
-const myInquiry: { data?: MyInquiryOut; isPending: boolean } = { data: { exists: false }, isPending: false };
+const NONE: MyInquiryOut = { exists: false, submissions: [], messages: [], can_withdraw: false };
+const myInquiry: { data?: MyInquiryOut; isPending: boolean } = { data: NONE, isPending: false };
 const submit = { mutate: vi.fn(), isPending: false, isError: false, error: undefined as unknown };
 const confirm = { mutate: vi.fn(), isPending: false, isError: false, error: undefined as unknown };
 
@@ -22,14 +24,16 @@ vi.mock("../api/inquiry", async (importOriginal) => ({
 function renderFormular() {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <AnfrageFormular projectId="p1" />
+      <MemoryRouter>
+        <AnfrageFormular projectId="p1" />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 describe("Anfrageformular (Modul A)", () => {
   beforeEach(async () => {
-    myInquiry.data = { exists: false };
+    myInquiry.data = NONE;
     myInquiry.isPending = false;
     submit.mutate.mockReset();
     confirm.mutate.mockReset();
@@ -80,10 +84,11 @@ describe("Anfrageformular (Modul A)", () => {
   });
 
   it("zeigt bei bestehender Anfrage nur die Zusammenfassung", () => {
-    myInquiry.data = { exists: true, number: "EMP-2026-000007", status: "in_bearbeitung" };
+    myInquiry.data = { ...NONE, exists: true, number: "EMP-2026-000007", status: "in_bearbeitung", can_withdraw: true };
     renderFormular();
     expect(screen.getByText(/EMP-2026-000007/)).toBeInTheDocument();
     expect(screen.getByText(/in Bearbeitung/)).toBeInTheDocument();
     expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Zum Vorgang" })).toHaveAttribute("href", "/vorgang");
   });
 });

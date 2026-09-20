@@ -1604,9 +1604,9 @@ S1–S13 aus der Prüfung vom 13.09.2026, S14 nach D11 (14.09.2026), S15–S17 a
 |---|---|---|---|---|
 | S1 | Ligne-Neigung `atan(2,8/4,0)` = 34,99° < 35° → ohne Winkeltoleranz gesperrt | Spez. 11.3, Anhang C | ja, Plan 3.7 | in H1 umgesetzt (Toleranz 0,1°, Plan H1 3.5) |
 | S2 | Firstrichtungstest mit Plateau sinnlos (Flachdach hat keinen First) | Spez. 11.2, D7 | ja, Plan 3.8 | in H2 mit Satteldachtyp getestet (Plan H2 10.1 Nr. 1) |
-| S3 | „Gespeicherte Konfigurationen sind immer auswahlgültig“ stimmt nicht → Neuprüfung beim Absenden | Spez. 5.10.2 Punkt 1 | ja, Plan 3.10 | H2 prüft bei jedem Abruf neu (HP13); Neuprüfung beim Absenden kommt mit V |
+| S3 | „Gespeicherte Konfigurationen sind immer auswahlgültig“ stimmt nicht → Neuprüfung beim Absenden | Spez. 5.10.2 Punkt 1 | ja, Plan 3.10 | in V umgesetzt: Prüfstempel beim Absenden (VU04, VU05) |
 | S4 | Zulässigkeit mit Einzelabweichungen sperrt Typen fälschlich, wenn nur zwei Gruppen gemeinsam passen | Spez. 5.4.6 | teilweise, Plan 3.8; automatische Erkennung zusammenwirkender Gruppen fehlt noch | ruht: H1 hat keine Variantengruppen (H02) |
-| S5 | Zustände für E-Mail-Bestätigung und `dossier_failed` fehlen; Projekt- und Übergabestatus vermischt | Spez. 5.10.1, 5.10.2 | teilweise (Code vor Absenden, Plan 3.6); Zustandsautomat offen | Code vor Absenden in A umgesetzt; Zustandsautomat offen (V) |
+| S5 | Zustände für E-Mail-Bestätigung und `dossier_failed` fehlen; Projekt- und Übergabestatus vermischt | Spez. 5.10.1, 5.10.2 | teilweise (Code vor Absenden, Plan 3.6); Zustandsautomat offen | in V gelöst: Vorgang (`inquiry`, Zustände einschließlich `rueckfrage`, `zurueckgezogen`) und Fassung (`submission`, `current`/`superseded`) getrennt, `dossier_status` an der Fassung (VU01, VU02, VU10) |
 | S6 | Preise und RE2020-Bewertungen an Typversion gekoppelt | Spez. 4.3 | ja, Plan 3.7 | in H1 umgesetzt (H05) |
 | S7 | Rückfall auf Entwurfsregeln zeigt ungeprüfte Regeln beim Kunden | Spez. 4.4 | ja, Plan 3.4 | durch D11 überholt |
 | S8 | Traufhöhe an Wandaußenseite gemessen; viele PLU messen am Tiefpunkt der Traufe (bis ca. 0,35 m Unterschied) → Messpunkt als Regelparameter | Spez. 5.4.3 | nein | offen |

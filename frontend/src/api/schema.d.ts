@@ -61,6 +61,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/access/redeem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Redeem Access Link
+         * @description Zugangslink aus einer Kundenmail einlösen; setzt ein neues Projekt-Cookie (V 3.9).
+         */
+        post: operations["redeem_access_link_api_v1_access_redeem_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Access Link
+         * @description Neuen Zugangslink per Mail anfordern; die Antwort verrät nicht, ob die Adresse bekannt ist.
+         */
+        post: operations["request_access_link_api_v1_access_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/cadastre/imports": {
         parameters: {
             query?: never;
@@ -565,6 +605,26 @@ export interface paths {
         patch: operations["patch_inquiry_status_api_v1_admin_projects__project_id__inquiry_patch"];
         trace?: never;
     };
+    "/api/v1/admin/projects/{project_id}/inquiry/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Office Message
+         * @description Nachricht an den Kunden; ein offener Vorgang wechselt auf `rueckfrage` (V 3.8).
+         */
+        post: operations["post_office_message_api_v1_admin_projects__project_id__inquiry_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/projects/{project_id}/rule-overrides": {
         parameters: {
             query?: never;
@@ -669,6 +729,43 @@ export interface paths {
         head?: never;
         /** Patch Edge Architect */
         patch: operations["patch_edge_architect_api_v1_admin_projects__project_id__site_edges__seq__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/submissions/{sequence}/dossier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Regenerate Dossier
+         * @description Gescheitertes Dossier neu erzeugen lassen (V 3.7).
+         */
+        post: operations["regenerate_dossier_api_v1_admin_projects__project_id__submissions__sequence__dossier_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/projects/{project_id}/submissions/{sequence}/files/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download File Staff */
+        get: operations["download_file_staff_api_v1_admin_projects__project_id__submissions__sequence__files__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/rule-sets/{rule_set_id}": {
@@ -991,6 +1088,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/catalog/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Options
+         * @description Linien und Optionen des gewählten Typs mit Preis, Zustand und Gründen (Plan H3 4.3).
+         */
+        get: operations["get_options_api_v1_projects__project_id__catalog_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/catalog/types": {
         parameters: {
             query?: never;
@@ -1144,7 +1261,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get My Inquiry */
+        /**
+         * Get My Inquiry
+         * @description Eigener Vorgang mit Fassungen und Nachrichten; `exists = false` ohne Vorgang.
+         */
         get: operations["get_my_inquiry_api_v1_projects__project_id__inquiry_get"];
         put?: never;
         post?: never;
@@ -1182,6 +1302,43 @@ export interface paths {
         put?: never;
         /** Submit Contact */
         post: operations["submit_contact_api_v1_projects__project_id__inquiry_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inquiry/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Post Customer Message */
+        post: operations["post_customer_message_api_v1_projects__project_id__inquiry_messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/inquiry/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw Inquiry
+         * @description Vorgang zurückziehen (V 3.8); es wird nichts gelöscht.
+         */
+        post: operations["withdraw_inquiry_api_v1_projects__project_id__inquiry_withdraw_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1267,6 +1424,48 @@ export interface paths {
         patch: operations["patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/submission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit
+         * @description Vorentwurf übergeben (V 3.2). `409 review_changed`: Die Auswertung hat sich seit dem Anzeigen
+         *     geändert (`changes`, neuer `review_stamp`); `409 deviations_not_acknowledged`: bindende Verstöße ohne
+         *     Bestätigung; `409 submission_incomplete`: Typ, Lage oder Linie fehlen.
+         */
+        post: operations["submit_api_v1_projects__project_id__submission_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/submissions/{sequence}/files/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Own File
+         * @description PDF einer eigenen Fassung; DXF-Dateien gibt es nur für das Büro.
+         */
+        get: operations["download_own_file_api_v1_projects__project_id__submissions__sequence__files__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/session": {
         parameters: {
             query?: never;
@@ -1291,6 +1490,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccessRedeemIn */
+        AccessRedeemIn: {
+            /** Token */
+            token: string;
+        };
+        /** AccessRedeemOut */
+        AccessRedeemOut: {
+            /**
+             * Project Id
+             * Format: uuid
+             */
+            project_id: string;
+        };
+        /** AccessRequestIn */
+        AccessRequestIn: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** AccessRequestOut */
+        AccessRequestOut: {
+            /**
+             * Status
+             * @default accepted
+             * @constant
+             */
+            status: "accepted";
+        };
         /** AddressOut */
         AddressOut: {
             /** City */
@@ -1314,6 +1543,29 @@ export interface components {
         ArchitectEdgeIn: {
             /** Kind */
             kind: ("street" | "side" | "rear" | "other") | null;
+        };
+        /** AreasOut */
+        AreasOut: {
+            /** Carport M2 */
+            carport_m2: number;
+            /** Driveway M2 */
+            driveway_m2: number;
+            /** Emprise M2 */
+            emprise_m2: number;
+            /** House M2 */
+            house_m2: number;
+            /** Parts */
+            parts: components["schemas"]["PartAreasOut"][];
+            /** Paths M2 */
+            paths_m2: number;
+            /** Sealed M2 */
+            sealed_m2: number;
+            /** Site M2 */
+            site_m2: number;
+            /** Terrace M2 */
+            terrace_m2: number;
+            /** Unsealed M2 */
+            unsealed_m2: number;
         };
         /**
          * BandOut
@@ -1483,12 +1735,29 @@ export interface components {
             /** Release */
             release: string;
         };
+        /** ComplianceOut */
+        ComplianceOut: {
+            /** Checks */
+            checks: components["schemas"]["CheckOut"][];
+            /** Fail */
+            fail: number;
+            /** Hint */
+            hint: number;
+            /** Passed */
+            passed: number;
+            /** Unknown */
+            unknown: number;
+        };
         /** ConfigurationOut */
         ConfigurationOut: {
+            areas: components["schemas"]["AreasOut"] | null;
             /** Boundary Options */
             boundary_options: {
                 [key: string]: boolean;
             };
+            compliance: components["schemas"]["ComplianceOut"] | null;
+            costs: components["schemas"]["CostsOut"] | null;
+            energy: components["schemas"]["EnergyStatusOut"] | null;
             /** Engine Version */
             engine_version: string;
             evaluation: components["schemas"]["PlacementEvaluationOut"] | null;
@@ -1502,16 +1771,21 @@ export interface components {
             mode: "rules" | "free";
             /** Notices */
             notices: string[];
+            orientation: components["schemas"]["OrientationOut"] | null;
+            outbuildings: components["schemas"]["OutbuildingsOut"] | null;
             placement: components["schemas"]["PlacementOut"] | null;
             /**
              * Project Id
              * Format: uuid
              */
             project_id: string;
+            /** Review Stamp */
+            review_stamp: string | null;
             /** Revision */
             revision: number;
             /** Rotations */
             rotations: number[];
+            selection: components["schemas"]["SelectionOut"] | null;
             /**
              * Simulation
              * @default true
@@ -1530,6 +1804,10 @@ export interface components {
             boundary_options?: {
                 [key: string]: boolean;
             } | null;
+            /** Option Slugs */
+            option_slugs?: string[] | null;
+            /** Package Slug */
+            package_slug?: string | null;
             placement?: components["schemas"]["PlacementRequest"] | null;
             /** Type Slug */
             type_slug?: string | null;
@@ -1663,6 +1941,61 @@ export interface components {
             /** Rings Local */
             rings_local: number[][][];
         };
+        /** CostItemOut */
+        CostItemOut: {
+            /** Code */
+            code: string;
+            /** Included */
+            included: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "base" | "package" | "option" | "energy";
+            /** Label De */
+            label_de: string | null;
+            /** Label Fr */
+            label_fr: string | null;
+            /** Max Cents */
+            max_cents: number;
+            /** Min Cents */
+            min_cents: number;
+            /** Quantity */
+            quantity: number | null;
+            /** Slug */
+            slug: string | null;
+            /** Source */
+            source: string | null;
+            /** Unit */
+            unit: string | null;
+            /** Unit Price Cents */
+            unit_price_cents: number | null;
+        };
+        /**
+         * CostsOut
+         * @description Kostenkorridor (Spez. 5.6.5): nur Spannen, kein Feld, das als Gesamtpreis lesbar ist (L1).
+         */
+        CostsOut: {
+            /** Available */
+            available: boolean;
+            /** Catalog Version */
+            catalog_version: number | null;
+            display: components["schemas"]["RangeOut"] | null;
+            /**
+             * Display Basis
+             * @default gross
+             * @constant
+             */
+            display_basis: "gross";
+            gross: components["schemas"]["RangeOut"] | null;
+            /** Items */
+            items: components["schemas"]["CostItemOut"][];
+            net: components["schemas"]["RangeOut"] | null;
+            /** Reason */
+            reason: string | null;
+            /** Vat Rate */
+            vat_rate: number;
+        };
         /** CoverageOut */
         CoverageOut: {
             /** Budget Month Usd */
@@ -1701,6 +2034,20 @@ export interface components {
             name: string;
             /** Phone */
             phone: string | null;
+        };
+        /** DrivewayOut */
+        DrivewayOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Length M */
+            length_m: number;
+            /** Polygon Local */
+            polygon_local: number[][] | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "carport" | "garage";
         };
         /** EdgeMeasureOut */
         EdgeMeasureOut: {
@@ -1800,6 +2147,22 @@ export interface components {
             /** Verdict */
             verdict: string;
         };
+        /** EnergyStatusOut */
+        EnergyStatusOut: {
+            /** Climate Zone */
+            climate_zone: string | null;
+            /** Measures */
+            measures: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "compliant" | "action" | "not_assessed";
+            /** Surcharge Cents */
+            surcharge_cents: number | null;
+            /** Verdict */
+            verdict: string | null;
+        };
         /** EnvelopeEdgeOut */
         EnvelopeEdgeOut: {
             /**
@@ -1892,7 +2255,9 @@ export interface components {
             /** Inquiry Number */
             inquiry_number: string | null;
             /** Inquiry Status */
-            inquiry_status: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
+            inquiry_status: ("neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen" | "zurueckgezogen") | null;
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
             /**
              * Project Created At
              * Format: date-time
@@ -1907,6 +2272,26 @@ export interface components {
             snapshot: {
                 [key: string]: unknown;
             } | null;
+            /** Submissions */
+            submissions: components["schemas"]["ExportSubmissionOut"][];
+        };
+        /** ExportSubmissionOut */
+        ExportSubmissionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Files */
+            files: string[];
+            /** Sequence */
+            sequence: number;
+            /** Snapshot */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status: string;
         };
         /** ExtractIn */
         ExtractIn: {
@@ -2027,6 +2412,8 @@ export interface components {
         };
         /** InquiryDetailOut */
         InquiryDetailOut: {
+            /** Configuration Revision */
+            configuration_revision: number | null;
             /** Consents */
             consents: components["schemas"]["ConsentOut"][];
             /**
@@ -2035,6 +2422,8 @@ export interface components {
              */
             created_at: string;
             customer: components["schemas"]["CustomerOut"];
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
             /** Number */
             number: string;
             /**
@@ -2052,7 +2441,9 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
+            status: "neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen" | "zurueckgezogen";
+            /** Submissions */
+            submissions: components["schemas"]["StaffSubmissionOut"][];
             /**
              * Updated At
              * Format: date-time
@@ -2072,6 +2463,10 @@ export interface components {
             customer_email: string;
             /** Customer Name */
             customer_name: string;
+            /** Deviation Count */
+            deviation_count: number | null;
+            /** Dossier Status */
+            dossier_status: ("pending" | "ready" | "failed") | null;
             /** Has Envelope */
             has_envelope: boolean;
             /**
@@ -2090,7 +2485,9 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
+            status: "neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen" | "zurueckgezogen";
+            /** Submissions */
+            submissions: number;
             /**
              * Updated At
              * Format: date-time
@@ -2103,7 +2500,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "neu" | "in_bearbeitung" | "beantwortet" | "geschlossen";
+            status: "neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen";
         };
         /** JobCreated */
         JobCreated: {
@@ -2254,6 +2651,31 @@ export interface components {
             /** Length M */
             length_m: number;
         };
+        /** MessageIn */
+        MessageIn: {
+            /** Body */
+            body: string;
+        };
+        /** MessageOut */
+        MessageOut: {
+            /**
+             * Author
+             * @enum {string}
+             */
+            author: "customer" | "office";
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** ModuleIn */
         ModuleIn: {
             /**
@@ -2261,10 +2683,30 @@ export interface components {
              * @default []
              */
             excludes_slugs: string[];
+            /**
+             * Kind
+             * @default plain
+             * @enum {string}
+             */
+            kind: "plain" | "terrace" | "carport";
             /** Label De */
             label_de: string;
             /** Label Fr */
             label_fr: string;
+            /**
+             * Params
+             * @default {}
+             */
+            params: {
+                [key: string]: unknown;
+            };
+            /**
+             * Regulatory
+             * @default {}
+             */
+            regulatory: {
+                [key: string]: string;
+            };
         };
         /** ModuleTypePriceOut */
         ModuleTypePriceOut: {
@@ -2284,6 +2726,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "plain" | "terrace" | "carport";
             /** Label De */
             label_de: string;
             /** Label Fr */
@@ -2293,8 +2740,16 @@ export interface components {
              * Format: uuid
              */
             module_id: string;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
             /** Published At */
             published_at: string | null;
+            /** Regulatory */
+            regulatory: {
+                [key: string]: string;
+            };
             /** Slug */
             slug: string;
             /**
@@ -2307,12 +2762,45 @@ export interface components {
         };
         /** MyInquiryOut */
         MyInquiryOut: {
+            /** Can Withdraw */
+            can_withdraw: boolean;
             /** Exists */
             exists: boolean;
+            /** Messages */
+            messages: components["schemas"]["MessageOut"][];
             /** Number */
             number?: string | null;
             /** Status */
-            status?: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
+            status?: ("neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen" | "zurueckgezogen") | null;
+            /** Submissions */
+            submissions: components["schemas"]["MySubmissionOut"][];
+        };
+        /**
+         * MySubmissionOut
+         * @description Fassung aus Sicht des Kunden: ohne Prüfdetails des Büros, mit den PDFs (V 3.7).
+         */
+        MySubmissionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deviation Count */
+            deviation_count: number;
+            /**
+             * Dossier Status
+             * @enum {string}
+             */
+            dossier_status: "pending" | "ready" | "failed";
+            /** Files */
+            files: components["schemas"]["SubmissionFileOut"][];
+            /** Sequence */
+            sequence: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
         };
         /** OpsStatus */
         OpsStatus: {
@@ -2331,6 +2819,100 @@ export interface components {
             /** Storage Ok */
             storage_ok: boolean;
         };
+        /** OptionChoiceOut */
+        OptionChoiceOut: {
+            /** Area M2 */
+            area_m2?: number | null;
+            /** Checks */
+            checks: components["schemas"]["CheckOut"][];
+            /** Excludes */
+            excludes: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "plain" | "terrace" | "carport";
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            price: components["schemas"]["PriceOut"] | null;
+            /** Reasons */
+            reasons: components["schemas"]["SelectionReasonOut"][];
+            /** Slug */
+            slug: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "selected" | "included" | "available" | "blocked";
+            /** Version */
+            version: number;
+        };
+        /** OptionsOut */
+        OptionsOut: {
+            /** Catalog Available */
+            catalog_available: boolean;
+            /**
+             * Display Basis
+             * @default gross
+             * @constant
+             */
+            display_basis: "gross";
+            /** Options */
+            options: components["schemas"]["OptionChoiceOut"][];
+            /** Packages */
+            packages: components["schemas"]["PackageChoiceOut"][];
+            /**
+             * Simulation
+             * @default true
+             */
+            simulation: boolean;
+            /** Type Slug */
+            type_slug: string | null;
+            /** Vat Rate */
+            vat_rate: number;
+        };
+        /** OrientationOut */
+        OrientationOut: {
+            /** Convergence Deg */
+            convergence_deg: number;
+            /** Facades */
+            facades: {
+                [key: string]: number;
+            };
+        };
+        /** OutbuildingOut */
+        OutbuildingOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Depth M */
+            depth_m: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "terrace" | "carport";
+            /** Placed */
+            placed: boolean;
+            /** Polygon Local */
+            polygon_local: number[][] | null;
+            /** Setback */
+            setback?: ("known" | "assumed" | "relaxed") | null;
+            /** Slug */
+            slug: string;
+            /** Spaces */
+            spaces?: number | null;
+            /** Width M */
+            width_m: number | null;
+        };
+        /** OutbuildingsOut */
+        OutbuildingsOut: {
+            carport: components["schemas"]["OutbuildingOut"] | null;
+            /** Driveways */
+            driveways: components["schemas"]["DrivewayOut"][];
+            terrace: components["schemas"]["OutbuildingOut"] | null;
+        };
         /** OverlayOut */
         OverlayOut: {
             /**
@@ -2345,6 +2927,27 @@ export interface components {
             /** Type Code */
             type_code: string | null;
         };
+        /** PackageChoiceOut */
+        PackageChoiceOut: {
+            energy: components["schemas"]["EnergyStatusOut"];
+            /** Included Option Slugs */
+            included_option_slugs: string[];
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            price: components["schemas"]["PriceOut"];
+            /** Retired */
+            retired: boolean;
+            /** Scope */
+            scope: string[];
+            /** Selected */
+            selected: boolean;
+            /** Slug */
+            slug: string;
+            /** Version */
+            version: number;
+        };
         /** PackageIn */
         PackageIn: {
             /**
@@ -2356,6 +2959,13 @@ export interface components {
             label_de: string;
             /** Label Fr */
             label_fr: string;
+            /**
+             * Regulatory
+             * @default {}
+             */
+            regulatory: {
+                [key: string]: string;
+            };
             /**
              * Scope
              * @default []
@@ -2391,6 +3001,10 @@ export interface components {
             package_id: string;
             /** Published At */
             published_at: string | null;
+            /** Regulatory */
+            regulatory: {
+                [key: string]: string;
+            };
             /** Scope */
             scope: string[];
             /** Slug */
@@ -2444,6 +3058,19 @@ export interface components {
             prefix: string;
             /** Section */
             section: string;
+        };
+        /** PartAreasOut */
+        PartAreasOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Emprise M2 */
+            emprise_m2: number;
+            /** Sealed M2 */
+            sealed_m2: number;
+            /** Unsealed M2 */
+            unsealed_m2: number;
+            /** Zone Code */
+            zone_code: string;
         };
         /** PartOut */
         PartOut: {
@@ -2600,6 +3227,25 @@ export interface components {
             /** Version */
             version: number;
         };
+        /**
+         * PriceOut
+         * @description Preis einer Linie oder Option in Cent, brutto (Anzeigebasis, D10). Kein Gesamtpreis (L1).
+         */
+        PriceOut: {
+            /**
+             * Basis
+             * @enum {string}
+             */
+            basis: "fixed" | "per_m2";
+            /** Max Cents */
+            max_cents: number;
+            /** Min Cents */
+            min_cents: number;
+            /** Quantity */
+            quantity?: number | null;
+            /** Unit Price Cents */
+            unit_price_cents?: number | null;
+        };
         /** ProjectOut */
         ProjectOut: {
             /**
@@ -2735,6 +3381,13 @@ export interface components {
             terrain_slope_percent?: number | null;
             /** Terrain Status */
             terrain_status: string;
+        };
+        /** RangeOut */
+        RangeOut: {
+            /** Max Cents */
+            max_cents: number;
+            /** Min Cents */
+            min_cents: number;
         };
         /** RiskOut */
         RiskOut: {
@@ -2931,6 +3584,30 @@ export interface components {
              */
             force: boolean;
         };
+        /** SelectionOut */
+        SelectionOut: {
+            /** Dropped */
+            dropped: string[];
+            /** Included Slugs */
+            included_slugs: string[];
+            /** Invalid */
+            invalid: components["schemas"]["SelectionReasonOut"][];
+            /** Option Slugs */
+            option_slugs: string[];
+            /** Package Slug */
+            package_slug: string | null;
+            /** Package Version */
+            package_version: number | null;
+        };
+        /** SelectionReasonOut */
+        SelectionReasonOut: {
+            /** Code */
+            code: string;
+            /** Other */
+            other?: string | null;
+            /** Slug */
+            slug?: string | null;
+        };
         /** SessionInfo */
         SessionInfo: {
             /** Project Id */
@@ -3078,6 +3755,122 @@ export interface components {
             id: string;
             /** Roles */
             roles: string[];
+        };
+        /** StaffSubmissionOut */
+        StaffSubmissionOut: {
+            /** Configuration Revision */
+            configuration_revision: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deviation Count */
+            deviation_count: number;
+            /** Deviations Acknowledged */
+            deviations_acknowledged: boolean;
+            /** Dossier Error */
+            dossier_error: string | null;
+            /**
+             * Dossier Status
+             * @enum {string}
+             */
+            dossier_status: "pending" | "ready" | "failed";
+            /** Files */
+            files: components["schemas"]["SubmissionFileOut"][];
+            /** Open Points */
+            open_points: number;
+            /** Sequence */
+            sequence: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "current" | "superseded";
+            summary: components["schemas"]["SubmissionSummaryOut"];
+        };
+        /** SubmissionFileOut */
+        SubmissionFileOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "pdf" | "dxf";
+            /** Locale */
+            locale: string | null;
+            /** Name */
+            name: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Variant */
+            variant: string | null;
+        };
+        /**
+         * SubmissionSummaryOut
+         * @description Zusammenfassung einer Fassung aus ihrem Snapshot, für die Liste im Büro.
+         */
+        SubmissionSummaryOut: {
+            /** Catalog Version */
+            catalog_version: number | null;
+            costs_display: components["schemas"]["RangeOut"] | null;
+            /** Deviations */
+            deviations: components["schemas"]["CheckOut"][];
+            /** Options */
+            options: components["schemas"]["SummaryOptionOut"][];
+            /** Package Label De */
+            package_label_de: string | null;
+            /** Package Label Fr */
+            package_label_fr: string | null;
+            /** Site Origin */
+            site_origin: ("parcel" | "manual_sketch") | null;
+            /** Type Name */
+            type_name: string | null;
+            /** Type Retired */
+            type_retired: boolean;
+            /** Type Version */
+            type_version: number | null;
+            /** Vat Rate */
+            vat_rate: number | null;
+        };
+        /** SubmitIn */
+        SubmitIn: {
+            /** Code */
+            code?: string | null;
+            /** Design Confirmation */
+            design_confirmation: boolean;
+            /**
+             * Deviations Acknowledged
+             * @default false
+             */
+            deviations_acknowledged: boolean;
+            /** Review Stamp */
+            review_stamp: string;
+            /** Transmission Design */
+            transmission_design: boolean;
+        };
+        /** SubmitOut */
+        SubmitOut: {
+            /** Number */
+            number: string;
+            /** Sequence */
+            sequence: number;
+            /**
+             * Status
+             * @default submitted
+             * @constant
+             */
+            status: "submitted";
+        };
+        /** SummaryOptionOut */
+        SummaryOptionOut: {
+            /** Included */
+            included: boolean;
+            /** Label De */
+            label_de: string;
+            /** Label Fr */
+            label_fr: string;
+            /** Slug */
+            slug: string;
         };
         /** TerrainOut */
         TerrainOut: {
@@ -3471,6 +4264,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    redeem_access_link_api_v1_access_redeem_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRedeemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRedeemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_access_link_api_v1_access_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessRequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -4096,7 +4955,7 @@ export interface operations {
     list_inquiries_api_v1_admin_inquiries_get: {
         parameters: {
             query?: {
-                status?: ("neu" | "in_bearbeitung" | "beantwortet" | "geschlossen") | null;
+                status?: ("neu" | "in_bearbeitung" | "rueckfrage" | "beantwortet" | "geschlossen" | "zurueckgezogen") | null;
             };
             header?: never;
             path?: never;
@@ -4387,6 +5246,41 @@ export interface operations {
             };
         };
     };
+    post_office_message_api_v1_admin_projects__project_id__inquiry_messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InquiryDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_project_overrides_api_v1_admin_projects__project_id__rule_overrides_get: {
         parameters: {
             query?: never;
@@ -4605,6 +5499,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    regenerate_dossier_api_v1_admin_projects__project_id__submissions__sequence__dossier_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                sequence: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InquiryDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_file_staff_api_v1_admin_projects__project_id__submissions__sequence__files__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                sequence: number;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -5127,6 +6086,37 @@ export interface operations {
             };
         };
     };
+    get_options_api_v1_projects__project_id__catalog_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_types_api_v1_projects__project_id__catalog_types_get: {
         parameters: {
             query?: never;
@@ -5517,6 +6507,72 @@ export interface operations {
             };
         };
     };
+    post_customer_message_api_v1_projects__project_id__inquiry_messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyInquiryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_inquiry_api_v1_projects__project_id__inquiry_withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyInquiryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     lookup_parcels_api_v1_projects__project_id__parcels_lookup_post: {
         parameters: {
             query?: never;
@@ -5674,6 +6730,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_api_v1_projects__project_id__submission_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubmitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_own_file_api_v1_projects__project_id__submissions__sequence__files__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sequence: number;
+                name: string;
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

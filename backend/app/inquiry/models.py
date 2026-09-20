@@ -1,9 +1,10 @@
-"""Tabellen des Moduls A (Plan 3.6, docs/PLAN_A_ANFRAGE.md 4.1).
+"""Tabellen des Moduls A (Plan 3.6, docs/PLAN_A_ANFRAGE.md 4.1), erweitert durch V (PLAN_V 4.1).
 
 `customer` entsteht schon beim Kontaktformular, bevor die E-Mail-Adresse bestätigt ist; erst die Bestätigung
 legt `inquiry` und `consent` an (3.1/3.2 des Plans). `consent` ist unveränderlich wie `audit_log`/`legal_text`
 (Migration); `inquiry` nicht, weil `status` sich ändert (3.7) – `number` und `snapshot` sind endgültig, weil
-kein Endpunkt sie nach der Anlage schreibt.
+kein Endpunkt sie nach der Anlage schreibt. `inquiry` ist der Vorgang; seine Fassungen aus dem Konfigurator
+stehen in `submission` (V), die Nachrichten zwischen Büro und Kunde in `inquiry_message`.
 """
 
 import uuid
@@ -15,10 +16,11 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     LargeBinary,
     String,
-    UniqueConstraint,
+    Text,
     func,
     text,
 )
@@ -28,8 +30,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.platform.db import Base, Created, UuidPk
 
 LOTISSEMENT_VALUES = "('yes','no','unknown')"
-INQUIRY_STATUSES = "('neu','in_bearbeitung','beantwortet','geschlossen')"
-CONSENT_KINDS = "('simulation_confirmation','transmission_office')"
+INQUIRY_STATUSES = "('neu','in_bearbeitung','rueckfrage','beantwortet','geschlossen','zurueckgezogen')"
+CONSENT_KINDS = (
+    "('simulation_confirmation','transmission_office','design_confirmation','transmission_design')"
+)
 
 
 class Customer(UuidPk, Created, Base):
@@ -42,12 +46,17 @@ class Customer(UuidPk, Created, Base):
     desired_start: Mapped[str | None] = mapped_column(String(60))
     financing_clarified: Mapped[bool | None] = mapped_column(Boolean)
     lotissement: Mapped[str] = mapped_column(String(10), server_default=text("'unknown'"))
+    locale: Mapped[str] = mapped_column(String(5), server_default=text("'fr'"))
+    """Sprache der Kundenmails (V 3.10); beim Kontakt und bei der Übergabe gesetzt."""
     email_code_hash: Mapped[bytes | None] = mapped_column(LargeBinary)
     email_code_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     email_code_attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (CheckConstraint(f"lotissement IN {LOTISSEMENT_VALUES}", name="lotissement_known"),)
+    __table_args__ = (
+        CheckConstraint(f"lotissement IN {LOTISSEMENT_VALUES}", name="lotissement_known"),
+        CheckConstraint("locale IN ('fr','de')", name="locale_known"),
+    )
 
 
 class Inquiry(UuidPk, Created, Base):
@@ -69,12 +78,41 @@ class Consent(UuidPk, Created, Base):
     __tablename__ = "consent"
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"), index=True)
+    submission_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("submission.id", ondelete="CASCADE"), index=True
+    )
+    """Fassung des Vorentwurfs (V 3.5); `NULL` für die Einwilligungen der Anfrage aus A."""
     kind: Mapped[str] = mapped_column(String(40))
     legal_text_key: Mapped[str] = mapped_column(String(80))
     legal_text_version: Mapped[int] = mapped_column(Integer)
     confirmed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        UniqueConstraint("project_id", "kind", name="uq_consent_project_kind"),
         CheckConstraint(f"kind IN {CONSENT_KINDS}", name="kind_known"),
+        Index(
+            "uq_consent_project_kind",
+            "project_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("submission_id IS NULL"),
+        ),
+        Index(
+            "uq_consent_submission_kind",
+            "submission_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("submission_id IS NOT NULL"),
+        ),
     )
+
+
+class InquiryMessage(UuidPk, Created, Base):
+    """Nachricht zwischen Büro und Kunde zu einem Vorgang (V 3.8). Kein Endpunkt ändert oder löscht sie."""
+
+    __tablename__ = "inquiry_message"
+
+    inquiry_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("inquiry.id", ondelete="CASCADE"), index=True)
+    author: Mapped[str] = mapped_column(String(10))
+    body: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (CheckConstraint("author IN ('customer','office')", name="author_known"),)

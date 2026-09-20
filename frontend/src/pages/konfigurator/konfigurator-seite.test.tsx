@@ -5,14 +5,16 @@ import { act } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "../../api/client";
 import i18n from "../../i18n";
-import { AREA, CONFIGURATION, TYPES, VIOLATED } from "../../configuration/__fixtures__/konfiguration";
+import { AREA, CONFIGURATION, CONFIGURED, OPTIONS, TYPES, VIOLATED } from "../../configuration/__fixtures__/konfiguration";
 import site from "../../site/__fixtures__/site-ad0065.json";
 
 const state = vi.hoisted(() => ({
   flags: {} as Record<string, boolean>,
   site: null as unknown,
   configuration: null as unknown,
+  options: null as unknown,
   patch: vi.fn(),
   presets: vi.fn(),
   patchError: null as unknown,
@@ -50,6 +52,7 @@ vi.mock("../../api/configuration", async (importOriginal) => {
     ...original,
     useTypes: () => ({ isPending: false, isError: false, data: TYPES }),
     useConfiguration: () => ({ isPending: false, isError: false, data: state.configuration }),
+    useOptions: () => ({ isPending: false, isError: false, data: state.options }),
     usePlacementArea: () => ({ isPending: false, isSuccess: true, data: AREA }),
     usePatchConfiguration: () => ({
       mutate: state.patch,
@@ -85,6 +88,7 @@ describe("Konfigurator", () => {
     state.flags = { configurator: true };
     state.site = site;
     state.configuration = EMPTY;
+    state.options = OPTIONS;
     state.patchError = null;
     state.patch.mockReset();
     state.presets.mockReset();
@@ -129,7 +133,7 @@ describe("Konfigurator", () => {
     expect(table.getByText("Straße (2)")).toBeInTheDocument();
     expect(table.getByText("5,00 m", { selector: "td.num.t-ink" })).toBeInTheDocument();
     expect(screen.getByTestId("haus")).toBeInTheDocument();
-    expect(screen.getByText("Nächster Schritt: Linie, Optionen und geschätzte Kosten. Er ist noch nicht freigeschaltet.")).toBeInTheDocument();
+    expect(screen.getByText("Ist die Lage in Ordnung, geht es weiter mit der Ausstattungslinie.")).toBeInTheDocument();
   });
 
   it("nennt bei einem Verstoß alle verletzten Regeln", () => {
@@ -196,5 +200,63 @@ describe("Konfigurator", () => {
     state.configuration = { ...CONFIGURATION, mode: "free", free_reason: "manual_sketch" };
     renderAt("/konfigurator");
     expect(screen.getAllByText(/Sie haben das Grundstück selbst gezeichnet/).length).toBeGreaterThan(0);
+  });
+
+  it("zeigt die Kostenleiste erst nach der Typwahl", () => {
+    renderAt("/konfigurator");
+    expect(screen.queryByTestId("kostenleiste")).not.toBeInTheDocument();
+  });
+
+  it("sperrt Linie, Optionen und Vorentwurf, bis der Typ platziert ist", () => {
+    renderAt("/konfigurator");
+    for (const name of [/2 · Implantation/, /3 · Linie/, /4 · Optionen/, /5 · Vorentwurf/]) {
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+    }
+  });
+
+  it("führt von der Lage zur Linie und zeigt den Korridor", async () => {
+    state.configuration = CONFIGURED;
+    renderAt("/konfigurator");
+    expect(screen.getByTestId("korridor")).toHaveTextContent("ca. 449.000 € – 490.000 €");
+    await userEvent.click(screen.getByRole("button", { name: "Weiter" }));
+    expect(screen.getByRole("heading", { name: "Ausstattungslinie" })).toBeInTheDocument();
+    expect(screen.getByTestId("linie-confort")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "3 · Linie" })).toHaveAttribute("aria-current", "step");
+  });
+
+  it("wählt eine Linie mit der Revision der Konfiguration", async () => {
+    state.configuration = CONFIGURED;
+    renderAt("/konfigurator");
+    await userEvent.click(screen.getByRole("button", { name: "3 · Linie" }));
+    await userEvent.click(within(screen.getByTestId("linie-base")).getByRole("button", { name: "Base wählen" }));
+    expect(state.patch).toHaveBeenCalledWith({ body: { package_slug: "base" }, revision: 3 });
+  });
+
+  it("schaltet Optionen um und sendet die vollständige Liste", async () => {
+    state.configuration = CONFIGURED;
+    renderAt("/konfigurator");
+    await userEvent.click(screen.getByRole("button", { name: "4 · Optionen" }));
+    await userEvent.click(screen.getByTestId("option-keller"));
+    expect(state.patch).toHaveBeenLastCalledWith({ body: { option_slugs: ["terrasse", "keller"] }, revision: 3 });
+    await userEvent.click(screen.getByTestId("option-terrasse"));
+    expect(state.patch).toHaveBeenLastCalledWith({ body: { option_slugs: [] }, revision: 3 });
+  });
+
+  it("nennt die Gründe, wenn der Server eine Option ablehnt", async () => {
+    state.configuration = CONFIGURED;
+    state.patchError = new ApiError({ status: 422, code: "selection_blocked", title: "blocked", checks: [{ code: "annex_footprint", kind: "annex", status: "fail", binding: true, measured: 30, limit: 20, unit: "m2", params: { subject: "carport_2" } }] } as never);
+    renderAt("/konfigurator");
+    await userEvent.click(screen.getByRole("button", { name: "4 · Optionen" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Nebengebäude „Carport zweistellig“: 30,0 m² (höchstens 20,0 m²)");
+  });
+
+  it("zeigt im Vorentwurf Auswahl und Flächen und führt zurück zur Linie", async () => {
+    state.configuration = CONFIGURED;
+    renderAt("/konfigurator");
+    await userEvent.click(screen.getByRole("button", { name: "5 · Vorentwurf" }));
+    expect(screen.getByRole("heading", { name: "Ihr Vorentwurf" })).toBeInTheDocument();
+    expect(screen.getByTestId("vorentwurf")).toHaveTextContent("Gartenfassade: Süden");
+    await userEvent.click(within(screen.getByTestId("vorentwurf")).getAllByRole("button", { name: "Ändern" })[1]!);
+    expect(screen.getByRole("heading", { name: "Ausstattungslinie" })).toBeInTheDocument();
   });
 });

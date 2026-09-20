@@ -8,7 +8,15 @@ import { useInquiries, type InquiryStatus } from "../../api/inquiry";
 import { Kopf } from "../../components/Kopf";
 import { Fehler } from "./Grundstuecke";
 
-const STATUSES: (InquiryStatus | "")[] = ["", "neu", "in_bearbeitung", "beantwortet", "geschlossen"];
+const STATUSES: (InquiryStatus | "")[] = [
+  "",
+  "neu",
+  "in_bearbeitung",
+  "rueckfrage",
+  "beantwortet",
+  "geschlossen",
+  "zurueckgezogen",
+];
 
 export function Anfragen() {
   const { t, i18n } = useTranslation();
@@ -38,6 +46,7 @@ export function Anfragen() {
                 <th scope="col" className="py-2 pr-3 font-medium">{t("inquiry.contact.name")}</th>
                 <th scope="col" className="py-2 pr-3 font-medium">{t("office.inquiries.status")}</th>
                 <th scope="col" className="py-2 pr-3 font-medium">{t("office.inquiries.envelope")}</th>
+                <th scope="col" className="py-2 pr-3 font-medium">{t("office.inquiries.design")}</th>
                 <th scope="col" className="py-2 font-medium">{t("office.inquiries.created")}</th>
               </tr>
             </thead>
@@ -52,6 +61,12 @@ export function Anfragen() {
                   <td className="py-2 pr-3">{item.customer_name}</td>
                   <td className="py-2 pr-3">{t(`inquiry.status.${item.status}`)}</td>
                   <td className="py-2 pr-3">{item.has_envelope ? t("inquiry.yes") : t("inquiry.no")}</td>
+                  <td className="py-2 pr-3">
+                    {item.submissions ? t("office.inquiries.designCount", { count: item.submissions }) : t("office.inquiries.noDesign")}
+                    {item.deviation_count ? (
+                      <span className="t-alert"> · {t("office.inquiries.deviations", { count: item.deviation_count })}</span>
+                    ) : null}
+                  </td>
                   <td className="py-2 t-mute">{new Date(item.created_at).toLocaleString(i18n.language)}</td>
                 </tr>
               ))}

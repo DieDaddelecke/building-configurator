@@ -1,6 +1,6 @@
 # Emprise – Umsetzungsplan in Modulen
 
-> **Status:** Vorschlag zur Entscheidung; daraus beauftragt: R0 (Modul P), G1, G2, G3, H1, A und H2; Entscheidungen in Kapitel 9 · **Stand:** 19.09.2026 · Umsetzungsstand je Modul: [HANDOFF.md](HANDOFF.md) Abschnitt 1; Festlegungen der Umsetzung: [docs/ANNAHMEN.md](docs/ANNAHMEN.md); Modulpläne: `docs/PLAN_<Modul>.md`
+> **Status:** Vorschlag zur Entscheidung; daraus beauftragt und umgesetzt: R0 (Modul P), G1, G2, G3, H1, A, H2, H3 und V; Entscheidungen in Kapitel 9 · **Stand:** 19.09.2026 · Umsetzungsstand je Modul: [HANDOFF.md](HANDOFF.md) Abschnitt 1; Festlegungen der Umsetzung: [docs/ANNAHMEN.md](docs/ANNAHMEN.md); Modulpläne: `docs/PLAN_<Modul>.md`
 > **Bezug:** `BACKEND_SPEZIFIKATION.md` (fachliche Regeln und Algorithmen), `Hauskonfigurator.jsx` (Oberfläche)
 > **Verhältnis zur Spezifikation:** Dieser Plan legt Zuschnitt, Reihenfolge und IT-Infrastruktur fest. Fachliche Details stehen weiter in der Spezifikation und werden hier nur mit Kapitelnummer verwiesen („Spez. 5.3“). Wo der Plan abweicht, steht es in Kapitel 7. Nach Freigabe ersetzt er Kapitel 14 (Meilensteine) der Spezifikation; die Abweichungen werden dort eingearbeitet.
 
@@ -364,6 +364,8 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 
 **Abnahme:** Korridorfälle Spez. 11.2 mit Lärche als fester Spanne je Typ; Freiflächenrechnung mit Zufahrt; in einer Linie enthaltene Option erhöht den Korridor nicht.
 
+**Umgesetzt am 19.09.2026:** H3 nach [docs/PLAN_H3_KONFIGURATION_KOSTEN.md](docs/PLAN_H3_KONFIGURATION_KOSTEN.md) umgesetzt (Backend `backend/app/configuration`, Migration 0010, Oberfläche `/konfigurator` mit den Schritten Linie, Optionen, Vorentwurf und Kostenleiste, ANNAHMEN HK01–HK17). Abweichungen: kein Cache des Typteils (HK12); Terrasse und Carport als Optionsarten mit Maßen und Preis je m² bzw. fest (HK04); Regelprüfung der Ausführungen über Material an Option und Linie statt über Ausführungstabellen (HK08); Photovoltaik-Belegung und Keller bleiben feste Aufschläge (Kapitel 7).
+
 **Größe:** M (3–5 PW).
 
 ### 3.10 V – Vorentwurf-Übergabe (R2)
@@ -377,6 +379,8 @@ Module rufen einander nur über `service.py` auf, nie über fremde Tabellen. `do
 - Zustände mit Neuübergabe und `superseded` (Spez. 5.10.1), Nachrichten Büro ↔ Kunde
 
 **Nicht in R2:** IFC-Export, XLSX-Mengen, gestempelte Planunterlagen (→ X4).
+
+**Umgesetzt am 19.09.2026:** V nach [docs/PLAN_V_VORENTWURF_UEBERGABE.md](docs/PLAN_V_VORENTWURF_UEBERGABE.md) (Backend `backend/app/submission`, Prüfstempel in `backend/app/configuration/review.py`, Migration 0011, Oberfläche mit Übergabe im Vorentwurf, `/vorgang`, `/zugang` und den Fassungen im Büro, ANNAHMEN VU01–VU16). Abweichungen: Vorgang (`inquiry`) und Fassung (`submission`) getrennt statt einer erweiterten Anfrage (VU01); Neuprüfung über einen inhaltsbasierten Prüfstempel mit sechs Teilen (VU04); Doppelklickschutz über den Stempel statt `Idempotency-Key` (VU05); Zustände als Erweiterung von A statt des Automaten aus Spez. 5.10.1 (VU02); gescheitertes Dossier nur als Log-Alarm und Anzeige im Büro, ohne Mail (VU10).
 
 **Abnahme:** Durchlauf A des Mockups erzeugt vollständiges PDF und DXF; eine zwischen Speichern und Absenden geänderte Regelwerksversion wird erkannt; Neuübergabe setzt die vorige auf `superseded`; das Büro übernimmt den DXF-Lageplan nach beschriebenem Vorgehen lagerichtig in ArchiCAD.
 
@@ -644,7 +648,9 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | Neuprüfung | „gespeicherte Konfigurationen sind immer auswahlgültig“ | Vollständige Neuprüfung beim Absenden | Regeln, Katalog und Kanten ändern sich nach dem Speichern |
 | Preisbezug | An Typversion | An Typ-Identität mit Gültigkeit | Modelländerung erzwingt keinen neuen Preiskatalog und kein neues Gutachten |
 | Katalogdaten | IFC ab M4 | Typdatenblatt und DXF-Umriss; IFC erst X3 | Bei wenigen Typen günstiger und genauer |
-| Optionspreise | Mengen × Einheitspreis ab M5 | Feste Spanne je Typ; Mengen erst X3 | Kein Mengengerüst nötig für gerundete Spannen |
+| Optionspreise | Mengen × Einheitspreis ab M5 | Feste Spanne je Typ; Mengen erst X3. Nur die Terrasse rechnet je m² (Fläche aus Typ und Gartenkante, HK04) | Kein Mengengerüst nötig für gerundete Spannen |
+| Typteil der Auswertung | gecacht (Plan 3.9) | Nicht gecacht, aber als eigene reine Funktion (HK12) | Wenige Nachschlagen; ein Cache brauchte Invalidierung bei Katalog, Preis und Regel |
+| Regelprüfung der Ausführungen | `finish_version.regulatory`, Ausführungen je Oberflächenkategorie (Spez. 4.3, 5.9.2) | Materialklasse an Option und Linie (`regulatory`, HK04, HK08) | Ohne Modell und Mengen tragen Ausführungstabellen nichts außer der Materialklasse |
 | **Bauband an der Straße** | `setback_street` mit `range` ist nur eine Bedingung an die Straßenfassade, keine Flächenbedingung (Spez. 5.2.4) | Parameter `band`: Meint der Text den ganzen Hauptbaukörper („bande d'implantation“), begrenzt das Band die bebaubare Fläche; meint er nur die Fassade, bleibt es eine Bedingung für H2; ohne Angabe gilt es nur in der engsten Auslegung, mit Hinweis | Wortlaut der Zone Uh in Treillières: „hors bande d'implantation, les constructions nouvelles ne sont pas autorisées“. Ohne Unterscheidung wäre die Fläche dreifach zu groß (3.5, BR02) |
 | **Bebaubare Fläche** | `B(0)` und `B(H_max)` je nach Höhe (Spez. 5.3.1) | Zwei Konturen als weiteste und engste Auslegung **jeder** mehrdeutigen Regel | Unsicherheit entsteht auch aus Grenzbebauung, Bauband, Kantenart und fehlenden Werten; sichtbar machen statt schätzen (D11, BR01) |
 | Höhenbezug Straßenniveau, Angabe in m NGF | Spez. 5.9.4 | Nur der Bezug wird genannt, keine absolute Höhe | G3 fragt keine externen Dienste ab; H2 fragt ohnehin Punkte unter dem Haus nach (BR09) |
@@ -656,6 +662,11 @@ Größenordnung für Staging und Produktion in R1: niedriger dreistelliger Eurob
 | Winkel | keine Toleranz | Konstante 0,1° | Ligne hätte 34,99° < 35° |
 | Paritätstest Firstrichtung | mit Plateau (Flachdach) | mit Satteldachtyp | Flachdach hat keinen First |
 | Dossier R2 | alle Dateien in M9 | PDF und DXF-Lageplan; Rest X4 | Größter Nutzen für das Büro bei geringem Aufwand |
+| **Übergabe und Zustände** | Eine Übergabe je Konfigurationsrevision mit Zustandsautomat (Spez. 5.10.1) | Vorgang (`inquiry`, eine Nummer je Projekt) und Fassung (`submission`) getrennt; Zustände von A um `rueckfrage` und `zurueckgezogen` erweitert (VU01, VU02) | Die Anfrage aus A und die Übergabe aus V sind derselbe Vorgang (D14); eine Fassung muss unveränderlich bleiben (L4) |
+| Neuprüfung beim Absenden | „Auswertung auf aktuellem Stand“ über Versionen (Spez. 5.10.2) | Prüfstempel über den **Inhalt** in sechs benannten Teilen; die Oberfläche nennt, was sich geändert hat (VU04) | Gelände, Projektkorrekturen und RE2020-Befunde ändern nichts an Versionsnummern |
+| Idempotenz der Übergabe | `Idempotency-Key` (Spez. 6.1) | Gleicher Prüfstempel liefert die bestehende Fassung; Sperre auf der Projektzeile (VU05) | Kein zweiter Mechanismus nötig, der Stempel enthält schon die Revision |
+| Fehlgeschlagenes Dossier | Benachrichtigung an Betrieb und Büro (Spez. 5.10.3) | Log-Alarm `dossier_failed` und Anzeige im Büro mit „neu erzeugen“ (VU10) | Kein Mailanbieter festgelegt (E2); das Büro sieht den Vorgang ohnehin |
+| Zugang des Kunden | Magic Link, mehrere Geräte offen (Spez. 6.2) | Signierter Link im Fragment, 30 Tage; Einlösen ersetzt das Projekt-Cookie (VU14) | Vom Projekttoken ist nur der Hash gespeichert |
 | RE2020 beim Veröffentlichen | – | Fehlende Bewertung sperrt nicht, Anzeige „nicht bewertet“ | Katalog wartet nicht auf Gutachten |
 | Sprache | Dokumente zweisprachig | Oberfläche Französisch führend | Kunden sind in Frankreich |
 
@@ -691,12 +702,12 @@ Ergänzt Spez. 16. Vorschlag jeweils als Standard.
 | D5 | Wer betreibt die Plattform | Emprise mit benannter Betriebsverantwortung und Vertretung |
 | D6 | Datenschutzrolle Emprise ↔ Büro | Vor R1 rechtlich festlegen |
 | D7 | Sprache der Oberfläche | Französisch führend, Deutsch zusätzlich |
-| D8 | Was bietet das Büro an: Honorar oder Bauleistung | Vor R2 klären; bestimmt Bedeutung und Pflege der Preisspannen |
+| D8 | Was bietet das Büro an: Honorar oder Bauleistung | Vor R2 klären; bestimmt Bedeutung und Pflege der Preisspannen. **Nach der Empfehlung genommen 19.09.2026 (H3, ungefragt), vom Nutzer am 19.09.2026 bestätigt:** bestimmt nur den Wortlaut der Spanne („Schätzung, unverbindlich“, ANNAHMEN HK10) |
 | D9 | Vier-Augen-Prinzip bei Regelfreigabe (Spez. E6) | **Entfällt mit D11** (keine Regelfreigabe mehr) |
-| D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto |
+| D10 | Mehrwertsteuer in der Anzeige (Spez. E4) | brutto. **Entschieden 19.09.2026 (H3 nach Empfehlung, vom Nutzer bestätigt):** gespeichert netto, Anzeige brutto mit dem Satz des Katalogs (ANNAHMEN HK10) |
 | D11 | Herkunft und Verbindlichkeit der Regeln | **Entschieden 14.09.2026:** G2 arbeitet vollautomatisch und ist nicht auf Eingaben des Büros angewiesen. Das Ergebnis ist eine unverbindliche Simulation, nicht kontraktuell. Das Büro prüft die fertige Simulation erst, nachdem der Kunde Kontakt aufgenommen hat (3.4, 3.6, Kapitel 7) |
-| D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (Auftrag „erstelle den Hauskonfigurator“, H2):** nur wirksame Regeln sperren, Unbekanntes bleibt Hinweis (ANNAHMEN HP01); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |
-| D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (H2), erweitert auf Grundstücke ohne verfügbare Regeln:** freier Modus im Umriss ohne Abstandsprüfung (ANNAHMEN HP02); vom Nutzer nicht ausdrücklich bestätigt, umkehrbar. |
+| D12 | Wie stark schränken simulierte Regeln den Konfigurator ein (R2)? | Regeln mit verifiziertem Zitat wirken im Konfigurator wie Grenzen: Lage außerhalb des simulierten Baurahmens wird nicht gespeichert, unzulässige Typen sind mit Begründung markiert. Regeln mit `unknown` erzeugen nur Hinweise. Die Anfrage an das Büro bleibt immer möglich, auch ohne gültige Konfiguration. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (Auftrag „erstelle den Hauskonfigurator“, H2):** nur wirksame Regeln sperren, Unbekanntes bleibt Hinweis (ANNAHMEN HP01); vom Nutzer am 19.09.2026 bestätigt. |
+| D13 | Wie geht H2 (Zulässigkeit und Implantation, R2) mit einem frei gezeichneten Grundstück ohne Baurahmen um (Weg E, 3.3)? | Platzierung ohne Abstandsprüfung: Der gezeichnete Umriss gilt direkt als Fläche, auf der das Haus frei verschoben und gedreht werden kann, ohne Prüfung gegen Kanten oder Abstände – da es keinen Baurahmen gibt, gibt es auch nichts, wogegen H2 prüfen könnte. Der Hinweistext aus 3.3 bleibt im gesamten weiteren Ablauf sichtbar. Vor H2 entscheiden. **Nach der Empfehlung genommen 19.09.2026 (H2), erweitert auf Grundstücke ohne verfügbare Regeln, vom Nutzer am 19.09.2026 bestätigt:** freier Modus im Umriss ohne Abstandsprüfung (ANNAHMEN HP02). |
 | D14 | Bleibt A (Anfrage direkt nach G3, ohne Konfiguration) bestehen, sobald H1–H3 und V den vollständigen Weg G3 → Konfigurator → V anbieten? | **Entschieden 17.09.2026:** Ja, dauerhaft als Notausgang, auch mit gültigem Baurahmen. Regelweg bleibt G3 → H2 → H3 → V mit einer Anfrage erst nach vollständiger Konfiguration (Spez. 3.4); A daneben als schnellerer Weg ohne Konfiguration. V erweitert dieselbe Anfrage, falls der Kunde nachträglich konfiguriert |
 
 ---
