@@ -12,7 +12,7 @@ x-backend-env: &backend-env
   EMPRISE_OIDC_ISSUER: http://oidc.localhost:8081/emprise
   EMPRISE_OIDC_CLIENT_ID: emprise-local
   EMPRISE_OIDC_CLIENT_SECRET: local-secret
-  EMPRISE_S3_ENDPOINT_URL: http://minio:9000
+  EMPRISE_S3_ENDPOINT_URL: http://storage:8333
   EMPRISE_S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
   EMPRISE_S3_ACCESS_KEY: emprise
   EMPRISE_S3_SECRET_KEY: emprise-local-secret
@@ -40,18 +40,28 @@ services:
       timeout: 3s
       retries: 30
 
-  minio:
-    # MinIO verteilt keine neuen Community-Images mehr; nur lokal genutzt (docs/ANNAHMEN.md)
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server /data --console-address :9001
-    environment:
-      MINIO_ROOT_USER: emprise
-      MINIO_ROOT_PASSWORD: emprise-local-secret
+  storage:
+    # S3-kompatibel wie auf Unraid (ANNAHMEN A16, A22). MinIO ist auf quay.io seit dem 25.09.2026
+    # nicht mehr anonym abrufbar; SeaweedFS spricht denselben S3-Anschluss, hört auf 8333 und ist
+    # auf dem Rechner unter Port 9000 erreichbar. Keine Konsole: Dateien über die API oder die CLI.
+    image: chrislusf/seaweedfs:3.97
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        printf '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise",
+        "secretKey":"emprise-local-secret"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
+        | tr -d ' \n' > /tmp/s3.json &&
+        exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json
     volumes:
-      - minio-data:/data
+      - storage-data:/data
     ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:9000:8333"
+    healthcheck:
+      # Master, Volume, Filer und S3 starten nacheinander; der S3-Anschluss ist zuletzt da (~15 s)
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8333"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
   mailpit:
     image: axllent/mailpit:v1.27
@@ -82,8 +92,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_started
+      storage:
+        condition: service_healthy
     restart: on-failure:5
 
   api:
@@ -140,4 +150,4 @@ services:
 
 volumes:
   db-data:
-  minio-data:
+  storage-data:

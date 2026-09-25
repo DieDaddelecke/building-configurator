@@ -18,7 +18,7 @@ x-backend-env: &backend-env
   EMPRISE_OIDC_ISSUER: http://oidc.localhost:8081/emprise
   EMPRISE_OIDC_CLIENT_ID: emprise-local
   EMPRISE_OIDC_CLIENT_SECRET: local-secret
-  EMPRISE_S3_ENDPOINT_URL: http://minio:9000
+  EMPRISE_S3_ENDPOINT_URL: http://storage:8333
   EMPRISE_S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
   EMPRISE_S3_ACCESS_KEY: emprise
   EMPRISE_S3_SECRET_KEY: emprise-local-secret
@@ -92,7 +92,7 @@ services:
         condition: service_healthy
 
 networks:
-  # Netz des Hauptstacks: `db`, `minio`, `mailpit` und `oidc.localhost` sind dort erreichbar.
+  # Netz des Hauptstacks: `db`, `storage`, `mailpit` und `oidc.localhost` sind dort erreichbar.
   default:
     name: emprise_default
     external: true

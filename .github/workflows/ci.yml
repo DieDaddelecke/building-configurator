@@ -37,11 +37,13 @@ jobs:
       EMPRISE_S3_BUCKET: emprise-ci
     steps:
       - uses: actions/checkout@v4
-      - name: MinIO starten
+      - name: Objektspeicher starten (SeaweedFS, S3 auf Port 9000)
         run: |
-          docker run -d --name minio -p 9000:9000 \
-            -e MINIO_ROOT_USER=emprise -e MINIO_ROOT_PASSWORD=emprise-ci-secret \
-            quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+          docker run -d --name storage -p 9000:8333 -e S3_CONFIG --entrypoint sh \
+            chrislusf/seaweedfs:3.97 -c \
+            'printf "%s" "$S3_CONFIG" > /tmp/s3.json && exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json'
+        env:
+          S3_CONFIG: '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise","secretKey":"emprise-ci-secret"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
@@ -51,7 +53,7 @@ jobs:
       - run: uv run mypy app
       - name: Bucket anlegen
         run: |
-          for i in $(seq 1 20); do curl -sf http://localhost:9000/minio/health/live && break; sleep 1; done
+          for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:9000 && break; sleep 1; done
           EMPRISE_ENV=test uv run python -m app.cli storage-init
       - run: uv run pytest
 

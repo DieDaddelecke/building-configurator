@@ -49,7 +49,7 @@ Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080
 | http://localhost:8080/buero | Büro; Anmeldung über den lokalen OIDC-Testdienst (Port 8081) als `ops@emprise.local` |
 | http://localhost:8000/api/v1/docs | API-Beschreibung |
 | http://localhost:8025 | Mailpit (versandte Mails, Bestätigungscodes) |
-| http://localhost:9001 | MinIO-Konsole (`emprise` / `emprise-local-secret`); MinIO selbst auf Port 9000 |
+| http://localhost:9000 | Objektspeicher (SeaweedFS, S3-Anschluss; Zugang `emprise` / `emprise-local-secret`, keine Konsole) |
 
 Das zweite Produkt „Emprise Analyse“ (AN0 und AN1: Parzelle als DXF, GeoJSON, PDF oder Zeichnung einbringen, Kanten einordnen) läuft als Aufsatz auf diesen Stack – eigene Datenbank `emprise_analyse`, eigener Bucket, Anwendung http://localhost:8180, API http://localhost:8100:
 
@@ -73,7 +73,7 @@ cd frontend && corepack pnpm install && corepack pnpm dev
 
 ## Prüfen
 
-Backend (Lint, Typen, Tests gegen PostGIS und MinIO; MinIO und Mailpit müssen laufen, sonst scheitert `test_storage_ops`; rund 3,5 Minuten; in Git-Bash `MSYS_NO_PATHCONV=1` davor):
+Backend (Lint, Typen, Tests gegen PostGIS und den Objektspeicher; `storage` und `mailpit` müssen laufen, sonst scheitert `test_storage_ops`; rund 3,5 Minuten; in Git-Bash `MSYS_NO_PATHCONV=1` davor):
 
 ```bash
 docker compose --profile dev run --rm -e TEST_S3=1 backend-dev sh -c "ruff check . && ruff format --check . && mypy app && pytest"
@@ -116,6 +116,7 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 - `ruff format` ändert Dateien: danach vor dem Edit-Werkzeug neu lesen. Das `# type: ignore[arg-type]` an `messages=` in `backend/app/integrations/claude.py` ist nötig, auch wenn mypy es einmal als unbenutzt meldet.
 - Unsichtbare Zeichen: `backend/app/rules/domain/text.py` enthält in `_TRANSLATE` geschützte Leerzeichen (U+00A0, U+202F) und einen weichen Trennstrich; beim vollständigen Neuschreiben gingen sie verloren – mit `git diff` prüfen.
 - Zweites Produkt lokal: `compose.analyse.yaml` hängt am Netz `emprise_default` und an den Images des Hauptstacks. Der Hauptstack muss also laufen (`docker compose up -d`), und nach Codeänderungen erst dort `docker compose build migrate web`, sonst startet der Analyse-Stack den alten Stand. Die Datenbank `emprise_analyse` bleibt beim `down` bestehen; neu aufsetzen mit `docker exec emprise-db-1 psql -U postgres -c "DROP DATABASE emprise_analyse"`. Konto und Flag gelten je Datenbank: `docker compose -f compose.analyse.yaml exec api-analyse python -m app.cli staff-add ops@emprise.local architect` und `… flag-set site_selection --role architect`. Die Dienste heißen `…-analyse`, weil beide Stacks dasselbe Netz benutzen und ein zweiter Dienst `api` den Namen mehrdeutig machte. Beide Produkte teilen lokal außerdem den Cookie-Vorrat (derselbe Host `localhost`, nur andere Ports): Eine Anmeldung im einen verdrängt die im anderen; auf Unraid haben sie eigene Hostnamen.
+- Objektspeicher: seit dem 25.09.2026 SeaweedFS statt MinIO (A16), Dienst `storage`, S3 im Netz auf `storage:8333`, auf dem Rechner `localhost:9000`, keine Konsole. Er braucht nach dem Start rund 15 Sekunden, bis der S3-Anschluss antwortet (Gesundheitsprüfung im Compose). Der alte Band `minio-data` bleibt liegen: Dossiers aus der Zeit davor sind im neuen Speicher nicht vorhanden und im Büro über „Dossier neu erzeugen“ wiederherstellbar; aufräumen mit `docker volume rm emprise_minio-data`.
 - Parallele Sessions im selben Ordner: Abstimmung per `ListAgents`/`SendMessage`, Dateien vor jeder Änderung neu einlesen. `docker compose up --build` baut den Arbeitsstand samt fremder halbfertiger Dateien; für isolierte Tests ein eigenes Compose-Projekt (`-p <name>` mit Override `ports: !reset []`) oder `git worktree`.
 - CI: Der Security-Job baut Caddy mit `xcaddy`; Netzfehler zu `sum.golang.org` sind kein Codefehler, wiederholen mit `gh run rerun <id> --failed`.
 

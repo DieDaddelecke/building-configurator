@@ -1,13 +1,13 @@
 # Hand-off für die nächste Session
 
-> **Stand:** 25.09.2026 · **Letzte Session:** „Emprise Analyse“ beauftragt und begonnen – AN0 (Produktschnitt) und AN1 (Parzelle einbringen, auch aus PDF) umgesetzt; **nichts committet** (Eintrag „Emprise Analyse: AN0 … und AN1 …“ oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
+> **Stand:** 25.09.2026 · **Letzte Session:** „Emprise Analyse“ beauftragt und begonnen – AN0 (Produktschnitt) und AN1 (Parzelle einbringen, auch aus PDF) umgesetzt; committet und gepusht (Eintrag „Emprise Analyse: AN0 … und AN1 …“ oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
 > Momentaufnahme, bei jedem `/handoff` neu geschrieben. Dauerhaftes steht nicht hier, sondern in README (Stolperstellen), BETRIEB (Module im Betrieb), ANNAHMEN und Spez. Anhang E.4.
 
 ---
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat) steht unverändert auf `35d8b43`. **Uncommittet im Arbeitsbaum:** die Hand-off-Dokumente der V-Session, der Plan „Emprise Analyse“ aus der Vorsession und die ganze Arbeit dieser Session (49 geänderte, 20 neue Dateien).
+- **Git:** `main` auf https://github.com/DieDaddelecke/building-configurator (privat) ist gepusht; alles aus dieser und den zwei Vorsessions ist committet (`8c9707f` Plandokument, `d97da2c` AN0 und AN1, dazu der Wechsel des Objektspeichers). Arbeitsbaum sauber.
 - **Hauskonfigurator:** R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1–H3 und V fertig; R2 fachlich vollständig. Verhalten unverändert, berührt wurden nur Weg E (legt jetzt Kanten an, ANNAHMEN UP02) und die Löschung eines Projekts (liegt im Kern, Sperre aus Modul A bleibt, UP07).
 - **Emprise Analyse (zweites Produkt, D18):** **AN0** (Produktschnitt: `EMPRISE_PRODUCT`, `app/products.py`, Grenz-Test, zweiter Vite-Einstieg, zweiter Stack) und **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung; Kanten von Hand einordnen; Projekte am Architektenkonto) umgesetzt. Festlegungen: ANNAHMEN PS01–PS09 und UP01–UP16; Pläne: [PLAN_ANALYSE](docs/PLAN_ANALYSE.md), [PLAN_AN1](docs/PLAN_AN1_PARZELLE.md); Betrieb: [BETRIEB 15](docs/BETRIEB.md).
 - **Tests:** Backend 526 (vorher 474), Frontend 150 (143), dazu ruff, Format, mypy, Typprüfung, Lint und Build grün. Playwright lief wie bisher lokal nicht; für Konfigurator, V und das Analyse-Produkt gibt es kein Szenario.
@@ -105,7 +105,7 @@ Alles Wesentliche steht in den Plänen und in ANNAHMEN. Kurz:
 4. Überwachung (Uptime Kuma, Unraid README 7) mit den Log-Alarmen aus BETRIEB 1, auch `dossier_failed`; Offsite-Sicherung; erste Wiederherstellungsübung.
 5. SMTP nach E2 eintragen, Testmail; GitHub-Hauptzweig schützen.
 6. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6): Staff-E-Mail, Mailadressen in Jobs (A12), IP-HMAC (A7), Steckbriefe (BR10), Kundenkontakt, Einwilligungen, Snapshots, Konfiguration, Dossierdateien; neu die Projekte des Analyse-Produkts (Eigentümer, hochgeladene Umrisse). Die Claude API erhält nur Planunterlagen.
-7. Optional: lokal und in CI SeaweedFS statt MinIO (A16, A22).
+7. Erledigt am 25.09.2026: lokal und in CI SeaweedFS statt MinIO (A16) – MinIO war nicht mehr abrufbar. Offen bleibt, den ungenutzten Band `minio-data` zu entfernen.
 
 ### 4.8 Weitere Punkte
 
@@ -118,7 +118,7 @@ Alles Wesentliche steht in den Plänen und in ANNAHMEN. Kurz:
 
 ## 5. Empfohlener nächster Schritt
 
-1. **Committen**, bevor mehr dazukommt: die Dokumente der zwei Vorsessions getrennt, danach AN0 + AN1 + PDF-Upload in einem Commit (sie greifen ineinander), dann pushen und die CI beobachten.
+1. **CI im Auge behalten:** Der Lauf nach dem Wechsel des Objektspeichers muss grün sein, besonders der Job `e2e` – er startet den ganzen Stack und lief mit SeaweedFS noch nie.
 2. Priorität 1 aus Abschnitt 3 klären (Schlüssel der Claude API, Authentik-Hostname, Mailanbieter, Büro-Postfach und -Name).
 3. Danach entweder **AN2** (PLU hochladen, 4.1) oder die Auslieferung auf Unraid und G2/G3 mit echtem Schlüssel (4.6, 4.7). Beides ist unabhängig voneinander.
 4. In beiden Fällen bald 4.2: Playwright-Szenarien und die Browserprüfungen, die noch fehlen.

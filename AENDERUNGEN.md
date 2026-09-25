@@ -8,7 +8,13 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 **Auftrag:** „Fange mit AN0 an“, danach „weiter mit AN1“, dann „kannst du eine lokale Instanz starten“ und „Es sollte auch möglich sein, PDF-Dateien hochzuladen, aus denen dann die Parzelle gelesen wird“. Gearbeitet am 20./21.09.2026, Hand-off am 25.09.2026.
 
-**Commits:** keine. Alles liegt uncommittet im Arbeitsbaum, zusammen mit den Dokumenten der beiden Vorsessions; `main` steht weiter auf `35d8b43`.
+**Commits:** `8c9707f` Vorgehensplan „Emprise Analyse“ (Dokument der Vorsession), `d97da2c` AN0 und AN1 samt Hand-off-Dokumenten beider Vorsessions, `5ca988a` Objektspeicher lokal und in CI von MinIO auf SeaweedFS. Getrennt ließ sich nur das Plandokument; HANDOFF, AENDERUNGEN, AGENTS und UMSETZUNGSPLAN tragen die Änderungen beider Sessions in denselben Zeilen.
+
+**Nachtrag nach dem Push: CI rot ohne Codefehler**
+
+- `quay.io/minio/minio` ist seit dem 25.09.2026 nicht mehr anonym abrufbar („unauthorized“, mit anonymem Pull-Token gegengeprüft). Der Backend-Job scheiterte beim Start von MinIO, `e2e` wurde übersprungen; `security` und `frontend` waren grün.
+- Umgestellt auf **SeaweedFS 3.97** – den in A16 vorgesehenen Ersatz, der auf Unraid schon läuft (A22): `.github/workflows/ci.yml`, `compose.yaml` (Dienst `storage`, S3 auf 8333, Port 9000, Gesundheitsprüfung, Band `storage-data`) und `compose.analyse.yaml`. Keine Konsole mehr; der alte Band `minio-data` bleibt ungenutzt liegen, lokale Dossiers sind über „Dossier neu erzeugen“ wiederherstellbar.
+- Gegengeprüft: `test_storage_ops` und `test_submission` gegen SeaweedFS, danach der volle Lauf mit 526 Tests.
 
 **Neu**
 - Backend: `app/products.py` (Router, Job-Module, periodische Aufgaben und Startseite je Produkt), `app/plan/` (`geometry.py`, `dxf.py` – aus `submission/dossier/` verschoben), `app/site/domain/upload.py` (DXF, GeoJSON), `app/site/domain/pdfplan.py` (vektorielles PDF), `app/submission/dossier/plan.py` (nur noch `from_snapshot`), Migration `0012_parcel_upload.py`.

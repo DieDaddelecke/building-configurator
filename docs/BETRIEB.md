@@ -308,7 +308,7 @@ Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([P
 
 `releases.log` führt beide Stacks mit Namen. Ein Rückrollen des einen lässt den anderen unberührt, weil die Kennzeichen getrennt sind.
 
-**Lokal.** Der Analyse-Stack setzt auf den laufenden Hauptstack auf (gemeinsamer Datenbankserver, MinIO, Mailpit, OIDC-Testdienst; eigene Datenbank `emprise_analyse`, eigener Bucket):
+**Lokal.** Der Analyse-Stack setzt auf den laufenden Hauptstack auf (gemeinsamer Datenbankserver, Objektspeicher, Mailpit, OIDC-Testdienst; eigene Datenbank `emprise_analyse`, eigener Bucket):
 
 ```
 docker compose -f compose.analyse.yaml up -d

@@ -554,7 +554,7 @@ Der Proof of Concept stellt das Gerüst aus P bereit, installiert PostGIS, stell
 
 | Umgebung | Zweck | Daten |
 |---|---|---|
-| `local` | Entwicklung mit Docker Compose: `postgis`, `api`, `worker`, `minio`, `mailpit` | Testdaten, Katasterausschnitt einer Gemeinde |
+| `local` | Entwicklung mit Docker Compose: `postgis`, `api`, `worker`, `storage` (SeaweedFS, A16), `mailpit` | Testdaten, Katasterausschnitt einer Gemeinde |
 | `staging` | Abnahme | Echte Referenzdaten (Kataster, GPU), keine echten Kundendaten |
 | `production` | Betrieb | Echt |
 
