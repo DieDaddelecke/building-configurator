@@ -1376,6 +1376,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/regulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Project Regulations
+         * @description Hochgeladene Dokumente des Projekts mit Lesestand, erkannten Kapiteln und Stand der Auswertung.
+         */
+        get: operations["list_project_regulations_api_v1_projects__project_id__regulations_get"];
+        put?: never;
+        /**
+         * Upload Project Regulation
+         * @description règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im
+         *     Job `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.
+         */
+        post: operations["upload_project_regulation_api_v1_projects__project_id__regulations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/regulations/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Project Regulation
+         * @description Dokument vom Projekt lösen; das Dokument bleibt für andere Projekte bestehen (E-AN2-4).
+         */
+        delete: operations["remove_project_regulation_api_v1_projects__project_id__regulations__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/regulations/{document_id}/zone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Regulation Zone
+         * @description Zone und Kapitel wählen (3.3). **Kostet**: plant die Auswertung des Kapitels ein, wenn sich seine
+         *     Eingabe ändert (neues Kapitel oder neuer Sektor); sonst nichts.
+         */
+        put: operations["choose_regulation_zone_api_v1_projects__project_id__regulations__document_id__zone_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/rules": {
         parameters: {
             query?: never;
@@ -1496,6 +1562,27 @@ export interface paths {
          * @description PDF einer eigenen Fassung; DXF-Dateien gibt es nur für das Büro.
          */
         get: operations["download_own_file_api_v1_projects__project_id__submissions__sequence__files__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/regulation-files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Regulation File
+         * @description Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für
+         *     das Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.
+         */
+        get: operations["regulation_file_api_v1_regulation_files__file_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1667,6 +1754,19 @@ export interface components {
         Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
             /** File */
             file: string;
+        };
+        /** Body_upload_project_regulation_api_v1_projects__project_id__regulations_post */
+        Body_upload_project_regulation_api_v1_projects__project_id__regulations_post: {
+            /**
+             * Du Type
+             * @default PLU
+             * @enum {string}
+             */
+            du_type: "PLU" | "PLUi" | "PSMV";
+            /** File */
+            file: string;
+            /** Title */
+            title?: string | null;
         };
         /** Body_upload_site_api_v1_projects__project_id__site_upload_post */
         Body_upload_site_api_v1_projects__project_id__site_upload_post: {
@@ -2112,6 +2212,39 @@ export interface components {
             name: string;
             /** Phone */
             phone: string | null;
+        };
+        /**
+         * DocumentChapterOut
+         * @description Kapitel eines hochgeladenen Reglements. `idle`: erkannt, aber für keine Zone gewählt – ohne Kosten.
+         */
+        DocumentChapterOut: {
+            /** Code */
+            code: string;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Detection */
+            detection: string;
+            /** Error */
+            error: string | null;
+            /** First Page */
+            first_page: number;
+            /** General Pages */
+            general_pages: number[];
+            /** Last Page */
+            last_page: number;
+            /** Runs */
+            runs: number;
+            /** Sectors */
+            sectors: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "idle" | "pending" | "extracting" | "succeeded" | "failed";
+            /** Suggested Sectors */
+            suggested_sectors: string[];
+            /** Title */
+            title: string;
         };
         /** DrivewayOut */
         DrivewayOut: {
@@ -3244,7 +3377,7 @@ export interface components {
             /** Du Type */
             du_type: string;
             /** Gpu Doc Id */
-            gpu_doc_id: string;
+            gpu_doc_id: string | null;
             /** Gpu Update Date */
             gpu_update_date: string | null;
             /**
@@ -3252,6 +3385,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "gpu" | "upload";
             /** Regulation Url */
             regulation_url: string | null;
             /** Title */
@@ -3401,6 +3539,19 @@ export interface components {
             /** Zone Code */
             zone_code: string;
         };
+        /** ProjectRegulationOut */
+        ProjectRegulationOut: {
+            /** Chapter Code */
+            chapter_code: string | null;
+            document: components["schemas"]["RegulationDocumentOut"];
+            /**
+             * Role
+             * @constant
+             */
+            role: "plu";
+            /** Zone Code */
+            zone_code: string | null;
+        };
         /** ProjectRulesOut */
         ProjectRulesOut: {
             /** Commune Insee */
@@ -3466,6 +3617,40 @@ export interface components {
             max_cents: number;
             /** Min Cents */
             min_cents: number;
+        };
+        /** RegulationDocumentOut */
+        RegulationDocumentOut: {
+            /** Chapters */
+            chapters: components["schemas"]["DocumentChapterOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Du Type */
+            du_type: string;
+            /** Empty Pages */
+            empty_pages: number[];
+            /** Error */
+            error: string | null;
+            /** File Name */
+            file_name: string | null;
+            /** File Url */
+            file_url: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Page Count */
+            page_count: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "importing" | "active" | "failed";
+            /** Title */
+            title: string;
         };
         /** RiskOut */
         RiskOut: {
@@ -4296,6 +4481,28 @@ export interface components {
             status: "simulated" | "office_reviewed" | "retired";
             /** Version */
             version: number;
+        };
+        /**
+         * ZoneChoiceIn
+         * @description Zone eines hochgeladenen Reglements wählen: erkanntes Kapitel oder Seitenbereich von Hand (3.3).
+         *
+         *     `zone_code` ist der Sektor, für den ausgewertet wird (`Uba` im Kapitel `Ub`). Ohne `first_page` gilt
+         *     das erkannte Kapitel `chapter_code`; mit `first_page`/`last_page` ein Kapitel von Hand (Code:
+         *     `chapter_code`, sonst der Zonencode), optional mit eigenem Bereich der allgemeinen Bestimmungen.
+         */
+        ZoneChoiceIn: {
+            /** Chapter Code */
+            chapter_code?: string | null;
+            /** First Page */
+            first_page?: number | null;
+            /** General First Page */
+            general_first_page?: number | null;
+            /** General Last Page */
+            general_last_page?: number | null;
+            /** Last Page */
+            last_page?: number | null;
+            /** Zone Code */
+            zone_code: string;
         };
         /** ZoneRulesOut */
         ZoneRulesOut: {
@@ -6755,6 +6962,138 @@ export interface operations {
             };
         };
     };
+    list_project_regulations_api_v1_projects__project_id__regulations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRegulationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_project_regulation_api_v1_projects__project_id__regulations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_project_regulation_api_v1_projects__project_id__regulations_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRegulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_project_regulation_api_v1_projects__project_id__regulations__document_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    choose_regulation_zone_api_v1_projects__project_id__regulations__document_id__zone_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneChoiceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRegulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_project_rules_api_v1_projects__project_id__rules_get: {
         parameters: {
             query?: never;
@@ -6980,6 +7319,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    regulation_file_api_v1_regulation_files__file_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
                 };
             };
             /** @description Validation Error */

@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     rules_price_input_per_mtok: float = 5.0
     rules_price_output_per_mtok: float = 25.0
     rules_limit_per_minute: int = 60
+    regulation_upload_max_bytes: int = 100 * 1024 * 1024
+    """Größtes hochgeladenes règlement écrit in „Emprise Analyse“ (AN2); gleich `pdf.MAX_PDF_BYTES`."""
 
     # Baurahmen (G3)
     envelope_limit_per_minute: int = 60

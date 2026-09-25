@@ -212,6 +212,31 @@ def _structure_from_headings(pages: dict[int, str], last_page: int) -> Structure
     return Structure(chapters, general, "headings" if chapters else "none")
 
 
+SECTOR_SUGGESTIONS_MAX = 12
+SECTOR_CONTEXT_CHARS = 60
+_SECTOR_CONTEXT = re.compile(r"\b(?:sous-secteurs?|secteurs?|zones?|indices?)\b", re.IGNORECASE)
+
+
+def sector_candidates(text: str, chapter_code: str, other_codes: frozenset[str] = frozenset()) -> list[str]:
+    """Zonencodes im Kapiteltext, die Sektoren des Kapitels sein können („Uba“, „Ub1“ im Kapitel „Ub“).
+
+    Nur Vorschläge für die Zonenwahl eines hochgeladenen Reglements (AN2, docs/PLAN_AN2_PLU.md 3.3); der
+    Architekt wählt oder schreibt selbst. Ein Treffer zählt nur, wenn in den 60 Zeichen davor „secteur“,
+    „zone“ oder „indice“ steht – so fällt ein großgeschriebener Satzanfang meist weg („Ne sont pas …“ im
+    Kapitel N). Codes anderer Kapitel sind keine Sektoren. Kürzere Codes zuerst.
+    """
+    pattern = re.compile(rf"(?<!\w){re.escape(chapter_code)}[a-z0-9]{{1,5}}(?!\w)")
+    found: set[str] = set()
+    for match in pattern.finditer(text):
+        code = match.group(0)
+        if code in other_codes or not _ZONE_CODE.match(code):
+            continue
+        before = text[max(0, match.start() - SECTOR_CONTEXT_CHARS) : match.start()]
+        if _SECTOR_CONTEXT.search(before):
+            found.add(code)
+    return sorted(found, key=lambda code: (len(code), code))[:SECTOR_SUGGESTIONS_MAX]
+
+
 def chapter_for_zone(zone_code: str, chapters: list[Chapter]) -> Chapter | None:
     """Kapitel einer Zone oder eines Sektors: exakt, sonst längstes Präfix, dem ein Kleinbuchstabe oder eine
     Ziffer folgt („Uba“ → „Ub“, „1AUz1“ → „1AUz“, nicht „AU“ → „A“)."""

@@ -24,6 +24,7 @@ from app.config import Settings
 from app.integrations.claude import ExtractionError, ExtractionRequest, RuleExtractor
 from app.platform import storage
 from app.platform.db import utcnow
+from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
 from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION
@@ -144,6 +145,7 @@ class _Calls:
     settings: Settings
     chapter_id: uuid.UUID
     digest: str
+    source_sha256: str
     extractor_factory: Callable[[], RuleExtractor]
     final_attempt: bool
     deadline: float | None
@@ -403,6 +405,7 @@ def extract_chapter(
             settings=settings,
             chapter_id=chapter_id,
             digest=digest,
+            source_sha256=source.sha256,
             extractor_factory=extractor_factory,
             final_attempt=final_attempt,
             deadline=deadline,
@@ -460,9 +463,14 @@ def _evaluate(
     # 4. Schreiben
     counts_total: dict[str, int] = defaultdict(int)
     with calls.sessions() as session:
-        chapter = session.get(RegulationChapter, calls.chapter_id)
+        chapter = session.execute(
+            select(RegulationChapter).where(RegulationChapter.id == calls.chapter_id).with_for_update()
+        ).scalar_one_or_none()
         if chapter is None:
             return ChapterOutcome("skipped", "chapter_missing")
+        # Während der Aufrufe kann ein Sektor dazugekommen sein (zweites Projekt, neue Gemeinde). Der Job
+        # dafür endete mit `already_running`; ohne Folgeauftrag bliebe er ohne Regeln (AN2, 7.1 Nr. 11)
+        current_digest = input_hash(calls.settings, calls.source_sha256, chapter)
         by_sector: dict[str, list[AssessedRule]] = defaultdict(list)
         for assessed_rule in final:
             by_sector[assessed_rule.sector].append(assessed_rule)
@@ -482,15 +490,19 @@ def _evaluate(
                 calls.digest,
                 calls.model,
             )
+        changed_meanwhile = current_digest != calls.digest
         chapter.status, chapter.input_hash, chapter.engine_version, chapter.error, chapter.updated_at = (
-            "succeeded",
+            "pending" if changed_meanwhile else "succeeded",
             calls.digest,
             ENGINE_VERSION,
             None,
             utcnow(),
         )
         session.flush()
-        release_fallback(session, plan_id)
+        if changed_meanwhile:
+            _enqueue_follow_up(session, chapter, current_digest)
+        else:
+            release_fallback(session, plan_id)
         session.commit()
     log.info(
         "rules_extracted",
@@ -501,6 +513,21 @@ def _evaluate(
         **counts_total,
     )
     return ChapterOutcome("succeeded", None, calls.cost, dict(counts_total))
+
+
+def _enqueue_follow_up(session: Session, chapter: RegulationChapter, digest: str) -> None:
+    """Folgeauftrag für die geänderte Eingabe. Eigener Schlüssel: Der Job mit dem Schlüssel der neuen
+    Eingabe ist schon beendet (`already_running`), Idempotenzschlüssel gelten dauerhaft."""
+    import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
+
+    enqueue(
+        session,
+        "rules_extract",
+        {"chapter_id": str(chapter.id)},
+        idempotency_key=f"rules_extract:{chapter.id}:{digest}:follow_up",
+        created_by=f"{ACTOR}:input_changed",
+    )
+    log.info("rules_extract_follow_up", chapter=chapter.code, sectors=list(chapter.sectors))
 
 
 def _cost(settings: Settings, usage: dict[str, int]) -> float:

@@ -119,9 +119,11 @@ interface RegelnSimulationProps {
   rules: ProjectRulesOut;
   /** Zusätzliche Bedienelemente je Zone (Büro: Korrektur). */
   zoneExtra?: (zone: ZoneRulesOut) => ReactNode;
+  /** `architect`: Hinweis ohne den Verweis auf die Anfrage (Emprise Analyse, AN2). */
+  rolle?: "customer" | "architect";
 }
 
-export function RegelnSimulation({ rules, zoneExtra }: RegelnSimulationProps) {
+export function RegelnSimulation({ rules, zoneExtra, rolle = "customer" }: RegelnSimulationProps) {
   const { t } = useTranslation();
   const notices = useNotices(rules.notices);
   return (
@@ -131,11 +133,14 @@ export function RegelnSimulation({ rules, zoneExtra }: RegelnSimulationProps) {
           {t("rules.title")}
         </h2>
         <p className="bg-warn t-warn px-4 py-3 text-sm m-0" role="note">
-          <strong>{t("rules.simulation.label")}</strong> {t("rules.simulation.text")}
+          <strong>{t("rules.simulation.label")}</strong>{" "}
+          {t(rolle === "architect" ? "rules.simulation.textOffice" : "rules.simulation.text")}
         </p>
         {rules.plan && (
           <p className="text-sm t-mute m-0">
-            {t("rules.plan", { title: rules.plan.title, date: rules.plan.gpu_update_date?.slice(0, 10) ?? "–" })}
+            {rules.plan.origin === "upload"
+              ? t("rules.uploaded", { title: rules.plan.title })
+              : t("rules.plan", { title: rules.plan.title, date: rules.plan.gpu_update_date?.slice(0, 10) ?? "–" })}
             {rules.plan.regulation_url && (
               <>
                 {" · "}

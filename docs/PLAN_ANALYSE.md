@@ -1,6 +1,6 @@
 # Emprise Analyse – eigenständige Web-App aus G1–G3
 
-> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09 und UP01–UP16, Plan [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); AN2–AN6 offen · **Arbeitstitel:** „Emprise Analyse“
+> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026, AN2 am 25.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09, UP01–UP16 und PU01–PU10, Pläne [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md) und [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); AN3–AN6 offen · **Arbeitstitel:** „Emprise Analyse“
 > **Bezug:** `UMSETZUNGSPLAN.md` 2.1, 3.2–3.5 (Zuschnitt von P, G1, G2, G3), `docs/PLAN_G3_BAURAHMEN.md` (Ableitung), `docs/ANNAHMEN.md` G01–G30, RW01–RW27, BR01–BR15 (Stand von G1–G3), `BACKEND_SPEZIFIKATION.md` 5.1–5.3, 5.9 (Fachregeln)
 > **Verhältnis zum Umsetzungsplan:** Dieses Dokument beschreibt ein **zweites Produkt** neben dem Hauskonfigurator, nicht ein weiteres Modul von R1/R2. Es ändert nichts an G1–G3, A, H1–H3 oder V; wo es den Kern berührt, steht das in Kapitel 4 (AN0, AN1, AN2).
 
@@ -85,7 +85,7 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 
 *Ergebnis:* umgesetzt wie beschrieben, Einzelheiten und Abweichungen in [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md) und ANNAHMEN UP01–UP10. Zwei Abweichungen: Die **Auskunft** (`GET …/export`) bleibt in Modul A, nur die **Löschung** wandert in den Kern (UP07); ein **Upload mit erkanntem Koordinatensystem** behält seine echte Lage (`site.georeferenced`), Gelände und Risiken bleiben trotzdem bis AN5 aus (UP04).
 
-### AN2 – PLU selbst hochladen (8–10 T)
+### AN2 – PLU selbst hochladen (8–10 T) · **umgesetzt am 25.09.2026** ([Plan](PLAN_AN2_PLU.md))
 
 - règlement écrit als PDF hochladen → Objektspeicher, SHA-256, `source_file` mit `origin = upload`.
 - `rules/plan_import.py` auftrennen: der Teil ab „PDF liegt vor“ (Seitentexte über `rules/pdf.py`, Kapitelerkennung über `rules/domain/chapters.py`) wird für Uploads wiederverwendet; der GPU-Teil davor bleibt dem Konfigurator.
@@ -94,6 +94,8 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 - Auswertung über den vorhandenen Job `rules_extract` – unverändert inklusive Schranken, Zitatprüfung, zweitem Lauf und Kostenzählung. Ausgewertet wird nur das gewählte Zonenkapitel und die allgemeinen Bestimmungen, nicht das ganze Dokument.
 - **Zusatzdokumente:** règlement de lotissement und cahier des charges als zweites Dokument derselben Art, dessen Regeln die PLU-Regeln überlagern. Heute nur ein Hinweistext, für Architekten aber ein echter Bedarf.
 - Kein extrahierbarer Text (Scan) → klare Meldung; OCR bleibt Ausbaustufe (RW03).
+
+*Ergebnis:* umgesetzt wie beschrieben, Einzelheiten in [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und ANNAHMEN PU01–PU10. Abweichungen: Das hochgeladene Reglement ist ein `land_use_plan` mit `origin = 'upload'` statt einer `source_file` mit Herkunft (die Kette Kapitel → Lauf → Regelwerk hängt am Planstand); dasselbe PDF ist dasselbe Dokument für alle Projekte des Büros (PU01); gelesen wird im Job `rules_document_read`, nicht im Request (PU03). **Die Zusatzdokumente sind nach AN4 verschoben** (PU09): Sie gelten neben dem PLU, das Strengere bindet – das gehört zum Regelformular, mit dem der Architekt Werte mit Zitat übernimmt. Die Gegenprobe aus Kapitel 7 Punkt 5 ist als Test umgesetzt: AD 65 über GPU und über Upload ergibt dieselben Regeln und Konturflächen.
 
 ### AN3 – Analyse für den Entwurf (10–12 T)
 
@@ -114,6 +116,7 @@ Die Ableitung bleibt in `envelope/domain` rein und deterministisch; das Neue kom
 - Wert je Projekt übersteuern mit Pflichtbegründung, Herkunft `architect`; der Baurahmen zeigt die Herkunft an jedem Wert (vorhanden, L3).
 - Regeln ergänzen, die das Modell nicht gefunden hat.
 - Zwei Stände nebeneinander vergleichen (vor und nach Korrektur, zwei Auswertungsläufe).
+- **Zusatzdokumente** (aus AN2 verschoben, PU09): règlement de lotissement und cahier des charges hochladen, auswerten (eigener Prompt, ohne Pflichtarten) und neben den PLU-Regeln mit Zitat zeigen; der Architekt übernimmt den strengeren Wert als Projektkorrektur.
 
 ### AN5 – Ausgabe und Projektakte (8–10 T)
 

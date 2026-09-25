@@ -65,11 +65,18 @@ class RulesCommune(Base):
 
 
 class LandUsePlan(UuidPk, Created, Base):
-    """Planstand eines Planwerks im GPU (PLU, PLUi). Ein neuer Stand ist ein neuer Datensatz (Spez. 5.2.5)."""
+    """Planstand eines Planwerks im GPU (PLU, PLUi). Ein neuer Stand ist ein neuer Datensatz (Spez. 5.2.5).
+
+    Seit AN2 auch ein **hochgeladenes** règlement écrit (`origin = 'upload'`, docs/PLAN_AN2_PLU.md 3.1):
+    ohne GPU-Kennung, ohne Gemeinden und Zonen, erkannt an der Prüfsumme der Datei. Dasselbe PDF ist
+    dasselbe Dokument; Kapitel, Läufe und Regelwerke hängen daran wie an einem Planstand des GPU.
+    """
 
     __tablename__ = "land_use_plan"
 
-    gpu_doc_id: Mapped[str] = mapped_column(String(64), unique=True)
+    origin: Mapped[str] = mapped_column(String(10), server_default=text("'gpu'"))
+    gpu_doc_id: Mapped[str | None] = mapped_column(String(64), unique=True)
+    document_sha256: Mapped[str | None] = mapped_column(String(64), unique=True)
     partition: Mapped[str] = mapped_column(String(60))
     du_type: Mapped[str] = mapped_column(String(20))
     title: Mapped[str] = mapped_column(String(300))
@@ -83,6 +90,11 @@ class LandUsePlan(UuidPk, Created, Base):
 
     __table_args__ = (
         CheckConstraint("status IN ('importing','active','superseded','failed')", name="status_known"),
+        CheckConstraint(
+            "(origin = 'gpu' AND gpu_doc_id IS NOT NULL) "
+            "OR (origin = 'upload' AND document_sha256 IS NOT NULL)",
+            name="origin_known",
+        ),
     )
 
 
@@ -179,6 +191,8 @@ class RegulationChapter(UuidPk, Created, Base):
     last_page: Mapped[int] = mapped_column(Integer)
     general_pages: Mapped[list[int]] = mapped_column(ARRAY(Integer))
     sectors: Mapped[list[str]] = mapped_column(ARRAY(String(20)))
+    suggested_sectors: Mapped[list[str]] = mapped_column(ARRAY(String(20)), server_default=text("'{}'"))
+    """Nur hochgeladene Dokumente: Zonencodes aus dem Kapiteltext als Vorschlag für die Zonenwahl (AN2)."""
     detection: Mapped[str] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20), server_default=text("'pending'"))
     input_hash: Mapped[str | None] = mapped_column(String(64))
@@ -297,6 +311,32 @@ class Rule(UuidPk, Created, Base):
         CheckConstraint(f"status IN {RULE_STATUSES}", name="status_known"),
         CheckConstraint("building_kind IN ('main','annex','pool','any')", name="building_kind_known"),
         CheckConstraint("origin IN ('extraction','office')", name="origin_known"),
+    )
+
+
+class ProjectRegulation(UuidPk, Created, Base):
+    """Hochgeladenes Dokument eines Projekts mit gewählter Zone (AN2, docs/PLAN_AN2_PLU.md 3.1).
+
+    Ein Projekt hat höchstens ein PLU (`role = 'plu'`); die Rolle ist für Zusatzdokumente offengehalten
+    (AN4). Das Dokument bleibt, wenn das Projekt gelöscht wird (E-AN2-4)."""
+
+    __tablename__ = "project_regulation"
+
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"))
+    land_use_plan_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("land_use_plan.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(20), server_default=text("'plu'"))
+    zone_code: Mapped[str | None] = mapped_column(String(20))
+    """Sektor, für den ausgewertet wird (`Uba`); leer, bis der Architekt die Zone wählt."""
+    chapter_code: Mapped[str | None] = mapped_column(String(20))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[str | None] = mapped_column(String(200))
+
+    __table_args__ = (
+        UniqueConstraint("project_id", "land_use_plan_id", name="uq_project_regulation_project_document"),
+        CheckConstraint("role IN ('plu')", name="role_known"),
+        Index("uq_project_regulation_plu", "project_id", unique=True, postgresql_where=text("role = 'plu'")),
     )
 
 

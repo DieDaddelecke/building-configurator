@@ -56,6 +56,7 @@ export function useStaffEnvelope(projectId: string) {
       unwrap(
         await api.GET("/api/v1/admin/projects/{project_id}/envelope", { params: { path: { project_id: projectId } } }),
       ),
+    refetchInterval: (query) => refetchWhilePending(query.state.data, query.state.dataUpdateCount),
   });
 }
 

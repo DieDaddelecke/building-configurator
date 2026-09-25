@@ -32,6 +32,28 @@ class PdfText:
     empty_pages: list[int]
 
 
+def check(data: bytes) -> int:
+    """Schnelle Prüfung eines hochgeladenen Reglements, ohne Text zu lesen (AN2): Größe, Kennung,
+    Verschlüsselung, Seitenzahl. Liefert die Seitenzahl; den Text liest der Job `rules_document_read`."""
+    if len(data) > MAX_PDF_BYTES:
+        raise PdfProblem("pdf_too_large")
+    if not data.startswith(b"%PDF"):
+        raise PdfProblem("not_a_pdf")
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        encrypted = reader.is_encrypted
+        count = 0 if encrypted else len(reader.pages)
+    except Exception as exc:  # Datei aus fremder Hand: jeder Lesefehler heißt „nicht lesbar“
+        raise PdfProblem("pdf_unreadable") from exc
+    if encrypted:
+        raise PdfProblem("pdf_encrypted")
+    if count > MAX_PAGES:
+        raise PdfProblem("pdf_too_many_pages")
+    if count == 0:
+        raise PdfProblem("pdf_unreadable")
+    return count
+
+
 def read_text(data: bytes) -> PdfText:
     if len(data) > MAX_PDF_BYTES:
         raise PdfProblem("pdf_too_large")

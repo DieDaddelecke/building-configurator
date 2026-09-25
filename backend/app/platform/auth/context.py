@@ -162,10 +162,25 @@ def require_project_access(
     """
     if auth.project_id == project_id:
         return project_id
-    if auth.staff is not None and Role.architect in auth.staff.roles:
-        owner = db.execute(
-            select(Project.owner_staff_user_id).where(Project.id == project_id)
-        ).scalar_one_or_none()
-        if owner is not None:
-            return project_id
+    if auth.staff is not None and Role.architect in auth.staff.roles and _has_owner(db, project_id):
+        return project_id
     raise Problem(404, "not_found")
+
+
+def _has_owner(db: Session, project_id: uuid.UUID) -> bool:
+    owner = db.execute(
+        select(Project.owner_staff_user_id).where(Project.id == project_id)
+    ).scalar_one_or_none()
+    return owner is not None
+
+
+@_policy("owned_project")
+def require_owned_project(
+    project_id: uuid.UUID, auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)
+) -> StaffPrincipal:
+    """Nur ein angemeldeter Architekt und nur ein Projekt **mit** Eigentümer (AN2, docs/PLAN_AN2_PLU.md
+    3.7). Für Aktionen, die Kosten auslösen (Auswertung eines hochgeladenen Reglements): Das
+    Projekt-Cookie eines Kunden reicht nicht. Sonst `404` wie bei fremden Projekten."""
+    if auth.staff is None or Role.architect not in auth.staff.roles or not _has_owner(db, project_id):
+        raise Problem(404, "not_found")
+    return auth.staff

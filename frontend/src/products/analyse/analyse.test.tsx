@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, expect, it, vi } from "vitest";
@@ -19,6 +19,11 @@ vi.mock("../../api/session", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../api/session")>()),
   useSession: () => ({ data: { staff: state.staff }, isPending: false, isError: false, isSuccess: true }),
   useLogout: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+vi.mock("../../api/regulations", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api/regulations")>()),
+  useProjectRegulations: () => ({ data: [], isPending: false, isError: false, isSuccess: true }),
 }));
 
 vi.mock("../../api/site", async (importOriginal) => ({
@@ -141,8 +146,10 @@ it("zeigt Herkunft und nicht eingeordnete Kanten und setzt eine Straßenkante", 
   expect(screen.getByText("ohne geografischen Bezug")).toBeInTheDocument();
   expect(screen.getByText(/Noch keine Straßenkante/)).toBeInTheDocument();
 
-  const auswahl = screen.getAllByRole("combobox");
+  const auswahl = within(screen.getByRole("region", { name: "Kanten" })).getAllByRole("combobox");
   expect(auswahl).toHaveLength(4);
+  // Darunter der Bebauungsplan, noch ohne Dokument (AN2)
+  expect(screen.getByRole("heading", { name: "Bebauungsplan" })).toBeInTheDocument();
   await userEvent.selectOptions(screen.getByLabelText("Korrektur für Grenze 1"), "street");
   expect(state.classify).toHaveBeenCalledWith({ seq: 1, kind: "street" });
 });

@@ -34,7 +34,7 @@
         "text": "Höhen, Abstände und Flächen mit Bericht und Ausgabe ins CAD."
       }
     },
-    "soon": "Diese Schritte entstehen gerade: Die Parzelle kommt schon herein, Regelwerk und Baurahmen folgen.",
+    "soon": "Parzelle und Bebauungsplan kommen schon herein, der Baurahmen steht; Nutzfläche, Bericht und CAD-Ausgabe folgen.",
     "login": {
       "intro": "Der Zugang gilt für Mitarbeitende des Büros; die Anmeldung läuft über den Identitätsdienst.",
       "denied": {
@@ -63,7 +63,7 @@
       "noSite": "keine Parzelle"
     },
     "site": {
-      "intro": "Parzelle einbringen, Kanten einordnen. Regelwerk und Baurahmen folgen.",
+      "intro": "Parzelle einbringen, Kanten einordnen, Bebauungsplan hochladen – daraus entstehen Regeln und Baurahmen.",
       "choose": "Parzelle einbringen",
       "chooseIntro": "Eine Datei aus dem CAD oder GIS oder eine Zeichnung mit Bemaßung.",
       "fromFile": "Datei hochladen",
@@ -78,7 +78,7 @@
       "edges": "Kanten",
       "edgesIntro": "Ohne Kataster kennt das Werkzeug keine Nachbarn: Jede Kante beginnt als Grenze ohne Einordnung. Setzen Sie mindestens die Straßenkante.",
       "noStreet": "Noch keine Straßenkante gesetzt – ohne sie gibt es keine Hauptstraße und keinen Straßenabstand.",
-      "next": "Als Nächstes: Regelwerk hochladen und auswerten (in Arbeit).",
+      "next": "Als Nächstes: Bebauungsplan hochladen und die Zone wählen.",
       "back": "Zur Übersicht",
       "delete": "Projekt löschen",
       "deleteConfirm": "Projekt mit Parzelle und allen Daten löschen?",
@@ -98,7 +98,7 @@
       "error": {
         "upload_invalid": "Die Datei lässt sich nicht als Parzelle lesen.",
         "upload_outline_not_found": "Diese Kontur steht nicht mehr zur Wahl.",
-        "upload_too_large": "Die Datei ist zu groß (höchstens 8 MB).",
+        "upload_too_large": "Die Datei ist zu groß (höchstens 20 MB).",
         "site_origin_mismatch": "Dieses Projekt hat schon ein Grundstück aus dem Kataster.",
         "upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan. Gescannte Pläne lassen sich noch nicht lesen – bitte das PDF aus dem CAD oder von cadastre.gouv.fr nehmen.",
         "upload_scale_missing": "Im Plan steht kein Maßstab. Bitte oben den Maßstab angeben und erneut übernehmen.",
@@ -114,7 +114,73 @@
       "list": "oder aus der Liste wählen",
       "pick": "Fläche wählen …"
     },
-    "disclaimer": "Analyse auf Grundlage der eingereichten Unterlagen. Keine Rechtsauskunft; maßgeblich bleibt das Certificat d’urbanisme."
+    "disclaimer": "Analyse auf Grundlage der eingereichten Unterlagen. Keine Rechtsauskunft; maßgeblich bleibt das Certificat d’urbanisme.",
+    "plu": {
+      "title": "Bebauungsplan",
+      "intro": "Das règlement écrit des PLU als PDF. Gelesen werden Text und Kapitel; ausgewertet wird nur das Kapitel der gewählten Zone mit den allgemeinen Bestimmungen.",
+      "file": "règlement écrit (PDF)",
+      "docTitle": "Bezeichnung",
+      "docTitleHint": "z. B. PLUi Erdre et Gesvres, Stand 2026",
+      "duType": "Art",
+      "formats": "Höchstens 100 MB. Gescannte Reglements ohne Textschicht lassen sich noch nicht lesen. Dasselbe PDF in mehreren Projekten wird nur einmal ausgewertet.",
+      "submit": "Hochladen",
+      "reading": "Das Reglement wird gelesen – Text und Kapitel …",
+      "pages": "{{count}} Seiten",
+      "open": "PDF öffnen",
+      "emptyPages": "{{count}} Seiten ohne Text (z. B. Pläne); Werte von dort bleiben „nicht ermittelt“.",
+      "replace": "Anderes PDF hochladen",
+      "remove": "Vom Projekt lösen",
+      "removeConfirm": "Bebauungsplan von diesem Projekt lösen? Das Dokument bleibt für andere Projekte erhalten.",
+      "cancel": "Abbrechen",
+      "chapters": "Zonenkapitel",
+      "noChapters": "Im Reglement wurde kein Inhaltsverzeichnis und keine Zonenüberschrift erkannt. Bitte den Seitenbereich des Zonenkapitels angeben.",
+      "chapterPages": "S. {{first}}–{{last}}",
+      "zoneCode": "Zone oder Sektor des Grundstücks",
+      "zoneHint": "wie im Zonenplan, z. B. Ub oder Uba",
+      "suggestions": "Im Kapitel genannt:",
+      "manual": "Seitenbereich von Hand angeben",
+      "firstPage": "Kapitel von Seite",
+      "lastPage": "bis Seite",
+      "generalFirst": "Allgemeine Bestimmungen von Seite",
+      "generalLast": "bis Seite",
+      "generalHint": "Leer lassen: die erkannten allgemeinen Bestimmungen werden verwendet.",
+      "choose": "Zone übernehmen und auswerten",
+      "costHint": "Die Auswertung kostet einmal je Kapitel; ein weiterer Sektor desselben Kapitels wertet es neu aus.",
+      "change": "Zone ändern",
+      "zone": "Zone {{zone}} · Kapitel {{chapter}}",
+      "runs": "{{count}} Aufrufe · {{cost}} $",
+      "status": {
+        "idle": "nicht gewählt",
+        "pending": "wartet auf die Auswertung",
+        "extracting": "wird ausgewertet",
+        "succeeded": "ausgewertet",
+        "failed": "Auswertung gescheitert"
+      },
+      "reason": {
+        "not_configured": "Die Auswertung ist nicht eingerichtet: Es fehlt der Schlüssel der Claude API. Sie startet von selbst, sobald er eingetragen ist.",
+        "budget_exceeded": "Das Monatsbudget der Auswertung ist erreicht. Sie startet von selbst im neuen Monat oder mit höherem Budget.",
+        "chapter_too_long": "Kapitel und allgemeine Bestimmungen sind zusammen zu lang. Bitte den Seitenbereich eingrenzen.",
+        "max_tokens": "Die Antwort war zu lang für eine Auswertung.",
+        "refusal": "Das Modell hat die Auswertung abgelehnt.",
+        "other": "Grund: {{reason}}"
+      },
+      "error": {
+        "not_a_pdf": "Die Datei ist kein PDF.",
+        "pdf_encrypted": "Das PDF ist verschlüsselt und lässt sich nicht lesen.",
+        "pdf_unreadable": "Das PDF lässt sich nicht lesen.",
+        "pdf_too_many_pages": "Das PDF hat zu viele Seiten.",
+        "pdf_too_large": "Das PDF ist zu groß (höchstens 100 MB).",
+        "upload_too_large": "Das PDF ist zu groß (höchstens 100 MB).",
+        "document_no_text": "Das PDF enthält kaum Text, vermutlich ein Scan. Gescannte Reglements lassen sich noch nicht lesen – bitte das PDF aus dem Géoportail de l'Urbanisme oder von der Gemeinde nehmen.",
+        "document_not_ready": "Das Reglement wird noch gelesen.",
+        "document_failed": "Das Reglement ließ sich nicht lesen.",
+        "chapter_not_found": "Dieses Kapitel gibt es im Reglement nicht.",
+        "chapter_too_long": "Kapitel und allgemeine Bestimmungen umfassen zusammen mehr als 150 Seiten. Bitte den Seitenbereich eingrenzen.",
+        "page_out_of_range": "Die Seitenangabe liegt außerhalb des Dokuments.",
+        "interrupted": "Das Lesen wurde unterbrochen. Bitte das PDF erneut hochladen."
+      }
+    },
+    "envelope": "Baurahmen"
   },
   "site": {
     "disabled": {
@@ -317,7 +383,8 @@
       "title": "Grenzen der Aussage",
       "cadastre_accuracy": "Katastergrenzen sind nicht vermessungsgenau. Verbindliche Grenzen ermittelt ein Géomètre-expert.",
       "risks_public_data": "Standortrisiken sind Hinweise aus öffentlichen Daten und ersetzen kein Gutachten.",
-      "manual_sketch": "Diese Fläche wurde nicht mit dem Bebauungsplan abgeglichen. Die Vereinbarkeit mit den geltenden Vorschriften ist nicht geprüft."
+      "manual_sketch": "Diese Fläche wurde nicht mit dem Bebauungsplan abgeglichen. Die Vereinbarkeit mit den geltenden Vorschriften ist nicht geprüft.",
+      "without_cadastre": "Die Parzelle stammt nicht aus dem Kataster, sondern aus einer Datei oder Zeichnung; Maße und Lage sind nicht mit dem Kataster abgeglichen."
     },
     "next": "Als Nächstes zeigt Emprise, welche Regeln des Bebauungsplans für dieses Grundstück gelten.",
     "nextBelow": "Die Regeln des Bebauungsplans für dieses Grundstück stehen unten.",
@@ -327,7 +394,8 @@
     "title": "Regeln des Bebauungsplans",
     "simulation": {
       "label": "Simulation – unverbindlich.",
-      "text": "Emprise hat die Regeln automatisch aus den öffentlichen Planunterlagen gelesen. Niemand hat sie bisher geprüft. Das Architekturbüro prüft sie, wenn Sie eine Anfrage senden. Verbindlich ist nur ein Certificat d'urbanisme der Gemeinde."
+      "text": "Emprise hat die Regeln automatisch aus den öffentlichen Planunterlagen gelesen. Niemand hat sie bisher geprüft. Das Architekturbüro prüft sie, wenn Sie eine Anfrage senden. Verbindlich ist nur ein Certificat d'urbanisme der Gemeinde.",
+      "textOffice": "Emprise hat die Regeln automatisch aus dem hochgeladenen Reglement gelesen; niemand hat sie geprüft. Jeder Wert nennt Zitat und Seite. Verbindlich ist nur ein Certificat d'urbanisme der Gemeinde."
     },
     "plan": "{{title}}, Stand {{date}}",
     "document": "Règlement écrit öffnen",
@@ -472,7 +540,11 @@
       "no_chapters": "Die Planunterlagen konnten nicht automatisch gelesen werden.",
       "no_zone": "Für das Grundstück wurde keine Zone gefunden.",
       "chapter_not_found": "Das Kapitel dieser Zone wurde in den Planunterlagen nicht gefunden.",
-      "failed": "Die automatische Auswertung ist gescheitert. Das Architekturbüro prüft die Regeln bei Ihrer Anfrage."
+      "failed": "Die automatische Auswertung ist gescheitert. Das Architekturbüro prüft die Regeln bei Ihrer Anfrage.",
+      "zone_not_chosen": "Im hochgeladenen Bebauungsplan ist noch keine Zone gewählt.",
+      "document_reading": "Der hochgeladene Bebauungsplan wird noch gelesen.",
+      "document_no_text": "Der hochgeladene Bebauungsplan enthält kaum Text (Scan) und lässt sich nicht auswerten.",
+      "document_failed": "Der hochgeladene Bebauungsplan ließ sich nicht lesen."
     },
     "warning": {
       "multiple_zones": "Das Grundstück liegt in mehreren Zonen; jede Teilfläche hat eigene Regeln.",
@@ -490,8 +562,10 @@
     },
     "notices": {
       "simulation": "Die Regeln sind eine automatische, ungeprüfte Simulation und keine Bauauskunft. Verbindlich ist allein das Certificat d'urbanisme der Gemeinde.",
-      "lotissement": "Liegt das Grundstück in einem Lotissement, gelten zusätzliche Regeln, die hier nicht berücksichtigt sind."
-    }
+      "lotissement": "Liegt das Grundstück in einem Lotissement, gelten zusätzliche Regeln, die hier nicht berücksichtigt sind.",
+      "upload": "Ausgewertet ist nur das hochgeladene règlement écrit. Zonenplan, überlagernde Vorgaben, Servituden und Zusatzdokumente (Lotissement, cahier des charges) sind nicht berücksichtigt."
+    },
+    "uploaded": "{{title}}, hochgeladen"
   },
   "inquiry": {
     "title": "Anfrage an das Büro",
@@ -708,7 +782,7 @@
   "envelope": {
     "simulation": {
       "label": "Simulation – unverbindlich.",
-      "text": "Emprise leitet den Baurahmen automatisch aus Kataster und Planunterlagen ab. Niemand hat ihn geprüft; er ist keine Bauauskunft."
+      "text": "Emprise leitet den Baurahmen automatisch aus Grundstück und Planunterlagen ab. Niemand hat ihn geprüft; er ist keine Bauauskunft."
     },
     "area": {
       "lenient": "Bebaubar, weiteste Auslegung",

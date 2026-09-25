@@ -34,7 +34,7 @@
         "text": "Hauteurs, reculs et surfaces, avec rapport et export CAO."
       }
     },
-    "soon": "Ces étapes se construisent : la parcelle entre déjà, le règlement et le cadre constructible suivent.",
+    "soon": "La parcelle et le règlement entrent déjà, le cadre constructible est calculé ; surface de plancher, rapport et export CAO suivent.",
     "login": {
       "intro": "L'accès est réservé au cabinet ; l'authentification passe par le fournisseur d'identité.",
       "denied": {
@@ -63,7 +63,7 @@
       "noSite": "pas de parcelle"
     },
     "site": {
-      "intro": "Apporter la parcelle, qualifier ses limites. Le règlement et le cadre constructible suivent.",
+      "intro": "Apporter la parcelle, qualifier ses limites, déposer le règlement – on en tire les règles et le cadre constructible.",
       "choose": "Apporter la parcelle",
       "chooseIntro": "Un fichier issu de la CAO ou du SIG, ou un dessin coté.",
       "fromFile": "Importer un fichier",
@@ -78,7 +78,7 @@
       "edges": "Limites",
       "edgesIntro": "Sans cadastre, l'outil ne connaît aucun voisin : chaque limite démarre sans qualification. Indiquez au moins la limite sur voie.",
       "noStreet": "Aucune limite sur voie n'est encore indiquée – sans elle, ni voie principale ni recul sur voie.",
-      "next": "Prochaine étape : déposer et extraire le règlement (en cours).",
+      "next": "Prochaine étape : déposer le règlement et choisir la zone.",
       "back": "Retour à la liste",
       "delete": "Supprimer le projet",
       "deleteConfirm": "Supprimer le projet, la parcelle et toutes ses données ?",
@@ -98,7 +98,7 @@
       "error": {
         "upload_invalid": "Le fichier ne peut pas être lu comme une parcelle.",
         "upload_outline_not_found": "Ce contour n'est plus proposé.",
-        "upload_too_large": "Le fichier est trop volumineux (8 Mo au plus).",
+        "upload_too_large": "Le fichier est trop volumineux (20 Mo au plus).",
         "site_origin_mismatch": "Ce projet a déjà un terrain issu du cadastre.",
         "upload_pdf_no_vector": "Le PDF ne contient aucun trait, probablement un scan. Les plans scannés ne sont pas encore lus – utilisez le PDF issu de la CAO ou de cadastre.gouv.fr.",
         "upload_scale_missing": "Aucune échelle sur le plan. Indiquez l’échelle ci-dessus puis importez à nouveau.",
@@ -114,7 +114,73 @@
       "list": "ou choisir dans la liste",
       "pick": "Choisir une surface…"
     },
-    "disclaimer": "Analyse fondée sur les documents fournis. Sans valeur juridique ; seul le certificat d’urbanisme fait foi."
+    "disclaimer": "Analyse fondée sur les documents fournis. Sans valeur juridique ; seul le certificat d’urbanisme fait foi.",
+    "plu": {
+      "title": "Règlement d'urbanisme",
+      "intro": "Le règlement écrit du PLU en PDF. Le texte et les chapitres sont lus ; seul le chapitre de la zone choisie est analysé, avec les dispositions générales.",
+      "file": "Règlement écrit (PDF)",
+      "docTitle": "Intitulé",
+      "docTitleHint": "p. ex. PLUi Erdre et Gesvres, version 2026",
+      "duType": "Type",
+      "formats": "100 Mo au plus. Les règlements scannés sans couche texte ne peuvent pas encore être lus. Le même PDF utilisé dans plusieurs projets n'est analysé qu'une fois.",
+      "submit": "Déposer",
+      "reading": "Lecture du règlement – texte et chapitres …",
+      "pages": "{{count}} pages",
+      "open": "Ouvrir le PDF",
+      "emptyPages": "{{count}} pages sans texte (p. ex. plans) ; les valeurs qui s'y trouvent restent « non déterminées ».",
+      "replace": "Déposer un autre PDF",
+      "remove": "Retirer du projet",
+      "removeConfirm": "Retirer le règlement de ce projet ? Le document reste disponible pour les autres projets.",
+      "cancel": "Annuler",
+      "chapters": "Chapitres de zone",
+      "noChapters": "Aucun sommaire ni titre de zone n'a été reconnu. Veuillez indiquer les pages du chapitre de la zone.",
+      "chapterPages": "p. {{first}}–{{last}}",
+      "zoneCode": "Zone ou secteur du terrain",
+      "zoneHint": "comme sur le plan de zonage, p. ex. Ub ou Uba",
+      "suggestions": "Cités dans le chapitre :",
+      "manual": "Indiquer les pages à la main",
+      "firstPage": "Chapitre de la page",
+      "lastPage": "à la page",
+      "generalFirst": "Dispositions générales de la page",
+      "generalLast": "à la page",
+      "generalHint": "Laisser vide : les dispositions générales reconnues sont utilisées.",
+      "choose": "Retenir la zone et analyser",
+      "costHint": "L'analyse est payante une fois par chapitre ; un secteur supplémentaire du même chapitre relance son analyse.",
+      "change": "Changer de zone",
+      "zone": "Zone {{zone}} · chapitre {{chapter}}",
+      "runs": "{{count}} appels · {{cost}} $",
+      "status": {
+        "idle": "non retenu",
+        "pending": "en attente d'analyse",
+        "extracting": "analyse en cours",
+        "succeeded": "analysé",
+        "failed": "échec de l'analyse"
+      },
+      "reason": {
+        "not_configured": "L'analyse n'est pas configurée : la clé de l'API Claude manque. Elle démarrera d'elle-même dès que la clé sera saisie.",
+        "budget_exceeded": "Le budget mensuel de l'analyse est atteint. Elle reprendra d'elle-même le mois prochain ou avec un budget plus élevé.",
+        "chapter_too_long": "Le chapitre et les dispositions générales sont trop longs ensemble. Veuillez restreindre les pages.",
+        "max_tokens": "La réponse était trop longue pour une analyse.",
+        "refusal": "Le modèle a refusé l'analyse.",
+        "other": "Motif : {{reason}}"
+      },
+      "error": {
+        "not_a_pdf": "Le fichier n'est pas un PDF.",
+        "pdf_encrypted": "Le PDF est chiffré et ne peut pas être lu.",
+        "pdf_unreadable": "Le PDF ne peut pas être lu.",
+        "pdf_too_many_pages": "Le PDF comporte trop de pages.",
+        "pdf_too_large": "Le PDF est trop volumineux (100 Mo au plus).",
+        "upload_too_large": "Le PDF est trop volumineux (100 Mo au plus).",
+        "document_no_text": "Le PDF ne contient presque pas de texte, sans doute un scan. Les règlements scannés ne peuvent pas encore être lus – prenez le PDF du Géoportail de l'Urbanisme ou de la commune.",
+        "document_not_ready": "Le règlement est encore en cours de lecture.",
+        "document_failed": "Le règlement n'a pas pu être lu.",
+        "chapter_not_found": "Ce chapitre n'existe pas dans le règlement.",
+        "chapter_too_long": "Le chapitre et les dispositions générales dépassent ensemble 150 pages. Veuillez restreindre les pages.",
+        "page_out_of_range": "Les pages indiquées sont hors du document.",
+        "interrupted": "La lecture a été interrompue. Veuillez déposer le PDF à nouveau."
+      }
+    },
+    "envelope": "Cadre constructible"
   },
   "site": {
     "disabled": {
@@ -317,7 +383,8 @@
       "title": "Limites de l'information",
       "cadastre_accuracy": "Les limites cadastrales ne sont pas des limites de bornage. Seul un géomètre-expert établit des limites opposables.",
       "risks_public_data": "Les risques sont des indications issues de données publiques et ne remplacent pas une étude.",
-      "manual_sketch": "Cette surface n'a pas été comparée au plan local d'urbanisme. Sa conformité aux règles en vigueur n'est pas vérifiée."
+      "manual_sketch": "Cette surface n'a pas été comparée au plan local d'urbanisme. Sa conformité aux règles en vigueur n'est pas vérifiée.",
+      "without_cadastre": "La parcelle ne provient pas du cadastre mais d'un fichier ou d'un dessin ; ses dimensions et sa position ne sont pas comparées au cadastre."
     },
     "next": "Emprise affichera ensuite les règles du PLU applicables à ce terrain.",
     "nextBelow": "Les règles du document d'urbanisme applicables à ce terrain figurent ci-dessous.",
@@ -327,7 +394,8 @@
     "title": "Règles du document d'urbanisme",
     "simulation": {
       "label": "Simulation – non contractuelle.",
-      "text": "Emprise a lu automatiquement les règles dans les documents d'urbanisme publics. Personne ne les a encore vérifiées. Le cabinet d'architecture les vérifie lorsque vous envoyez une demande. Seul un certificat d'urbanisme délivré par la commune fait foi."
+      "text": "Emprise a lu automatiquement les règles dans les documents d'urbanisme publics. Personne ne les a encore vérifiées. Le cabinet d'architecture les vérifie lorsque vous envoyez une demande. Seul un certificat d'urbanisme délivré par la commune fait foi.",
+      "textOffice": "Emprise a lu les règles automatiquement dans le règlement déposé ; personne ne les a vérifiées. Chaque valeur cite son passage et sa page. Seul un certificat d'urbanisme délivré par la commune fait foi."
     },
     "plan": "{{title}}, version du {{date}}",
     "document": "Ouvrir le règlement écrit",
@@ -472,7 +540,11 @@
       "no_chapters": "Le règlement n'a pas pu être lu automatiquement.",
       "no_zone": "Aucune zone n'a été trouvée pour ce terrain.",
       "chapter_not_found": "Le chapitre de cette zone n'a pas été trouvé dans le règlement.",
-      "failed": "L'analyse automatique a échoué. Le cabinet d'architecture vérifie les règles lors de votre demande."
+      "failed": "L'analyse automatique a échoué. Le cabinet d'architecture vérifie les règles lors de votre demande.",
+      "zone_not_chosen": "Aucune zone n'est encore choisie dans le règlement déposé.",
+      "document_reading": "Le règlement déposé est en cours de lecture.",
+      "document_no_text": "Le règlement déposé ne contient presque pas de texte (scan) et ne peut pas être analysé.",
+      "document_failed": "Le règlement déposé n'a pas pu être lu."
     },
     "warning": {
       "multiple_zones": "Le terrain se situe dans plusieurs zones ; chaque partie a ses propres règles.",
@@ -490,8 +562,10 @@
     },
     "notices": {
       "simulation": "Les règles sont une simulation automatique, non vérifiée, et ne valent pas renseignement d'urbanisme. Seul le certificat d'urbanisme délivré par la commune fait foi.",
-      "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici."
-    }
+      "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici.",
+      "upload": "Seul le règlement écrit déposé est analysé. Le plan de zonage, les prescriptions superposées, les servitudes et les documents complémentaires (lotissement, cahier des charges) ne sont pas pris en compte."
+    },
+    "uploaded": "{{title}}, déposé"
   },
   "inquiry": {
     "title": "Demande à l'agence",
@@ -708,7 +782,7 @@
   "envelope": {
     "simulation": {
       "label": "Simulation – sans valeur contractuelle.",
-      "text": "Emprise établit le cadre constructible automatiquement à partir du cadastre et des documents d'urbanisme. Personne ne l'a vérifié ; ce n'est pas un renseignement d'urbanisme."
+      "text": "Emprise établit le cadre constructible automatiquement à partir du terrain et des documents d'urbanisme. Personne ne l'a vérifié ; ce n'est pas un renseignement d'urbanisme."
     },
     "area": {
       "lenient": "Constructible, interprétation la plus large",

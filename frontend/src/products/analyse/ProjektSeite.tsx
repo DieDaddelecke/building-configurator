@@ -2,12 +2,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 
+import { useStaffEnvelope } from "../../api/envelope";
+import { useProjectRegulations } from "../../api/regulations";
+import { useStaffProjectRules } from "../../api/rules";
 import { useClassifyEdge, useDeleteProject, useSite, type EdgeKind, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
+import { Baurahmen } from "../../envelope/Baurahmen";
+import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { FreiesZeichnen } from "../../site/FreiesZeichnen";
 import { formatNumber } from "../../site/geo";
 import { KantenListe } from "../../site/KantenListe";
 import { SiteLageplan } from "../../site/SiteLageplan";
+import { Bebauungsplan } from "./Bebauungsplan";
 import { ParzelleHochladen } from "./ParzelleHochladen";
 
 type Weg = "wahl" | "datei" | "zeichnen";
@@ -53,15 +59,41 @@ function Herkunft({ site }: { site: SiteOut }) {
   );
 }
 
-/** Ein Projekt: Parzelle einbringen, dann Kanten einordnen (AN1). Regeln und Baurahmen folgen mit AN2/AN3. */
+/** Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die Büro-Endpunkte (E-AN2-7). */
+function Ergebnis({ projectId, revision }: { projectId: string; revision: number }) {
+  const { t } = useTranslation();
+  const envelope = useStaffEnvelope(projectId);
+  const rules = useStaffProjectRules(projectId);
+  if (envelope.isPending || rules.isPending) return <p className="t-mute">{t("loading")}</p>;
+  if (envelope.isError || rules.isError) return <p className="t-alert" role="alert">{t("error.generic")}</p>;
+  return (
+    <>
+      <section aria-labelledby="baurahmen" className="flex flex-col gap-5">
+        <h2 id="baurahmen" className="eyebrow m-0">{t("analyse.envelope")}</h2>
+        <Baurahmen key={revision} envelope={envelope.data} projectId={projectId} rolle="architect" />
+      </section>
+      <details className="flex flex-col gap-4">
+        <summary className="cursor-pointer eyebrow t-accent">{t("envelope.rulesDetails")}</summary>
+        <div className="pt-6">
+          <RegelnSimulation key={revision} rules={rules.data} rolle="architect" />
+        </div>
+      </details>
+    </>
+  );
+}
+
+/** Ein Projekt: Parzelle einbringen, Kanten einordnen (AN1), Bebauungsplan hochladen und Zone wählen; daraus
+ *  Regeln und Baurahmen (AN2). Nutzfläche und Analyse folgen mit AN3. */
 export function ProjektSeite() {
   const { t } = useTranslation();
   const { projectId = "" } = useParams();
   const navigate = useNavigate();
   const site = useSite(projectId);
+  const regulations = useProjectRegulations(projectId);
   const entfernen = useDeleteProject();
   const [weg, setWeg] = useState<Weg>("wahl");
   const [hervorgehoben, setHervorgehoben] = useState<number | null>(null);
+  const zoneGewaehlt = Boolean(regulations.data?.some((regulation) => regulation.zone_code));
 
   const loeschen = () => {
     if (!window.confirm(t("analyse.site.deleteConfirm"))) return;
@@ -123,7 +155,18 @@ export function ProjektSeite() {
         </>
       )}
 
-      {site.data && <Grundstueck site={site.data} highlighted={hervorgehoben} onHighlight={setHervorgehoben} />}
+      {site.data && (
+        <>
+          <Grundstueck
+            site={site.data}
+            highlighted={hervorgehoben}
+            onHighlight={setHervorgehoben}
+            next={!regulations.data?.length}
+          />
+          <Bebauungsplan projectId={projectId} />
+          {zoneGewaehlt && <Ergebnis projectId={projectId} revision={site.data.revision} />}
+        </>
+      )}
     </div>
   );
 }
@@ -132,10 +175,12 @@ function Grundstueck({
   site,
   highlighted,
   onHighlight,
+  next,
 }: {
   site: SiteOut;
   highlighted: number | null;
   onHighlight: (seq: number | null) => void;
+  next: boolean;
 }) {
   const { t } = useTranslation();
   const classify = useClassifyEdge(site);
@@ -164,7 +209,7 @@ function Grundstueck({
           {classify.isError && <p className="t-alert m-0">{t("error.generic")}</p>}
           {site.main_street_seq === null && <p className="t-warn m-0">{t("analyse.site.noStreet")}</p>}
         </section>
-        <p className="t-mute text-sm">{t("analyse.site.next")}</p>
+        {next && <p className="t-mute text-sm">{t("analyse.site.next")}</p>}
       </div>
     </div>
   );

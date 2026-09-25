@@ -104,6 +104,7 @@ export function useStaffProjectRules(projectId: string) {
     queryKey: staffRulesKey(projectId),
     queryFn: async () =>
       unwrap(await api.GET("/api/v1/admin/projects/{project_id}/rules", { params: { path: { project_id: projectId } } })),
+    refetchInterval: (query) => refetchWhileRunning(query.state.data, query.state.dataUpdateCount),
   });
 }
 

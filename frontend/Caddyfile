@@ -12,10 +12,17 @@
 :8080 {
 	encode zstd gzip
 
-	header {
-		# Keine fremden Skripte, Schriften oder Stile (Plan 6.7). Einzige fremde Quelle: Kartenkacheln der
-		# Géoplateforme (G1), von MapLibre per fetch geladen. Der Karten-Worker kommt aus dem eigenen Build.
+	# Keine fremden Skripte, Schriften oder Stile (Plan 6.7). Einzige fremde Quelle: Kartenkacheln der
+	# Géoplateforme (G1), von MapLibre per fetch geladen. Der Karten-Worker kommt aus dem eigenen Build.
+	# Nicht für die Planunterlagen der Zitate (AN2, ANNAHMEN PU06): Chrome zeigt ein PDF unter
+	# `object-src 'none'` und `style-src 'self'` nicht an (Chromium-Fehler 40328564). Die API liefert dort
+	# nur geprüfte PDFs an das Büro, mit `nosniff`.
+	@seiten not path /api/v1/regulation-files/*
+	header @seiten {
 		Content-Security-Policy "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self' data: blob: https://data.geopf.fr; font-src 'self'; connect-src 'self' https://data.geopf.fr; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+	}
+
+	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"

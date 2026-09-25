@@ -8,7 +8,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Any
+from typing import Any, Literal
 
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
@@ -19,12 +19,14 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.platform.problems import Problem
+from app.rules import documents
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.kinds import BUILDING_SPECIFIC_KINDS, ParamProblem, validate_params
 from app.rules.extract import RUNNING_STALE_AFTER, month_cost
 from app.rules.models import (
     LandUsePlan,
+    ProjectRegulation,
     ProjectRuleOverride,
     RegulationChapter,
     Rule,
@@ -64,6 +66,9 @@ UNCOVERED_WARNING_SHARE = 0.01
 LINE_OVERLAY_DISTANCE_M = 1.0
 """Linienhafte Vorgaben (z. B. Baulinie) liegen oft genau auf der Grenze; bis 1 m gelten sie als betroffen."""
 NOTICES = ["notice.rules_simulation", "notice.rules_lotissement"]
+UPLOAD_NOTICES = ["notice.rules_simulation", "notice.rules_upload"]
+"""Hochgeladenes Reglement (AN2): ausgewertet ist nur dieses Dokument – ohne Zonenplan, überlagernde
+Vorgaben, Servituden und Zusatzdokumente (docs/PLAN_AN2_PLU.md 3.4)."""
 RESULT_STATUSES = {"simulated", "office_reviewed"}
 SPECIFIC_BUILDING_KINDS = ("main", "annex", "pool")
 
@@ -82,17 +87,10 @@ TRANSIENT_ERRORS = ("rate_limited", "http_5", "transport:", "interrupted:")
 
 
 def _plan_out(db: Session, plan: LandUsePlan) -> PlanOut:
-    source = (
-        db.execute(
-            select(SourceFile)
-            .where(SourceFile.land_use_plan_id == plan.id)
-            .order_by(SourceFile.created_at.desc())
-        )
-        .scalars()
-        .first()
-    )
+    source = documents.latest_source(db, plan.id)
     return PlanOut(
         id=plan.id,
+        origin="upload" if plan.origin == "upload" else "gpu",
         title=plan.title,
         du_type=plan.du_type,
         gpu_doc_id=plan.gpu_doc_id,
@@ -232,18 +230,26 @@ class RulesResult:
     engine_version: str = ENGINE_VERSION
 
 
-def _unavailable(commune: str | None, reason: str, warnings: list[str]) -> RulesResult:
+def _unavailable(
+    commune: str | None,
+    reason: str,
+    warnings: list[str],
+    *,
+    plan: PlanOut | None = None,
+    notices: list[str] = NOTICES,
+    status: Literal["unavailable", "in_progress"] = "unavailable",
+) -> RulesResult:
     return RulesResult(
         out=ProjectRulesOut(
-            status="unavailable",
+            status=status,
             reason=reason,
             commune_insee=commune,
-            plan=None,
+            plan=plan,
             zones=[],
             ignored_zones=[],
             overlays=[],
             warnings=sorted(set(warnings)),
-            notices=NOTICES,
+            notices=notices,
         )
     )
 
@@ -260,10 +266,16 @@ def envelope_rules(db: Session, project_id: uuid.UUID) -> RulesResult:
 
 def resolve_rules(db: Session, project_id: uuid.UUID, *, geometry: bool = False) -> RulesResult:
     """Simulation für das Grundstück. Ist der aktuelle Planstand für dieses Grundstück nicht vollständig
-    ausgewertet oder nicht lesbar, zeigt sie den vorigen Planstand als „veraltet“ (Plan 3.4, RW21)."""
+    ausgewertet oder nicht lesbar, zeigt sie den vorigen Planstand als „veraltet“ (Plan 3.4, RW21).
+
+    Hat das Projekt ein **hochgeladenes** règlement écrit (AN2), gilt es vor dem GPU-Weg – auch für ein
+    Kataster-Grundstück (E-AN2-6): eine Zone, Teilfläche = ganzes Grundstück (`_uploaded_rules`)."""
     footprint = site_service.site_footprint(db, project_id)
     if footprint is None:
         raise Problem(404, "site_not_found")
+    link = documents.project_plu(db, project_id)
+    if link is not None:
+        return _uploaded_rules(db, project_id, footprint, link, geometry=geometry)
     commune = footprint.commune_insees[0] if footprint.commune_insees else None
     warnings: list[str] = []
     if len(footprint.commune_insees) > 1:
@@ -306,6 +318,71 @@ def resolve_rules(db: Session, project_id: uuid.UUID, *, geometry: bool = False)
     return _unavailable(commune, unavailable, warnings)
 
 
+def has_uploaded_plu(db: Session, project_id: uuid.UUID) -> bool:
+    """Hat das Projekt ein hochgeladenes PLU (AN2)? Dann gibt es Regeln auch ohne Kataster (G3, 3.5)."""
+    return documents.project_plu(db, project_id) is not None
+
+
+@dataclass(frozen=True)
+class _ZoneRow:
+    """Teilfläche Grundstück × Zone: aus dem GPU verschnitten oder, beim Upload, das ganze Grundstück."""
+
+    code: str
+    label: str | None
+    chapter_code: str | None
+    area: float
+    part_wkb: bytes | None
+
+
+def _uploaded_rules(
+    db: Session,
+    project_id: uuid.UUID,
+    footprint: SiteFootprint,
+    link: ProjectRegulation,
+    *,
+    geometry: bool,
+) -> RulesResult:
+    """Zweiter Einstieg (AN2, 3.4): gewähltes Dokument und Kapitel statt Gemeinde und Zonengeometrie.
+    Kein Rückfall-Planstand, keine überlagernden Vorgaben, keine Gemeinde."""
+    plan = db.get(LandUsePlan, link.land_use_plan_id)
+    assert plan is not None
+    plan_out = _plan_out(db, plan)
+    if plan.status == "importing":
+        return _unavailable(
+            None, "document_reading", [], plan=plan_out, notices=UPLOAD_NOTICES, status="in_progress"
+        )
+    if plan.status != "active":
+        return _unavailable(None, plan.error or "document_failed", [], plan=plan_out, notices=UPLOAD_NOTICES)
+    if link.zone_code is None:
+        return _unavailable(None, "zone_not_chosen", [], plan=plan_out, notices=UPLOAD_NOTICES)
+    chapter = db.execute(
+        select(RegulationChapter).where(
+            RegulationChapter.land_use_plan_id == plan.id, RegulationChapter.code == link.chapter_code
+        )
+    ).scalar_one_or_none()
+    row = _ZoneRow(
+        code=link.zone_code,
+        label=chapter.title if chapter is not None else None,
+        chapter_code=link.chapter_code,
+        area=footprint.area_m2,
+        part_wkb=footprint.wkb if geometry else None,
+    )
+    return _rules_for_zones(
+        db,
+        project_id,
+        plan,
+        [row],
+        site_area=footprint.area_m2 or 1.0,
+        commune=None,
+        warnings=[],
+        ignored=[],
+        uncovered_share=0.0,
+        overlay_rows=[],
+        notices=UPLOAD_NOTICES,
+        geometry=geometry,
+    )
+
+
 def _plan_rules(
     db: Session,
     project_id: uuid.UUID,
@@ -316,6 +393,7 @@ def _plan_rules(
     *,
     geometry: bool = False,
 ) -> RulesResult:
+    """GPU-Weg: Zonen des Planstands mit dem Grundstück verschneiden, Vorgaben der Gemeinde dazu."""
     warnings = list(base_warnings)
     part = "ST_Union(ST_Intersection(z.geometry, s.g))"
     rows = db.execute(
@@ -344,6 +422,67 @@ def _plan_rules(
     if rows and uncovered >= UNCOVERED_WARNING_SHARE:
         warnings.append("zone_coverage_incomplete")
 
+    overlay_rows = db.execute(
+        text(
+            f"""
+            WITH s AS (SELECT ST_GeomFromWKB(:wkb, 2154) AS g)
+            SELECT o.category, o.type_code, o.label, o.endpoint,
+                   {
+                "ST_AsBinary(ST_MakeValid(ST_Intersection(o.geometry, ST_Buffer(s.g, :distance))))"
+                if geometry
+                else "NULL"
+            } AS clipped
+            FROM overlay_constraint o, s
+            WHERE o.land_use_plan_id = :plan AND o.commune_insee = :commune
+              AND ST_DWithin(o.geometry, s.g, :distance)
+              AND (GeometryType(o.geometry) NOT LIKE '%POLYGON%' OR ST_Intersects(o.geometry, s.g))
+            ORDER BY o.category, o.label
+            """  # noqa: S608  nur ein fester Ausdruck, keine Eingabe
+        ),
+        {"wkb": footprint.wkb, "plan": plan.id, "commune": commune, "distance": LINE_OVERLAY_DISTANCE_M},
+    ).all()
+    return _rules_for_zones(
+        db,
+        project_id,
+        plan,
+        [
+            _ZoneRow(
+                code=r.code,
+                label=r.label,
+                chapter_code=r.chapter_code,
+                area=float(r.area),
+                part_wkb=bytes(r.part_wkb) if r.part_wkb is not None else None,
+            )
+            for r in relevant
+        ],
+        site_area=site_area,
+        commune=commune,
+        warnings=warnings,
+        ignored=ignored,
+        uncovered_share=round(uncovered, 4) if rows else 0.0,
+        overlay_rows=list(overlay_rows),
+        notices=NOTICES,
+        geometry=geometry,
+    )
+
+
+def _rules_for_zones(
+    db: Session,
+    project_id: uuid.UUID,
+    plan: LandUsePlan,
+    relevant: list[_ZoneRow],
+    *,
+    site_area: float,
+    commune: str | None,
+    warnings: list[str],
+    ignored: list[IgnoredZoneOut],
+    uncovered_share: float,
+    overlay_rows: list[Any],
+    notices: list[str],
+    geometry: bool,
+) -> RulesResult:
+    """Regelwerke, Versionen, Kapitelstatus, Projektkorrekturen und Zitat-URLs je Zonenzeile – für beide
+    Einstiege gleich, damit Anzeige und Baurahmen dieselbe Ausgabe bekommen (BR15, AN2 3.4)."""
     codes = [r.code for r in relevant]
     rule_sets = {
         rs.zone_code: rs
@@ -425,25 +564,6 @@ def _plan_rules(
             )
         )
 
-    overlay_rows = db.execute(
-        text(
-            f"""
-            WITH s AS (SELECT ST_GeomFromWKB(:wkb, 2154) AS g)
-            SELECT o.category, o.type_code, o.label, o.endpoint,
-                   {
-                "ST_AsBinary(ST_MakeValid(ST_Intersection(o.geometry, ST_Buffer(s.g, :distance))))"
-                if geometry
-                else "NULL"
-            } AS clipped
-            FROM overlay_constraint o, s
-            WHERE o.land_use_plan_id = :plan AND o.commune_insee = :commune
-              AND ST_DWithin(o.geometry, s.g, :distance)
-              AND (GeometryType(o.geometry) NOT LIKE '%POLYGON%' OR ST_Intersects(o.geometry, s.g))
-            ORDER BY o.category, o.label
-            """  # noqa: S608  nur ein fester Ausdruck, keine Eingabe
-        ),
-        {"wkb": footprint.wkb, "plan": plan.id, "commune": commune, "distance": LINE_OVERLAY_DISTANCE_M},
-    ).all()
     statuses = {z.status for z in zones}
     if not zones:
         overall, overall_reason = "unavailable", "no_zone"
@@ -469,20 +589,16 @@ def _plan_rules(
         plan=_plan_out(db, plan),
         zones=zones,
         ignored_zones=ignored,
-        uncovered_share=round(uncovered, 4) if rows else 0.0,
+        uncovered_share=uncovered_share,
         overlays=overlays,
         warnings=sorted(set(warnings)),
-        notices=NOTICES,
+        notices=notices,
     )
     if not geometry:
         return RulesResult(out=out)
     return RulesResult(
         out=out,
-        zones=[
-            ZoneGeometry(code=row.code, wkb=bytes(row.part_wkb))
-            for row in relevant
-            if row.part_wkb is not None
-        ],
+        zones=[ZoneGeometry(code=row.code, wkb=row.part_wkb) for row in relevant if row.part_wkb is not None],
         constraints=[
             ConstraintGeometry(
                 category=row.category,

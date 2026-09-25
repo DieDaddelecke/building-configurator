@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.rules.domain.kinds import BuildingKind, RuleKind
 
@@ -27,7 +27,7 @@ class RuleOut(BaseModel):
     quote: str | None
     quote_verified: bool
     source_url: str | None
-    """Planunterlage im GPU mit Seitensprung (`#page=`)."""
+    """Planunterlage mit Seitensprung (`#page=`): im GPU oder, hochgeladen, `/api/v1/regulation-files/…`."""
     confidence: float
     notes: str | None
     origin: Literal["extraction", "office", "project"]
@@ -79,9 +79,11 @@ class OverlayOut(BaseModel):
 
 class PlanOut(BaseModel):
     id: uuid.UUID
+    origin: Literal["gpu", "upload"]
+    """`upload`: vom Architekten hochgeladenes règlement écrit (AN2); dann ohne GPU-Kennung und -Datum."""
     title: str
     du_type: str
-    gpu_doc_id: str
+    gpu_doc_id: str | None
     gpu_update_date: str | None
     regulation_url: str | None
 
@@ -195,3 +197,83 @@ class RulesImportIn(BaseModel):
 class ExtractIn(BaseModel):
     force: bool = False
     """Ohne `force` werden gespeicherte Aufrufe derselben Eingabe genutzt; mit `force` kostet es erneut."""
+
+
+# ---------------------------------------------------------------------------
+# Hochgeladenes Reglement (AN2, docs/PLAN_AN2_PLU.md)
+# ---------------------------------------------------------------------------
+
+UploadDuType = Literal["PLU", "PLUi", "PSMV"]
+ZONE_CODE_PATTERN = r"^[0-9A-Za-z][0-9A-Za-z_\-]{0,19}$"
+
+
+class DocumentChapterOut(BaseModel):
+    """Kapitel eines hochgeladenen Reglements. `idle`: erkannt, aber für keine Zone gewählt – ohne Kosten."""
+
+    code: str
+    title: str
+    first_page: int
+    last_page: int
+    general_pages: list[int]
+    detection: str
+    sectors: list[str]
+    suggested_sectors: list[str]
+    status: Literal["idle", "pending", "extracting", "succeeded", "failed"]
+    error: str | None
+    runs: int
+    cost_usd: float
+
+
+class RegulationDocumentOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    du_type: str
+    status: Literal["importing", "active", "failed"]
+    """`importing`: der Job liest noch Text und Kapitel; `failed` mit Grund in `error`."""
+    error: str | None
+    file_name: str | None
+    file_url: str | None
+    page_count: int | None
+    empty_pages: list[int]
+    created_at: datetime
+    chapters: list[DocumentChapterOut]
+
+
+class ProjectRegulationOut(BaseModel):
+    role: Literal["plu"]
+    zone_code: str | None
+    chapter_code: str | None
+    document: RegulationDocumentOut
+
+
+class ZoneChoiceIn(BaseModel):
+    """Zone eines hochgeladenen Reglements wählen: erkanntes Kapitel oder Seitenbereich von Hand (3.3).
+
+    `zone_code` ist der Sektor, für den ausgewertet wird (`Uba` im Kapitel `Ub`). Ohne `first_page` gilt
+    das erkannte Kapitel `chapter_code`; mit `first_page`/`last_page` ein Kapitel von Hand (Code:
+    `chapter_code`, sonst der Zonencode), optional mit eigenem Bereich der allgemeinen Bestimmungen."""
+
+    zone_code: str = Field(pattern=ZONE_CODE_PATTERN)
+    chapter_code: str | None = Field(default=None, pattern=ZONE_CODE_PATTERN)
+    first_page: int | None = Field(default=None, ge=1)
+    last_page: int | None = Field(default=None, ge=1)
+    general_first_page: int | None = Field(default=None, ge=1)
+    general_last_page: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def _consistent(self) -> "ZoneChoiceIn":
+        if (self.first_page is None) != (self.last_page is None):
+            raise ValueError("first_page und last_page nur gemeinsam")
+        if (self.general_first_page is None) != (self.general_last_page is None):
+            raise ValueError("general_first_page und general_last_page nur gemeinsam")
+        if self.first_page is None and self.chapter_code is None:
+            raise ValueError("chapter_code oder Seitenbereich angeben")
+        if self.first_page is not None and self.last_page is not None and self.last_page < self.first_page:
+            raise ValueError("last_page vor first_page")
+        if (
+            self.general_first_page is not None
+            and self.general_last_page is not None
+            and self.general_last_page < self.general_first_page
+        ):
+            raise ValueError("general_last_page vor general_first_page")
+        return self

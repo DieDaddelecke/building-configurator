@@ -366,6 +366,42 @@
         "title": "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post",
         "type": "object"
       },
+      "Body_upload_project_regulation_api_v1_projects__project_id__regulations_post": {
+        "properties": {
+          "du_type": {
+            "default": "PLU",
+            "enum": [
+              "PLU",
+              "PLUi",
+              "PSMV"
+            ],
+            "title": "Du Type",
+            "type": "string"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_project_regulation_api_v1_projects__project_id__regulations_post",
+        "type": "object"
+      },
       "Body_upload_site_api_v1_projects__project_id__site_upload_post": {
         "properties": {
           "address_label": {
@@ -1860,6 +1896,98 @@
           "lotissement"
         ],
         "title": "CustomerOut",
+        "type": "object"
+      },
+      "DocumentChapterOut": {
+        "description": "Kapitel eines hochgeladenen Reglements. `idle`: erkannt, aber für keine Zone gewählt – ohne Kosten.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "detection": {
+            "title": "Detection",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "first_page": {
+            "title": "First Page",
+            "type": "integer"
+          },
+          "general_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "General Pages",
+            "type": "array"
+          },
+          "last_page": {
+            "title": "Last Page",
+            "type": "integer"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "idle",
+              "pending",
+              "extracting",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suggested_sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested Sectors",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "title",
+          "first_page",
+          "last_page",
+          "general_pages",
+          "detection",
+          "sectors",
+          "suggested_sectors",
+          "status",
+          "error",
+          "runs",
+          "cost_usd"
+        ],
+        "title": "DocumentChapterOut",
         "type": "object"
       },
       "DrivewayOut": {
@@ -4959,8 +5087,15 @@
             "type": "string"
           },
           "gpu_doc_id": {
-            "title": "Gpu Doc Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gpu Doc Id"
           },
           "gpu_update_date": {
             "anyOf": [
@@ -4976,6 +5111,14 @@
           "id": {
             "format": "uuid",
             "title": "Id",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "gpu",
+              "upload"
+            ],
+            "title": "Origin",
             "type": "string"
           },
           "regulation_url": {
@@ -4996,6 +5139,7 @@
         },
         "required": [
           "id",
+          "origin",
           "title",
           "du_type",
           "gpu_doc_id",
@@ -5359,6 +5503,48 @@
         "title": "ProjectOverrideOut",
         "type": "object"
       },
+      "ProjectRegulationOut": {
+        "properties": {
+          "chapter_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Code"
+          },
+          "document": {
+            "$ref": "#/components/schemas/RegulationDocumentOut"
+          },
+          "role": {
+            "const": "plu",
+            "title": "Role",
+            "type": "string"
+          },
+          "zone_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Code"
+          }
+        },
+        "required": [
+          "role",
+          "zone_code",
+          "chapter_code",
+          "document"
+        ],
+        "title": "ProjectRegulationOut",
+        "type": "object"
+      },
       "ProjectRulesOut": {
         "properties": {
           "commune_insee": {
@@ -5575,6 +5761,110 @@
           "max_cents"
         ],
         "title": "RangeOut",
+        "type": "object"
+      },
+      "RegulationDocumentOut": {
+        "properties": {
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentChapterOut"
+            },
+            "title": "Chapters",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "du_type": {
+            "title": "Du Type",
+            "type": "string"
+          },
+          "empty_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Empty Pages",
+            "type": "array"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "file_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Url"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "status": {
+            "enum": [
+              "importing",
+              "active",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "du_type",
+          "status",
+          "error",
+          "file_name",
+          "file_url",
+          "page_count",
+          "empty_pages",
+          "created_at",
+          "chapters"
+        ],
+        "title": "RegulationDocumentOut",
         "type": "object"
       },
       "RiskOut": {
@@ -8106,6 +8396,81 @@
           "coverage"
         ],
         "title": "VersionOut",
+        "type": "object"
+      },
+      "ZoneChoiceIn": {
+        "description": "Zone eines hochgeladenen Reglements wählen: erkanntes Kapitel oder Seitenbereich von Hand (3.3).\n\n`zone_code` ist der Sektor, für den ausgewertet wird (`Uba` im Kapitel `Ub`). Ohne `first_page` gilt\ndas erkannte Kapitel `chapter_code`; mit `first_page`/`last_page` ein Kapitel von Hand (Code:\n`chapter_code`, sonst der Zonencode), optional mit eigenem Bereich der allgemeinen Bestimmungen.",
+        "properties": {
+          "chapter_code": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9A-Za-z][0-9A-Za-z_\\-]{0,19}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Code"
+          },
+          "first_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Page"
+          },
+          "general_first_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "General First Page"
+          },
+          "general_last_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "General Last Page"
+          },
+          "last_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Page"
+          },
+          "zone_code": {
+            "pattern": "^[0-9A-Za-z][0-9A-Za-z_\\-]{0,19}$",
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code"
+        ],
+        "title": "ZoneChoiceIn",
         "type": "object"
       },
       "ZoneRulesOut": {
@@ -11778,6 +12143,217 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/regulations": {
+      "get": {
+        "description": "Hochgeladene Dokumente des Projekts mit Lesestand, erkannten Kapiteln und Stand der Auswertung.",
+        "operationId": "list_project_regulations_api_v1_projects__project_id__regulations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectRegulationOut"
+                  },
+                  "title": "Response List Project Regulations Api V1 Projects  Project Id  Regulations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Project Regulations",
+        "tags": [
+          "rules"
+        ]
+      },
+      "post": {
+        "description": "règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im\nJob `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.",
+        "operationId": "upload_project_regulation_api_v1_projects__project_id__regulations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_project_regulation_api_v1_projects__project_id__regulations_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRegulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Project Regulation",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/regulations/{document_id}": {
+      "delete": {
+        "description": "Dokument vom Projekt lösen; das Dokument bleibt für andere Projekte bestehen (E-AN2-4).",
+        "operationId": "remove_project_regulation_api_v1_projects__project_id__regulations__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Project Regulation",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/regulations/{document_id}/zone": {
+      "put": {
+        "description": "Zone und Kapitel wählen (3.3). **Kostet**: plant die Auswertung des Kapitels ein, wenn sich seine\nEingabe ändert (neues Kapitel oder neuer Sektor); sonst nichts.",
+        "operationId": "choose_regulation_zone_api_v1_projects__project_id__regulations__document_id__zone_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ZoneChoiceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRegulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Choose Regulation Zone",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
     "/api/v1/projects/{project_id}/rules": {
       "get": {
         "description": "Zonen, Regeln mit Zitat und Status, Vorgaben und Hinweise – als Simulation (Plan 3.4, D11).",
@@ -12162,6 +12738,46 @@
         "summary": "Download Own File",
         "tags": [
           "submission"
+        ]
+      }
+    },
+    "/api/v1/regulation-files/{file_id}": {
+      "get": {
+        "description": "Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für\ndas Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.",
+        "operationId": "regulation_file_api_v1_regulation_files__file_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "file_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "File Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Regulation File",
+        "tags": [
+          "rules"
         ]
       }
     },

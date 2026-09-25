@@ -26,6 +26,8 @@ const FALLBACK_NOTICES: Record<string, string> = {
   "notice.envelope_simulation": "envelope.notices.simulation",
   "notice.rules_simulation": "rules.notices.simulation",
   "notice.rules_lotissement": "rules.notices.lotissement",
+  "notice.rules_upload": "rules.notices.upload",
+  "notice.site_without_cadastre": "site.notices.without_cadastre",
   "notice.cadastre_accuracy": "site.notices.cadastre_accuracy",
   "notice.risks_public_data": "site.notices.risks_public_data",
 };
@@ -210,7 +212,8 @@ export function Baurahmen({ envelope, projectId, rolle = "customer" }: Baurahmen
     return (
       <div className="flex flex-col gap-2">
         <p className="t-warn text-sm m-0">{t("envelope.unavailable")}</p>
-        <p className="text-sm t-mute m-0">{t("envelope.unavailableHint")}</p>
+        {/* Der Hinweis auf die Anfrage gilt Kunden; das Büro (Prüfung, Emprise Analyse) sieht den Grund im Regelwerk */}
+        {rolle === "customer" && <p className="text-sm t-mute m-0">{t("envelope.unavailableHint")}</p>}
       </div>
     );
   }

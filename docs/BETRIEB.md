@@ -22,7 +22,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 |---|---|---|---|---|---|
 | P | 0001 | – | `mail_send`, `retention_cleanup` (täglich), `housekeeping` (stündlich) | SMTP-Anbieter (E2) | `staff-add` (3), SMTP (5) |
 | G1 | 0002, 0006, 0012 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
-| G2 | 0003, 0004 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
+| G2 | 0003, 0004, 0013 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich), `rules_document_read` (nur Analyse-Produkt, 15) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
 | G3 | 0005 | `envelope_simulation` | `envelope_sheet` | – | WeasyPrint im Image (10) |
 | H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
 | A | 0008 | `inquiry` | `mail_send` | – | Büro-Postfach, `legal-seed` (11) |
@@ -286,14 +286,14 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 - `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
 - Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.
 
-## 15. Zweites Produkt: Emprise Analyse (AN0, AN1)
+## 15. Zweites Produkt: Emprise Analyse (AN0–AN2)
 
-Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09 und UP01–UP16). Umgesetzt sind **AN0** (Produktschnitt) und **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto). PLU hochladen (AN2), Analyse und Nutzfläche (AN3), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
+Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16 und PU01–PU10). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto) und **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen). Analyse und Nutzfläche (AN3), Regelformular und Zusatzdokumente (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
 
 | | Hauskonfigurator | Emprise Analyse |
 |---|---|---|
 | `EMPRISE_PRODUCT` | `configurator` (Standard) | `analyse` |
-| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (80 Routen) | nur Kern: Plattform, G1, G2, G3 (42 Routen) |
+| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (91 Operationen im OpenAPI-Dokument, Stand AN2) | nur Kern: Plattform, G1, G2, G3 (51 Operationen) |
 | Periodische Aufgaben | alle sechs | ohne `cadastre_import` und `plu_import` (D17: der Nutzer lädt hoch) |
 | Oberfläche | `index.html` | `analyse.html` über `SPA_INDEX` im Web-Container |
 | Datenbank, Speicher, Sicherung, Hostname, Authentik | eigene | eigene (E-A4) |
@@ -321,12 +321,22 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 1. Konto freischalten: `python -m app.cli staff-add person@buero.fr architect` – **im Analyse-Stack**, er hat eigene Tabellen (lokal: `docker compose -f compose.analyse.yaml exec api-analyse …`).
 2. Flag setzen: `python -m app.cli flag-set site_selection --role architect`. Ohne das Flag antworten alle Grundstücksendpunkte mit `403 feature_disabled` (UP10).
 3. Kein Katasterimport nötig: Die Parzelle kommt als DXF oder GeoJSON oder wird gezeichnet (D17). `CADASTRE_COMMUNES=[]` ist der Normalfall; mit einer Gemeinde darin läuft der Import von Hand (`cadastre-import`), dann funktioniert auch der Katasterklick.
+4. Für die Auswertung hochgeladener Reglements (AN2): `ANTHROPIC_API_KEY` und `RULES_BUDGET_MONTH_USD` in `.env.analyse` (lokal `EMPRISE_ANTHROPIC_API_KEY`, Budget-Vorgabe 20 $). Das Budget gilt je Datenbank, also getrennt vom Hauskonfigurator. Ohne Schlüssel steht das gewählte Kapitel auf „nicht eingerichtet“ und startet von selbst, sobald er eingetragen ist (RW22). Die Flags `rules_simulation` und `envelope_simulation` braucht das Analyse-Produkt nicht: Regeln und Baurahmen liest die Oberfläche über die Büro-Endpunkte (PU08). Ausgehender Zugang zusätzlich `api.anthropic.com`.
 
 **Prüfpunkte**
 
 - Richtiges Profil: `GET /api/v1/openapi.json` des Analyse-Stacks enthält keine Route mit `catalog`, `inquiry`, `submission` oder `configuration`.
 - Richtige Oberfläche: `GET /` liefert `<title>Emprise Analyse</title>`. Kommt „Emprise“, fehlt `SPA_INDEX=analyse.html`.
 - Richtige Zeitpläne: `SELECT name FROM periodic_schedule` zeigt vier Einträge (`housekeeping`, `retention_cleanup`, `rules_housekeeping`, `site_housekeeping`), im Konfigurator sechs.
+
+**Hochgeladene Reglements (AN2)**
+
+- Ablage: `rules/uploads/<sha256>.pdf` im Objektspeicher des Stacks, Seitentexte in `source_page`. Dasselbe PDF ist dasselbe Dokument für alle Projekte (PU01); es bleibt, wenn ein Projekt gelöscht wird (E-AN2-4) – ein Reglement enthält keine personenbezogenen Daten. Ungenutzte Dokumente räumt noch nichts auf; bei Bedarf von Hand (`DELETE FROM land_use_plan WHERE origin = 'upload' AND id NOT IN (SELECT land_use_plan_id FROM project_regulation)` – löscht auch Läufe und senkt damit die Monatskosten, nur zum Monatsbeginn).
+- Kosten je Kapitel stehen im Abschnitt „Bebauungsplan“ der Projektseite (Aufrufe, Dollar) und in `rule_extraction_run`; Größenordnung wie beim GPU-Weg (9): 1–2 $ je Kapitel. Ein **weiterer Sektor** desselben Kapitels wertet es neu aus (E-AN2-2).
+- **„Wird gelesen“ bleibt stehen:** Job `rules_document_read` prüfen (Abschnitt 4; `SELECT status, last_error FROM job WHERE kind = 'rules_document_read' ORDER BY created_at DESC`). Scheitert er dreimal, steht das Dokument auf `failed: interrupted:<Art>`; erneutes Hochladen derselben Datei liest neu.
+- **`document_no_text`:** mehr als die Hälfte der Seiten ohne Textschicht, meist ein Scan. Ein PDF mit Textschicht besorgen (Géoportail de l'Urbanisme, Gemeinde); OCR gibt es nicht (RW03).
+- **Kein Kapitel erkannt:** Der Architekt gibt den Seitenbereich von Hand an (Kapitel, optional allgemeine Bestimmungen). Mehrbändige Reglements (allgemeine Bestimmungen in eigener Datei) vorher zu einem PDF verbinden.
+- **Kapitel gescheitert:** Gründe und Wiederaufnahme wie in 9 (`not_configured`, `budget_exceeded` … nimmt `rules_housekeeping` von selbst wieder auf).
 
 **Störungen beim Hochladen einer Parzelle**
 

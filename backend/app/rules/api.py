@@ -4,11 +4,15 @@ Kunden lesen die Regeln ihres Grundstücks hinter dem Feature-Flag `rules_simula
 Büro: Abdeckung und Regelwerke lesen (`architect`, `rules_admin`, `ops`), Korrekturen (`architect`,
 `rules_admin`), Import und erneute Auswertung (`ops`, `rules_admin`). Keine dieser Büroaktionen ist
 Voraussetzung für die Simulation beim Kunden (D11).
+„Emprise Analyse“ (AN2): Der Architekt lädt für eigene Projekte ein règlement écrit hoch und wählt die
+Zone (`require_owned_project`); die Datei liefert `GET /regulation-files/{id}` für die Zitate aus.
 """
 
 import uuid
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, File, Form, Request, Response, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -18,21 +22,25 @@ from app.platform.auth.context import (
     Role,
     StaffPrincipal,
     get_auth,
+    require_owned_project,
     require_project_access,
     require_roles,
 )
 from app.platform.db import get_db
 from app.platform.problems import Problem
-from app.rules import service
+from app.rules import documents, service
 from app.rules.schemas import (
     CoverageOut,
     ExtractIn,
     ProjectOverrideIn,
     ProjectOverrideOut,
+    ProjectRegulationOut,
     ProjectRulesOut,
     RuleSetOut,
     RuleSetVersionIn,
     RulesImportIn,
+    UploadDuType,
+    ZoneChoiceIn,
 )
 
 router = APIRouter(tags=["rules"])
@@ -137,3 +145,114 @@ def delete_project_override(
     db: Session = Depends(get_db),
 ) -> list[ProjectOverrideOut]:
     return service.delete_override(db, project_id, override_id, staff.actor_id)
+
+
+# ---------------------------------------------------------------------------
+# Hochgeladenes Reglement (AN2, docs/PLAN_AN2_PLU.md): nur Architekt und eigenes Projekt, weil die
+# Zonenwahl eine bezahlte Auswertung auslöst (3.7)
+# ---------------------------------------------------------------------------
+
+UPLOAD_CHUNK_BYTES = 1024 * 1024
+
+
+async def _read_limited(file: UploadFile, limit: int) -> bytes:
+    """Datei stückweise lesen und bei Überschreiten der Grenze abbrechen, nicht erst danach."""
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(UPLOAD_CHUNK_BYTES):
+        total += len(chunk)
+        if total > limit:
+            raise Problem(413, "upload_too_large")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+@router.get("/projects/{project_id}/regulations", response_model=list[ProjectRegulationOut])
+def list_project_regulations(
+    project_id: uuid.UUID,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> list[ProjectRegulationOut]:
+    """Hochgeladene Dokumente des Projekts mit Lesestand, erkannten Kapiteln und Stand der Auswertung."""
+    return documents.project_regulations(db, project_id)
+
+
+@router.post("/projects/{project_id}/regulations", response_model=ProjectRegulationOut, status_code=202)
+async def upload_project_regulation(
+    request: Request,
+    project_id: uuid.UUID,
+    file: UploadFile = File(...),
+    title: str | None = Form(default=None, max_length=300),
+    du_type: UploadDuType = Form(default="PLU"),
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> ProjectRegulationOut:
+    """règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im
+    Job `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts."""
+    settings = get_settings()
+    rate_limit.check(request, "regulation_write", settings.site_write_limit_per_hour, 3600)
+    data = await _read_limited(file, settings.regulation_upload_max_bytes)
+    if not data:
+        raise Problem(422, "not_a_pdf")
+    # Prüfung des PDF und Ablage im Objektspeicher dauern bei großen Dateien Sekunden: nicht im Event-Loop
+    return await run_in_threadpool(
+        documents.upload,
+        db,
+        project_id,
+        file_name=file.filename or "",
+        data=data,
+        title=title,
+        du_type=du_type,
+        actor=staff.actor_id,
+    )
+
+
+@router.put("/projects/{project_id}/regulations/{document_id}/zone", response_model=ProjectRegulationOut)
+def choose_regulation_zone(
+    request: Request,
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    body: ZoneChoiceIn,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> ProjectRegulationOut:
+    """Zone und Kapitel wählen (3.3). **Kostet**: plant die Auswertung des Kapitels ein, wenn sich seine
+    Eingabe ändert (neues Kapitel oder neuer Sektor); sonst nichts."""
+    rate_limit.check(request, "regulation_write", get_settings().site_write_limit_per_hour, 3600)
+    return documents.choose_zone(db, get_settings(), project_id, document_id, body, staff.actor_id)
+
+
+@router.delete("/projects/{project_id}/regulations/{document_id}", status_code=204)
+def remove_project_regulation(
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Dokument vom Projekt lösen; das Dokument bleibt für andere Projekte bestehen (E-AN2-4)."""
+    documents.remove(db, project_id, document_id, staff.actor_id)
+    return Response(status_code=204)
+
+
+@router.get(
+    "/regulation-files/{file_id}",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+def regulation_file(
+    file_id: uuid.UUID, staff: StaffPrincipal = Reader, db: Session = Depends(get_db)
+) -> Response:
+    """Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für
+    das Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung."""
+    content, filename = documents.file_content(db, file_id)
+    ascii_name = filename.encode("ascii", "replace").decode().replace('"', "").replace("?", "_")
+    disposition = f"inline; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename)}"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": disposition,
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, max-age=3600",
+        },
+    )

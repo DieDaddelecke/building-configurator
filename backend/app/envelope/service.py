@@ -90,8 +90,8 @@ def _rule_input(rule: RuleOut) -> RuleInput:
 def envelope_input(
     db: Session, project_id: uuid.UUID, site: site_service.EnvelopeSite | None = None
 ) -> tuple[EnvelopeInput, rules_service.RulesResult]:
-    """Eingaben aus G1 und G2 einsammeln. Nur für Grundstücke aus Kataster (`site.origin == 'parcel'`);
-    für Grundstücke ohne Kataster siehe `_no_rules_input` – G2 wird dafür nicht aufgerufen (D13)."""
+    """Eingaben aus G1 und G2 einsammeln: für Kataster-Grundstücke und – mit hochgeladenem PLU (AN2) –
+    für Grundstücke ohne Kataster. Ohne Regeln siehe `_no_rules_input`; G2 läuft dann nicht (D13)."""
     if site is None:
         site = site_service.envelope_site(db, project_id)
     rules = rules_service.envelope_rules(db, project_id)
@@ -159,7 +159,12 @@ def envelope_input(
         rules_reason=rules.out.reason,
         uncovered_share=rules.out.uncovered_share,
         warnings=list(rules.out.warnings),
-        notices=[NOTICE, *rules.out.notices, "notice.cadastre_accuracy"],
+        notices=[
+            NOTICE,
+            *rules.out.notices,
+            # Ohne Kataster (Datei oder Zeichnung, AN2): Maße und Lage kommen vom Architekten
+            "notice.cadastre_accuracy" if site.origin == "parcel" else "notice.site_without_cadastre",
+        ],
         rules_engine_version=rules.engine_version,
     )
     return data, rules
@@ -244,9 +249,15 @@ def _geometry_key(geometry: BaseGeometry) -> str:
 # ---------------------------------------------------------------------------
 
 NO_RULES_ORIGINS = ("manual_sketch", "upload")
-"""Grundstücke ohne Kataster (Weg E und Upload, AN1): keine Gemeinde, keine Zone, keine Regeln.
-Grund und Hinweis heißen wie die Herkunft (`manual_sketch`, `upload`). Der Upload-Weg zu Regeln aus
-einem hochgeladenen PLU kommt mit AN2."""
+"""Grundstücke ohne Kataster (Weg E und Upload, AN1): keine Gemeinde, keine Zone, keine Regeln – es sei
+denn, das Projekt hat ein hochgeladenes PLU (AN2, `_without_rules`). Grund und Hinweis heißen wie die
+Herkunft (`manual_sketch`, `upload`)."""
+
+
+def _without_rules(db: Session, project_id: uuid.UUID, site: site_service.EnvelopeSite) -> bool:
+    """Kein Baurahmen: Grundstück ohne Kataster und ohne hochgeladenes PLU (D13, AN2 3.5). Kundenprojekte
+    des Hauskonfigurators können kein PLU hochladen; für Weg E bleibt es dort beim Hinweis."""
+    return site.origin in NO_RULES_ORIGINS and not rules_service.has_uploaded_plu(db, project_id)
 
 
 def _no_rules_input(site: site_service.EnvelopeSite) -> EnvelopeInput:
@@ -311,7 +322,7 @@ def build_envelope(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeOut, Env
     """Baurahmen ableiten und ausgeben; die Eingaben kommen mit, damit der Steckbrief ihre Prüfsumme
     gegen den angeforderten Stand halten kann. Für Weg E (Plan 3.3) wird G2 nicht aufgerufen (D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin in NO_RULES_ORIGINS:
+    if _without_rules(db, project_id, site):
         return _no_rules_envelope(site), _no_rules_input(site)
     data, rules = envelope_input(db, project_id, site=site)
     envelope = derive_envelope(data)
@@ -327,7 +338,7 @@ def derived(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeInput, Envelope
     """Eingaben und Ableitung für Module, die auf dem Baurahmen aufbauen (H2): die reine Fachlogik statt der
     Ausgabeform. Für Weg E (freies Zeichnen) gibt es keine Ableitung (`None`, D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin in NO_RULES_ORIGINS:
+    if _without_rules(db, project_id, site):
         return _no_rules_input(site), None
     data, _rules = envelope_input(db, project_id, site=site)
     return data, derive_envelope(data)
@@ -541,7 +552,7 @@ def request_sheet(db: Session, project_id: uuid.UUID, actor: str | None = None) 
     Für Weg E (freies Zeichnen, Plan 3.3) gibt es keinen Steckbrief: ohne Baurahmen keine Simulation,
     die er zusammenfassen könnte (D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin in NO_RULES_ORIGINS:
+    if _without_rules(db, project_id, site):
         raise Problem(409, "sheet_unavailable_manual_sketch")
     data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)
@@ -564,7 +575,7 @@ def sheet_bytes(db: Session, project_id: uuid.UUID) -> tuple[bytes, str]:
     from app.platform import storage
 
     site = site_service.envelope_site(db, project_id)
-    if site.origin in NO_RULES_ORIGINS:
+    if _without_rules(db, project_id, site):
         raise Problem(409, "sheet_unavailable_manual_sketch")
     data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)

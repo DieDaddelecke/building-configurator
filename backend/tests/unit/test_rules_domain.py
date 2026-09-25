@@ -19,7 +19,7 @@ from app.rules.domain.assess import (
     match_sector,
     verify,
 )
-from app.rules.domain.chapters import Chapter, chapter_for_zone, detect_structure
+from app.rules.domain.chapters import Chapter, chapter_for_zone, detect_structure, sector_candidates
 from app.rules.domain.extraction import (
     OUTPUT_SCHEMA,
     VERIFICATION_SCHEMA,
@@ -484,3 +484,17 @@ def test_parse_output_skips_malformed_entries() -> None:
         parse_output({"remarks": ""})
     with pytest.raises(ValueError):
         parse_verification({"remarks": ""})
+
+
+def test_sector_candidates_come_from_sector_context() -> None:
+    """AN2: Vorschläge für die Zonenwahl eines hochgeladenen Reglements (docs/PLAN_AN2_PLU.md 3.3)."""
+    text = (
+        "La zone Ub comprend les secteurs Uba et Ubb. Dans le secteur Ub1, la hauteur est limitée.\n"
+        "Ubiquité des règles : sans objet. Voir aussi la zone Uc et le sous-secteur Ubc2."
+    )
+    assert sector_candidates(text, "Ub", frozenset({"Uc"})) == ["Ub1", "Uba", "Ubb", "Ubc2"]
+    # „Ne“ am Satzanfang ist kein Sektor der Zone N; ohne Stichwort davor zählt es nicht
+    assert sector_candidates("Ne sont pas autorisées les constructions.", "N") == []
+    assert sector_candidates("en secteur Nh ou Np", "N") == ["Nh", "Np"]
+    # Codes anderer Kapitel sind keine Sektoren (Kapitel 1AU neben 1AUz)
+    assert sector_candidates("dans la zone 1AUz et le secteur 1AUa", "1AU", frozenset({"1AUz"})) == ["1AUa"]
