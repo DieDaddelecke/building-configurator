@@ -1,0 +1,26 @@
+# Ergänzung für den Ende-zu-Ende-Lauf (CI, .github/workflows/ci.yml Job `e2e`).
+#
+# Der Lauf darf keine fremden Dienste anrufen: Der Kataster-Ausschnitt, die Straßen und der Planstand
+# kommen aus Aufzeichnungen (`cadastre-import --from-dir`, `tests.e2e_seed_rules`). Blieben die echten
+# Adressen stehen, fragt `site_enrich` Höhendienst und Géorisques wirklich ab – langsam, von außen
+# abhängig und unhöflich gegenüber den Behördendiensten. Vor allem aber arbeitet der Worker die
+# Warteschlange einzeln ab: Zwei Zeitüberläufe à 8 Sekunden schoben den Steckbrief-Job um 24 Sekunden
+# nach hinten, und der Test lief in sein Limit (A28).
+#
+# Port 9 (discard) nimmt niemand an: Die Anfrage scheitert sofort mit „Verbindung abgelehnt“,
+# `site_enrich` endet nach drei kurzen Versuchen als „nicht abgefragt“ – ein regulärer Weg.
+#
+#   docker compose -f compose.yaml -f compose.e2e.yaml up -d --build
+x-ohne-aussenwelt: &ohne-aussenwelt
+  EMPRISE_GEOPLATEFORME_BASE_URL: http://127.0.0.1:9
+  EMPRISE_GEORISQUES_BASE_URL: http://127.0.0.1:9
+  EMPRISE_CADASTRE_BASE_URL: http://127.0.0.1:9
+  EMPRISE_APICARTO_BASE_URL: http://127.0.0.1:9
+  EMPRISE_GPU_API_BASE_URL: http://127.0.0.1:9
+  EMPRISE_GPU_FILES_BASE_URL: http://127.0.0.1:9
+
+services:
+  api:
+    environment: *ohne-aussenwelt
+  worker:
+    environment: *ohne-aussenwelt
