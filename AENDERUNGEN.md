@@ -4,6 +4,37 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 25.09.2026 – Emprise Analyse: AN2 (Bebauungsplan hochladen)
+
+**Auftrag:** Stand zusammenfassen, dann „fahre mit AN2 fort“, am Ende „comitte und pushe alle änderungen“.
+
+**Commits:** `6241363` AN2 (Plan, Code, Tests, Dokumente, dazu `Caddyfile` und `compose.yaml` aus der Browserprüfung), `aaa8bf6` CI e2e ohne Zugriff auf fremde Dienste – liegengebliebene Arbeit einer parallelen Session (`ci.yml`, `compose.e2e.yaml`), getrennt committet. Beide gepusht. Während der Session hatte die parallele Session selbst `d1d5007` (SeaweedFS) und `c240195` committet und gepusht (voriger Eintrag).
+
+**Neu**
+- Backend: `app/rules/documents.py` (Upload, Lese-Job, Zonenwahl, Entfernen), Migration `0013_regulation_upload.py`, `tests/integration/test_rules_upload.py` (14 Tests, darunter die Gegenprobe GPU ↔ Upload und der Wettlauf-Test).
+- Frontend: `src/api/regulations.ts`, `src/products/analyse/Bebauungsplan.tsx`, `bebauungsplan.test.tsx`.
+- Dokumente: `docs/PLAN_AN2_PLU.md` (Modulplan mit Selbstprüfung, 7.4 Befunde beim Bau, Prüflauf, Browserprüfung).
+
+**Geändert**
+- G2 (wirkt auch im Hauskonfigurator): `plan_import.py` mit den gemeinsamen Bausteinen `store_source` und `ensure_chapter`; `extract.py` plant einen Folgeauftrag, wenn während einer Auswertung ein Sektor dazukam (vorher blieb er dauerhaft ohne Regeln, PU07); `service.py` mit zweitem Einstieg und gemeinsamer Zusammenstellung `_rules_for_zones`.
+- G3: Baurahmen auch ohne Kataster, sobald ein PLU hochgeladen ist; Hinweis `notice.site_without_cadastre`.
+- Oberfläche: Texte für Architekten statt für Kunden (`rules.simulation.textOffice`, Hinweis auf die Anfrage nur für Kunden, „aus Grundstück und Planunterlagen“); AN1-Fehlertext „höchstens 8 MB“ auf 20 MB korrigiert.
+- `frontend/Caddyfile`: keine Seiten-CSP für `/api/v1/regulation-files/*` (Chrome zeigt PDFs unter `object-src 'none'` nicht an). `compose.yaml`: SeaweedFS mit `-volume.max=0`.
+- Dokumente: `docs/ANNAHMEN.md` (Abschnitt AN2 mit PU01–PU10; Verweise an UP12 und RW22), `docs/PLAN_ANALYSE.md` (AN2 umgesetzt, Zusatzdokumente nach AN4), `docs/BETRIEB.md` (G2 mit 0013 und `rules_document_read`, Abschnitt 15 für AN2, Operationen je Profil 91/51), `README.md` (Stolperstellen SeaweedFS und Browserprüfung), `AGENTS.md`, `UMSETZUNGSPLAN.md` (D18).
+
+**Entschieden**
+- Mit dem Auftrag gelten die Empfehlungen E-AN2-1 bis E-AN2-7 des Plans als entschieden (PU01–PU10). **Abweichung vom Gesamtplan:** Die Zusatzdokumente (lotissement, cahier des charges) sind nach AN4 verschoben (E-AN2-5, PU09) – zur Bestätigung in HANDOFF 3.
+
+**Ohne Dateiänderung**
+- Zu Beginn: Widerspruch gemeldet – HANDOFF nannte „nichts committet“, AN0/AN1 waren aber schon gepusht; der Wechsel auf SeaweedFS lag damals noch uncommittet im Arbeitsbaum.
+- Browserprüfung, Befunde und Prüflauf stehen jetzt in PLAN_AN2 7.4. Die Anzeige der PDFs in Chrome selbst ist ungeprüft (das Browserwerkzeug lädt PDFs nur herunter).
+- CI: Der Lauf nach dem Speicherwechsel (`c240195`) war im Job `e2e` bei `pnpm install --frozen-lockfile` gescheitert; der Lauf nach `aaa8bf6` (36188401453) ist vollständig grün, auch e2e.
+- Lokal steht in der Analyse-Datenbank ein Testprojekt „Testparzelle Zone Uh“ mit einem Scheinlauf (0,16 $) aus der Browserprüfung.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Modulauftrag nach Zusammenfassung; „alle Änderungen“ schließt Arbeit paralleler Sessions ein, getrennt committet).
+
+---
+
 ## 25.09.2026 – Emprise Analyse: AN0 (Produktschnitt) und AN1 (Parzelle einbringen), Parzelle auch aus PDF
 
 **Auftrag:** „Fange mit AN0 an“, danach „weiter mit AN1“, dann „kannst du eine lokale Instanz starten“ und „Es sollte auch möglich sein, PDF-Dateien hochzuladen, aus denen dann die Parzelle gelesen wird“. Gearbeitet am 20./21.09.2026, Hand-off am 25.09.2026.
