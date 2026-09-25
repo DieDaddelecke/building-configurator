@@ -1,14 +1,36 @@
 #!/bin/sh
 # Ausliefern und Rückrollen auf Unraid (docs/BETRIEB.md Abschnitt 2).
-#   ./deploy.sh                 aktuellen Code bauen und ausliefern
-#   ./deploy.sh rollback REL    auf eine frühere Release zurück (siehe releases.log)
+#   ./deploy.sh                          Hauskonfigurator bauen und ausliefern
+#   ./deploy.sh rollback REL             Hauskonfigurator auf eine frühere Release zurück (releases.log)
+#   ./deploy.sh analyse                  „Emprise Analyse“ ausliefern (AN0; dieselben Images, eigener Stack)
+#   ./deploy.sh analyse rollback REL     Analyse-Stack zurückrollen
+# Beide Produkte kommen aus einem Repository (D16); getrennt sind Datenbank, Speicher, Hostname und
+# das Bild-Kennzeichen (`current` gegenüber `current-analyse`), damit ein Rückrollen nur einen Stack trifft.
 set -eu
 cd "$(dirname "$0")"
+
+stack=konfigurator
+if [ "${1:-}" = "analyse" ]; then
+  stack=analyse
+  shift
+fi
+
+if [ "$stack" = "analyse" ]; then
+  tag=current-analyse
+  compose() {
+    docker compose -f compose.yaml -f compose.analyse.yaml --env-file .env.analyse "$@"
+  }
+else
+  tag=current
+  compose() {
+    docker compose "$@"
+  }
+fi
 
 smoke_test() {
   i=0
   while [ $i -lt 60 ]; do
-    if docker compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')" 2>/dev/null; then
+    if compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')" 2>/dev/null; then
       return 0
     fi
     i=$((i + 1))
@@ -18,13 +40,13 @@ smoke_test() {
 }
 
 activate() {
-  docker tag "emprise-backend:$1" emprise-backend:current
-  docker tag "emprise-web:$1" emprise-web:current
-  docker compose up -d --remove-orphans --force-recreate migrate api worker web
-  docker compose up -d
+  docker tag "emprise-backend:$1" "emprise-backend:$tag"
+  docker tag "emprise-web:$1" "emprise-web:$tag"
+  compose up -d --remove-orphans --force-recreate migrate api worker web
+  compose up -d
   if smoke_test; then
-    echo "$(date -Iseconds) $1" >> releases.log
-    echo "Release $1 bereit"
+    echo "$(date -Iseconds) $stack $1" >> releases.log
+    echo "Release $1 bereit ($stack)"
   else
     echo "Rauchtest fehlgeschlagen: docker compose logs api migrate" >&2
     exit 1
@@ -42,6 +64,6 @@ release=$(git -C ../.. rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M)
 if [ -n "$(git -C ../.. status --porcelain 2>/dev/null)" ]; then
   release="$release-dirty"
 fi
-echo "Baue Release $release"
-EMPRISE_RELEASE="$release" docker compose build migrate web
+echo "Baue Release $release ($stack)"
+EMPRISE_RELEASE="$release" compose build migrate web
 activate "$release"

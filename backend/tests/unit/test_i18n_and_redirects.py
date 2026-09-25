@@ -30,12 +30,22 @@ def test_translate_falls_back_to_french_and_key() -> None:
     ("value", "expected"),
     [
         (None, "/buero"),
+        ("", "/buero"),
         ("/buero/regeln", "/buero/regeln"),
+        # Seit AN1 ist jedes relative Ziel erlaubt: „Emprise Analyse“ hat keinen Büro-Bereich (UP11)
+        ("/projekt/1", "/projekt/1"),
         ("https://evil.example/buero", "/buero"),
         ("//evil.example/buero", "/buero"),
         ("/\\evil.example", "/buero"),
-        ("/projekt", "/buero"),
+        ("buero", "/buero"),
     ],
 )
 def test_safe_next_prevents_open_redirect(value: str | None, expected: str) -> None:
     assert safe_next(value) == expected
+
+
+def test_safe_next_falls_back_to_the_home_of_the_product() -> None:
+    """Im Analyse-Produkt gibt es kein `/buero`; die Startseite kommt aus `app/products.py` (UP11)."""
+    assert safe_next(None, "/") == "/"
+    assert safe_next("https://evil.example", "/") == "/"
+    assert safe_next("/projekt/1", "/") == "/projekt/1"

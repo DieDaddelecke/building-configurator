@@ -21,7 +21,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | Modul | Migration | Flag | Jobs (Rhythmus) | Ausgehender Zugang von API und Worker | Vor dem Freischalten |
 |---|---|---|---|---|---|
 | P | 0001 | – | `mail_send`, `retention_cleanup` (täglich), `housekeeping` (stündlich) | SMTP-Anbieter (E2) | `staff-add` (3), SMTP (5) |
-| G1 | 0002, 0006 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
+| G1 | 0002, 0006, 0012 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
 | G2 | 0003, 0004 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
 | G3 | 0005 | `envelope_simulation` | `envelope_sheet` | – | WeasyPrint im Image (10) |
 | H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
@@ -29,6 +29,8 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | H2 | 0009 | `configurator` | – | – | ein veröffentlichter Typ (12) |
 | H3 | 0010 | `configurator` (dasselbe Flag) | – | – | veröffentlichter Preiskatalog mit Linien, Optionen und Preisen netto (13) |
 | V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (14) |
+
+Die Tabelle gilt für den Hauskonfigurator. Aus demselben Code läuft mit `EMPRISE_PRODUCT=analyse` ein zweites Produkt („Emprise Analyse“) mit eigenem Stack und ohne die Module H1–H3, A und V: Abschnitt 15.
 
 ## 2. Ausliefern und Rückrollen
 
@@ -283,3 +285,60 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 - `…_local.dxf`: Einheit Meter; der Ursprung (0, 0) ist der Punkt auf der Ebene `ORIGINE`, seine Lambert-93-Koordinaten stehen im Text auf der Ebene `TEXTE`. In ArchiCAD „Ablage > Interoperabilität > Zusammenführen“ (DXF), Einheit Meter, Einfügepunkt = Projektnullpunkt; der Plan liegt dann im lokalen System des Projekts.
 - `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
 - Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.
+
+## 15. Zweites Produkt: Emprise Analyse (AN0, AN1)
+
+Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09 und UP01–UP16). Umgesetzt sind **AN0** (Produktschnitt) und **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto). PLU hochladen (AN2), Analyse und Nutzfläche (AN3), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
+
+| | Hauskonfigurator | Emprise Analyse |
+|---|---|---|
+| `EMPRISE_PRODUCT` | `configurator` (Standard) | `analyse` |
+| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (80 Routen) | nur Kern: Plattform, G1, G2, G3 (42 Routen) |
+| Periodische Aufgaben | alle sechs | ohne `cadastre_import` und `plu_import` (D17: der Nutzer lädt hoch) |
+| Oberfläche | `index.html` | `analyse.html` über `SPA_INDEX` im Web-Container |
+| Datenbank, Speicher, Sicherung, Hostname, Authentik | eigene | eigene (E-A4) |
+| Images | dieselben, Kennzeichen `current` | dieselben, Kennzeichen `current-analyse` |
+
+**Ausliefern auf Unraid.** `deploy/unraid/.env.analyse.example` nach `.env.analyse` kopieren und ausfüllen (eigene Geheimnisse, eigener Hostname, eigenes `APPDATA_DIR` und `BACKUP_DIR`), in Authentik eine zweite Anwendung anlegen (wie Unraid README 3), im Reverse Proxy den zweiten Hostnamen auf `WEB_PORT` zeigen lassen, dann:
+
+```
+./deploy.sh analyse                # bauen und ausliefern
+./deploy.sh analyse rollback REL   # nur diesen Stack zurückrollen
+```
+
+`releases.log` führt beide Stacks mit Namen. Ein Rückrollen des einen lässt den anderen unberührt, weil die Kennzeichen getrennt sind.
+
+**Lokal.** Der Analyse-Stack setzt auf den laufenden Hauptstack auf (gemeinsamer Datenbankserver, MinIO, Mailpit, OIDC-Testdienst; eigene Datenbank `emprise_analyse`, eigener Bucket):
+
+```
+docker compose -f compose.analyse.yaml up -d
+```
+
+Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dienste heißen dort `api-analyse`, `worker-analyse`, `web-analyse` (PS08). Beenden mit `docker compose -f compose.analyse.yaml down`; die Datenbank `emprise_analyse` bleibt bestehen.
+
+**Einrichten nach dem ersten Start (AN1)**
+
+1. Konto freischalten: `python -m app.cli staff-add person@buero.fr architect` – **im Analyse-Stack**, er hat eigene Tabellen (lokal: `docker compose -f compose.analyse.yaml exec api-analyse …`).
+2. Flag setzen: `python -m app.cli flag-set site_selection --role architect`. Ohne das Flag antworten alle Grundstücksendpunkte mit `403 feature_disabled` (UP10).
+3. Kein Katasterimport nötig: Die Parzelle kommt als DXF oder GeoJSON oder wird gezeichnet (D17). `CADASTRE_COMMUNES=[]` ist der Normalfall; mit einer Gemeinde darin läuft der Import von Hand (`cadastre-import`), dann funktioniert auch der Katasterklick.
+
+**Prüfpunkte**
+
+- Richtiges Profil: `GET /api/v1/openapi.json` des Analyse-Stacks enthält keine Route mit `catalog`, `inquiry`, `submission` oder `configuration`.
+- Richtige Oberfläche: `GET /` liefert `<title>Emprise Analyse</title>`. Kommt „Emprise“, fehlt `SPA_INDEX=analyse.html`.
+- Richtige Zeitpläne: `SELECT name FROM periodic_schedule` zeigt vier Einträge (`housekeeping`, `retention_cleanup`, `rules_housekeeping`, `site_housekeeping`), im Konfigurator sechs.
+
+**Störungen beim Hochladen einer Parzelle**
+
+- `422 upload_invalid`: kein lesbares DXF oder GeoJSON, keine geschlossene Polylinie, oder keine Kontur mit plausibler Fläche (20–50 000 m², UP08). Im DXF muss die Parzelle eine **geschlossene** Polylinie sein; einzelne Linien werden nicht verbunden.
+- Mehrere Konturen: Die Antwort enthält `candidates` statt `site`; die Oberfläche zeigt sie zur Auswahl. Erst der zweite Aufruf mit `index` legt das Grundstück an.
+- `409 site_origin_mismatch`: Das Projekt hat schon ein Grundstück aus dem Kataster. Für eine andere Herkunft ein neues Projekt anlegen.
+- Fläche unplausibel groß oder klein: meist die Einheit im DXF (`$INSUNITS`). Millimeter und Zentimeter werden umgerechnet, fehlt die Angabe, gelten Meter.
+- **PDF** (UP13–UP16): `422 upload_pdf_no_vector` – das PDF enthält keine Linien, meist ein Scan; das PDF aus dem CAD oder von cadastre.gouv.fr nehmen. `422 upload_scale_missing` – kein Maßstab im Text, von Hand angeben. `422 upload_scale_ambiguous` – mehrere Maßstäbe, die Antwort nennt sie in `scales`. Stimmt die Fläche nicht mit der Katasterfläche, war das PDF nicht maßstäblich gedruckt oder der Maßstab falsch; `source_info.scale` und `scale_source` zeigen, womit gerechnet wurde. Große Pläne: höchstens 3 Seiten, 60 000 Linienstücke, 20 MB (`EMPRISE_SITE_UPLOAD_MAX_BYTES`); der realistische Auszug mit 458 Schraffurlinien brauchte 0,3 s.
+- „ohne geografischen Bezug“ trotz Lambert-93-Datei: Die Koordinaten liegen außerhalb des erkannten Bereichs (UP04). Folge ist nur, dass keine Karte und später keine Lambert-93-Ausgabe möglich ist; Abstände und Flächen stimmen trotzdem.
+
+**Grenzen**
+
+- Das Analyse-Produkt kennt **keine Datenauskunft** (`GET /projects/{id}/export` liegt in Modul A, UP07); die Löschung eines Projekts gibt es. Vor AN6 (fremde Büros) neu bewerten.
+- Im Image liegen beide Oberflächen. Unter `/index.html` zeigt der Analyse-Stack die Seite des Konfigurators; deren Aufrufe laufen dort ins Leere (PS06).
+- Regelwerke werden nicht geteilt: Eine Auswertung, die beide Produkte brauchen, kostet zweimal (PLAN_ANALYSE 3, letzter Punkt).

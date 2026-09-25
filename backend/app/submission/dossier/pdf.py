@@ -8,9 +8,9 @@ nie als Gesamtpreis (L1).
 import html
 from typing import Any
 
+from app.plan.geometry import PLAN_MM, Edge, Plan, Ring, choose_scale
 from app.platform.i18n import Locale
 from app.submission.dossier import format as fmt
-from app.submission.dossier.plan import PLAN_MM, Edge, Plan, Ring, choose_scale
 
 COLORS = {
     "outline": "#1f2933",

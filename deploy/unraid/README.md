@@ -96,6 +96,8 @@ deploy/unraid/deploy.sh rollback <release>
 
 Migrationen werden dabei nicht zurückgedreht (abwärtskompatibel, docs/BETRIEB.md Abschnitt 2). Alte Images gelegentlich aufräumen: `docker image ls emprise-backend`.
 
+**Zweiter Stack „Emprise Analyse“** (AN0): `deploy.sh analyse` und `deploy.sh analyse rollback <release>` liefern dasselbe Image mit `EMPRISE_PRODUCT=analyse` als eigenen Stack aus – eigene Datenbank, eigener Speicher, eigener Hostname, eigenes `.env.analyse` (Vorlage `.env.analyse.example`), eigenes Bild-Kennzeichen `current-analyse`. Einrichten und Prüfpunkte: [docs/BETRIEB.md](../../docs/BETRIEB.md) Abschnitt 15. Ohne `.env.analyse` bleibt der zweite Stack einfach aus.
+
 ## 6. Sicherung und Wiederherstellung
 
 | Was | Wie | Wohin |

@@ -331,10 +331,16 @@ def test_manual_sketch_forms_site_without_cadastre(client: Any, manual_project: 
     assert body["origin"] == "manual_sketch" and body["address_label"] == "12 rue imaginaire"
     assert body["area_m2"] == pytest.approx(200.0)
     assert body["area_official_m2"] is None
-    assert body["parcels"] == [] and body["edges"] == []
+    assert body["parcels"] == []
+    assert body["georeferenced"] is False and body["source_info"] == {}
     assert body["terrain"]["status"] == "unavailable" and body["risks"]["status"] == "unavailable"
     assert body["notices"] == ["notice.manual_sketch"]
-    assert body["binding"] is True and body["warnings"] == []
+    assert body["binding"] is True
+    # Seit AN1 entstehen Kanten auch ohne Kataster (UP02): eingeordnet wird von Hand
+    assert [e["kind"] for e in body["edges"]] == ["other"] * 4
+    assert all(e["confidence"] == 0 and e["classification_source"] == "auto" for e in body["edges"])
+    assert body["main_street_seq"] is None
+    assert set(body["warnings"]) == {"no_neighbour_data", "no_street_edge", "edges_need_review"}
 
     # Kein site_enrich-Job: keine echte Lage, nichts zum Abfragen (Plan 3.3)
     jobs = db_session.execute(select(Job).where(Job.kind == "site_enrich")).scalars().all()

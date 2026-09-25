@@ -6,7 +6,7 @@ Hauskonfigurator für Bauinteressenten in Frankreich. Projektbeschreibung, Dokum
 
 | Ordner | Inhalt |
 |---|---|
-| `backend/` | FastAPI-Anwendung, je Fachmodul ein Paket mit reinem `domain/` (Plan 3.2): `app/platform` (P), `app/site` (G1), `app/rules` (G2), `app/envelope` (G3), `app/inquiry` (A), `app/catalog` (H1), `app/configuration` (H2); Adapter externer Dienste in `app/integrations` |
+| `backend/` | FastAPI-Anwendung, je Fachmodul ein Paket mit reinem `domain/` (Plan 3.2): `app/platform` (P), `app/site` (G1), `app/rules` (G2), `app/envelope` (G3), `app/inquiry` (A), `app/catalog` (H1), `app/configuration` (H2), `app/submission` (V); Adapter externer Dienste in `app/integrations`, Lageplan und DXF in `app/plan`. `app/products.py` sagt, welche Module welches Produkt lädt (AN0) |
 | `frontend/` | Vite, React, TypeScript, Tailwind, MapLibre; Web-Container mit Caddy |
 | `infra/` | Lokale Datenbankrollen, OIDC-Testdienst; Anforderungen an einen späteren verwalteten Anbieter |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
@@ -51,6 +51,20 @@ Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080
 | http://localhost:8025 | Mailpit (versandte Mails, Bestätigungscodes) |
 | http://localhost:9001 | MinIO-Konsole (`emprise` / `emprise-local-secret`); MinIO selbst auf Port 9000 |
 
+Das zweite Produkt „Emprise Analyse“ (AN0 und AN1: Parzelle als DXF, GeoJSON, PDF oder Zeichnung einbringen, Kanten einordnen) läuft als Aufsatz auf diesen Stack – eigene Datenbank `emprise_analyse`, eigener Bucket, Anwendung http://localhost:8180, API http://localhost:8100:
+
+```bash
+docker compose -f compose.analyse.yaml up -d
+```
+
+```bash
+docker compose -f compose.analyse.yaml exec api-analyse python -m app.cli staff-add ops@emprise.local architect
+```
+
+```bash
+docker compose -f compose.analyse.yaml exec api-analyse python -m app.cli flag-set site_selection --role architect
+```
+
 Frontend mit Hot Reload (API aus Compose):
 
 ```bash
@@ -85,6 +99,7 @@ cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e
 3. Datenbankänderungen nur über Alembic: `alembic revision --autogenerate -m "…"`, prüfen, abwärtskompatibel halten. `pytest` enthält `alembic check`. Neue Sequenzen brauchen ein eigenes `GRANT` in der Migration (AF07); `TRUNCATE … RESTART IDENTITY` setzt `inquiry_number_seq` nicht zurück, Tests erwarten keine feste Nummer.
 4. Unveränderliche Tabellen: bedingt `forbid_published_modification` (nur bei `status = 'published'`, H1), unbedingt `forbid_modification` (`audit_log`, `legal_text`, `consent`) bzw. `rule_no_update` (`rule`); `inquiry` hat bewusst keinen Trigger.
 5. Neue Jobarten: Wer `enqueue` aufruft (auch die CLI), muss `app.registry` importieren, sonst „Unbekannte Jobart“; `app/rules` importiert `app.rules.jobs` lokal in den Funktionen (sonst Importzyklus).
+   Ein neuer Router, ein neues Job-Modul oder eine neue periodische Aufgabe gehört in `backend/app/products.py` (je Produkt); sonst läuft sie nirgends oder im falschen Produkt. `test_module_boundaries.py` prüft das und verbietet Importe aus `app.catalog`, `app.configuration`, `app.inquiry` und `app.submission` in `platform`, `integrations`, `site`, `rules`, `envelope` und `plan` (AN0, ANNAHMEN PS01–PS09).
 6. Neue oder geänderte Texte von Prüfungen: Das Dossier-PDF (V) benutzt dieselben Sätze wie der Konfigurator. Nach einer Änderung an `configurator.check`, `…reason`, `…orientation`, `…material`, `types.roof`, `…edge`, `…status`, `…compass`, `design.area` oder `site.risks` in `frontend/src/i18n/*.json` einmal `node tools/sync-check-texts.cjs` laufen lassen; `check-texte.test.ts` prüft den Abgleich (`--check` meldet ihn ohne zu schreiben).
 
 ## Stolperstellen
@@ -93,13 +108,14 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 
 **Windows und Werkzeuge**
 - Docker Desktop beendet sich gelegentlich; Start `C:\Users\sarah\AppData\Local\Programs\DockerDesktop\Docker Desktop.exe`, dann `docker info` abwarten.
-- Der vollständige Backend-Lauf dauert 4–11 Minuten. Wird die Ausgabe umgeleitet oder läuft der Befehl im Hintergrund, `docker compose run -T` benutzen, sonst fehlt die Ausgabe von `pytest`; Werkzeugaufrufe über 10 Minuten wandern von selbst in den Hintergrund, das Ergebnis steht dann in der Ausgabedatei der Aufgabe.
+- Der vollständige Backend-Lauf dauert 5–17 Minuten (die PDF-Tests setzen PDFs mit WeasyPrint). Wird die Ausgabe umgeleitet oder läuft der Befehl im Hintergrund, `docker compose run -T` benutzen, sonst fehlt die Ausgabe von `pytest`; Werkzeugaufrufe über 10 Minuten wandern von selbst in den Hintergrund, das Ergebnis steht dann in der Ausgabedatei der Aufgabe.
 - Große Dateien mit dem Schreibwerkzeug anlegen, nicht mit einem Heredoc im Bash-Werkzeug: bestimmte Zeichenfolgen brechen dort mit „unexpected EOF“ ab.
 - Lokal gibt es kein Python (`python` im Host ist ein Store-Platzhalter, `python3` fehlt): Backend-Befehle immer im Container. `backend-dev` sieht nur `backend/`, nicht `frontend/`, und nutzt die Umgebungsvariablen des lokalen Stacks: Skripte wie `python -m tests.e2e_seed_types` laufen gegen die lokale Datenbank `emprise`; pytest legt eine eigene Testdatenbank an.
 - Git-Bash: `MSYS_NO_PATHCONV=1` nur vor `docker …`-Befehlen mit Linux-Pfaden (`docker -v`, `docker exec -w`, `docker compose … run`). Vor `corepack pnpm …` zerbricht die Variable den Pfad zu `corepack.js` („Cannot find module C:\c\Program Files…“); tritt der Fehler trotzdem auf, PowerShell nehmen. `corepack pnpm …` nur im Ordner `frontend` (aus dem Wurzelordner zieht Corepack pnpm 12 und bricht ab).
 - Heredocs und `node -e "…"` im Bash-Werkzeug zerbrechen an einer ungeraden Zahl von Apostrophen (französische Zitate), an Backticks und `$$` (ein `$$` in einer Migration wurde zu `$`). Längere Dateien mit dem Write-Werkzeug schreiben oder als Skript im Scratchpad ablegen und mit `node` ausführen; Git-Bash-`/tmp` ist nicht das `C:\tmp` von Node; Skripte nicht `inspect.py` nennen (verdeckt die Standardbibliothek).
 - `ruff format` ändert Dateien: danach vor dem Edit-Werkzeug neu lesen. Das `# type: ignore[arg-type]` an `messages=` in `backend/app/integrations/claude.py` ist nötig, auch wenn mypy es einmal als unbenutzt meldet.
 - Unsichtbare Zeichen: `backend/app/rules/domain/text.py` enthält in `_TRANSLATE` geschützte Leerzeichen (U+00A0, U+202F) und einen weichen Trennstrich; beim vollständigen Neuschreiben gingen sie verloren – mit `git diff` prüfen.
+- Zweites Produkt lokal: `compose.analyse.yaml` hängt am Netz `emprise_default` und an den Images des Hauptstacks. Der Hauptstack muss also laufen (`docker compose up -d`), und nach Codeänderungen erst dort `docker compose build migrate web`, sonst startet der Analyse-Stack den alten Stand. Die Datenbank `emprise_analyse` bleibt beim `down` bestehen; neu aufsetzen mit `docker exec emprise-db-1 psql -U postgres -c "DROP DATABASE emprise_analyse"`. Konto und Flag gelten je Datenbank: `docker compose -f compose.analyse.yaml exec api-analyse python -m app.cli staff-add ops@emprise.local architect` und `… flag-set site_selection --role architect`. Die Dienste heißen `…-analyse`, weil beide Stacks dasselbe Netz benutzen und ein zweiter Dienst `api` den Namen mehrdeutig machte. Beide Produkte teilen lokal außerdem den Cookie-Vorrat (derselbe Host `localhost`, nur andere Ports): Eine Anmeldung im einen verdrängt die im anderen; auf Unraid haben sie eigene Hostnamen.
 - Parallele Sessions im selben Ordner: Abstimmung per `ListAgents`/`SendMessage`, Dateien vor jeder Änderung neu einlesen. `docker compose up --build` baut den Arbeitsstand samt fremder halbfertiger Dateien; für isolierte Tests ein eigenes Compose-Projekt (`-p <name>` mit Override `ports: !reset []`) oder `git worktree`.
 - CI: Der Security-Job baut Caddy mit `xcaddy`; Netzfehler zu `sum.golang.org` sind kein Codefehler, wiederholen mit `gh run rerun <id> --failed`.
 
@@ -132,6 +148,6 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 - Geometrie von Nebenbauten und Lage immer am echten, schiefen Grundstück AD 65 ansehen (Konfigurator, Schritt Vorentwurf): Die Rechteck-Tests (20 × 31 m) fanden weder den Carport hinter dem Haus mit Zufahrt durch das Haus noch die Überlappung von Carport und Terrasse (Plan H3 10.1a).
 - Login `http://localhost:8080/api/v1/auth/staff/login` (Mock-OIDC ohne Eingabe, `ops@emprise.local` mit `architect` und `ops`, landet unter `/buero`); wer im selben Browser als `architect` angemeldet ist, sieht auch auf `/grundstueck` die Flags dieser Rolle. Danach `/grundstueck`: „Saisir la référence cadastrale“ (Section `AD`, Nummer `65`), „Valider le terrain“, „Choisir ma maison“.
 - `left_click_drag` löst das Ziehen aus. Dateien in Formulare per `javascript_tool` (`DataTransfer` auf dem Dateifeld); die Daten über die Web-Ebene bereitstellen (`docker cp` nach `emprise-web-1:/srv/`, dann gleicher Ursprung; fremde Ursprünge blockt die CSP). `window.confirm` wird abgebrochen: vorher `window.confirm = () => true`. Ein Klick auf die App-Sprache wechselt sie für die ganze Sitzung.
-- Screenshots von `localhost` funktionieren, von `file://` nicht; Lagepläne zur Prüfung mit matplotlib im Container als PNG erzeugen und ansehen.
+- Screenshots scheitern mit „page did not finish rendering“, wenn das Fenster im Hintergrund liegt; `get_page_text`, `find` und `javascript_tool` arbeiten weiter. Screenshots von `localhost` funktionieren, von `file://` nicht; Lagepläne zur Prüfung mit matplotlib im Container als PNG erzeugen und ansehen.
 - Modul V: Der Bestätigungscode steht in Mailpit (`curl -s "http://localhost:8025/api/v1/search?query=to:<adresse>"`, dann `/api/v1/message/<id>`); der Zugangslink der Kundenmail endet auf `/zugang#t=<Token>`. Dateien einer Fassung liegen im Objektspeicher: `docker compose exec api python -c "…storage.get_bytes(f['storage_key'])…"` und `docker cp`; PDFs lassen sich mit dem Lesewerkzeug ansehen, DXF mit `ezdxf` (matplotlib fehlt im Image).
 - Mockup `emprise.html` (`file:///…`): Bedienung und Auslesen per `find` und `javascript_tool`; Typkarten sind keine `<button>`, sondern Elemente mit `role=button`; die Kontaktprüfung meldet Fehler erst beim Klick auf „Vorentwurf zur Prüfung übergeben“.

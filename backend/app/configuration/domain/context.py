@@ -27,7 +27,7 @@ from app.envelope.domain.setbacks import RuleIndex, index_rules
 
 Point = tuple[float, float]
 
-FREE_REASONS = ("manual_sketch", "rules_unavailable", "rules_in_progress")
+FREE_REASONS = ("manual_sketch", "upload", "rules_unavailable", "rules_in_progress")
 
 
 @dataclass(frozen=True)
@@ -118,9 +118,9 @@ def build_context(data: EnvelopeInput, envelope: Envelope | None) -> SiteContext
 
 def _free_reason(data: EnvelopeInput, envelope: Envelope | None) -> str | None:
     if envelope is None:
-        return "manual_sketch"
-    if data.rules_reason == "manual_sketch":
-        return "manual_sketch"
+        return data.rules_reason if data.rules_reason in FREE_REASONS else "manual_sketch"
+    if data.rules_reason in ("manual_sketch", "upload"):
+        return data.rules_reason
     if envelope.status == "in_progress":
         return "rules_in_progress"
     if envelope.status == "unavailable":

@@ -1,0 +1,26 @@
+# Zweites Produkt „Emprise Analyse“ auf Unraid (AN0, docs/PLAN_ANALYSE.md 3).
+# Ergänzung zu compose.yaml, nicht für sich allein:
+#   docker compose -f compose.yaml -f compose.analyse.yaml --env-file .env.analyse up -d
+#   (oder einfach ./deploy.sh analyse)
+#
+# Getrennt sind Datenbank, Objektspeicher, Sicherung, Hostname und Authentik-Anwendung – alles über
+# .env.analyse (Vorlage .env.analyse.example): eigenes APPDATA_DIR, eigenes BACKUP_DIR, eigener WEB_PORT.
+# Gleich sind die Images: ein Repository, zwei Produkte (D16); `EMPRISE_PRODUCT` und `SPA_INDEX` wählen aus.
+name: emprise-analyse
+
+services:
+  migrate:
+    environment:
+      EMPRISE_PRODUCT: analyse
+
+  api:
+    environment:
+      EMPRISE_PRODUCT: analyse
+
+  worker:
+    environment:
+      EMPRISE_PRODUCT: analyse
+
+  web:
+    environment:
+      SPA_INDEX: analyse.html

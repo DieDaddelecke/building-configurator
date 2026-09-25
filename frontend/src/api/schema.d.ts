@@ -1060,9 +1060,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Own Projects
+         * @description Projekte mit Eigentümer, neueste zuerst (AN1). Alle Architekten des Büros sehen dieselben
+         *     Projekte; nach Person und Organisation trennt erst AN6 (D15, E-AN1-4).
+         */
+        get: operations["list_own_projects_api_v1_projects_get"];
         put?: never;
-        /** Create Project */
+        /**
+         * Create Project
+         * @description Neues Projekt. Ein angemeldeter Architekt wird Eigentümer und bekommt **kein** Cookie – sonst
+         *     verdrängte jedes neue Projekt das vorige (AN1, UP05).
+         */
         post: operations["create_project_api_v1_projects_post"];
         delete?: never;
         options?: never;
@@ -1081,7 +1090,12 @@ export interface paths {
         get: operations["get_project_api_v1_projects__project_id__get"];
         put?: never;
         post?: never;
-        /** Delete Project */
+        /**
+         * Delete Project
+         * @description Projekt mit allem daran löschen (Spez. 10.2), unabhängig vom Feature-Flag.
+         *
+         *     Angemeldete Module können widersprechen: Modul A lässt nach einer Anfrage nur das Büro löschen.
+         */
         delete: operations["delete_project_api_v1_projects__project_id__delete"];
         options?: never;
         head?: never;
@@ -1424,6 +1438,30 @@ export interface paths {
         patch: operations["patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/site/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Site
+         * @description Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).
+         *
+         *     Ohne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;
+         *     der zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den
+         *     Maßstab aus dem Text des Plans.
+         */
+        post: operations["upload_site_api_v1_projects__project_id__site_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/submission": {
         parameters: {
             query?: never;
@@ -1544,6 +1582,35 @@ export interface components {
             /** Kind */
             kind: ("street" | "side" | "rear" | "other") | null;
         };
+        /**
+         * ArchitectProjectOut
+         * @description Projekt am Konto des Architekten (AN1). Benennung, Notiz und Archiv folgen mit AN5.
+         */
+        ArchitectProjectOut: {
+            /** Address Label */
+            address_label: string | null;
+            /** Area M2 */
+            area_m2: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Last Activity At
+             * Format: date-time
+             */
+            last_activity_at: string;
+            /** Site Origin */
+            site_origin: string | null;
+            /** Status */
+            status: string;
+        };
         /** AreasOut */
         AreasOut: {
             /** Carport M2 */
@@ -1600,6 +1667,17 @@ export interface components {
         Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
             /** File */
             file: string;
+        };
+        /** Body_upload_site_api_v1_projects__project_id__site_upload_post */
+        Body_upload_site_api_v1_projects__project_id__site_upload_post: {
+            /** Address Label */
+            address_label: string;
+            /** File */
+            file: string;
+            /** Index */
+            index?: number | null;
+            /** Scale */
+            scale?: number | null;
         };
         /** ChapterCoverageOut */
         ChapterCoverageOut: {
@@ -3687,6 +3765,8 @@ export interface components {
             engine_version: string;
             /** Garden Azimuth Deg */
             garden_azimuth_deg: number | null;
+            /** Georeferenced */
+            georeferenced: boolean;
             local_origin: components["schemas"]["LocalOrigin"];
             /** Main Street Seq */
             main_street_seq: number | null;
@@ -3696,7 +3776,7 @@ export interface components {
              * Origin
              * @enum {string}
              */
-            origin: "parcel" | "manual_sketch";
+            origin: "parcel" | "manual_sketch" | "upload";
             /** Outline Geojson */
             outline_geojson: {
                 [key: string]: unknown;
@@ -3713,6 +3793,10 @@ export interface components {
             /** Revision */
             revision: number;
             risks: components["schemas"]["RisksOut"];
+            /** Source Info */
+            source_info: {
+                [key: string]: unknown;
+            };
             /** Street Azimuth Deg */
             street_azimuth_deg: number | null;
             terrain: components["schemas"]["TerrainOut"];
@@ -3822,7 +3906,7 @@ export interface components {
             /** Package Label Fr */
             package_label_fr: string | null;
             /** Site Origin */
-            site_origin: ("parcel" | "manual_sketch") | null;
+            site_origin: ("parcel" | "manual_sketch" | "upload") | null;
             /** Type Name */
             type_name: string | null;
             /** Type Retired */
@@ -4121,6 +4205,49 @@ export interface components {
             site_revision: number;
             /** Types */
             types: components["schemas"]["TypeFitOut"][];
+        };
+        /**
+         * UploadCandidateOut
+         * @description Eine geschlossene Kontur aus einer hochgeladenen Datei (AN1, PLAN_AN1 3.2).
+         */
+        UploadCandidateOut: {
+            /** Area M2 */
+            area_m2: number;
+            /**
+             * Crs
+             * @enum {string}
+             */
+            crs: "EPSG:2154" | "EPSG:4326" | "local";
+            /** Georeferenced */
+            georeferenced: boolean;
+            /** Index */
+            index: number;
+            /** Layer */
+            layer: string | null;
+            /** Name */
+            name: string | null;
+            /** Outline Local */
+            outline_local: number[][][];
+            /** Outline Overview */
+            outline_overview: number[][][];
+        };
+        /**
+         * UploadResultOut
+         * @description Entweder ist das Grundstück gebildet (`site`), oder mehrere Konturen stehen zur Wahl.
+         */
+        UploadResultOut: {
+            /** Candidates */
+            candidates: components["schemas"]["UploadCandidateOut"][];
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "dxf" | "geojson" | "pdf";
+            /** Scale */
+            scale: number | null;
+            /** Scale Source */
+            scale_source: ("file" | "input") | null;
+            site: components["schemas"]["SiteOut"] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -6006,6 +6133,26 @@ export interface operations {
             };
         };
     };
+    list_own_projects_api_v1_projects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArchitectProjectOut"][];
+                };
+            };
+        };
+    };
     create_project_api_v1_projects_post: {
         parameters: {
             query?: never;
@@ -6730,6 +6877,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_site_api_v1_projects__project_id__site_upload_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_site_api_v1_projects__project_id__site_upload_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadResultOut"];
                 };
             };
             /** @description Validation Error */

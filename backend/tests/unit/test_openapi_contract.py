@@ -3,13 +3,13 @@
 import json
 from pathlib import Path
 
-from app.main import create_app
+from app.main import create_full_app
 
 OPENAPI_FILE = Path(__file__).resolve().parents[2] / "openapi.json"
 
 
 def test_committed_openapi_matches_code() -> None:
-    generated = create_app().openapi()
+    generated = create_full_app().openapi()
     committed = json.loads(OPENAPI_FILE.read_text(encoding="utf-8"))
     assert generated == committed, "openapi.json veraltet: python -m app.cli openapi openapi.json"
 

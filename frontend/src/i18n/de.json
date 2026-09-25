@@ -14,6 +14,108 @@
     "noNotices": "Die rechtlichen Hinweise werden vor dem Start veröffentlicht.",
     "cta": "Grundstück wählen"
   },
+  "analyse": {
+    "tagline": "Analyse",
+    "eyebrow": "Für Architekturbüros",
+    "title": "Parzelle und Bebauungsplan analysieren",
+    "intro": "Emprise Analyse leitet aus Parzelle und PLU den Baurahmen für den Entwurf ab: Höhen, Abstand je Grenze, bebaubare Fläche und Nutzfläche – jeder Wert mit Zitat und Seite, jeder Wert korrigierbar.",
+    "steps": "Die drei Schritte",
+    "step": {
+      "site": {
+        "title": "Parzelle einbringen",
+        "text": "Mit Bemaßung zeichnen oder als DXF oder GeoJSON hochladen."
+      },
+      "rules": {
+        "title": "Regelwerk hochladen",
+        "text": "Règlement als PDF, Zonenkapitel wählen, Regeln auswerten lassen."
+      },
+      "envelope": {
+        "title": "Baurahmen ableiten",
+        "text": "Höhen, Abstände und Flächen mit Bericht und Ausgabe ins CAD."
+      }
+    },
+    "soon": "Diese Schritte entstehen gerade: Die Parzelle kommt schon herein, Regelwerk und Baurahmen folgen.",
+    "login": {
+      "intro": "Der Zugang gilt für Mitarbeitende des Büros; die Anmeldung läuft über den Identitätsdienst.",
+      "denied": {
+        "unknown": "Diese Adresse ist nicht freigeschaltet. Wenden Sie sich an die Administration.",
+        "mfa": "Es fehlt der zweite Faktor. Melden Sie sich erneut mit Ihrem zweiten Faktor an.",
+        "email_unverified": "Die E-Mail-Adresse ist beim Identitätsdienst nicht bestätigt.",
+        "inactive": "Dieses Konto ist gesperrt.",
+        "fehler": "Die Anmeldung ist fehlgeschlagen. Bitte erneut versuchen."
+      }
+    },
+    "origin": {
+      "parcel": "Kataster",
+      "manual_sketch": "gezeichnet",
+      "upload": "aus Datei"
+    },
+    "projects": {
+      "title": "Projekte",
+      "intro": "Je Projekt eine Parzelle mit ihren Vorgaben. Benennung, Notizen und Archiv kommen später.",
+      "new": "Neues Projekt",
+      "empty": "Noch kein Projekt angelegt.",
+      "untitled": "Ohne Bezeichnung",
+      "label": "Bezeichnung",
+      "origin": "Herkunft",
+      "area": "Fläche",
+      "updated": "Zuletzt geändert",
+      "noSite": "keine Parzelle"
+    },
+    "site": {
+      "intro": "Parzelle einbringen, Kanten einordnen. Regelwerk und Baurahmen folgen.",
+      "choose": "Parzelle einbringen",
+      "chooseIntro": "Eine Datei aus dem CAD oder GIS oder eine Zeichnung mit Bemaßung.",
+      "fromFile": "Datei hochladen",
+      "draw": "Zeichnen und bemaßen",
+      "summary": "Grundstück",
+      "area": "Fläche",
+      "origin": "Herkunft",
+      "position": "Lage",
+      "georeferenced": "in Lambert-93",
+      "local": "ohne geografischen Bezug",
+      "file": "Datei",
+      "edges": "Kanten",
+      "edgesIntro": "Ohne Kataster kennt das Werkzeug keine Nachbarn: Jede Kante beginnt als Grenze ohne Einordnung. Setzen Sie mindestens die Straßenkante.",
+      "noStreet": "Noch keine Straßenkante gesetzt – ohne sie gibt es keine Hauptstraße und keinen Straßenabstand.",
+      "next": "Als Nächstes: Regelwerk hochladen und auswerten (in Arbeit).",
+      "back": "Zur Übersicht",
+      "delete": "Projekt löschen",
+      "deleteConfirm": "Projekt mit Parzelle und allen Daten löschen?",
+      "scale": "Maßstab",
+      "scaleFile": "aus dem Plan",
+      "scaleInput": "angegeben"
+    },
+    "upload": {
+      "title": "Parzelle aus einer Datei",
+      "formats": "DXF mit geschlossener Polylinie, GeoJSON (Lambert-93 oder WGS84) oder PDF mit Vektorzeichnung – etwa der Katasterauszug von cadastre.gouv.fr oder der Plan des Geometers; höchstens 20 MB. Gescannte PDFs lassen sich noch nicht lesen. Die Datei selbst wird nicht gespeichert, nur Name, Prüfsumme, Ebene und Maßstab.",
+      "label": "Bezeichnung des Grundstücks",
+      "labelHint": "z. B. Adresse oder Parzellennummer",
+      "file": "Datei",
+      "submit": "Übernehmen",
+      "take": "Diese übernehmen",
+      "choose": "{{count}} geschlossene Flächen gefunden – klicken Sie die Parzelle im Plan an.",
+      "error": {
+        "upload_invalid": "Die Datei lässt sich nicht als Parzelle lesen.",
+        "upload_outline_not_found": "Diese Kontur steht nicht mehr zur Wahl.",
+        "upload_too_large": "Die Datei ist zu groß (höchstens 8 MB).",
+        "site_origin_mismatch": "Dieses Projekt hat schon ein Grundstück aus dem Kataster.",
+        "upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan. Gescannte Pläne lassen sich noch nicht lesen – bitte das PDF aus dem CAD oder von cadastre.gouv.fr nehmen.",
+        "upload_scale_missing": "Im Plan steht kein Maßstab. Bitte oben den Maßstab angeben und erneut übernehmen.",
+        "upload_scale_ambiguous": "Im Plan stehen mehrere Maßstäbe. Welcher gilt für die Zeichnung?"
+      },
+      "cancel": "Abbrechen",
+      "scale": "Maßstab des Plans",
+      "scaleAuto": "aus dem Plan",
+      "scaleHint": "Leer lassen, wenn der Maßstab im Plan steht (etwa „Échelle d’édition : 1/500“). Stimmt die Fläche danach nicht mit der Katasterfläche überein, war das PDF nicht maßstäblich.",
+      "scaleUsedFile": "Maßstab 1:{{scale}} aus dem Plan.",
+      "scaleUsedInput": "Maßstab 1:{{scale}} wie angegeben.",
+      "overview": "Übersicht der Flächen aus der Datei",
+      "list": "oder aus der Liste wählen",
+      "pick": "Fläche wählen …"
+    },
+    "disclaimer": "Analyse auf Grundlage der eingereichten Unterlagen. Keine Rechtsauskunft; maßgeblich bleibt das Certificat d’urbanisme."
+  },
   "site": {
     "disabled": {
       "eyebrow": "Demnächst verfügbar",

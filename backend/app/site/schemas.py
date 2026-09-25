@@ -15,6 +15,8 @@ from app.site.domain.edges import EdgeKind
 
 LocalRing = list[list[float]]
 """Ring in lokalen Metern: Liste von [Ost, Nord]."""
+SiteOrigin = Literal["parcel", "manual_sketch", "upload"]
+"""Herkunft des Grundstücks: Kataster, freies Zeichnen (Weg E) oder Datei (AN1)."""
 INSEE_PATTERN = r"^(?:\d{2}|2[AB])\d{3}$"
 IDU = re.compile(r"^(?:\d{2}|2[AB])\d{3}\d{3}[0-9A-Z]{2}\d{4}$")
 """Gemeinde (5), Präfix (3), Sektion (2), Nummer (4)."""
@@ -191,8 +193,15 @@ class LocalOrigin(BaseModel):
 
 class SiteOut(BaseModel):
     project_id: uuid.UUID
-    origin: Literal["parcel", "manual_sketch"]
-    """`manual_sketch`: Weg E, frei gezeichnet und bemaßt, ohne Bebaubarkeitscheck (Plan 3.3)."""
+    origin: SiteOrigin
+    """`manual_sketch`: Weg E, frei gezeichnet und bemaßt (Plan 3.3). `upload`: aus DXF oder GeoJSON
+    übernommen (AN1). Beide ohne Bebaubarkeitscheck."""
+    georeferenced: bool
+    """Hat der Umriss eine echte Lage in Lambert-93? Bei Zeichnung und Upload ohne erkanntes
+    Koordinatensystem nein; dann ist `outline_geojson` leer (G26, UP04)."""
+    source_info: dict[str, Any]
+    """Herkunft eines Uploads: `file_name`, `sha256`, `format`, `layer`, `name`, `index`, `crs`; bei PDF
+    zusätzlich `scale`, `scale_source` und `page` (UP14). Sonst leer."""
     address_label: str | None
     revision: int
     engine_version: str
@@ -215,6 +224,36 @@ class SiteOut(BaseModel):
     terrain: TerrainOut
     risks: RisksOut
     context: ContextOut
+
+
+class UploadCandidateOut(BaseModel):
+    """Eine geschlossene Kontur aus einer hochgeladenen Datei (AN1, PLAN_AN1 3.2)."""
+
+    index: int
+    area_m2: float
+    layer: str | None
+    """Ebene der DXF-Zeichnung; bei GeoJSON leer."""
+    name: str | None
+    """Bezeichnung aus den Eigenschaften eines GeoJSON-Features (`idu`, `name`, `nom`, `label`)."""
+    crs: Literal["EPSG:2154", "EPSG:4326", "local"]
+    georeferenced: bool
+    outline_local: list[LocalRing]
+    """Vorschau in Metern, je Kandidat auf den eigenen Ursprung bezogen."""
+    outline_overview: list[LocalRing]
+    """Derselbe Umriss auf einen gemeinsamen Ursprung aller Kandidaten bezogen: für eine Übersicht, in der
+    die Parzelle zwischen ihren Nachbarn angeklickt wird (Katasterauszug als PDF, UP14)."""
+
+
+class UploadResultOut(BaseModel):
+    """Entweder ist das Grundstück gebildet (`site`), oder mehrere Konturen stehen zur Wahl."""
+
+    site: SiteOut | None
+    candidates: list[UploadCandidateOut]
+    format: Literal["dxf", "geojson", "pdf"]
+    scale: int | None
+    """Maßstab 1:n, mit dem ein PDF in Meter umgerechnet wurde; bei DXF und GeoJSON leer."""
+    scale_source: Literal["file", "input"] | None
+    """`file`: aus dem Text des Plans gelesen, `input`: von Hand angegeben."""
 
 
 class SiteReviewItem(BaseModel):

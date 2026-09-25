@@ -12,13 +12,13 @@ from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal, cast
 
 import httpx2
-from fastapi import APIRouter, Depends, Header, Query, Request
+from fastapi import APIRouter, Depends, File, Form, Header, Query, Request, UploadFile
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.integrations import geoplateforme
 from app.integrations.http import ExternalServiceError, shared_client
-from app.platform import flags, rate_limit
+from app.platform import flags, projects, rate_limit
 from app.platform.auth.context import (
     RequestAuth,
     Role,
@@ -48,9 +48,13 @@ from app.site.schemas import (
     SiteIn,
     SiteOut,
     SiteReviewItem,
+    UploadResultOut,
 )
 
 router = APIRouter(tags=["site"])
+
+projects.register_summary_provider(service.project_summaries)
+"""G1 füllt die Projektliste des Architekten (AN1); der Kern kennt die Tabelle `site` nicht."""
 
 
 def require_site_feature(auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)) -> None:
@@ -212,6 +216,40 @@ def put_site(
         return service.form_manual_site(db, project_id, edges, body.address_label, actor=actor)
     assert body.parcel_idus is not None  # von SiteIn erzwungen
     return service.form_site(db, project_id, body.parcel_idus, actor=actor)
+
+
+@router.post("/projects/{project_id}/site/upload", response_model=UploadResultOut, dependencies=[Feature])
+async def upload_site(
+    request: Request,
+    file: UploadFile = File(...),
+    address_label: str = Form(..., min_length=1, max_length=200),
+    index: int | None = Form(default=None, ge=0),
+    scale: int | None = Form(default=None, ge=50, le=10_000),
+    project_id: uuid.UUID = Depends(require_project_access),
+    db: Session = Depends(get_db),
+) -> UploadResultOut:
+    """Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).
+
+    Ohne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;
+    der zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den
+    Maßstab aus dem Text des Plans.
+    """
+    rate_limit.check(request, "site_write", get_settings().site_write_limit_per_hour, 3600)
+    data = await file.read()
+    if not data:
+        raise Problem(422, "upload_invalid", detail="Die Datei ist leer")
+    if len(data) > get_settings().site_upload_max_bytes:
+        raise Problem(413, "upload_too_large")
+    return service.form_uploaded_site(
+        db,
+        project_id,
+        file_name=file.filename or "",
+        data=data,
+        address_label=address_label,
+        index=index,
+        scale=scale,
+        actor=f"project:{project_id}",
+    )
 
 
 @router.get("/projects/{project_id}/site", response_model=SiteOut, dependencies=[Feature])

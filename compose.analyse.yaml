@@ -1,0 +1,98 @@
+# Zweites Produkt „Emprise Analyse“ lokal (AN0, docs/PLAN_ANALYSE.md 3).
+# Aufsatz auf den laufenden Hauptstack: eigene Datenbank, eigener Bucket, eigene Ports – Datenbankserver,
+# Objektspeicher, Mailpit und OIDC-Testdienst kommen aus `compose.yaml`. Auf Unraid ist der Stack dagegen
+# vollständig getrennt (deploy/unraid/compose.analyse.yaml).
+#
+#   docker compose up -d                              (Hauptstack muss laufen, baut die Images)
+#   docker compose -f compose.analyse.yaml up -d      Analyse-Produkt dazu
+#   Aufrufe: Anwendung http://localhost:8180 · API http://localhost:8100/api/v1/docs
+name: emprise-analyse
+
+x-backend-env: &backend-env
+  EMPRISE_ENV: local
+  EMPRISE_PRODUCT: analyse
+  EMPRISE_LOG_LEVEL: INFO
+  EMPRISE_DATABASE_URL: postgresql+psycopg://app:app@db:5432/emprise_analyse
+  EMPRISE_MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:migrator@db:5432/emprise_analyse
+  EMPRISE_PUBLIC_BASE_URL: ${EMPRISE_ANALYSE_BASE_URL:-http://localhost:8180}
+  EMPRISE_OIDC_ISSUER: http://oidc.localhost:8081/emprise
+  EMPRISE_OIDC_CLIENT_ID: emprise-local
+  EMPRISE_OIDC_CLIENT_SECRET: local-secret
+  EMPRISE_S3_ENDPOINT_URL: http://minio:9000
+  EMPRISE_S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
+  EMPRISE_S3_ACCESS_KEY: emprise
+  EMPRISE_S3_SECRET_KEY: emprise-local-secret
+  EMPRISE_S3_BUCKET: emprise-analyse-local
+  EMPRISE_SMTP_HOST: mailpit
+  EMPRISE_SMTP_PORT: "1025"
+  EMPRISE_ANTHROPIC_API_KEY: ${EMPRISE_ANTHROPIC_API_KEY:-}
+  EMPRISE_RULES_BUDGET_MONTH_USD: ${EMPRISE_RULES_BUDGET_MONTH_USD:-20}
+  FORWARDED_ALLOW_IPS: "*"
+
+services:
+  # Die Dienste heißen `…-analyse`, weil beide Stacks lokal **dasselbe Netz** benutzen: Docker legt für
+  # jeden Dienstnamen einen Netz-Alias an, und ein zweiter Dienst `api` hätte den Namen `api` mehrdeutig
+  # gemacht – die Weiterleitung `/api` wäre abwechselnd beim falschen Produkt gelandet (PLAN_AN1 7.1a Nr. 1).
+  # Legt `emprise_analyse` im Datenbankserver des Hauptstacks an; mehrfach ausführbar.
+  db-init-analyse:
+    image: postgis/postgis:16-3.5
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        until pg_isready -h db -U postgres; do sleep 2; done;
+        psql -v ON_ERROR_STOP=1 -h db -U postgres -f /init.sql
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./infra/local/postgres-init-analyse.sql:/init.sql:ro
+    restart: on-failure:5
+
+  migrate-analyse:
+    # Images baut der Hauptstack (`docker compose build migrate web`); beide Produkte teilen sie.
+    image: emprise-backend:local
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli storage-init"]
+    environment: *backend-env
+    depends_on:
+      db-init-analyse:
+        condition: service_completed_successfully
+    restart: on-failure:5
+
+  api-analyse:
+    image: emprise-backend:local
+    environment: *backend-env
+    depends_on:
+      migrate-analyse:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8100:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/ready')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker-analyse:
+    image: emprise-backend:local
+    command: ["python", "-m", "app.cli", "worker"]
+    environment: *backend-env
+    depends_on:
+      migrate-analyse:
+        condition: service_completed_successfully
+
+  web-analyse:
+    image: emprise-web:local
+    environment:
+      API_UPSTREAM: api-analyse:8000
+      # Dasselbe Image wie der Hauskonfigurator; SPA_INDEX wählt den Einstieg (frontend/Caddyfile)
+      SPA_INDEX: analyse.html
+    ports:
+      - "127.0.0.1:8180:8080"
+    depends_on:
+      api-analyse:
+        condition: service_healthy
+
+networks:
+  # Netz des Hauptstacks: `db`, `minio`, `mailpit` und `oidc.localhost` sind dort erreichbar.
+  default:
+    name: emprise_default
+    external: true

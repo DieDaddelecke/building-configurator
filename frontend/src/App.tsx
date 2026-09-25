@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
-import { useTranslation } from "react-i18next";
-import { createBrowserRouter, Link, RouterProvider, type RouteObject } from "react-router";
+import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
 
+import { NichtGefunden } from "./components/NichtGefunden";
 import { AnfrageDetail } from "./pages/buero/AnfrageDetail";
 import { Anfragen } from "./pages/buero/Anfragen";
 import { BueroLayout } from "./pages/buero/BueroLayout";
@@ -22,18 +22,6 @@ import { VorgangSeite } from "./pages/vorgang/VorgangSeite";
 import { ZugangSeite } from "./pages/vorgang/ZugangSeite";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
-
-function NichtGefunden() {
-  const { t } = useTranslation();
-  return (
-    <main className="emp p-10 flex flex-col gap-4">
-      <h1 className="f-display text-3xl">{t("error.notFound")}</h1>
-      <Link className="link" to="/">
-        {t("error.home")}
-      </Link>
-    </main>
-  );
-}
 
 export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },

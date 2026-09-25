@@ -217,3 +217,97 @@ export function useConfirmCustomerEdges(site: SiteOut) {
     },
   });
 }
+
+// ---------------------------------------------------------------------------
+// Emprise Analyse (AN1): Projekte am Architektenkonto, Parzelle aus einer Datei
+// ---------------------------------------------------------------------------
+
+export type ArchitectProjectOut = components["schemas"]["ArchitectProjectOut"];
+export type UploadResultOut = components["schemas"]["UploadResultOut"];
+export type UploadCandidateOut = components["schemas"]["UploadCandidateOut"];
+
+export const ownProjectsKey = ["projects", "own"] as const;
+
+/** Projekte mit Eigentümer; alle Architekten des Büros sehen dieselben (E-AN1-4). */
+export function useOwnProjects() {
+  return useQuery({
+    queryKey: ownProjectsKey,
+    queryFn: async () => unwrap(await api.GET("/api/v1/projects")),
+  });
+}
+
+export function useCreateProject() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => unwrap(await api.POST("/api/v1/projects")),
+    onSuccess: () => client.invalidateQueries({ queryKey: ownProjectsKey }),
+  });
+}
+
+export function useDeleteProject() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { response } = await api.DELETE("/api/v1/projects/{project_id}", {
+        params: { path: { project_id: projectId } },
+      });
+      if (!response.ok) throw new Error(`delete ${response.status}`);
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: ownProjectsKey }),
+  });
+}
+
+/** Parzelle als DXF, GeoJSON oder vektorielles PDF (AN1). Ohne `index` und mit mehreren Konturen kommt die
+ *  Auswahl zurück; `scale` (1:n) gilt nur für PDF und ersetzt den Maßstab aus dem Plan. */
+export function useUploadParcel(projectId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      file,
+      addressLabel,
+      index,
+      scale,
+    }: {
+      file: File;
+      addressLabel: string;
+      index?: number;
+      scale?: number;
+    }) => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("address_label", addressLabel);
+      if (index !== undefined) form.append("index", String(index));
+      if (scale !== undefined) form.append("scale", String(scale));
+      return unwrap(
+        await api.POST("/api/v1/projects/{project_id}/site/upload", {
+          params: { path: { project_id: projectId } },
+          // Der Serialisierer ersetzt den Rumpf; die Platzhalter erfüllen nur die Typen des Schemas
+          body: { file: "", address_label: addressLabel },
+          bodySerializer: () => form,
+        }),
+      );
+    },
+    onSuccess: (result) => {
+      if (result.site) {
+        client.setQueryData(siteKey(result.site.project_id), result.site);
+        void client.invalidateQueries({ queryKey: ownProjectsKey });
+      }
+    },
+  });
+}
+
+/** Kantenart setzen als Architekt, auf dem eigenen Projekt (AN1); Ergebnis landet im Projekt-Cache. */
+export function useClassifyEdge(site: SiteOut) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ seq, kind }: { seq: number; kind: EdgeKind | null }) =>
+      unwrap(
+        await api.PATCH("/api/v1/admin/projects/{project_id}/site/edges/{seq}", {
+          params: { path: { project_id: site.project_id, seq }, header: { "if-match": `"${site.revision}"` } },
+          body: { kind },
+        }),
+      ),
+    onSuccess: (updated) => client.setQueryData(siteKey(updated.project_id), updated),
+    onError: () => client.invalidateQueries({ queryKey: siteKey(site.project_id) }),
+  });
+}

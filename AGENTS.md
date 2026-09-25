@@ -2,9 +2,9 @@
 
 Webplattform für Bauinteressenten in Frankreich: Parzelle wählen, die Vorgaben des Bebauungsplans (PLU) werden zu harten Grenzen, darin wird ein Haus konfiguriert (Typ, Ausstattungslinie, Optionen, Lage). Ergebnis ist kein Kauf, sondern ein unverbindlicher Vorentwurf, den ein Architekturbüro prüft und in ein Angebot überführt. „Emprise“ ist eine eigene Marke, getrennt vom Büro.
 
-## Stand (19.09.2026)
+## Stand (25.09.2026)
 
-Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetzt: R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1, H2, H3 und V; damit ist der Hauskonfigurator (R2) fachlich vollständig. Einzelheiten, offene Entscheidungen und nächster Schritt: [HANDOFF.md](HANDOFF.md).
+Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetzt: R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1, H2, H3 und V; damit ist der Hauskonfigurator (R2) fachlich vollständig. Daneben ist ein zweites Produkt beauftragt: „Emprise Analyse“ – G1–G3 als eigenständige Web-App für Architekten ([docs/PLAN_ANALYSE.md](docs/PLAN_ANALYSE.md)); davon sind AN0 (Produktschnitt) und AN1 (Parzelle als Datei – auch PDF – oder Zeichnung einbringen, Kanten einordnen, Projekte am Konto) umgesetzt, AN2–AN6 stehen aus. Einzelheiten, offene Entscheidungen und nächster Schritt: [HANDOFF.md](HANDOFF.md).
 
 ## Dokumente
 
@@ -13,9 +13,10 @@ Mockup, Fachdokumentation, Spezifikation und Umsetzungsplan liegen vor. Umgesetz
 | [HANDOFF.md](HANDOFF.md) | Momentaufnahme: Stand, offene Entscheidungen und Arbeitspunkte, nächster Schritt | zu Beginn jeder Session |
 | [AENDERUNGEN.md](AENDERUNGEN.md) | Änderungsprotokoll je Session, neueste zuerst | zu Beginn jeder Session (nur neuester Eintrag) |
 | [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) | Maßgebliche Vorgabe für das Backend: Leitplanken, Datenmodell, Abläufe, API, Tests, Meilensteine, offene Entscheidungen E1–E12, Prüfprotokoll mit offenen Korrekturen (Anhang E.4) | vor Backend-Arbeit kapitelweise nach Kapitel 0 Punkt 1 |
-| [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, Technik je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), Entscheidungen D1–D14, Prüfprotokoll | vor Planung oder Beginn eines Moduls; der Modulabschnitt nennt die nötigen Spezifikationskapitel |
+| [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) | Zuschnitt in Module, Releases, Technik je Modul, IT-Infrastruktur, Abweichungen von der Spezifikation (Kapitel 7), Entscheidungen D1–D18, Prüfprotokoll | vor Planung oder Beginn eines Moduls; der Modulabschnitt nennt die nötigen Spezifikationskapitel |
 | `docs/PLAN_<Modul>.md` | Pläne der Module [G3](docs/PLAN_G3_BAURAHMEN.md), [H1](docs/PLAN_H1_HAUSKATALOG.md), [A](docs/PLAN_A_ANFRAGE.md), [H2](docs/PLAN_H2_ZULAESSIGKEIT_IMPLANTATION.md), [H3](docs/PLAN_H3_KONFIGURATION_KOSTEN.md), [V](docs/PLAN_V_VORENTWURF_UEBERGABE.md): fachliche Festlegungen, Architektur, Arbeitsschritte, Prüfprotokoll | Arbeit am jeweiligen Modul |
-| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen der Umsetzung, je Modul ein Abschnitt mit IDs (A, G, RW, BR, H, AF, HP, HK) | vor Code-Arbeit den Abschnitt des Moduls; neue Annahmen hier eintragen |
+| [docs/PLAN_ANALYSE.md](docs/PLAN_ANALYSE.md) | Zweites Produkt „Emprise Analyse“: eigenständige Web-App für Architekten aus G1–G3 (Parzelle und PLU hochladen, Baurahmen, Nutzfläche, CAD-Ausgabe); AN0 und AN1 umgesetzt, Modulplan [AN1](docs/PLAN_AN1_PARZELLE.md) | Arbeit am Analyse-Produkt oder am Produktschnitt |
+| [docs/ANNAHMEN.md](docs/ANNAHMEN.md) | Festlegungen und Abweichungen der Umsetzung, je Modul ein Abschnitt mit IDs (A, G, RW, BR, H, AF, HP, HK, VU, PS, UP) | vor Code-Arbeit den Abschnitt des Moduls; neue Annahmen hier eintragen |
 | [README.md](README.md) | Aufbau, lokal starten, Prüfbefehle, Regeln für API-Änderungen, Stolperstellen | vor Code-Arbeit |
 | [docs/BETRIEB.md](docs/BETRIEB.md) | Module im Betrieb (Flags, Migrationen, Jobs, ausgehender Zugang), Ausliefern, Rückrollen, Zugang, Mail, Wiederherstellung, Sicherheitsvorfall, Störungen je Modul | Betrieb, Störungen, Freischalten |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb bis zur Beta auf Unraid: Reverse Proxy, Authentik, Einrichtung, Aktualisieren, Sicherung, Überwachung, Module | Auslieferung, Arbeit an `deploy/unraid` |

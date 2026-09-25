@@ -8,10 +8,12 @@ from typing import Any
 import pytest
 
 from app.configuration import review
+from app.plan import dxf
+from app.plan.geometry import choose_scale
 from app.submission import dossier
-from app.submission.dossier import dxf, pdf
 from app.submission.dossier import format as fmt
-from app.submission.dossier.plan import choose_scale, from_snapshot
+from app.submission.dossier import pdf
+from app.submission.dossier.plan import from_snapshot
 
 ORIGIN = {"e": 355000.0, "n": 6700000.0, "crs": "EPSG:2154"}
 

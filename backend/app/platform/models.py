@@ -66,6 +66,21 @@ class Project(UuidPk, Created, Base):
     access_token_hash: Mapped[bytes] = mapped_column(LargeBinary, unique=True)
     status: Mapped[str] = mapped_column(String(30), server_default=text("'draft'"))
     last_activity_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    owner_staff_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("staff_user.id", ondelete="SET NULL")
+    )
+    """Gesetzt für Projekte, die ein Architekt in „Emprise Analyse“ anlegt (AN1). Sie gehören keinem
+    Kunden, haben kein Zugangscookie und werden nicht nach 90 Tagen gelöscht (UP06)."""
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    """Nur offengehalten für AN6 (Abo für fremde Büros, D15); bis dahin immer NULL."""
+
+    __table_args__ = (
+        Index(
+            "ix_project_owner_staff_user_id",
+            "owner_staff_user_id",
+            postgresql_where=text("owner_staff_user_id IS NOT NULL"),
+        ),
+    )
 
 
 class AuditLog(Base):

@@ -177,6 +177,12 @@ class Site(UuidPk, Created, Base):
 
     project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("project.id", ondelete="CASCADE"), unique=True)
     origin: Mapped[str] = mapped_column(String(20), server_default=text("'parcel'"))
+    """`parcel` (Kataster), `manual_sketch` (Weg E) oder `upload` (Datei, AN1)."""
+    georeferenced: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    """Hat die Geometrie eine echte Lage in Lambert-93? Bei Zeichnung und Upload ohne erkanntes
+    Koordinatensystem liegt sie technisch im SRID 2154, aber ohne geografische Bedeutung (G26, UP04)."""
+    source_info: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
+    """Herkunft eines Uploads: Dateiname, SHA-256, Ebene, Index, erkanntes Koordinatensystem (UP03)."""
     address_label: Mapped[str | None] = mapped_column(String(200))
     geometry: Mapped[Any] = mapped_column(_geom("POLYGON"))
     area_m2: Mapped[float] = mapped_column(Float)
@@ -205,7 +211,7 @@ class Site(UuidPk, Created, Base):
         CheckConstraint(
             "neighbour_coverage IN ('complete','partial','none')", name="neighbour_coverage_known"
         ),
-        CheckConstraint("origin IN ('parcel','manual_sketch')", name="origin_known"),
+        CheckConstraint("origin IN ('parcel','manual_sketch','upload')", name="origin_known"),
     )
 
 

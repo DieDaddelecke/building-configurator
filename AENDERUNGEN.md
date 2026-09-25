@@ -4,6 +4,110 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 25.09.2026 – Emprise Analyse: AN0 (Produktschnitt) und AN1 (Parzelle einbringen), Parzelle auch aus PDF
+
+**Auftrag:** „Fange mit AN0 an“, danach „weiter mit AN1“, dann „kannst du eine lokale Instanz starten“ und „Es sollte auch möglich sein, PDF-Dateien hochzuladen, aus denen dann die Parzelle gelesen wird“. Gearbeitet am 20./21.09.2026, Hand-off am 25.09.2026.
+
+**Commits:** keine. Alles liegt uncommittet im Arbeitsbaum, zusammen mit den Dokumenten der beiden Vorsessions; `main` steht weiter auf `35d8b43`.
+
+**Neu**
+- Backend: `app/products.py` (Router, Job-Module, periodische Aufgaben und Startseite je Produkt), `app/plan/` (`geometry.py`, `dxf.py` – aus `submission/dossier/` verschoben), `app/site/domain/upload.py` (DXF, GeoJSON), `app/site/domain/pdfplan.py` (vektorielles PDF), `app/submission/dossier/plan.py` (nur noch `from_snapshot`), Migration `0012_parcel_upload.py`.
+- Tests: `unit/test_module_boundaries.py`, `unit/test_site_upload_domain.py`, `unit/test_site_pdf_domain.py`, `integration/test_site_upload.py`, `tests/site_pdf_support.py`.
+- Frontend: `analyse.html`, `src/products/analyse/` (`main.tsx`, `App.tsx`, `AnalyseLayout.tsx`, `Schaufenster.tsx`, `Projekte.tsx`, `ProjektSeite.tsx`, `ParzelleHochladen.tsx`, `KonturWahl.tsx`, `styles.css`, zwei Testdateien), `src/components/NichtGefunden.tsx`.
+- Auslieferung: `compose.analyse.yaml` (lokal), `deploy/unraid/compose.analyse.yaml` und `.env.analyse.example`, `infra/local/postgres-init-analyse.sql`.
+- Dokumente: `docs/PLAN_AN1_PARZELLE.md` (Modulplan mit Selbstprüfung, Kapitel 8 zum PDF-Nachtrag); `docs/PLAN_ANALYSE.md` war aus der Vorsession noch uncommittet.
+
+**Geändert**
+- Backend: `main.py`, `registry.py`, `config.py` (`EMPRISE_PRODUCT`, `site_upload_max_bytes` 20 MB), `platform/jobs/worker.py` (periodische Aufgaben je Produkt), `platform/auth/staff.py` (Startseite je Produkt, `safe_next` erlaubt jedes relative Ziel), `platform/auth/context.py` (`require_project_access` für Architekten), `platform/projects.py` (Eigentümer, Projektliste, Löschung mit Erweiterungspunkt), `platform/tasks.py`, `platform/models.py`, `platform/locales/*.json` (Fehlertexte der Upload-Codes), `site/{api,models,schemas,service}.py`, `envelope/service.py` (`NO_RULES_ORIGINS`), `configuration/domain/context.py`, `inquiry/{api,service}.py`, `submission/schemas.py`, `submission/dossier/{__init__,pdf}.py`, `cli.py`, `openapi.json`, `pyproject.toml`/`uv.lock` (neu: `pdfminer.six`, MIT).
+- Frontend: `vite.config.ts` (zweiter Einstieg), `Caddyfile` (`SPA_INDEX`), `src/App.tsx`, `src/api/site.ts`, `src/api/schema.d.ts`, `src/i18n/{de,fr}.json`.
+- Dokumente: `docs/ANNAHMEN.md` (neue Abschnitte AN0 mit PS01–PS09 und AN1 mit UP01–UP16), `docs/BETRIEB.md` (Abschnitt 15, Migration 0012 in der Modultabelle), `README.md`, `AGENTS.md`, `UMSETZUNGSPLAN.md` (D17 ergänzt, D18 neu), `deploy/unraid/README.md`, `deploy/unraid/deploy.sh` (Stack-Parameter), `.gitignore` (`.env.*.example` bleibt versioniert).
+
+**Entschieden** (Nutzer)
+- **D18 (20.09.2026):** „Emprise Analyse“ ist beauftragt, Modul für Modul; AN0 und AN1 umgesetzt, AN2 folgt.
+- **D17 ergänzt (21.09.2026):** Die Parzelle kommt auch aus einem **vektoriellen PDF** (Katasterauszug, Plan des Geometers). Das hebt die Empfehlung E-A2 („kein PDF-Plan“) auf; gescannte PDFs bleiben offen.
+- Die übrigen Empfehlungen der Pläne (E-A1, E-A3 bis E-A6, E-AN1-1 bis E-AN1-5) gelten mit dem Auftrag als entschieden und stehen als Festlegungen in `docs/ANNAHMEN.md`.
+
+**Ohne Dateiänderung**
+- **Prüfläufe:** Backend 526 Tests (vor der Session 474), Frontend 150 (143), dazu ruff, Format, mypy, Typprüfung, Lint und Build grün. `openapi.json` und `schema.d.ts` neu erzeugt.
+- **Browserprüfung** am Analyse-Stack in Deutsch und Französisch, auch in Telefonbreite: Anmeldung, Projekt anlegen, GeoJSON mit zwei Konturen, Kante als Straße setzen (Hauptstraße und Azimute entstehen), PDF-Auszug mit 39 Flächen, Parzelle 65 angeklickt und übernommen.
+- **Gegenprobe mit echten Daten:** Aus dem Kataster von Treillières wurde ein Auszug wie von cadastre.gouv.fr gesetzt (22 Parzellen, 23 Gebäude, 458 Schraffurlinien, Rahmen, Karte auf Seite 2). In 0,33 s gelesen, Maßstab 1:500 aus „Échelle d'édition“ erkannt, AD 65 mit 926,1 m² – **gleich der Katasterfläche**. Die Datei liegt nur im Scratchpad dieser Session; der Nutzer hat sie zum Ausprobieren bekommen.
+- **Befunde der Selbstprüfung** stehen in den Plänen: PLAN_ANALYSE 8.1 Nr. 9–12 (AN0), PLAN_AN1 7.1a Nr. 1–6 und 8.4 Nr. 1–6 (AN1 und PDF). Die zwei schwersten: Beide lokalen Stacks hatten gleich benannte Dienste im selben Netz, sodass die Analyse-Oberfläche abwechselnd beim Hauskonfigurator landete; und `safe_next` ließ nach der Anmeldung nur `/buero` zu, das es im zweiten Produkt nicht gibt.
+- **Lokale Instanz** läuft: Hauskonfigurator auf 8080/8000, „Emprise Analyse“ auf 8180/8100, beide mit Konto `ops@emprise.local` und Flag `site_selection`.
+
+**Unverändert**
+- Der Hauskonfigurator verhält sich gleich; berührt wurden nur Weg E (legt jetzt Kanten an, UP02) und die Löschung eines Projekts (liegt im Kern, Sperre aus Modul A bleibt).
+- `EMPRISE_OFFICE_EMAIL` ist in `deploy/unraid/compose.yaml` und `.env.example` weiter nicht verdrahtet (HANDOFF 4).
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (knappe Modulaufträge „weiter mit AN1“; unbeantwortete Fragen am Rundenende nicht wiederholen) und um den Fall erweitert, dass der Nutzer eine Empfehlung des Plans durch einen Praxisfall aufhebt.
+
+---
+
+## 20.09.2026 – Vorgehensplan „Emprise Analyse“: eigenständige Web-App aus G1–G3
+
+**Auftrag:** „Plange eine Vorgehensweise, wie man aus G1–G3 eine eigenständige Web-App erstellen könnte“ – ein Werkzeug, das Architekten hilft, Parzelle und PLU zu analysieren und daraus einen Baurahmen für den weiteren Entwurf abzuleiten (Höhe, Abstände je Grenze, bebaubare Fläche, Nutzfläche, grafische Ableitung auf der Parzelle). **Nur Planung, keine Umsetzung, kein Code.**
+
+**Commits:** keine. Alles liegt uncommittet im Arbeitsbaum, zusammen mit den Dokumenten der V-Session; `main` steht weiter auf `35d8b43`.
+
+**Neu**
+- [docs/PLAN_ANALYSE.md](docs/PLAN_ANALYSE.md) – Vorgehensplan für das zweite Produkt: Befund (was G1–G3 liefern, was fehlt), Architektur „ein Repo, zwei Produkte“, Module AN0–AN6, Releases RA1–RA3, sechs offene Entscheidungen E-A1–E-A6 mit Empfehlung, Abnahme, Prüfprotokoll (8.1 Fehler, 8.2 Alternativen, 8.3 Grenzen). Status: geplant, nicht umgesetzt.
+
+**Geändert**
+- `UMSETZUNGSPLAN.md` Kapitel 9: **D15, D16, D17** neu und entschieden (unten).
+- `AGENTS.md`: Zeile für `docs/PLAN_ANALYSE.md` in der Dokumententabelle.
+
+**Entschieden** (Nutzer, 20.09.2026)
+- **D15 Zielgruppe:** zuerst nur das eigene Büro; ein Abo für fremde Büros mit eigenem Branding und eigener API bleibt das Ziel (Ausbaustufe AN6). Vorbereitet wird dafür jetzt nur die nullable Spalte `organisation_id`.
+- **D16 Codeschnitt:** ein Repository, zwei Produkte aus gemeinsamem Kern; kein Fork.
+- **D17 Datenbeschaffung:** kein Vorausdenken von Gebieten – der Nutzer lädt Parzelle und PLU selbst hoch: „das Produkt ist die Analyse, die Kunden liefern das zu analysierende Material“. Kataster-Massenimport und GPU-Abruf bleiben Komfortweg. Für den Hauskonfigurator bleibt D1 unberührt.
+
+**Ohne Dateiänderung**
+- **Kartierung von G1–G3** (Backend und Frontend, zwei Erkundungsläufe): Der Schnitt ist sauber – `site/`, `rules/` und `envelope/` importieren nur aus `platform/`, `integrations/` und untereinander; kein Fremdschlüssel aus `catalog`, `configuration`, `inquiry` oder `submission` zeigt auf eine G-Tabelle; Migrationen 0002–0006 sind ein Block. Die schwerste Kopplung läuft umgekehrt: `configuration/domain` rechnet direkt mit `envelope/domain`. Ergebnis steht in PLAN_ANALYSE 2 und 3.
+- **Fünf Befunde**, die die Herauslösung betreffen und im Plan verankert sind (PLAN_ANALYSE 8.1): `resolve_rules` startet zwingend bei Gemeinde-INSEE und GPU-Zonengeometrie (größter verdeckter Aufwand, AN2); Weg E legt keine `site_edge` an; `require_project_access` kennt nur den Projekt-Cookie; `retention_cleanup` löscht Projekte nach 90 Tagen; der DXF-Schreiber liegt in `submission/dossier/` (Modul V).
+- **Fachliche Lücke für Architekten:** Die Nutzfläche (surface de plancher) fehlt in G3 vollständig, und der bindende Grenzwert der Grundfläche (Minimum aus Kontur und Grundflächenzahl) wird nicht gebildet. Umgekehrt ist ein gestufter Hüllkörper fast geschenkt, weil `envelope/domain/setbacks.py` den höhenabhängigen Abstand bereits rechnet.
+- **Keine Prüfläufe:** kein Testlauf, kein Build, keine Browserprüfung – es wurde kein Code geändert.
+
+**Unverändert**
+- Kein Code, keine Migration, keine Übersetzung, keine API. Der Hauskonfigurator ist von dieser Session nicht berührt.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Antworten auf Auswahlfragen können die Frage umdeuten statt eine Option zu wählen).
+
+---
+
+## 20.09.2026 – V: Vorentwurf-Übergabe (Plan und Umsetzung), H3 und V committet
+
+**Auftrag:** Startprompt des Hand-offs: Stand zusammenfassen, Priorität-1-Entscheidungen nennen, D8 und D10 erfragen, danach V nach Umsetzungsplan 3.10 mit Selbstprüfung planen und umsetzen; committen und pushen erst auf Anweisung (kam am Ende der Session).
+
+**Commits:** `72a73ab` H3 und V (Code, Tests, Dokumente – H3 lag uncommittet im Arbeitsbaum und V ändert dieselben Dateien, deshalb ein Commit), `35d8b43` Hand-off der H3-Session (HANDOFF, AENDERUNGEN). `main` steht auf `35d8b43`, CI-Lauf 35489847956 grün (security, frontend, backend, e2e; 9:13 min).
+
+**Neu**
+- `docs/PLAN_V_VORENTWURF_UEBERGABE.md` – Plan mit Selbstprüfung (9.1 Entwurf, 9.1a Bau, 9.2 Alternativen, 9.3 Grenzen), Abnahmeergebnis in Kapitel 6, Festlegungen mit Empfehlung in Kapitel 8 (E-V1–E-V8).
+- Backend: `app/submission/` (`models`, `schemas`, `service`, `api`, `views`, `jobs`, `texts`, `dossier/` mit `format`, `plan`, `pdf`, `dxf`), `app/configuration/review.py` (Prüfstempel), `app/inquiry/access.py` (Zugangslink), Migration `0011_submission.py`.
+- Tests: `test_submission.py` (18 Integrationstests), `test_submission_domain.py` (12 Einheitstests).
+- Frontend: `api/submission.ts`, `configuration/Uebergabe.tsx`, `inquiry/ZugangAnfordern.tsx`, `pages/vorgang/{VorgangSeite,ZugangSeite}.tsx`, `pages/buero/AnfrageFassungen.tsx`, Tests `uebergabe`, `vorgang`, `anfrage-fassungen`, `check-texte`.
+- `tools/sync-check-texts.cjs` – übernimmt die Texte der Prüfungen aus dem Frontend in die Übersetzungen des Backends (Dossier-PDF).
+
+**Geändert**
+- `configuration/service.py`, `schemas.py`: `review_stamp` in jeder Antwort, `design_review` mit Katalogkopie; `envelope/service.py`: `fingerprint_parts` teilt die G3-Prüfsumme in `site` und `rules`.
+- `inquiry/`: Fassungen und Nachrichten in Modell, Schemas, Dienst und API; Zustände `rueckfrage`/`zurueckgezogen`, `customer.locale`, Export um Fassungen und Nachrichten, Zugangslink öffentlich; `cli.py` (`legal-seed` auch für die V-Texte), `config.py` (Einstellungen für Übergabe, Nachrichten, Zugangslink).
+- Übersetzungen des Backends: Mails, Fehlertexte, Dossier-Texte und die aus dem Frontend übernommenen Prüftexte; `openapi.json` und `schema.d.ts` neu erzeugt.
+- Frontend: Übergabe im Schritt Vorentwurf, Routen `/vorgang` und `/zugang`, Fassungen und Nachrichten im Anfrage-Detail, Spalte „Vorentwurf“ in der Anfragenliste, `deviationsOf` in `configuration/format.ts`, Texte in `i18n/{de,fr}.json`.
+- Dokumente: `docs/ANNAHMEN.md` (VU01–VU16; G17, AF12 und HK10 nachgezogen), `docs/BETRIEB.md` (Modultabelle, Alarm `dossier_failed`, Abschnitt 14 mit ArchiCAD-Vorgehen), `UMSETZUNGSPLAN.md` (Kopf, 3.10 umgesetzt, Kapitel 7 mit fünf neuen Abweichungen, D8/D10 bestätigt), `BACKEND_SPEZIFIKATION.md` (E.4: S3 und S5 gelöst), `README.md` (Regel für die Prüftexte, zwei Stolperstellen), `AGENTS.md` (Stand, Dokumententabelle).
+
+**Entschieden** (Nutzer, 19.09.2026)
+- D8 bleibt: die Spanne ist eine unverbindliche Schätzung der Baukosten, Wortlaut unverändert.
+- D10 bleibt: netto speichern, brutto mit dem Satz des Katalogs anzeigen.
+- G17 (ODbL): Quellenangabe in PDF und DXF genügt; die rechtliche Prüfung vor der Beta bleibt offen (VU11).
+
+**Ohne Dateiänderung**
+- Browserprüfung am lokalen Stack (AD 65, Deutsch und Französisch, auch Telefonbreite): Kontakt, Code aus Mailpit, Übergabe → EMP-2026-000002 Fassung 1 mit Dossier, Büro- und Kundenmail, Nachricht des Büros → `rueckfrage`, Antwort des Kunden → `in_bearbeitung`, Zugangslink eingelöst, PDF-Download, Regeländerung → `review_changed` mit `rules` und `result`, danach Fassung 2 und Fassung 1 `superseded`. Fand drei Fehler (Plan V 9.1a Nr. 15–17).
+- Messung lokal: Übergabe 0,8–1,0 s, abgelehnte Übergabe 0,6 s, Dossier-Job 2,2–3,7 s, Snapshot 17,5 KB, Prüfstempel 1–2 ms je Abruf; `GET …/configuration` rund 0,5 s im Container (aus H2/H3). Plan V 6.
+- Volllauf: Backend 474 Tests (vorher 444), Frontend 143 (vorher 132), ruff, Format, mypy, Typprüfung, Lint und Build grün. Playwright lief lokal nicht.
+- Lokaler Stack auf dem neuen Stand: Migration 0011, `legal-seed` für die zwei neuen Rechtstexte, Flag `submission` für `architect`; die Regelkorrektur der Browserprüfung wurde wieder entfernt.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (gezielte Rückfragen mit Empfehlung; Commit-Zuschnitt, wenn zwei Module ineinandergreifen).
+
+---
+
 ## 19.09.2026 – H3: Konfiguration und Kosten (Plan und Umsetzung)
 
 **Auftrag:** Startprompt des Hand-offs: Stand zusammenfassen, Priorität-1-Entscheidungen nennen, HP03, D12/D13 und die Maße von Terrasse und Carport erfragen, danach H3 nach Umsetzungsplan 3.9 mit Selbstprüfung planen und umsetzen; CI-Lauf 35431041895 prüfen.

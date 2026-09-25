@@ -60,7 +60,7 @@ class SubmissionSummaryOut(BaseModel):
     vat_rate: float | None
     catalog_version: int | None
     deviations: list[CheckOut]
-    site_origin: Literal["parcel", "manual_sketch"] | None
+    site_origin: Literal["parcel", "manual_sketch", "upload"] | None
 
 
 class StaffSubmissionOut(BaseModel):

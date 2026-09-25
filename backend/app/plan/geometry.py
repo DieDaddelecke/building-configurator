@@ -1,4 +1,4 @@
-"""Geometrie des Lageplans aus dem Snapshot einer Fassung (V 3.7), für PDF und DXF gleich.
+"""Geometrie eines Lageplans, für PDF und DXF gleich (V 3.7, seit AN0 im Kern).
 
 Alle Koordinaten sind lokale Meter (Ost, Nord) relativ zu `site.local_origin`; Lambert-93 ist lokal plus
 Ursprung (reine Verschiebung, `envelope/domain/local.py`). Für Weg E hat der Ursprung keine geografische
@@ -55,55 +55,15 @@ class Plan:
         return [r for r in (self.facade, self.projection, self.terrace, self.carport, *self.driveways) if r]
 
 
-def _ring(raw: Any) -> Ring | None:
+def ring(raw: Any) -> Ring | None:
+    """Rohe Koordinatenliste in einen Ring; zu kurze oder leere Listen ergeben nichts."""
     if not raw or len(raw) < 3:
         return None
     return [(float(p[0]), float(p[1])) for p in raw]
 
 
-def _rings(raw: Any) -> list[Ring]:
-    return [ring for ring in (_ring(r) for r in raw or []) if ring]
-
-
-def from_snapshot(snapshot: dict[str, Any]) -> Plan:
-    site = snapshot.get("site") or {}
-    envelope = snapshot.get("envelope") or {}
-    configuration = snapshot.get("configuration") or {}
-    evaluation = configuration.get("evaluation") or {}
-    outbuildings = configuration.get("outbuildings") or {}
-    contours = envelope.get("contours") or {}
-    context = site.get("context") or {}
-    origin = site.get("local_origin") or {"e": 0.0, "n": 0.0}
-    placement = configuration.get("placement")
-    orientation = configuration.get("orientation")
-    return Plan(
-        origin=(float(origin["e"]), float(origin["n"])),
-        georeferenced=site.get("origin") == "parcel",
-        parcel=_rings(site.get("outline_local")),
-        edges=[
-            Edge(
-                seq=int(e["seq"]),
-                kind=str(e["kind"]),
-                coords=[(float(x), float(y)) for x, y in e["coords_local"]],
-            )
-            for e in site.get("edges") or []
-            if e.get("coords_local")
-        ],
-        neighbour_parcels=_rings(context.get("parcels")),
-        neighbour_buildings=_rings(context.get("buildings")),
-        lenient=_rings((contours.get("lenient") or {}).get("rings_local")),
-        strict=_rings((contours.get("strict") or {}).get("rings_local")),
-        facade=_ring(evaluation.get("facade_local")),
-        projection=_ring(evaluation.get("projection_local")),
-        terrace=_ring((outbuildings.get("terrace") or {}).get("polygon_local")),
-        carport=_ring((outbuildings.get("carport") or {}).get("polygon_local")),
-        driveways=_rings([d.get("polygon_local") for d in outbuildings.get("driveways") or []]),
-        house_origin=(
-            (float(placement["origin"]["e"]), float(placement["origin"]["n"])) if placement else None
-        ),
-        rotation_deg=float(placement["rotation_deg"]) if placement else None,
-        convergence_deg=float(orientation["convergence_deg"]) if orientation else None,
-    )
+def rings(raw: Any) -> list[Ring]:
+    return [r for r in (ring(item) for item in raw or []) if r]
 
 
 def choose_scale(plan: Plan) -> int:

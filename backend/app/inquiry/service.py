@@ -425,22 +425,13 @@ def export(db: Session, project_id: uuid.UUID) -> ExportOut:
     )
 
 
-def delete_project(db: Session, project_id: uuid.UUID, actor: str) -> None:
-    project = db.get(Project, project_id)
-    if project is None:
-        raise Problem(404, "not_found")
+def guard_delete(db: Session, project_id: uuid.UUID) -> None:
+    """Sperre des Moduls A für die Löschung im Kern: Nach einer Anfrage löscht nur das Büro (D6).
+
+    Angemeldet in `app/inquiry/api.py` über `platform.projects.register_delete_guard`.
+    """
     if db.execute(select(Inquiry.id).where(Inquiry.project_id == project_id)).first() is not None:
         raise Problem(409, "deletion_requires_office")
-    audit.record(
-        db,
-        actor_type="customer",
-        actor_id=actor,
-        action="project.delete",
-        entity_type="project",
-        entity_id=str(project_id),
-    )
-    db.delete(project)
-    db.commit()
 
 
 # ---------------------------------------------------------------------------

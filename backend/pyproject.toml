@@ -26,6 +26,7 @@ dependencies = [
   "ezdxf>=1.3",
   "python-multipart>=0.0.18",
   "email-validator>=2.2",
+  "pdfminer-six>=20250506",
 ]
 
 [dependency-groups]

@@ -151,8 +151,21 @@ def require_roles(*roles: Role) -> Callable[..., StaffPrincipal]:
 
 
 @_policy("project")
-def require_project_access(project_id: uuid.UUID, auth: RequestAuth = Depends(get_auth)) -> uuid.UUID:
-    """Nur das Projekt aus dem eigenen Cookie. Fremde Projekte erscheinen als nicht vorhanden."""
-    if auth.project_id != project_id:
-        raise Problem(404, "not_found")
-    return project_id
+def require_project_access(
+    project_id: uuid.UUID, auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)
+) -> uuid.UUID:
+    """Das Projekt aus dem eigenen Cookie – oder ein Projekt des eigenen Büros, wenn ein Architekt
+    angemeldet ist (AN1, UP05). Fremde Projekte erscheinen als nicht vorhanden.
+
+    Kundenprojekte haben keinen Eigentümer und bleiben auch für Mitarbeitende über diesen Weg
+    unerreichbar; das Büro sieht sie über die eigenen `/admin`-Endpunkte.
+    """
+    if auth.project_id == project_id:
+        return project_id
+    if auth.staff is not None and Role.architect in auth.staff.roles:
+        owner = db.execute(
+            select(Project.owner_staff_user_id).where(Project.id == project_id)
+        ).scalar_one_or_none()
+        if owner is not None:
+            return project_id
+    raise Problem(404, "not_found")

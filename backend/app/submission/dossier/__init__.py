@@ -37,8 +37,9 @@ def file_names(snapshot: dict[str, Any]) -> list[tuple[str, Literal["pdf", "dxf"
 
 
 def build(snapshot: dict[str, Any]) -> list[DossierFile]:
-    from app.submission.dossier import dxf, pdf
+    from app.plan import dxf
     from app.submission.dossier import format as fmt
+    from app.submission.dossier import pdf
     from app.submission.dossier.plan import from_snapshot
 
     plan = from_snapshot(snapshot)

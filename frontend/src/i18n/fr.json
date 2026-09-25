@@ -14,6 +14,108 @@
     "noNotices": "Les mentions légales seront publiées avant l'ouverture.",
     "cta": "Choisir mon terrain"
   },
+  "analyse": {
+    "tagline": "Analyse",
+    "eyebrow": "Pour les cabinets d'architecture",
+    "title": "Analyser la parcelle et le PLU",
+    "intro": "Emprise Analyse déduit de la parcelle et du PLU le cadre constructible du projet : hauteurs, recul par limite, emprise au sol et surface de plancher – chaque valeur citée avec sa page, chaque valeur corrigeable.",
+    "steps": "Les trois étapes",
+    "step": {
+      "site": {
+        "title": "Apporter la parcelle",
+        "text": "La dessiner avec ses cotes ou l'importer en DXF ou GeoJSON."
+      },
+      "rules": {
+        "title": "Déposer le règlement",
+        "text": "Règlement en PDF, choix du chapitre de zone, extraction des règles."
+      },
+      "envelope": {
+        "title": "Déduire le cadre constructible",
+        "text": "Hauteurs, reculs et surfaces, avec rapport et export CAO."
+      }
+    },
+    "soon": "Ces étapes se construisent : la parcelle entre déjà, le règlement et le cadre constructible suivent.",
+    "login": {
+      "intro": "L'accès est réservé au cabinet ; l'authentification passe par le fournisseur d'identité.",
+      "denied": {
+        "unknown": "Cette adresse n’est pas autorisée. Contactez l’administration.",
+        "mfa": "Le second facteur manque. Reconnectez-vous avec votre second facteur.",
+        "email_unverified": "L’adresse e-mail n’est pas vérifiée par le fournisseur d’identité.",
+        "inactive": "Ce compte est désactivé.",
+        "fehler": "La connexion a échoué. Merci de réessayer."
+      }
+    },
+    "origin": {
+      "parcel": "cadastre",
+      "manual_sketch": "dessinée",
+      "upload": "fichier"
+    },
+    "projects": {
+      "title": "Projets",
+      "intro": "Un projet, une parcelle et ses règles. Nommage, notes et archivage viendront plus tard.",
+      "new": "Nouveau projet",
+      "empty": "Aucun projet pour l'instant.",
+      "untitled": "Sans libellé",
+      "label": "Libellé",
+      "origin": "Origine",
+      "area": "Surface",
+      "updated": "Dernière modification",
+      "noSite": "pas de parcelle"
+    },
+    "site": {
+      "intro": "Apporter la parcelle, qualifier ses limites. Le règlement et le cadre constructible suivent.",
+      "choose": "Apporter la parcelle",
+      "chooseIntro": "Un fichier issu de la CAO ou du SIG, ou un dessin coté.",
+      "fromFile": "Importer un fichier",
+      "draw": "Dessiner et coter",
+      "summary": "Terrain",
+      "area": "Surface",
+      "origin": "Origine",
+      "position": "Localisation",
+      "georeferenced": "en Lambert-93",
+      "local": "sans référence géographique",
+      "file": "Fichier",
+      "edges": "Limites",
+      "edgesIntro": "Sans cadastre, l'outil ne connaît aucun voisin : chaque limite démarre sans qualification. Indiquez au moins la limite sur voie.",
+      "noStreet": "Aucune limite sur voie n'est encore indiquée – sans elle, ni voie principale ni recul sur voie.",
+      "next": "Prochaine étape : déposer et extraire le règlement (en cours).",
+      "back": "Retour à la liste",
+      "delete": "Supprimer le projet",
+      "deleteConfirm": "Supprimer le projet, la parcelle et toutes ses données ?",
+      "scale": "Échelle",
+      "scaleFile": "lue dans le plan",
+      "scaleInput": "indiquée"
+    },
+    "upload": {
+      "title": "Parcelle depuis un fichier",
+      "formats": "DXF avec polyligne fermée, GeoJSON (Lambert-93 ou WGS84) ou PDF vectoriel – par exemple l’extrait de cadastre.gouv.fr ou le plan du géomètre ; 20 Mo au plus. Les PDF scannés ne sont pas encore lus. Le fichier n’est pas conservé, seulement son nom, son empreinte, son calque et son échelle.",
+      "label": "Libellé du terrain",
+      "labelHint": "adresse ou référence cadastrale",
+      "file": "Fichier",
+      "submit": "Importer",
+      "take": "Choisir celle-ci",
+      "choose": "{{count}} surfaces fermées trouvées – cliquez sur la parcelle dans le plan.",
+      "error": {
+        "upload_invalid": "Le fichier ne peut pas être lu comme une parcelle.",
+        "upload_outline_not_found": "Ce contour n'est plus proposé.",
+        "upload_too_large": "Le fichier est trop volumineux (8 Mo au plus).",
+        "site_origin_mismatch": "Ce projet a déjà un terrain issu du cadastre.",
+        "upload_pdf_no_vector": "Le PDF ne contient aucun trait, probablement un scan. Les plans scannés ne sont pas encore lus – utilisez le PDF issu de la CAO ou de cadastre.gouv.fr.",
+        "upload_scale_missing": "Aucune échelle sur le plan. Indiquez l’échelle ci-dessus puis importez à nouveau.",
+        "upload_scale_ambiguous": "Le plan indique plusieurs échelles. Laquelle vaut pour le dessin ?"
+      },
+      "cancel": "Annuler",
+      "scale": "Échelle du plan",
+      "scaleAuto": "lue dans le plan",
+      "scaleHint": "Laisser vide si l’échelle figure sur le plan (par exemple « Échelle d’édition : 1/500 »). Si la surface ne correspond pas à la contenance cadastrale, le PDF n’était pas à l’échelle.",
+      "scaleUsedFile": "Échelle 1:{{scale}} lue dans le plan.",
+      "scaleUsedInput": "Échelle 1:{{scale}} indiquée.",
+      "overview": "Aperçu des surfaces du fichier",
+      "list": "ou choisir dans la liste",
+      "pick": "Choisir une surface…"
+    },
+    "disclaimer": "Analyse fondée sur les documents fournis. Sans valeur juridique ; seul le certificat d’urbanisme fait foi."
+  },
   "site": {
     "disabled": {
       "eyebrow": "Bientôt disponible",

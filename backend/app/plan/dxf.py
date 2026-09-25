@@ -8,7 +8,7 @@ das Büro sie lagerichtig einsetzen kann (Vorgehen in docs/BETRIEB.md).
 import io
 from typing import Literal
 
-from app.submission.dossier.plan import Plan, Ring
+from app.plan.geometry import Plan, Ring
 
 Variant = Literal["L93", "local"]
 

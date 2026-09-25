@@ -1,8 +1,12 @@
-"""Lädt alle Module, die Jobs oder periodische Aufgaben anmelden. API und Worker importieren diese Datei."""
+"""Lädt die Module, die Jobs oder periodische Aufgaben anmelden. API, Worker und CLI importieren diese Datei.
 
-import app.envelope.jobs
-import app.platform.mail
-import app.platform.tasks
-import app.rules.jobs
-import app.site.jobs
-import app.submission.jobs  # noqa: F401
+Welche Module das sind, sagt `app.products` für das Produkt dieser Instanz (`EMPRISE_PRODUCT`).
+"""
+
+from importlib import import_module
+
+from app.config import get_settings
+from app.products import spec_for
+
+for _name in spec_for(get_settings().product).job_modules:
+    import_module(_name)

@@ -5,6 +5,7 @@ Geometrie wird in PostGIS gesucht und transformiert, in Shapely (Lambert-93) ber
 
 import hashlib
 import json
+import math
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
 from app.platform import audit
+from app.platform import projects as platform_projects
 from app.platform.jobs import enqueue
 from app.platform.models import Project
 from app.platform.problems import Problem
@@ -38,6 +40,13 @@ from app.site.domain.edges import (
 )
 from app.site.domain.manual import ManualEdgeInput, ManualPolygonInvalid, build_manual_polygon
 from app.site.domain.outline import ParcelInput, SiteNotContiguous, merge_parcels, to_local
+from app.site.domain.upload import (
+    Candidate,
+    ParcelFile,
+    UploadInvalid,
+    build_candidates,
+    read_parcel_file,
+)
 from app.site.models import L93, Site, SiteEdge, SiteParcel, SiteRisk, Terrain
 from app.site.schemas import (
     CommuneOut,
@@ -54,6 +63,8 @@ from app.site.schemas import (
     SiteOut,
     SiteReviewItem,
     TerrainOut,
+    UploadCandidateOut,
+    UploadResultOut,
 )
 
 FEATURE_FLAG = "site_selection"
@@ -254,7 +265,7 @@ def form_site(db: Session, project_id: uuid.UUID, idus: list[str], actor: str) -
     site = db.execute(
         select(Site).where(Site.project_id == project_id).with_for_update()
     ).scalar_one_or_none()
-    if site is not None and site.origin == "manual_sketch":
+    if site is not None and site.origin in SKETCH_ORIGINS:
         raise Problem(409, "site_origin_mismatch")
     outline_hash = _outline_hash(outline.polygon)
     if site is not None and site.outline_hash == outline_hash and sorted(site.parcel_idus) == idus:
@@ -391,32 +402,60 @@ def _apply_classification(site: Site, classification: Classification, warnings: 
 
 
 # ---------------------------------------------------------------------------
-# Grundstück frei zeichnen (Weg E, Plan 3.3)
+# Grundstück ohne Kataster: frei zeichnen (Weg E, Plan 3.3) oder hochladen (AN1)
 # ---------------------------------------------------------------------------
 
+SKETCH_ORIGINS = ("manual_sketch", "upload")
+"""Herkünfte ohne Kataster: keine Nachbarn, kein Gelände, keine Risiken, keine Zonensuche."""
 
-def form_manual_site(
-    db: Session, project_id: uuid.UUID, edges: Sequence[ManualEdgeInput], address_label: str, actor: str
-) -> SiteOut:
-    """Grundstück aus freier Zeichnung und Bemaßung bilden, ohne Kataster (Weg E, Plan 3.3).
 
-    G2 und G3 werden für dieses Grundstück nicht aufgerufen (D13): kein Baurahmen, kein Steckbrief. Ein
-    vorhandenes Grundstück eines anderen Ursprungs wird nicht überschrieben (`site_origin_mismatch`);
-    dafür ist ein neues Projekt vorgesehen.
+def _sketch_classification(polygon: Polygon, area_m2: float) -> Classification:
+    """Kanten eines Grundstücks ohne Kataster: Geometrie ja, Beobachtungen nein.
+
+    Ohne Nachbarn und ohne Straßenachsen ordnet `classify` jede Kante als `other` mit Vertrauen 0 ein
+    und warnt (`no_neighbour_data`, `no_street_edge`, `edges_need_review`). Der Architekt setzt die
+    Arten von Hand; erst eine Straßenkante ergibt Hauptstraße und Azimute (UP02).
     """
-    try:
-        outline = build_manual_polygon(edges)
-    except ManualPolygonInvalid as exc:
-        raise Problem(422, "manual_polygon_invalid", detail=str(exc)) from None
+    edges = split_edges(polygon)
+    facts = [
+        EdgeFacts(neighbour_share=0.0, adjacent=(), street_candidate="none", probe_in_parcel=False)
+        for _ in edges
+    ]
+    return classify(edges, facts, site_area_m2=area_m2, neighbour_coverage="none")
 
+
+def _store_sketch_site(
+    db: Session,
+    project_id: uuid.UUID,
+    *,
+    polygon: Polygon,
+    area_m2: float,
+    local_origin: tuple[float, float],
+    origin: str,
+    address_label: str,
+    georeferenced: bool,
+    source_info: dict[str, Any],
+    actor: str,
+) -> SiteOut:
+    """Grundstück ohne Kataster speichern, mit Kanten (UP02).
+
+    G2 und G3 werden dafür nicht aufgerufen (D13, G29): kein Baurahmen, kein Steckbrief. Ein
+    vorhandenes Grundstück aus dem Kataster wird nicht überschrieben (`site_origin_mismatch`); dafür
+    ist ein neues Projekt vorgesehen.
+    """
     db.execute(select(Project.id).where(Project.id == project_id).with_for_update())
     site = db.execute(
         select(Site).where(Site.project_id == project_id).with_for_update()
     ).scalar_one_or_none()
-    if site is not None and site.origin == "parcel":
+    if site is not None and site.origin not in SKETCH_ORIGINS:
         raise Problem(409, "site_origin_mismatch")
-    outline_hash = _outline_hash(outline.polygon)
-    if site is not None and site.outline_hash == outline_hash and site.address_label == address_label:
+    outline_hash = _outline_hash(polygon)
+    if (
+        site is not None
+        and site.origin == origin
+        and site.outline_hash == outline_hash
+        and site.address_label == address_label
+    ):
         return load_site(db, project_id)
 
     if site is None:
@@ -426,29 +465,173 @@ def form_manual_site(
         site.revision += 1
         for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
             db.execute(delete(model).where(model.site_id == site.id))
-    site.origin = "manual_sketch"
+    classification = _sketch_classification(polygon, area_m2)
+    site.origin = origin
+    site.georeferenced = georeferenced
+    site.source_info = source_info
     site.address_label = address_label
-    site.geometry = from_shape(outline.polygon, srid=L93)
-    site.area_m2 = round(outline.area_m2, tol.STORAGE_DECIMALS)
+    site.geometry = from_shape(polygon, srid=L93)
+    site.area_m2 = round(area_m2, tol.STORAGE_DECIMALS)
     site.area_official_m2 = None
-    site.local_origin_e, site.local_origin_n = outline.local_origin
+    site.local_origin_e, site.local_origin_n = local_origin
     site.parcel_idus = []
     site.outline_hash = outline_hash
     site.neighbour_coverage = "none"
     site.road_data = False
-    # Nie `pending`: für Weg E wird nie ein site_enrich-Job eingeplant (kein Kataster, keine echte Lage)
+    # Nie `pending`: ohne geprüfte Lage wird kein site_enrich-Job eingeplant (Gelände und Risiken: AN5)
     site.terrain_status = "unavailable"
     site.risks_status = "unavailable"
     site.engine_version = ENGINE_VERSION
-    site.main_street_seq = None
-    site.street_azimuth_deg = None
-    site.garden_azimuth_deg = None
-    site.warnings = []
     site.updated_by = actor
     site.updated_at = _db_now(db)
+    _apply_classification(site, classification, list(classification.warnings))
     db.flush()
+    for edge in classification.edges:
+        geometry = edge.geometry
+        db.add(
+            SiteEdge(
+                site_id=site.id,
+                seq=geometry.seq,
+                ring=geometry.ring,
+                geometry=from_shape(shapely.LineString(geometry.coords), srid=L93),
+                length_m=round(geometry.length_m, tol.STORAGE_DECIMALS),
+                normal_azimuth_deg=round(geometry.normal_azimuth_deg, 2),
+                kind=edge.kind,
+                kind_auto=edge.kind_auto,
+                override_kind=None,
+                classification_source="auto",
+                confidence=edge.confidence,
+                neighbour_share=edge.facts.neighbour_share,
+                street_candidate=edge.facts.street_candidate,
+                probe_in_parcel=edge.facts.probe_in_parcel,
+                road_share=edge.facts.road_share,
+                street_name=edge.facts.street_name,
+                adjacent=list(edge.facts.adjacent),
+                created_by=actor,
+            )
+        )
     db.commit()
     return load_site(db, project_id)
+
+
+def form_manual_site(
+    db: Session, project_id: uuid.UUID, edges: Sequence[ManualEdgeInput], address_label: str, actor: str
+) -> SiteOut:
+    """Grundstück aus freier Zeichnung und Bemaßung bilden, ohne Kataster (Weg E, Plan 3.3)."""
+    try:
+        outline = build_manual_polygon(edges)
+    except ManualPolygonInvalid as exc:
+        raise Problem(422, "manual_polygon_invalid", detail=str(exc)) from None
+    return _store_sketch_site(
+        db,
+        project_id,
+        polygon=outline.polygon,
+        area_m2=outline.area_m2,
+        local_origin=outline.local_origin,
+        origin="manual_sketch",
+        address_label=address_label,
+        georeferenced=False,
+        source_info={},
+        actor=actor,
+    )
+
+
+def _to_l93(db: Session, points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """WGS84 nach Lambert-93 über PostGIS, wie überall im Modul."""
+    line = json.dumps({"type": "LineString", "coordinates": [[x, y] for x, y in points]})
+    wkb = db.execute(
+        text("SELECT ST_AsBinary(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326), 2154))"),
+        {"g": line},
+    ).scalar_one()
+    return [(float(x), float(y)) for x, y, *_ in shapely.from_wkb(bytes(wkb)).coords]
+
+
+def _candidate_out(candidate: Candidate, overview_origin: tuple[float, float]) -> UploadCandidateOut:
+    origin = (math.floor(candidate.polygon.bounds[0]), math.floor(candidate.polygon.bounds[1]))
+    return UploadCandidateOut(
+        index=candidate.index,
+        area_m2=round(candidate.area_m2, tol.STORAGE_DECIMALS),
+        layer=candidate.layer,
+        name=candidate.name,
+        crs=candidate.crs,
+        georeferenced=candidate.georeferenced,
+        outline_local=_rings(candidate.polygon, origin),
+        outline_overview=_rings(candidate.polygon, overview_origin),
+    )
+
+
+def read_parcel_upload(
+    db: Session, file_name: str, data: bytes, scale: int | None = None
+) -> tuple[ParcelFile, list[Candidate]]:
+    """Konturen einer hochgeladenen Datei, benannte und größte zuerst (AN1, PLAN_AN1 3.2 und 8)."""
+    try:
+        parcel_file = read_parcel_file(file_name, data, scale)
+        return parcel_file, build_candidates(parcel_file.rings, lambda points: _to_l93(db, points))
+    except UploadInvalid as exc:
+        raise Problem(422, exc.code, detail=str(exc), **exc.extra) from None
+
+
+def form_uploaded_site(
+    db: Session,
+    project_id: uuid.UUID,
+    *,
+    file_name: str,
+    data: bytes,
+    address_label: str,
+    index: int | None,
+    scale: int | None,
+    actor: str,
+) -> UploadResultOut:
+    """Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1).
+
+    Mehrere Konturen und keine Auswahl: die Kandidaten kommen zurück, das Grundstück entsteht erst im
+    zweiten Aufruf mit `index`. Die Datei wird nicht gespeichert, ihre Herkunft schon (E-AN1-1); bei PDF
+    gehören Maßstab und Seite dazu, damit der Umriss nachvollziehbar bleibt (UP14).
+    """
+    parcel_file, candidates = read_parcel_upload(db, file_name, data, scale)
+    scale_info = {"scale": parcel_file.scale, "scale_source": parcel_file.scale_source}
+    if index is None:
+        if len(candidates) > 1:
+            min_x = min(c.polygon.bounds[0] for c in candidates)
+            min_y = min(c.polygon.bounds[1] for c in candidates)
+            overview = (float(math.floor(min_x)), float(math.floor(min_y)))
+            return UploadResultOut(
+                site=None,
+                candidates=[_candidate_out(c, overview) for c in candidates],
+                format=parcel_file.format,
+                **scale_info,
+            )
+        chosen = candidates[0]
+    else:
+        found = next((c for c in candidates if c.index == index), None)
+        if found is None:
+            raise Problem(422, "upload_outline_not_found")
+        chosen = found
+    min_x, min_y, _, _ = chosen.polygon.bounds
+    source_info: dict[str, Any] = {
+        "file_name": file_name,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "format": parcel_file.format,
+        "layer": chosen.layer,
+        "name": chosen.name,
+        "index": chosen.index,
+        "crs": chosen.crs,
+    }
+    if parcel_file.format == "pdf":
+        source_info |= {**scale_info, "page": parcel_file.page}
+    site = _store_sketch_site(
+        db,
+        project_id,
+        polygon=chosen.polygon,
+        area_m2=chosen.area_m2,
+        local_origin=(float(math.floor(min_x)), float(math.floor(min_y))),
+        origin="upload",
+        address_label=address_label,
+        georeferenced=chosen.georeferenced,
+        source_info=source_info,
+        actor=actor,
+    )
+    return UploadResultOut(site=site, candidates=[], format=parcel_file.format, **scale_info)
 
 
 # ---------------------------------------------------------------------------
@@ -845,15 +1028,30 @@ def site_footprint(db: Session, project_id: uuid.UUID) -> SiteFootprint | None:
     return SiteFootprint(row.id, bytes(row.wkb), float(row.area_m2), list(communes), int(row.revision))
 
 
-def _manual_site_out(site: Site) -> SiteOut:
-    """Weg E (Plan 3.3): kein Kataster, keine Kanteneinordnung, kein Gelände, keine Risiken, kein
-    Umgebungskontext. `outline_geojson` bleibt leer statt über `ST_Transform` berechnet: die Koordinaten
-    haben keinen geografischen Bezug (Kapitel 7)."""
+def _sketch_site_out(db: Session, site: Site) -> SiteOut:
+    """Grundstück ohne Kataster (Weg E und Upload): keine Parzellen, kein Gelände, keine Risiken, keine
+    Umgebung – aber Kanten, damit ein Abstand überhaupt gerechnet werden kann (UP02).
+
+    `outline_geojson` bleibt leer, solange die Geometrie keine echte Lage hat (G26); bei einem Upload
+    mit erkanntem Koordinatensystem wird sie wie beim Kataster-Grundstück berechnet (UP04)."""
     origin = (site.local_origin_e, site.local_origin_n)
     polygon = to_shape(site.geometry)
+    edges = list(
+        db.execute(select(SiteEdge).where(SiteEdge.site_id == site.id).order_by(SiteEdge.seq)).scalars()
+    )
+    outline_geojson: dict[str, Any] = {"type": "Polygon", "coordinates": []}
+    if site.georeferenced:
+        outline_geojson = json.loads(
+            db.execute(
+                text("SELECT ST_AsGeoJSON(ST_Transform(geometry, 4326), 7) FROM site WHERE id = :id"),
+                {"id": site.id},
+            ).scalar_one()
+        )
     return SiteOut(
         project_id=site.project_id,
         origin=cast(Any, site.origin),
+        georeferenced=site.georeferenced,
+        source_info=dict(site.source_info or {}),
         address_label=site.address_label,
         revision=site.revision,
         engine_version=site.engine_version,
@@ -862,18 +1060,38 @@ def _manual_site_out(site: Site) -> SiteOut:
         area_official_m2=None,
         local_origin=LocalOrigin(e=origin[0], n=origin[1]),
         outline_local=_rings(polygon, origin),
-        outline_geojson={"type": "Polygon", "coordinates": []},
+        outline_geojson=outline_geojson,
         parcels=[],
-        edges=[],
-        main_street_seq=None,
-        street_azimuth_deg=None,
-        garden_azimuth_deg=None,
-        binding=True,
-        warnings=[],
-        notices=["notice.manual_sketch"],
+        edges=[_edge_out(e, origin) for e in edges],
+        main_street_seq=site.main_street_seq,
+        street_azimuth_deg=site.street_azimuth_deg,
+        garden_azimuth_deg=site.garden_azimuth_deg,
+        binding=not any(e.classification_source == "customer" for e in edges),
+        warnings=list(site.warnings),
+        notices=[f"notice.{site.origin}"],
         terrain=TerrainOut(status="unavailable"),
         risks=RisksOut(status="unavailable", items=[]),
         context=ContextOut(parcels=[], buildings=[]),
+    )
+
+
+def _edge_out(edge: SiteEdge, origin: tuple[float, float]) -> EdgeOut:
+    return EdgeOut(
+        seq=edge.seq,
+        ring=edge.ring,
+        kind=cast(Any, edge.kind),
+        kind_auto=cast(Any, edge.kind_auto),
+        override_kind=edge.override_kind,
+        classification_source=cast(Any, edge.classification_source),
+        confidence=edge.confidence,
+        length_m=edge.length_m,
+        normal_azimuth_deg=edge.normal_azimuth_deg,
+        adjacent=list(edge.adjacent),
+        street_name=edge.street_name,
+        road_share=edge.road_share,
+        coords_local=[
+            list(to_local((float(x), float(y)), origin)) for x, y, *_ in to_shape(edge.geometry).coords
+        ],
     )
 
 
@@ -881,8 +1099,8 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
     site = db.execute(select(Site).where(Site.project_id == project_id)).scalar_one_or_none()
     if site is None:
         raise Problem(404, "site_not_found")
-    if site.origin == "manual_sketch":
-        return _manual_site_out(site)
+    if site.origin in SKETCH_ORIGINS:
+        return _sketch_site_out(db, site)
     origin = (site.local_origin_e, site.local_origin_n)
     polygon = to_shape(site.geometry)
     outline_geojson = db.execute(
@@ -926,6 +1144,8 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
     return SiteOut(
         project_id=site.project_id,
         origin=cast(Any, site.origin),
+        georeferenced=site.georeferenced,
+        source_info=dict(site.source_info or {}),
         address_label=site.address_label,
         revision=site.revision,
         engine_version=site.engine_version,
@@ -949,26 +1169,7 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
             )
             for p in parcels
         ],
-        edges=[
-            EdgeOut(
-                seq=e.seq,
-                ring=e.ring,
-                kind=cast(Any, e.kind),
-                kind_auto=cast(Any, e.kind_auto),
-                override_kind=e.override_kind,
-                classification_source=cast(Any, e.classification_source),
-                confidence=e.confidence,
-                length_m=e.length_m,
-                normal_azimuth_deg=e.normal_azimuth_deg,
-                adjacent=list(e.adjacent),
-                street_name=e.street_name,
-                road_share=e.road_share,
-                coords_local=[
-                    list(to_local((float(x), float(y)), origin)) for x, y, *_ in to_shape(e.geometry).coords
-                ],
-            )
-            for e in edges
-        ],
+        edges=[_edge_out(e, origin) for e in edges],
         main_street_seq=site.main_street_seq,
         street_azimuth_deg=site.street_azimuth_deg,
         garden_azimuth_deg=site.garden_azimuth_deg,
@@ -999,3 +1200,22 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
             ],
         ),
     )
+
+
+def project_summaries(
+    db: Session, project_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, platform_projects.ProjectSummary]:
+    """Bezeichnung, Herkunft und Fläche je Projekt für die Projektliste des Architekten (AN1)."""
+    if not project_ids:
+        return {}
+    rows = db.execute(
+        select(Site.project_id, Site.address_label, Site.origin, Site.area_m2).where(
+            Site.project_id.in_(project_ids)
+        )
+    ).all()
+    return {
+        r.project_id: platform_projects.ProjectSummary(
+            address_label=r.address_label, site_origin=r.origin, area_m2=float(r.area_m2)
+        )
+        for r in rows
+    }

@@ -1,24 +1,18 @@
-"""FastAPI-Anwendung. Fachmodule hängen ihre Router in `create_app` unter `/api/v1` ein."""
+"""FastAPI-Anwendung. Welche Fachmodule ihre Router unter `/api/v1` einhängen, sagt `app.products`."""
+
+from importlib import import_module
 
 import sentry_sdk
 from fastapi import APIRouter, FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 import app.registry  # noqa: F401  Jobs registrieren, damit enqueue sie kennt
-from app.catalog import api as catalog_api
 from app.config import Settings, get_settings
-from app.configuration import api as configuration_api
-from app.envelope import api as envelope_api
-from app.inquiry import api as inquiry_api
-from app.platform import flags, health, legal, ops, projects
-from app.platform.auth import staff
-from app.platform.jobs import api as jobs_api
+from app.platform import health
 from app.platform.logging import configure_logging
 from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
 from app.platform.problems import install_problem_handlers
-from app.rules import api as rules_api
-from app.site import api as site_api
-from app.submission import api as submission_api
+from app.products import spec_for
 
 API_V1 = "/api/v1"
 
@@ -49,22 +43,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_problem_handlers(app)
 
     v1 = APIRouter(prefix=API_V1)
-    for module in (
-        staff,
-        projects,
-        flags,
-        legal,
-        ops,
-        jobs_api,
-        site_api,
-        rules_api,
-        envelope_api,
-        catalog_api,
-        configuration_api,
-        inquiry_api,
-        submission_api,
-    ):
-        v1.include_router(module.router)
+    for name in spec_for(settings.product).routers:
+        v1.include_router(import_module(name).router)
     app.include_router(v1)
     app.include_router(health.router, prefix="/api")
 
@@ -81,3 +61,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(RequestContextMiddleware)
     return app
+
+
+def create_full_app() -> FastAPI:
+    """Vollständiges Profil für `openapi.json`: eine Datei mit allen Routen, unabhängig vom Produkt
+    dieser Instanz (PLAN_ANALYSE 8.1 Nr. 5). Sonst müsste das Frontend zwei Typdateien pflegen."""
+    return create_app(get_settings().model_copy(update={"product": "configurator"}))

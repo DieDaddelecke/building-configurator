@@ -5,6 +5,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+!.env.*.example
 
 # Auslieferung auf Unraid: Protokoll der Releases bleibt auf dem Server
 deploy/unraid/releases.log

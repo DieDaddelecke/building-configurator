@@ -137,6 +137,74 @@
         "title": "ArchitectEdgeIn",
         "type": "object"
       },
+      "ArchitectProjectOut": {
+        "description": "Projekt am Konto des Architekten (AN1). Benennung, Notiz und Archiv folgen mit AN5.",
+        "properties": {
+          "address_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Label"
+          },
+          "area_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area M2"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "format": "date-time",
+            "title": "Last Activity At",
+            "type": "string"
+          },
+          "site_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Origin"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at",
+          "last_activity_at",
+          "address_label",
+          "site_origin",
+          "area_m2"
+        ],
+        "title": "ArchitectProjectOut",
+        "type": "object"
+      },
       "AreasOut": {
         "properties": {
           "carport_m2": {
@@ -296,6 +364,52 @@
           "file"
         ],
         "title": "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post",
+        "type": "object"
+      },
+      "Body_upload_site_api_v1_projects__project_id__site_upload_post": {
+        "properties": {
+          "address_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Address Label",
+            "type": "string"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 50.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          }
+        },
+        "required": [
+          "file",
+          "address_label"
+        ],
+        "title": "Body_upload_site_api_v1_projects__project_id__site_upload_post",
         "type": "object"
       },
       "ChapterCoverageOut": {
@@ -6425,6 +6539,10 @@
             ],
             "title": "Garden Azimuth Deg"
           },
+          "georeferenced": {
+            "title": "Georeferenced",
+            "type": "boolean"
+          },
           "local_origin": {
             "$ref": "#/components/schemas/LocalOrigin"
           },
@@ -6449,7 +6567,8 @@
           "origin": {
             "enum": [
               "parcel",
-              "manual_sketch"
+              "manual_sketch",
+              "upload"
             ],
             "title": "Origin",
             "type": "string"
@@ -6491,6 +6610,11 @@
           "risks": {
             "$ref": "#/components/schemas/RisksOut"
           },
+          "source_info": {
+            "additionalProperties": true,
+            "title": "Source Info",
+            "type": "object"
+          },
           "street_azimuth_deg": {
             "anyOf": [
               {
@@ -6521,6 +6645,8 @@
         "required": [
           "project_id",
           "origin",
+          "georeferenced",
+          "source_info",
           "address_label",
           "revision",
           "engine_version",
@@ -6827,7 +6953,8 @@
               {
                 "enum": [
                   "parcel",
-                  "manual_sketch"
+                  "manual_sketch",
+                  "upload"
                 ],
                 "type": "string"
               },
@@ -7699,6 +7826,158 @@
           "types"
         ],
         "title": "TypesOut",
+        "type": "object"
+      },
+      "UploadCandidateOut": {
+        "description": "Eine geschlossene Kontur aus einer hochgeladenen Datei (AN1, PLAN_AN1 3.2).",
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "crs": {
+            "enum": [
+              "EPSG:2154",
+              "EPSG:4326",
+              "local"
+            ],
+            "title": "Crs",
+            "type": "string"
+          },
+          "georeferenced": {
+            "title": "Georeferenced",
+            "type": "boolean"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "layer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Layer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "outline_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Outline Local",
+            "type": "array"
+          },
+          "outline_overview": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Outline Overview",
+            "type": "array"
+          }
+        },
+        "required": [
+          "index",
+          "area_m2",
+          "layer",
+          "name",
+          "crs",
+          "georeferenced",
+          "outline_local",
+          "outline_overview"
+        ],
+        "title": "UploadCandidateOut",
+        "type": "object"
+      },
+      "UploadResultOut": {
+        "description": "Entweder ist das Grundstück gebildet (`site`), oder mehrere Konturen stehen zur Wahl.",
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/UploadCandidateOut"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "format": {
+            "enum": [
+              "dxf",
+              "geojson",
+              "pdf"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          },
+          "scale_source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "file",
+                  "input"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale Source"
+          },
+          "site": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SiteOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "site",
+          "candidates",
+          "format",
+          "scale",
+          "scale_source"
+        ],
+        "title": "UploadResultOut",
         "type": "object"
       },
       "ValidationError": {
@@ -10583,7 +10862,32 @@
       }
     },
     "/api/v1/projects": {
+      "get": {
+        "description": "Projekte mit Eigentümer, neueste zuerst (AN1). Alle Architekten des Büros sehen dieselben\nProjekte; nach Person und Organisation trennt erst AN6 (D15, E-AN1-4).",
+        "operationId": "list_own_projects_api_v1_projects_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ArchitectProjectOut"
+                  },
+                  "title": "Response List Own Projects Api V1 Projects Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Own Projects",
+        "tags": [
+          "projects"
+        ]
+      },
       "post": {
+        "description": "Neues Projekt. Ein angemeldeter Architekt wird Eigentümer und bekommt **kein** Cookie – sonst\nverdrängte jedes neue Projekt das vorige (AN1, UP05).",
         "operationId": "create_project_api_v1_projects_post",
         "responses": {
           "201": {
@@ -10605,6 +10909,7 @@
     },
     "/api/v1/projects/{project_id}": {
       "delete": {
+        "description": "Projekt mit allem daran löschen (Spez. 10.2), unabhängig vom Feature-Flag.\n\nAngemeldete Module können widersprechen: Modul A lässt nach einer Anfrage nur das Büro löschen.",
         "operationId": "delete_project_api_v1_projects__project_id__delete",
         "parameters": [
           {
@@ -10635,7 +10940,7 @@
         },
         "summary": "Delete Project",
         "tags": [
-          "inquiry"
+          "projects"
         ]
       },
       "get": {
@@ -11686,6 +11991,60 @@
           }
         },
         "summary": "Patch Edge Customer",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/site/upload": {
+      "post": {
+        "description": "Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).\n\nOhne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;\nder zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den\nMaßstab aus dem Text des Plans.",
+        "operationId": "upload_site_api_v1_projects__project_id__site_upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_site_api_v1_projects__project_id__site_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResultOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Site",
         "tags": [
           "site"
         ]

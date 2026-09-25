@@ -33,7 +33,7 @@ from app.inquiry.schemas import (
     MessageIn,
     MyInquiryOut,
 )
-from app.platform import flags, rate_limit
+from app.platform import flags, projects, rate_limit
 from app.platform.auth.context import (
     RequestAuth,
     Role,
@@ -166,12 +166,8 @@ def export_project(
     return service.export(db, project_id)
 
 
-@router.delete("/projects/{project_id}", status_code=204)
-def delete_project(
-    project_id: uuid.UUID = Depends(require_project_access), db: Session = Depends(get_db)
-) -> Response:
-    service.delete_project(db, project_id, actor=f"project:{project_id}")
-    return Response(status_code=204)
+projects.register_delete_guard(service.guard_delete)
+"""Die Löschung liegt seit AN1 im Kern (`app/platform/projects.py`); Modul A hängt nur seine Sperre ein."""
 
 
 # ---------------------------------------------------------------------------

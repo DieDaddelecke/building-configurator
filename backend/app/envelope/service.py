@@ -91,7 +91,7 @@ def envelope_input(
     db: Session, project_id: uuid.UUID, site: site_service.EnvelopeSite | None = None
 ) -> tuple[EnvelopeInput, rules_service.RulesResult]:
     """Eingaben aus G1 und G2 einsammeln. Nur für Grundstücke aus Kataster (`site.origin == 'parcel'`);
-    für Weg E (freies Zeichnen) siehe `_manual_sketch_input` – G2 wird dafür nicht aufgerufen (D13)."""
+    für Grundstücke ohne Kataster siehe `_no_rules_input` – G2 wird dafür nicht aufgerufen (D13)."""
     if site is None:
         site = site_service.envelope_site(db, project_id)
     rules = rules_service.envelope_rules(db, project_id)
@@ -243,11 +243,13 @@ def _geometry_key(geometry: BaseGeometry) -> str:
 # Weg E: freies Zeichnen ohne Kataster (Plan 3.3, D13)
 # ---------------------------------------------------------------------------
 
-MANUAL_SKETCH_REASON = "manual_sketch"
-MANUAL_SKETCH_NOTICE = "notice.manual_sketch"
+NO_RULES_ORIGINS = ("manual_sketch", "upload")
+"""Grundstücke ohne Kataster (Weg E und Upload, AN1): keine Gemeinde, keine Zone, keine Regeln.
+Grund und Hinweis heißen wie die Herkunft (`manual_sketch`, `upload`). Der Upload-Weg zu Regeln aus
+einem hochgeladenen PLU kommt mit AN2."""
 
 
-def _manual_sketch_input(site: site_service.EnvelopeSite) -> EnvelopeInput:
+def _no_rules_input(site: site_service.EnvelopeSite) -> EnvelopeInput:
     """G2 wird nicht aufgerufen: keine Zonen, keine Vorgaben, keine Kosten für eine Auswertung (D13)."""
     return EnvelopeInput(
         site=SiteInput(
@@ -261,19 +263,19 @@ def _manual_sketch_input(site: site_service.EnvelopeSite) -> EnvelopeInput:
             terrain=TerrainInput(status=site.terrain_status),
         ),
         rules_status="unavailable",
-        rules_reason=MANUAL_SKETCH_REASON,
-        notices=[MANUAL_SKETCH_NOTICE],
+        rules_reason=site.origin,
+        notices=[f"notice.{site.origin}"],
         rules_engine_version="n/a",
     )
 
 
-def _manual_sketch_envelope(site: site_service.EnvelopeSite) -> EnvelopeOut:
-    """Kein Baurahmen für Weg E: die Fläche ist nicht mit dem Bebauungsplan abgeglichen (Plan 3.3)."""
+def _no_rules_envelope(site: site_service.EnvelopeSite) -> EnvelopeOut:
+    """Kein Baurahmen ohne Kataster: die Fläche ist nicht mit dem Bebauungsplan abgeglichen (Plan 3.3)."""
     origin = site.local_origin
-    fingerprint_raw = f"manual_sketch:{site.site_id}:{site.revision}".encode()
+    fingerprint_raw = f"{site.origin}:{site.site_id}:{site.revision}".encode()
     return EnvelopeOut(
         status="unavailable",
-        reason=MANUAL_SKETCH_REASON,
+        reason=site.origin,
         engine_version=ENGINE_VERSION,
         input_hash="sha256:" + hashlib.sha256(fingerprint_raw).hexdigest(),
         updated_at=utcnow(),
@@ -287,7 +289,7 @@ def _manual_sketch_envelope(site: site_service.EnvelopeSite) -> EnvelopeOut:
         bands=[],
         constraints=[],
         warnings=[],
-        notices=[MANUAL_SKETCH_NOTICE],
+        notices=[f"notice.{site.origin}"],
         provenance=ProvenanceOut(
             site_revision=site.revision,
             site_engine_version=site.engine_version,
@@ -309,8 +311,8 @@ def build_envelope(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeOut, Env
     """Baurahmen ableiten und ausgeben; die Eingaben kommen mit, damit der Steckbrief ihre Prüfsumme
     gegen den angeforderten Stand halten kann. Für Weg E (Plan 3.3) wird G2 nicht aufgerufen (D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin == "manual_sketch":
-        return _manual_sketch_envelope(site), _manual_sketch_input(site)
+    if site.origin in NO_RULES_ORIGINS:
+        return _no_rules_envelope(site), _no_rules_input(site)
     data, rules = envelope_input(db, project_id, site=site)
     envelope = derive_envelope(data)
     return _out(db, data, rules, envelope), data
@@ -325,8 +327,8 @@ def derived(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeInput, Envelope
     """Eingaben und Ableitung für Module, die auf dem Baurahmen aufbauen (H2): die reine Fachlogik statt der
     Ausgabeform. Für Weg E (freies Zeichnen) gibt es keine Ableitung (`None`, D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin == "manual_sketch":
-        return _manual_sketch_input(site), None
+    if site.origin in NO_RULES_ORIGINS:
+        return _no_rules_input(site), None
     data, _rules = envelope_input(db, project_id, site=site)
     return data, derive_envelope(data)
 
@@ -539,7 +541,7 @@ def request_sheet(db: Session, project_id: uuid.UUID, actor: str | None = None) 
     Für Weg E (freies Zeichnen, Plan 3.3) gibt es keinen Steckbrief: ohne Baurahmen keine Simulation,
     die er zusammenfassen könnte (D13)."""
     site = site_service.envelope_site(db, project_id)
-    if site.origin == "manual_sketch":
+    if site.origin in NO_RULES_ORIGINS:
         raise Problem(409, "sheet_unavailable_manual_sketch")
     data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)
@@ -562,7 +564,7 @@ def sheet_bytes(db: Session, project_id: uuid.UUID) -> tuple[bytes, str]:
     from app.platform import storage
 
     site = site_service.envelope_site(db, project_id)
-    if site.origin == "manual_sketch":
+    if site.origin in NO_RULES_ORIGINS:
         raise Problem(409, "sheet_unavailable_manual_sketch")
     data, _rules = envelope_input(db, project_id, site=site)
     input_hash = fingerprint(data)

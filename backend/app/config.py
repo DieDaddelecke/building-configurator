@@ -6,6 +6,8 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.products import Product
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="EMPRISE_", env_file=".env", extra="ignore")
@@ -13,6 +15,10 @@ class Settings(BaseSettings):
     env: Literal["local", "test", "staging", "production"] = "local"
     release: str = "dev"
     log_level: str = "INFO"
+
+    # Produkt dieser Instanz (app/products.py, PLAN_ANALYSE 3): `analyse` lädt die Module des
+    # Hauskonfigurators nicht und plant seine Datenimporte nicht ein.
+    product: Product = "configurator"
 
     # Öffentliche Adresse, unter der Frontend und API gemeinsam erreichbar sind (Plan 6.2)
     public_base_url: str = "http://localhost:8080"
@@ -70,6 +76,8 @@ class Settings(BaseSettings):
     geocode_limit_per_minute: int = 60
     cadastre_limit_per_minute: int = 120
     site_write_limit_per_hour: int = 120
+    site_upload_max_bytes: int = 20 * 1024 * 1024
+    """Größte hochgeladene Parzellendatei (DXF, GeoJSON, PDF) in „Emprise Analyse“ (AN1, UP08)."""
 
     # Regelwerk (G2, Plan 3.4): GPU-Endpunkte am 14.09.2026 geprüft; Auswertung per Claude API (D11)
     apicarto_base_url: str = "https://apicarto.ign.fr/api"
