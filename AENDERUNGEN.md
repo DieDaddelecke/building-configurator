@@ -8,7 +8,7 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 **Auftrag:** „Fange mit AN0 an“, danach „weiter mit AN1“, dann „kannst du eine lokale Instanz starten“ und „Es sollte auch möglich sein, PDF-Dateien hochzuladen, aus denen dann die Parzelle gelesen wird“. Gearbeitet am 20./21.09.2026, Hand-off am 25.09.2026.
 
-**Commits:** `8c9707f` Vorgehensplan „Emprise Analyse“ (Dokument der Vorsession), `d97da2c` AN0 und AN1 samt Hand-off-Dokumenten beider Vorsessions, `5ca988a` Objektspeicher lokal und in CI von MinIO auf SeaweedFS. Getrennt ließ sich nur das Plandokument; HANDOFF, AENDERUNGEN, AGENTS und UMSETZUNGSPLAN tragen die Änderungen beider Sessions in denselben Zeilen.
+**Commits:** `8c9707f` Vorgehensplan „Emprise Analyse“ (Dokument der Vorsession), `d97da2c` AN0 und AN1 samt Hand-off-Dokumenten beider Vorsessions, `d1d5007` Objektspeicher lokal und in CI von MinIO auf SeaweedFS. Getrennt ließ sich nur das Plandokument; HANDOFF, AENDERUNGEN, AGENTS und UMSETZUNGSPLAN tragen die Änderungen beider Sessions in denselben Zeilen.
 
 **Nachtrag nach dem Push: CI rot ohne Codefehler**
 
