@@ -4,6 +4,39 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 26.09.2026 – Entscheidungen zu Betrieb und Zusatzdokumenten, Emprise Analyse: AN3
+
+**Auftrag:** Stand zusammenfassen, Hand-off-Dokumente der Vorsession committen, A28 nachtragen, Priorität 1 und E-AN2-5 in höchstens drei Fragen entscheiden, dann AN3 (Modulplan mit Selbstprüfung, Umsetzung). Am Ende „committe und pushe alle änderungen, danach /handoff“. Begonnen am 25.09., abgeschlossen am 26.09.2026.
+
+**Commits:** `92e00fd` Hand-off-Dokumente der AN2-Session, `0c2b42c` A28 in ANNAHMEN, `d2c5765` Modulplan `docs/PLAN_AN3_ANALYSE.md`, `91fa1e3` AN3 (Code, Tests, Dokumente, eingetragene Entscheidungen). Alle gepusht; CI-Lauf 36227653123 vollständig grün, auch e2e.
+
+**Neu**
+- Backend: Modul `app/analysis/` (nur Analyse-Produkt; `domain/` mit `footprint`, `storeys`, `floor_area`, `compare`, `analyse`, `parameters`), Migration `0014_analysis.py`, Tests `tests/unit/test_analysis_domain.py` (34), `tests/integration/test_analysis.py` (9).
+- Frontend: `src/api/analysis.ts`, `src/products/analyse/Analyse.tsx`, `Zusatzdokumente.tsx`, `abstand.ts` mit drei Testdateien.
+- Dokumente: `docs/PLAN_AN3_ANALYSE.md` (Plan, Selbstprüfung 7.1–7.3, Befunde beim Bau 7.4, Prüflauf, Browserprüfung); ANNAHMEN Abschnitt AN3 (EA01–EA12) und A28.
+
+**Geändert**
+- G2 (wirkt auch im Hauskonfigurator): Regelart `max_area` (Höchstflächen SDP und Grundfläche in m²), PLU-Prompt `g2-prompt-4`; eigener Prompt für Zusatzdokumente ohne Pflichtarten, Prüfsumme je Dokumentart; Upload mit `lotissement`/`cahier_des_charges`, Kapitel `DOC`, Lotwahl `PUT …/regulations/{id}/lot`; `match_sector` mit Rückfall ohne Trennzeichen. Der Konfigurator zeigt `max_area`, prüft sie nicht (EA06).
+- `openapi.json` aus der Vereinigung aller Produktprofile (`products.ALL_ROUTERS`).
+- Oberfläche: `Bebauungsplan` nimmt das PLU nach Rolle, Neuladen über alle Dokumente; Startseite des Analyse-Produkts (Nutzfläche vorhanden, PDF als Parzellenformat); Rückfalltext `rules.notices.upload`.
+- Dokumente: BETRIEB (9 Budget, Modultabelle G2 mit 0014, 15 um AN3), `deploy/unraid/README.md` (Authentik-Hostname, DNS only), PLAN_ANALYSE (AN3 umgesetzt, AN4 nur noch Übernahme mit Zitat), PLAN_AN2 (E-AN2-5), README (Stolperstellen), AGENTS, UMSETZUNGSPLAN (D18).
+
+**Entschieden** (Nutzer, 25.09.2026)
+- Monatsbudget der Claude API 150 $ je Stack, lokal 20 $; den Schlüssel trägt der Nutzer selbst ein.
+- Authentik unter `auth.aslani.work`, alle Cloudflare-Einträge „DNS only“ (A26).
+- E2 Mailanbieter: später. Name und Sammeladresse des Büros nicht genannt.
+- **E-AN2-5 gegen die Empfehlung:** Zusatzdokumente in AN3 vorgezogen – als Anzeige neben den PLU-Regeln, ohne Verrechnung; Übernahme als Projektkorrektur bleibt AN4.
+- Mit dem Auftrag gelten E-AN3-1 bis E-AN3-7 des Plans als entschieden (EA01–EA12).
+
+**Ohne Dateiänderung**
+- Zu Beginn lief Docker nicht; Docker Desktop gestartet, beide lokalen Stacks neu gebaut (Migration 0014).
+- Prüfläufe: Backend 588 Tests (vorher 541), Frontend 172 (157), ruff, Format, mypy, Typprüfung, Lint, Build grün. Browserprüfung am Analyse-Stack: steht in PLAN_AN3 7.4.
+- In der Analyse-Datenbank liegt jetzt zusätzlich das Test-Zusatzdokument „Règlement du lotissement Les Chênes“ (Lot 12) mit einem Scheinlauf von 0,16 $; Monatskosten dort 0,32 $.
+
+**Memory:** `feedback-plan-dann-umsetzen` ergänzt (Entscheidungsrunde zu Sessionbeginn: Empfehlung nicht immer übernommen; gewählte Option genau so umsetzen).
+
+---
+
 ## 25.09.2026 – Emprise Analyse: AN2 (Bebauungsplan hochladen)
 
 **Auftrag:** Stand zusammenfassen, dann „fahre mit AN2 fort“, am Ende „comitte und pushe alle änderungen“.
