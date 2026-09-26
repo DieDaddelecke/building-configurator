@@ -1,23 +1,24 @@
 # Hand-off für die nächste Session
 
-> **Stand:** 26.09.2026 · **Letzte Session:** Entscheidungen zu Betrieb und Zusatzdokumenten, „Emprise Analyse“ AN3 geplant, umgesetzt, im Browser geprüft, committet und gepusht (Eintrag vom 26.09.2026 oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
+> **Stand:** 26.09.2026 · **Letzte Session:** G2-Schnittstelle auf OpenRouter umgestellt (statt der Claude API unmittelbar), committet und gepusht (Eintrag vom 26.09.2026 oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
 > Momentaufnahme, bei jedem `/handoff` neu geschrieben. Dauerhaftes steht nicht hier, sondern in README (Stolperstellen), BETRIEB (Module im Betrieb), ANNAHMEN und Spez. Anhang E.4.
 
 ---
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` gepusht bis `91fa1e3` (`92e00fd`, `0c2b42c`, `d2c5765`, `91fa1e3`). Uncommittet sind nur die Hand-off-Dokumente dieser Session. **CI-Lauf 36227653123 zu `91fa1e3` vollständig grün** (backend, frontend, security, e2e).
-- **Hauskonfigurator:** R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1–H3 und V fertig. Durch AN3 geändert: neue Regelart `max_area` in Regelliste, Steckbrief und Büro-Korrektur, vom Konfigurator nicht geprüft (EA06); PLU-Prompt `g2-prompt-4`.
-- **Emprise Analyse (D18):** AN0–AN2 und **AN3** umgesetzt – bindende Grundfläche, Vollgeschosse, Nutzfläche (SDP) als Spanne mit Annahmen je Projekt, Abstand je Grenze im Klartext; **Zusatzdokumente** (lotissement, cahier des charges) hochladen, Lot wählen, Vergleich mit dem PLU ohne Verrechnung. Damit ist RA1 fachlich vollständig. Pläne [PLAN_ANALYSE](docs/PLAN_ANALYSE.md), [PLAN_AN3](docs/PLAN_AN3_ANALYSE.md); Festlegungen EA01–EA12; Betrieb [BETRIEB 15](docs/BETRIEB.md).
-- **Tests:** Backend 588 (vorher 541), Frontend 172 (157), dazu ruff, Format, mypy, Typprüfung, Lint und Build grün. Playwright lief lokal nicht; für Konfigurator, V und das Analyse-Produkt gibt es kein Szenario.
-- **Lokale Stacks laufen:** Hauskonfigurator http://localhost:8080, „Emprise Analyse“ http://localhost:8180; beide auf Migration **0014**. In der Analyse-Datenbank: Testprojekt „Testparzelle Zone Uh“ mit PLU (Zone Uh) und Zusatzdokument „Règlement du lotissement Les Chênes“ (Lot 12), zwei Scheinläufe à 0,16 $.
-- **G2 ohne Schlüssel** der Claude API weiterhin ohne echte Auswertung (beide Produkte); H1 fehlen fünf echte Typdateien und die XLSX-Vorlage.
-- **Entscheidungen:** D1–D4, D8, D10, D11–D18 entschieden; G17 entschieden; am 25.09.2026 Budget, Authentik-Hostname und E-AN2-5 (AENDERUNGEN). **Spezifikation:** Korrekturen S1–S17 in Anhang E.4 (S3 und S5 gelöst).
+- **Git:** `main` gepusht bis `16ac599` (`86869ed` Hand-off der AN3-Session, `16ac599` OpenRouter-Umstellung). Nichts uncommittet. CI zu `16ac599` nicht abgewartet.
+- **Hauskonfigurator:** R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1–H3 und V fachlich unverändert seit AN3 (neue Regelart `max_area`, PLU-Prompt `g2-prompt-4`).
+- **Emprise Analyse (D18):** AN0–AN2 und AN3 (RA1-Teil und Zusatzdokumente) umgesetzt, fachlich unverändert seit der Vorsession. Pläne [PLAN_ANALYSE](docs/PLAN_ANALYSE.md), [PLAN_AN3](docs/PLAN_AN3_ANALYSE.md); Festlegungen EA01–EA12; Betrieb [BETRIEB 15](docs/BETRIEB.md).
+- **G2 – Schnittstelle umgestellt:** Regelauswertung läuft jetzt über **OpenRouter** (`backend/app/integrations/openrouter.py`, OpenAI-kompatible Chat-Completions-API) statt unmittelbar über die Claude API; Modell weiter frei wählbar (Vorgabe `anthropic/claude-opus-5`). Schlüssel heißt jetzt `EMPRISE_OPENROUTER_API_KEY` (Unraid: `OPENROUTER_API_KEY`), nicht mehr `EMPRISE_ANTHROPIC_API_KEY`/`ANTHROPIC_API_KEY`. Festlegung **RW28** in `docs/ANNAHMEN.md`; damit ein weiterer Drittanbieter im Datenweg neben der bisherigen Ausnahme der Claude API (D3/D4) – akzeptiert für öffentliche Planunterlagen (L8). Entfällt: zugesichertes 1-Stunden-Zwischenspeichern, serverseitiger Fallback-Header (beides Anthropic-spezifisch).
+- **G2 weiterhin ohne Schlüssel** ohne echte Auswertung (beide Produkte); H1 fehlen fünf echte Typdateien und die XLSX-Vorlage.
+- **Tests:** Backend 585, Frontend 172, dazu ruff, `ruff format --check`, mypy, Frontend-Typecheck und Lint grün (im `backend-dev`-Image geprüft). Playwright lief nicht; für Konfigurator, V und das Analyse-Produkt gibt es kein Szenario.
+- **Laufende Container `api`/`worker` veraltet:** Sie nutzen noch das alte Image `emprise-backend:local` ohne `openai`-Paket. Vor dem nächsten echten Auswertungslauf: `docker compose build migrate web`, dann `docker compose up -d migrate api worker web` (beide Stacks, siehe Abschnitt 4 unten).
+- **Entscheidungen:** D1–D4, D8, D10, D11–D18 entschieden; G17 entschieden; am 25.09.2026 Budget, Authentik-Hostname und E-AN2-5; am 26.09.2026 OpenRouter statt Claude API (RW28). **Spezifikation:** Korrekturen S1–S17 in Anhang E.4 (S3 und S5 gelöst).
 
 ## 2. Ergebnisse der letzten Session, die nur im Chat standen
 
-Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/PLAN_AN3_ANALYSE.md) 7.4, die Entscheidungen in AENDERUNGEN und an ihren Orten (BETRIEB 9, Unraid README 2, A26, PU09). Zu Beginn lief Docker nicht (Start: README, Stolperstellen).
+Keine offenen: Die Abwägung zum zusätzlichen Drittanbieter steht in RW28 (`docs/ANNAHMEN.md`), die technischen Einzelheiten im AENDERUNGEN-Eintrag vom 26.09.2026.
 
 ## 3. Offene Entscheidungen des Nutzers
 
@@ -25,7 +26,7 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 |---|---|---|---|
 | 1 | E2 | Mailanbieter (EU-Drittanbieter, Empfehlung Scaleway TEM, sonst Brevo); am 25.09.2026 „später“ – A und V können ohne ihn nicht produktiv gehen | Spez. 16, BETRIEB 5 |
 | 1 | – | Echte Sammeladresse des Büros für `EMPRISE_OFFICE_EMAIL` und **Name des Büros** für die Einwilligungstexte (am 25.09.2026 nicht genannt) | AF02, AF05, VU08 |
-| 2 | – | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? Nur mit Bilderkennung über die Claude API – Kosten je Aufruf. Empfehlung: nach dem Schlüssel | UP16, PU03, RW03 |
+| 2 | – | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? Nur mit Bilderkennung über die Schnittstelle – Kosten je Aufruf. Empfehlung: nach dem Schlüssel | UP16, PU03, RW03 |
 | 2 | – | Hostname und Authentik-Anwendung für den Analyse-Stack (Vorschlag `analyse.aslani.work`) | BETRIEB 15, PS08 |
 | 2 (vor Beta) | – | Rechtliche Prüfung: Simulation (Hinweise, Haftung, Konturen, Weg E), die **vier** vorläufigen Rechtstexte (A und V) und die ODbL-Quellenangabe | Plan 6.9, RW16, AF05, VU08, VU11 |
 | 2 | E-A5 | Rechtlicher Rahmen des Analyse-Produkts: Hinweis im Fuß genügt, solange nur das eigene Büro arbeitet; **vor AN6 juristisch prüfen** | PLAN_ANALYSE 6 |
@@ -37,7 +38,7 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 | 2 | D5, D6 | Betriebsverantwortung; Datenschutzrolle Emprise ↔ Büro (bestimmt die Löschung nach einer Anfrage) | Plan 9 |
 | 2 | – | Ablauf der Anfragebearbeitung im Büro (Antwortfrist, Vorlagen); Standort des Unraid-Servers (EU, L8) | Plan 8 |
 | 3 | – | Gegenprüfung statt zweitem Lauf (RW19) in Plan 3.4 übernehmen? Empfehlung: nach der Messung mit der Referenzmenge | RW19 |
-| 3 | E-A1, E-A6 | Endgültiger Produktname statt „Emprise Analyse“ und Kostendeckel der Claude API je Organisation – beides erst vor AN6 | PLAN_ANALYSE 6 |
+| 3 | E-A1, E-A6 | Endgültiger Produktname statt „Emprise Analyse“ und Kostendeckel je Organisation – beides erst vor AN6 | PLAN_ANALYSE 6 |
 | 3 | – | Géorisques-Token vor öffentlichem Start | G12 |
 | 3 | – | Umsetzungsplan als Ganzes freigeben (dann Plan 7 und Spez. E.4 einarbeiten); D2 (Beta), D7, E1–E12 | Plan 9, Spez. 16 |
 
@@ -66,7 +67,7 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 ### 4.3 H3 und V weiterentwickeln (nach Bedarf)
 
 - Schnellstellungen des Hauses (H2) kennen den Carport nicht (Plan H3 10.3).
-- Nicht geprüft: `spaces_per_m2_sdp`, `setback_between_buildings`, `color_families_allowed`, **`max_area`** (neu, EA06); kein Keller, keine Photovoltaik-Belegung, keine Ausführungen und Mengen (Plan 7, X3).
+- Nicht geprüft: `spaces_per_m2_sdp`, `setback_between_buildings`, `color_families_allowed`, `max_area` (EA06); kein Keller, keine Photovoltaik-Belegung, keine Ausführungen und Mengen (Plan 7, X3).
 - Ein Preis-Editor fehlt: Preise kommen nur aus dem XLSX (H05, H14); die Importbeschreibung sollte „netto (HT)“ und „Terrasse je m²“ nennen (siehe 4.5).
 - V: Anhänge an Nachrichten, Kopie einer Fassung als neue Konfiguration (Spez. 5.10.8), Webhooks (X5), erweitertes Dossier (X4) – bewusst offen (Plan V 1, 9.3).
 
@@ -87,7 +88,7 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 
 ### 4.6 G2 und G3 abschließen (sobald ein Schlüssel eingetragen ist)
 
-1. **Schlüssel der Claude API** (Nutzer): in `.env` und `.env.analyse` bzw. lokal `EMPRISE_ANTHROPIC_API_KEY`, `docker compose up -d`; sofort `docker compose exec api python -m app.cli rules-extract --pending`. Kosten, Dauer, Anteil der Gegenprüfung in BETRIEB 9 eintragen.
+1. **Schlüssel von OpenRouter** (Nutzer, [openrouter.ai/keys](https://openrouter.ai/keys)): in `.env` und `.env.analyse` bzw. lokal `EMPRISE_OPENROUTER_API_KEY`. Da die laufenden Container das alte Image nutzen: zuerst `docker compose build migrate web` (beide Stacks: zusätzlich `-f compose.analyse.yaml`), dann `docker compose up -d migrate api worker web`; danach sofort `docker compose exec api python -m app.cli rules-extract --pending`. Kosten, Dauer, Anteil der Gegenprüfung in BETRIEB 9 eintragen.
 2. Wegen `g2-prompt-4` (Parameter `band`, Regelart `max_area`) alle Kapitel neu auswerten; prüfen, ob `setback_street.band` gefüllt ist und ob `max_area` nur echte Obergrenzen trifft.
 3. Referenzmenge der Zonen von Treillières messen (Spez. 11.4).
 4. `envelope-check --commune 44209` über alle Zonen wiederholen, Anteil unvollständiger Konturen in BETRIEB 10 festhalten; für H2 den Anteil gesperrter Typen je Zone prüfen; für H3, wie oft `annex`, `unsealed_min` und `facade` wirksam werden.
@@ -97,11 +98,11 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 ### 4.7 Auslieferung und Betrieb
 
 1. Unraid in Betrieb nehmen ([deploy/unraid/README.md](deploy/unraid/README.md) 2–4; Authentik unter `auth.aslani.work`, DNS only), danach TLS, Authentik, `staff-add`, Login prüfen.
-2. G1–V auf Unraid nach Unraid README 9 und BETRIEB 1 (ausgehender Zugang, `.env` mit `ANTHROPIC_API_KEY`, Migrationen 0007–**0014**, `legal-seed`, Flags). **`EMPRISE_OFFICE_EMAIL` ist in `deploy/unraid/compose.yaml` und `deploy/unraid/.env.example` noch nicht verdrahtet** – ergänzen. `demo_*`-Typen und Demo-Preise nie in Produktion; vor `configurator` und `submission` einen Preiskatalog veröffentlichen (BETRIEB 13, 14).
-3. Zweiten Stack ausliefern, sobald gewünscht: `.env.analyse` aus der Vorlage (mit `ANTHROPIC_API_KEY`), eigene Authentik-Anwendung, `./deploy.sh analyse` (BETRIEB 15).
+2. G1–V auf Unraid nach Unraid README 9 und BETRIEB 1 (ausgehender Zugang **jetzt zusätzlich `openrouter.ai` statt `api.anthropic.com`**, `.env` mit `OPENROUTER_API_KEY`, Migrationen 0007–0014, `legal-seed`, Flags). **`EMPRISE_OFFICE_EMAIL` ist in `deploy/unraid/compose.yaml` und `deploy/unraid/.env.example` noch nicht verdrahtet** – ergänzen. `demo_*`-Typen und Demo-Preise nie in Produktion; vor `configurator` und `submission` einen Preiskatalog veröffentlichen (BETRIEB 13, 14).
+3. Zweiten Stack ausliefern, sobald gewünscht: `.env.analyse` aus der Vorlage (mit `OPENROUTER_API_KEY`), eigene Authentik-Anwendung, `./deploy.sh analyse` (BETRIEB 15).
 4. Überwachung (Uptime Kuma, Unraid README 7) mit den Log-Alarmen aus BETRIEB 1, auch `dossier_failed`; Offsite-Sicherung; erste Wiederherstellungsübung.
 5. SMTP nach E2 eintragen, Testmail; GitHub-Hauptzweig schützen.
-6. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6): Staff-E-Mail, Mailadressen in Jobs (A12), IP-HMAC (A7), Steckbriefe (BR10), Kundenkontakt, Einwilligungen, Snapshots, Konfiguration, Dossierdateien; die Projekte des Analyse-Produkts (Eigentümer, hochgeladene Umrisse, Annahmen); hochgeladene Reglements und Zusatzdokumente enthalten in der Regel keine personenbezogenen Daten (PU01; ein cahier des charges kann Namen von Verkäufern nennen – prüfen). Die Claude API erhält nur Planunterlagen.
+6. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6): Staff-E-Mail, Mailadressen in Jobs (A12), IP-HMAC (A7), Steckbriefe (BR10), Kundenkontakt, Einwilligungen, Snapshots, Konfiguration, Dossierdateien; die Projekte des Analyse-Produkts (Eigentümer, hochgeladene Umrisse, Annahmen); hochgeladene Reglements und Zusatzdokumente enthalten in der Regel keine personenbezogenen Daten (PU01; ein cahier des charges kann Namen von Verkäufern nennen – prüfen). Die Schnittstelle (OpenRouter) erhält nur Planunterlagen.
 7. Den ungenutzten Band `minio-data` entfernen (`docker volume rm emprise_minio-data`, README).
 
 ### 4.8 Weitere Punkte
@@ -115,24 +116,24 @@ Keine offenen: Befunde, Prüflauf und Browserprüfung stehen in [PLAN_AN3](docs/
 
 ## 5. Empfohlener nächster Schritt
 
-1. Hand-off-Dokumente dieser Session committen.
-2. Priorität 1 aus Abschnitt 3: Mailanbieter (E2) und Büro-Angaben, sobald bekannt; den Schlüssel der Claude API eintragen (4.6 Punkt 1).
-3. Mit Schlüssel zuerst 4.1 Punkt 2 (echte Unterlagen) – misst beide Produkte; sonst das nächste RA2-Modul (4.1 Punkt 1) oder die Auslieferung auf Unraid (4.7).
-4. Bald 4.2 und 4.1 Punkt 7: Playwright-Szenarien.
+1. Priorität 1 aus Abschnitt 3: Mailanbieter (E2) und Büro-Angaben, sobald bekannt; den Schlüssel von OpenRouter eintragen (4.6 Punkt 1) – dabei zuerst die Container-Images neu bauen (alte `api`/`worker` haben `openai` noch nicht installiert).
+2. Mit Schlüssel zuerst 4.1 Punkt 2 (echte Unterlagen) – misst beide Produkte; sonst das nächste RA2-Modul (4.1 Punkt 1) oder die Auslieferung auf Unraid (4.7).
+3. Bald 4.2 und 4.1 Punkt 7: Playwright-Szenarien.
 
 ## 6. Hinweise
 
 - Stolperstellen (lokaler Stack, Docker-Start, SeaweedFS, Tests, Fixtures aus anderen Testmodulen, Browserprüfung mit PDFs und Scheinauswertung – auch für Zusatzdokumente) stehen dauerhaft in [README.md](README.md).
 - Der Volllauf des Backends dauert rund 7 Minuten; `docker compose run -T` benutzen.
+- `uv lock` in einem Container ohne die bestehende `uv.lock` als Ausgangspunkt löst **alle** Pakete frisch auf und zieht ungewollt viele Fremdupgrades mit (in dieser Session so passiert und verworfen). Immer die vorhandene `uv.lock` zuerst in den Container kopieren, dann `uv lock` – so ändert sich nur, was die geänderten Abhängigkeiten wirklich erzwingen.
 - Beim Öffnen eines PDF im Browserwerkzeug geht beim Nutzer ein Speichern-Dialog auf; PDFs dort nicht aufrufen.
 
 ## 7. Startprompt für die neue Session
 
 ```
 Lies HANDOFF.md und den obersten Eintrag in AENDERUNGEN.md. Fasse den Stand in fünf Sätzen zusammen.
-Committe die Hand-off-Dokumente der Vorsession. Frage mich danach in höchstens drei Fragen (Empfehlung an
-erster Stelle), welches Modul als Nächstes kommt (HANDOFF 4.1 Punkt 1: AN4, Rest von AN3 oder AN5 – oder
-die Auslieferung auf Unraid, 4.7) und was aus Priorität 1 in HANDOFF 3 inzwischen feststeht.
+Frage mich danach in höchstens drei Fragen (Empfehlung an erster Stelle), welches Modul als Nächstes kommt
+(HANDOFF 4.1 Punkt 1: AN4, Rest von AN3 oder AN5 – oder die Auslieferung auf Unraid, 4.7) und was aus
+Priorität 1 in HANDOFF 3 inzwischen feststeht.
 Arbeite das gewählte Modul ab (Modulplan mit Selbstprüfung, dann Umsetzung). Committe und pushe nur auf
 meine Anweisung.
 ```

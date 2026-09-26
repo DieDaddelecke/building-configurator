@@ -4,6 +4,32 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 26.09.2026 – G2: Schnittstelle auf OpenRouter umgestellt
+
+**Auftrag:** Schnittstelle für OpenRouter statt der Claude API einrichten (Nutzerfrage „kannst du eine Schnittstelle für OpenRouter einstellen?“); nach kurzer Klärung (Zweck: vollständiger Ersatz; Drittanbieter für Planunterlagen akzeptiert) umgesetzt. Am Ende „pushe und comitte alle Änderungen, dann /handoff“.
+
+**Commits:** `86869ed` Hand-off-Dokumente der AN3-Session (nachgeholt), `16ac599` Regelauswertung (G2): Schnittstelle auf OpenRouter umgestellt. Beide gepusht; CI nicht abgewartet.
+
+**Geändert**
+- `backend/app/integrations/claude.py` → `backend/app/integrations/openrouter.py`: OpenAI-kompatible Chat-Completions-API von OpenRouter statt der Anthropic-Messages-API. Modell frei über `EMPRISE_RULES_MODEL` wählbar (Vorgabe `anthropic/claude-opus-5`), strukturierte Ausgabe über einen erzwungenen Funktionsaufruf statt `response_format` (breiter über Anbieter hinweg unterstützt), Denkaufwand über den herstellerübergreifenden `reasoning`-Parameter. Entfällt: das zugesicherte 1-Stunden-Zwischenspeichern der Dokumente und der serverseitige Fallback-Beta-Header (beides Anthropic-spezifisch, kein verlässliches Gegenstück über OpenRouter).
+- Schlüssel umbenannt: `EMPRISE_ANTHROPIC_API_KEY` → `EMPRISE_OPENROUTER_API_KEY` (Unraid: `ANTHROPIC_API_KEY` → `OPENROUTER_API_KEY`) in `app/config.py`, allen Compose- und `.env.example`-Dateien, CI, Playwright-Kommentar, `tests/e2e_seed_rules.py`.
+- Abhängigkeit `anthropic` → `openai` in `backend/pyproject.toml`; `uv.lock` minimal aktualisiert (nur der nötige Wechsel, ohne Fremdupgrades anderer Pakete – erster Lock-Versuch ohne die bestehende `uv.lock` als Grundlage hatte ungewollt viele Transitiv-Pakete mit hochgezogen, deshalb verworfen und mit vorhandenem Lock als Basis neu aufgelöst).
+- Nutzertexte `frontend/src/i18n/{de,fr}.json` (Büro-Oberfläche „Regelwerke“, Fehlertext `rules.notices.not_configured`): „Claude API“ → „OpenRouter“.
+- Dokumente: README (Stolperstellen, Prüfbefehle), `docs/BETRIEB.md` (Abschnitt 1 und 15), `deploy/unraid/README.md`.
+- Tests: `tests/unit/test_rules_integrations.py` komplett neu für die OpenRouter-Antwortform (OpenAI-Chat-Completion mit erzwungenem Tool-Call statt Anthropic-Stream-Events); `tests/rules_support.py` (`FakeExtractor`), betroffene Integrationstests auf den neuen Schlüsselnamen umgestellt.
+
+**Entschieden** (Nutzer, 26.09.2026)
+- OpenRouter ersetzt die Claude API vollständig als Schnittstelle der Regelauswertung (G2), nicht nur als Fallback.
+- Damit ein weiterer Drittanbieter im Datenweg neben der bisherigen Ausnahme der Claude API (D3/D4) – akzeptiert, weil weiterhin nur öffentliche Planunterlagen gesendet werden, nie Kundendaten (L8). Festgehalten als **RW28** in `docs/ANNAHMEN.md`.
+
+**Ohne Dateiänderung**
+- Geprüft im Container (`backend-dev`-Image neu gebaut): Backend 585 Tests (davon 10 im neuen `test_rules_integrations.py`, vorher 588 – Differenz durch eine nicht mehr einzeln nachgebildete Anthropic-Fehlerart im Test, die Fehlerbehandlung selbst bleibt im Code), Frontend 172, dazu ruff, `ruff format --check`, mypy und der Frontend-Typecheck/Lint grün.
+- Die laufenden Container `api`/`worker` nutzen weiterhin das alte Image `emprise-backend:local` ohne `openai`-Paket; vor dem nächsten echten Auswertungslauf `docker compose build migrate web` und Neustart nötig (siehe HANDOFF 4.6).
+
+**Memory:** keine Änderung.
+
+---
+
 ## 26.09.2026 – Entscheidungen zu Betrieb und Zusatzdokumenten, Emprise Analyse: AN3
 
 **Auftrag:** Stand zusammenfassen, Hand-off-Dokumente der Vorsession committen, A28 nachtragen, Priorität 1 und E-AN2-5 in höchstens drei Fragen entscheiden, dann AN3 (Modulplan mit Selbstprüfung, Umsetzung). Am Ende „committe und pushe alle änderungen, danach /handoff“. Begonnen am 25.09., abgeschlossen am 26.09.2026.
