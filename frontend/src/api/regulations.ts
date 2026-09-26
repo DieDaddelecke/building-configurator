@@ -10,9 +10,25 @@ export type ProjectRegulationOut = components["schemas"]["ProjectRegulationOut"]
 export type RegulationDocumentOut = components["schemas"]["RegulationDocumentOut"];
 export type DocumentChapterOut = components["schemas"]["DocumentChapterOut"];
 export type ZoneChoiceIn = components["schemas"]["ZoneChoiceIn"];
-export type UploadDuType = "PLU" | "PLUi" | "PSMV";
+export type LotChoiceIn = components["schemas"]["LotChoiceIn"];
+export type PluDuType = "PLU" | "PLUi" | "PSMV";
+export type SupplementDuType = "lotissement" | "cahier_des_charges";
+export type UploadDuType = PluDuType | SupplementDuType;
+
+/** Höchstens so viele Zusatzdokumente je Projekt (AN3, E-AN3-6; `documents.MAX_SUPPLEMENTS`). */
+export const MAX_SUPPLEMENTS = 3;
 
 export const regulationsKey = (projectId: string) => ["regulations", projectId] as const;
+
+/** Das PLU des Projekts: Grundlage von Regeln, Baurahmen und Analyse. */
+export function pluOf(regulations: ProjectRegulationOut[] | undefined): ProjectRegulationOut | undefined {
+  return regulations?.find((regulation) => regulation.role === "plu");
+}
+
+/** Zusatzdokumente (lotissement, cahier des charges), nur im Vergleich der Analyse (AN3). */
+export function supplementsOf(regulations: ProjectRegulationOut[] | undefined): ProjectRegulationOut[] {
+  return regulations?.filter((regulation) => regulation.role === "supplement") ?? [];
+}
 
 /** Das Kapitel der gewählten Zone (oder `undefined`, solange keine gewählt ist). */
 export function chosenChapter(regulation: ProjectRegulationOut): DocumentChapterOut | undefined {
@@ -44,20 +60,25 @@ function useRefreshDerived(projectId: string) {
     void client.invalidateQueries({ queryKey: regulationsKey(projectId) });
     void client.invalidateQueries({ queryKey: ["admin", "project-rules", projectId] });
     void client.invalidateQueries({ queryKey: ["admin", "envelope", projectId] });
+    void client.invalidateQueries({ queryKey: ["analysis", projectId] });
   };
 }
 
-/** Regeln und Baurahmen neu laden, sobald sich der Stand von Dokument oder Kapitel ändert – deren eigenes
- *  Nachfragen endet nach zehn Minuten, eine Auswertung kann länger dauern. */
-export function useRefreshWhenStateChanges(projectId: string, regulation: ProjectRegulationOut | undefined) {
+/** Regeln, Baurahmen und Analyse neu laden, sobald sich der Stand eines Dokuments oder Kapitels ändert – deren
+ *  eigenes Nachfragen endet nach zehn Minuten, eine Auswertung kann länger dauern. Gilt für PLU und
+ *  Zusatzdokumente (AN3). */
+export function useRefreshWhenStateChanges(projectId: string, regulations: ProjectRegulationOut[] | undefined) {
   const client = useQueryClient();
-  const state = regulation ? `${regulation.document.status}:${chosenChapter(regulation)?.status ?? ""}` : "";
+  const state = (regulations ?? [])
+    .map((regulation) => `${regulation.document.id}:${regulation.document.status}:${chosenChapter(regulation)?.status ?? ""}`)
+    .join("|");
   const previous = useRef(state);
   useEffect(() => {
     if (previous.current === state) return;
     previous.current = state;
     void client.invalidateQueries({ queryKey: ["admin", "project-rules", projectId] });
     void client.invalidateQueries({ queryKey: ["admin", "envelope", projectId] });
+    void client.invalidateQueries({ queryKey: ["analysis", projectId] });
   }, [client, projectId, state]);
 }
 
@@ -90,6 +111,21 @@ export function useChooseZone(projectId: string, documentId: string) {
     mutationFn: async (body: ZoneChoiceIn) =>
       unwrap(
         await api.PUT("/api/v1/projects/{project_id}/regulations/{document_id}/zone", {
+          params: { path: { project_id: projectId, document_id: documentId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Lot eines Zusatzdokuments wählen (AN3) – plant wie die Zonenwahl eine (bezahlte) Auswertung ein. */
+export function useChooseLot(projectId: string, documentId: string) {
+  const refresh = useRefreshDerived(projectId);
+  return useMutation({
+    mutationFn: async (body: LotChoiceIn) =>
+      unwrap(
+        await api.PUT("/api/v1/projects/{project_id}/regulations/{document_id}/lot", {
           params: { path: { project_id: projectId, document_id: documentId } },
           body,
         }),

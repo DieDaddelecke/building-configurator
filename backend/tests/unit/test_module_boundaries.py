@@ -20,7 +20,7 @@ from app.products import PRODUCT_NAMES, PRODUCTS, Product, spec_for
 
 APP = Path(__file__).resolve().parents[2] / "app"
 CORE_PACKAGES = ("platform", "integrations", "site", "rules", "envelope", "plan")
-PRODUCT_PACKAGES = ("catalog", "configuration", "inquiry", "submission")
+PRODUCT_PACKAGES = ("catalog", "configuration", "inquiry", "submission", "analysis")
 
 
 def _package_of(path: Path) -> str:
@@ -107,3 +107,18 @@ def test_analyse_profile_serves_site_rules_and_envelope() -> None:
     assert ("GET", "/api/v1/projects/{project_id}/site") in served
     assert ("GET", "/api/v1/projects/{project_id}/rules") in served
     assert ("GET", "/api/v1/projects/{project_id}/envelope") in served
+
+
+def test_configurator_serves_no_analysis_routes_but_openapi_has_both() -> None:
+    """AN3: `analysis` läuft nur im Analyse-Produkt; `openapi.json` beschreibt trotzdem alle Routen."""
+    from app.main import create_full_app
+
+    served = _served("configurator")
+    analysis = _routes_of("app.analysis.api")
+    assert analysis and not analysis & served
+    full = {
+        (method, str(ctx.path))
+        for ctx in iter_route_contexts(create_full_app().routes)
+        for method in getattr(ctx, "methods", None) or ()
+    }
+    assert analysis <= full and served <= full

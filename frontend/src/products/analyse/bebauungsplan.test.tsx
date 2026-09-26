@@ -149,3 +149,10 @@ it("meldet einen Scan ohne Text", () => {
   zeige();
   expect(screen.getByRole("alert")).toHaveTextContent("vermutlich ein Scan");
 });
+
+it("nimmt ein Zusatzdokument nicht für den Bebauungsplan", () => {
+  state.regulations = [regulation({ role: "supplement", zone_code: "Lot-12" }, { id: "s1", title: "Lotissement" })];
+  zeige();
+  expect(screen.queryByText("Lotissement")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("règlement écrit (PDF)")).toBeInTheDocument();
+});

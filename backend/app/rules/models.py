@@ -317,8 +317,8 @@ class Rule(UuidPk, Created, Base):
 class ProjectRegulation(UuidPk, Created, Base):
     """Hochgeladenes Dokument eines Projekts mit gewählter Zone (AN2, docs/PLAN_AN2_PLU.md 3.1).
 
-    Ein Projekt hat höchstens ein PLU (`role = 'plu'`); die Rolle ist für Zusatzdokumente offengehalten
-    (AN4). Das Dokument bleibt, wenn das Projekt gelöscht wird (E-AN2-4)."""
+    Ein Projekt hat höchstens ein PLU (`role = 'plu'`) und bis zu drei Zusatzdokumente (`supplement`,
+    AN3, docs/PLAN_AN3_ANALYSE.md 3.7). Das Dokument bleibt, wenn das Projekt gelöscht wird (E-AN2-4)."""
 
     __tablename__ = "project_regulation"
 
@@ -328,14 +328,15 @@ class ProjectRegulation(UuidPk, Created, Base):
     )
     role: Mapped[str] = mapped_column(String(20), server_default=text("'plu'"))
     zone_code: Mapped[str | None] = mapped_column(String(20))
-    """Sektor, für den ausgewertet wird (`Uba`); leer, bis der Architekt die Zone wählt."""
+    """Sektor, für den ausgewertet wird (`Uba`; bei Zusatzdokumenten das Lot, `Lot-12` oder `Ensemble`);
+    leer, bis der Architekt Zone oder Lot wählt."""
     chapter_code: Mapped[str | None] = mapped_column(String(20))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_by: Mapped[str | None] = mapped_column(String(200))
 
     __table_args__ = (
         UniqueConstraint("project_id", "land_use_plan_id", name="uq_project_regulation_project_document"),
-        CheckConstraint("role IN ('plu')", name="role_known"),
+        CheckConstraint("role IN ('plu','supplement')", name="role_known"),
         Index("uq_project_regulation_plu", "project_id", unique=True, postgresql_where=text("role = 'plu'")),
     )
 

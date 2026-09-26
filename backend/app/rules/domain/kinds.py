@@ -23,6 +23,7 @@ RuleKind = Literal[
     "planting",
     "fence",
     "text_only",
+    "max_area",
 ]
 RULE_KINDS: tuple[str, ...] = get_args(RuleKind)
 BuildingKind = Literal["main", "annex", "pool", "any"]
@@ -100,6 +101,8 @@ PARAM_TYPES: dict[str, ParamType] = {
     "min_green_ratio": "number",
     "materials": "items",
     "summary": "text",
+    "sdp_m2": "number",
+    "footprint_m2": "number",
 }
 """Alle Parameternamen mit Typ. Das Sprachmodell liefert Parameter als Liste aus Name und Wert."""
 
@@ -122,6 +125,8 @@ BOUNDS: dict[str, tuple[float, float]] = {
     "max_height_m": (0.0, 15.0),
     "trees_per_m2": (0.0, 0.1),
     "min_green_ratio": (0.0, 1.0),
+    "sdp_m2": (10.0, 5000.0),
+    "footprint_m2": (10.0, 5000.0),
 }
 """Plausibilitätsgrenzen (Plan 3.4). Werte außerhalb sind eher Lesefehler als echte Festsetzungen."""
 
@@ -329,6 +334,21 @@ class TextOnly(_Params):
     summary: str
 
 
+class MaxArea(_Params):
+    """Höchstflächen in m² für das Grundstück oder Lot (AN3, docs/PLAN_AN3_ANALYSE.md 3.6): surface de
+    plancher und emprise au sol als feste Zahl – typisch für Lots eines lotissement, seltener im PLU. Eine
+    eigene Art, weil H2/H3 bei `max_footprint_ratio` den Anteil voraussetzen."""
+
+    sdp_m2: float | None = None
+    footprint_m2: float | None = None
+
+    @model_validator(mode="after")
+    def _consistent(self) -> "MaxArea":
+        if self.sdp_m2 is None and self.footprint_m2 is None:
+            raise ValueError("max_area_empty")
+        return self
+
+
 PARAM_MODELS: dict[str, type[_Params]] = {
     "setback_street": SetbackStreet,
     "setback_side": SetbackBoundary,
@@ -344,6 +364,7 @@ PARAM_MODELS: dict[str, type[_Params]] = {
     "planting": Planting,
     "fence": Fence,
     "text_only": TextOnly,
+    "max_area": MaxArea,
 }
 
 

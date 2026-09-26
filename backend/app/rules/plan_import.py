@@ -39,6 +39,7 @@ from app.rules.domain.chapters import (
     chapter_for_zone,
     detect_structure,
 )
+from app.rules.domain.extraction import DocumentKind, document_kind
 from app.rules.extract import input_hash
 from app.rules.models import (
     LandUsePlan,
@@ -336,6 +337,7 @@ def enqueue_extraction(
     chapter: RegulationChapter,
     source_sha256: str,
     created_by: str,
+    kind: DocumentKind = "plu",
 ) -> None:
     import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
 
@@ -344,7 +346,7 @@ def enqueue_extraction(
         session,
         "rules_extract",
         {"chapter_id": str(chapter.id)},
-        idempotency_key=f"rules_extract:{chapter.id}:{input_hash(settings, source_sha256, chapter)}",
+        idempotency_key=f"rules_extract:{chapter.id}:{input_hash(settings, source_sha256, chapter, kind)}",
         created_by=created_by,
     )
 
@@ -625,7 +627,14 @@ def ensure_chapter(
     if values.sectors and (changed or chapter.status == "pending"):
         if chapter.status != "extracting":
             chapter.status, chapter.error, chapter.updated_at = "pending", None, utcnow()
-        enqueue_extraction(session, settings, chapter, source_file.sha256, f"{actor}:{reason}")
+        enqueue_extraction(
+            session,
+            settings,
+            chapter,
+            source_file.sha256,
+            f"{actor}:{reason}",
+            document_kind(plan.du_type),
+        )
     return chapter
 
 

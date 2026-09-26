@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { useStaffEnvelope } from "../../api/envelope";
-import { useProjectRegulations } from "../../api/regulations";
+import { pluOf, useProjectRegulations } from "../../api/regulations";
 import { useStaffProjectRules } from "../../api/rules";
 import { useClassifyEdge, useDeleteProject, useSite, type EdgeKind, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
@@ -13,8 +13,10 @@ import { FreiesZeichnen } from "../../site/FreiesZeichnen";
 import { formatNumber } from "../../site/geo";
 import { KantenListe } from "../../site/KantenListe";
 import { SiteLageplan } from "../../site/SiteLageplan";
+import { Analyse } from "./Analyse";
 import { Bebauungsplan } from "./Bebauungsplan";
 import { ParzelleHochladen } from "./ParzelleHochladen";
+import { Zusatzdokumente } from "./Zusatzdokumente";
 
 type Weg = "wahl" | "datei" | "zeichnen";
 
@@ -59,7 +61,8 @@ function Herkunft({ site }: { site: SiteOut }) {
   );
 }
 
-/** Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die Büro-Endpunkte (E-AN2-7). */
+/** Analyse (AN3), Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die Büro-Endpunkte
+ *  (E-AN2-7). */
 function Ergebnis({ projectId, revision }: { projectId: string; revision: number }) {
   const { t } = useTranslation();
   const envelope = useStaffEnvelope(projectId);
@@ -68,6 +71,7 @@ function Ergebnis({ projectId, revision }: { projectId: string; revision: number
   if (envelope.isError || rules.isError) return <p className="t-alert" role="alert">{t("error.generic")}</p>;
   return (
     <>
+      <Analyse projectId={projectId} envelope={envelope.data} />
       <section aria-labelledby="baurahmen" className="flex flex-col gap-5">
         <h2 id="baurahmen" className="eyebrow m-0">{t("analyse.envelope")}</h2>
         <Baurahmen key={revision} envelope={envelope.data} projectId={projectId} rolle="architect" />
@@ -83,7 +87,7 @@ function Ergebnis({ projectId, revision }: { projectId: string; revision: number
 }
 
 /** Ein Projekt: Parzelle einbringen, Kanten einordnen (AN1), Bebauungsplan hochladen und Zone wählen; daraus
- *  Regeln und Baurahmen (AN2). Nutzfläche und Analyse folgen mit AN3. */
+ *  Regeln und Baurahmen (AN2). Zusatzdokumente und die Analyse für den Entwurf (AN3). */
 export function ProjektSeite() {
   const { t } = useTranslation();
   const { projectId = "" } = useParams();
@@ -93,7 +97,7 @@ export function ProjektSeite() {
   const entfernen = useDeleteProject();
   const [weg, setWeg] = useState<Weg>("wahl");
   const [hervorgehoben, setHervorgehoben] = useState<number | null>(null);
-  const zoneGewaehlt = Boolean(regulations.data?.some((regulation) => regulation.zone_code));
+  const zoneGewaehlt = Boolean(pluOf(regulations.data)?.zone_code);
 
   const loeschen = () => {
     if (!window.confirm(t("analyse.site.deleteConfirm"))) return;
@@ -164,6 +168,7 @@ export function ProjektSeite() {
             next={!regulations.data?.length}
           />
           <Bebauungsplan projectId={projectId} />
+          <Zusatzdokumente projectId={projectId} />
           {zoneGewaehlt && <Ergebnis projectId={projectId} revision={site.data.revision} />}
         </>
       )}

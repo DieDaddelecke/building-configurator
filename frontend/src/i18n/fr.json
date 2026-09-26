@@ -23,7 +23,7 @@
     "step": {
       "site": {
         "title": "Apporter la parcelle",
-        "text": "La dessiner avec ses cotes ou l'importer en DXF ou GeoJSON."
+        "text": "La dessiner avec ses cotes ou l'importer en DXF, GeoJSON ou PDF."
       },
       "rules": {
         "title": "Déposer le règlement",
@@ -34,7 +34,7 @@
         "text": "Hauteurs, reculs et surfaces, avec rapport et export CAO."
       }
     },
-    "soon": "La parcelle et le règlement entrent déjà, le cadre constructible est calculé ; surface de plancher, rapport et export CAO suivent.",
+    "soon": "La parcelle, le règlement et les documents complémentaires entrent ; cadre constructible, emprise déterminante, niveaux et surface de plancher sont calculés. Rapport et export CAO suivent.",
     "login": {
       "intro": "L'accès est réservé au cabinet ; l'authentification passe par le fournisseur d'identité.",
       "denied": {
@@ -180,7 +180,167 @@
         "interrupted": "La lecture a été interrompue. Veuillez déposer le PDF à nouveau."
       }
     },
-    "envelope": "Cadre constructible"
+    "envelope": "Cadre constructible",
+    "supplement": {
+      "title": "Documents complémentaires",
+      "intro": "Règlement de lotissement ou cahier des charges applicables en plus du PLU. Leurs règles figurent à côté de celles du PLU ; la plus stricte s'impose, si le document est applicable.",
+      "add": "Déposer un document complémentaire",
+      "limit": "Trois documents complémentaires au plus par projet.",
+      "file": "Document complémentaire (PDF)",
+      "titleHint": "p. ex. Règlement du lotissement Les Chênes",
+      "type": {
+        "lotissement": "Règlement de lotissement",
+        "cahier_des_charges": "Cahier des charges"
+      },
+      "reading": "Lecture du document en cours …",
+      "removeConfirm": "Détacher ce document complémentaire du projet ? Il reste disponible pour les autres projets.",
+      "lot": "Lot du terrain (facultatif)",
+      "lotHint": "p. ex. 12",
+      "lotExplain": "Tel qu'il est désigné dans le document. Laisser vide si le document ne distingue pas de lots.",
+      "lotLabel": "Lot {{lot}}",
+      "whole": "document entier",
+      "manual": "N'analyser qu'une plage de pages (nécessaire au-delà de 150 pages)",
+      "costHint": "L'analyse est facturée une fois par document et par lot ; un lot supplémentaire relance l'analyse du document.",
+      "choose": "Retenir le lot et analyser",
+      "change": "Changer de lot",
+      "notApplied": "Non intégré aux règles, à l'enveloppe ni à l'analyse. C'est à vous d'apprécier si le document s'applique – les règles d'un lotissement deviennent caduques dix ans après l'autorisation lorsqu'un PLU est en vigueur (L.442-9) ; un cahier des charges engage sur le plan contractuel.",
+      "updating": "Une nouvelle analyse est en cours ; ces valeurs restent valables d'ici là.",
+      "comparison": "Comparaison de {{title}} avec le PLU",
+      "plu": "PLU",
+      "document": "Document complémentaire",
+      "verdictColumn": "Appréciation",
+      "noRule": "pas de règle",
+      "verdict": {
+        "stricter": "plus strict que le PLU",
+        "looser": "moins strict – le PLU s'impose",
+        "equal": "identique",
+        "mixed": "en partie plus strict, en partie moins",
+        "different": "différent, non comparable",
+        "only_supplement": "uniquement dans le document",
+        "no_own_rule": "pas de règle propre – le PLU s'applique",
+        "unknown": "non déterminé"
+      },
+      "error": {
+        "too_many_supplements": "Trois documents complémentaires au plus par projet.",
+        "document_type_conflict": "Ce PDF a déjà été déposé comme règlement de PLU.",
+        "chapter_too_long": "Le document dépasse 150 pages ; veuillez indiquer une plage de pages."
+      }
+    },
+    "analysis": {
+      "title": "Analyse pour le projet",
+      "unavailable": "L'analyse nécessite l'enveloppe constructible : parcelle avec ses limites et un PLU analysé.",
+      "inProgress": "Les règles sont encore en cours d'analyse ; l'analyse s'affichera ensuite.",
+      "supplementStricter": "Un document complémentaire est plus strict pour : {{kinds}}. Non intégré à ces valeurs – voir les documents complémentaires.",
+      "derivation": "Calcul pour la zone {{zone}}",
+      "footprint": {
+        "title": "Emprise au sol déterminante",
+        "binding": {
+          "contour": "la zone constructible est déterminante",
+          "ratio": "le coefficient d'emprise est déterminant",
+          "absolute": "la surface maximale est déterminante"
+        },
+        "upperBound": "au plus – coefficient d'emprise non déterminé"
+      },
+      "storeys": {
+        "title": "Niveaux pleins",
+        "unknown": "non déterminé",
+        "top": {
+          "attic": "+ combles",
+          "atticPossible": "+ combles possibles",
+          "attique": "+ attique"
+        },
+        "source": {
+          "storeys": "selon le nombre de niveaux du règlement",
+          "eave": "d'après la hauteur à l'égout",
+          "parapet": "d'après la hauteur à l'acrotère",
+          "ridge": "d'après la seule hauteur au faîtage – forme du toit ouverte",
+          "unknown": "hauteur non déterminée"
+        },
+        "note": {
+          "storeys_exceed_eave": "Le nombre de niveaux ne tient pas sous l'égout avec la hauteur d'étage minimale.",
+          "roof_form_open": "Calcul bas avec toit en pente, calcul haut avec toit-terrasse jusqu'au faîtage.",
+          "height_without_value": "La règle de hauteur ne donne pas de valeur."
+        }
+      },
+      "floorArea": {
+        "title": "Surface de plancher",
+        "unknown": "non déterminée",
+        "hint": "Fourchette issue de l'emprise, des niveaux et des hypothèses – pas un métré",
+        "capped": "la surface de plancher maximale du règlement est déterminante",
+        "upperBound": "Maximum – toutes les données d'entrée ne sont pas déterminées",
+        "cap": "Maximum selon le règlement : {{value}} m²"
+      },
+      "reason": {
+        "height_unknown": "hauteur non déterminée",
+        "footprint_unknown": "emprise non déterminée",
+        "footprint_ratio_unknown": "coefficient d'emprise non déterminé",
+        "contour_incomplete": "tous les reculs ne sont pas déterminés",
+        "zone_rules_unavailable": "zone sans règles",
+        "zone_rules_in_progress": "règles de la zone en cours d'analyse"
+      },
+      "candidate": {
+        "title": "Emprise",
+        "contour": "Zone constructible (enveloppe)",
+        "ratio": "Coefficient d'emprise",
+        "absolute": "Surface maximale",
+        "binds": "déterminant",
+        "envelope": "Enveloppe",
+        "status": {
+          "missing": "pas de règle",
+          "unknown": "non déterminé",
+          "not_regulated": "non réglementé"
+        }
+      },
+      "reading": {
+        "strict": "lecture la plus stricte",
+        "lenient": "lecture la plus large"
+      },
+      "notCounted": {
+        "title": "Non pris en compte",
+        "stairs_lifts": "Trémies d'escaliers et d'ascenseurs",
+        "low_height": "Surfaces de hauteur inférieure à 1,80 m (approchées seulement par la part des combles)",
+        "parking": "Stationnement et rampes dans le bâtiment",
+        "attic_unusable": "Combles non aménageables",
+        "technical_cellars": "Locaux techniques et caves",
+        "collective_ten_percent": "Déduction de 10 % en cas de desserte par des parties communes intérieures",
+        "embrasures": "Embrasures des portes et fenêtres",
+        "boundary_height": "Hauteur limitée en cas d'implantation en limite",
+        "upper_setbacks": "Reculs dépendant de la hauteur aux étages supérieurs (gabarit)"
+      },
+      "assumptions": {
+        "title": "Hypothèses",
+        "custom": "modifiées",
+        "intro": "Le bas de la fourchette retient le côté défavorable de chaque hypothèse, le haut le côté favorable.",
+        "storey_height_m": "Hauteur d'étage plancher à plancher (m)",
+        "wall_share": "Déduction des murs extérieurs (%)",
+        "attic_share": "Part comptée des combles (%)",
+        "attique_share": "Part d'un niveau en attique (%)",
+        "low": "de",
+        "high": "à",
+        "default": "Par défaut {{low}} – {{high}}",
+        "invalid": "Veuillez indiquer des plages valides (de ≤ à, dans les limites usuelles).",
+        "save": "Appliquer les hypothèses",
+        "reset": "Rétablir les valeurs par défaut"
+      }
+    },
+    "distance": {
+      "title": "Reculs par limite",
+      "unknown": "non déterminé",
+      "notRegulated": "non réglementé – pas de recul minimal",
+      "alignment": "à l'alignement des constructions voisines",
+      "fixed": "exactement {{value}}",
+      "range": "entre {{min}} et {{max}}",
+      "rangeBuilding": "entre {{min}} et {{max}} (construction entière dans la bande)",
+      "rangeFacade": "entre {{min}} et {{max}} (façade sur rue dans la bande)",
+      "min": "au moins {{value}}",
+      "factor": "{{factor}} ({{basis}})",
+      "atLeast": "au moins {{value}}",
+      "atHeight": "soit {{value}} pour une hauteur de {{height}}",
+      "heightUnknown": "hauteur non déterminée",
+      "onBoundary": "implantation en limite autorisée",
+      "onBoundaryHeight": "implantation en limite autorisée jusqu'à {{value}} de hauteur",
+      "otherwise": "{{first}}, sinon {{second}}"
+    }
   },
   "site": {
     "disabled": {
@@ -450,7 +610,8 @@
       "annex": "Annexes",
       "planting": "Plantations",
       "fence": "Clôtures",
-      "text_only": "Remarque"
+      "text_only": "Remarque",
+      "max_area": "Surfaces maximales"
     },
     "building": {
       "main": "construction principale",
@@ -488,7 +649,9 @@
       "onBoundaryHeight": "en limite jusqu'à {{value}} de hauteur",
       "fromRoofEdge": "mesuré depuis le bord du toit",
       "fromProjection": "mesuré depuis la partie la plus saillante",
-      "minDimensions": "dimensions {{value}}"
+      "minDimensions": "dimensions {{value}}",
+      "sdpMax": "Surface de plancher ≤ {{value}} m²",
+      "footprintMax": "Emprise au sol ≤ {{value}} m²"
     },
     "roofForm": {
       "gable": "deux pans",
@@ -563,7 +726,7 @@
     "notices": {
       "simulation": "Les règles sont une simulation automatique, non vérifiée, et ne valent pas renseignement d'urbanisme. Seul le certificat d'urbanisme délivré par la commune fait foi.",
       "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici.",
-      "upload": "Seul le règlement écrit déposé est analysé. Le plan de zonage, les prescriptions superposées, les servitudes et les documents complémentaires (lotissement, cahier des charges) ne sont pas pris en compte."
+      "upload": "Seul le règlement écrit déposé est analysé. Le plan de zonage, les prescriptions superposées et les servitudes ne sont pas pris en compte ; les documents complémentaires (lotissement, cahier des charges) figurent seulement dans la comparaison de l'analyse, pas dans les règles ni dans l'enveloppe constructible."
     },
     "uploaded": "{{title}}, déposé"
   },
@@ -815,7 +978,8 @@
       "text_only": "Prescription",
       "footprint_max_m2": "Emprise au sol maximale",
       "unsealed_min_m2": "Espaces libres minimum",
-      "full_soil_min_m2": "Pleine terre minimum"
+      "full_soil_min_m2": "Pleine terre minimum",
+      "max_area": "Surfaces maximales"
     },
     "edge": {
       "street": "Limite sur voie {{seq}}",

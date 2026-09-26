@@ -16,6 +16,7 @@ const KIND_ORDER = [
   "setback_side",
   "setback_rear",
   "max_footprint_ratio",
+  "max_area",
   "max_height",
   "roof",
   "facade",

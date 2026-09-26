@@ -40,8 +40,10 @@ from app.rules.domain.assess import (
 )
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES
 from app.rules.domain.extraction import (
+    DocumentKind,
     ExtractedRule,
     VerificationCheck,
+    document_kind,
     parse_output,
     parse_verification,
     prompt_fingerprint,
@@ -90,8 +92,11 @@ class _Stop(Exception):
         self.error = error
 
 
-def input_hash(settings: Settings, source_sha256: str, chapter: RegulationChapter) -> str:
-    """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung."""
+def input_hash(
+    settings: Settings, source_sha256: str, chapter: RegulationChapter, kind: DocumentKind = "plu"
+) -> str:
+    """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung. Der
+    Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3)."""
     payload = {
         "source": source_sha256,
         "chapter": [chapter.code, chapter.first_page, chapter.last_page],
@@ -100,7 +105,7 @@ def input_hash(settings: Settings, source_sha256: str, chapter: RegulationChapte
         "model": settings.rules_model,
         "effort": settings.rules_effort,
         "runs": settings.rules_runs,
-        "prompt": [PROMPT_VERSION, prompt_fingerprint()],
+        "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
@@ -155,6 +160,7 @@ class _Calls:
     general_pages: list[int]
     reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any]]]
     split: set[tuple[int, str]]
+    document_kind: DocumentKind = "plu"
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
@@ -238,6 +244,7 @@ class _Calls:
             general_pdf=general_pdf,
             general_pages=self.general_pages,
             claims=claims,
+            document_kind=self.document_kind,
         )
         self.in_flight = key
         try:
@@ -361,7 +368,8 @@ def extract_chapter(
             chapter.status, chapter.error, chapter.updated_at = "failed", "chapter_too_long", utcnow()
             session.commit()
             return ChapterOutcome("failed", "chapter_too_long")
-        digest = input_hash(settings, source.sha256, chapter)
+        kind = document_kind(plan.du_type)
+        digest = input_hash(settings, source.sha256, chapter, kind)
         if (
             not force
             and chapter.status == "succeeded"
@@ -415,6 +423,7 @@ def extract_chapter(
             general_pages=general_pages,
             reusable=reusable,
             split=split,
+            document_kind=kind,
             model=settings.rules_model,
         )
         file_id, plan_id = source.id, plan.id
@@ -458,7 +467,12 @@ def _evaluate(
             if (claim := claim_for(number, rule, sectors)) is not None
         }
         rules = verify(rules, _verify(calls, claims) if claims else {})
-    final = complete(rules, sectors)
+    # Zusatzdokumente haben keine Pflichtarten: Was sie nicht regeln, regelt der PLU (AN3, 3.7)
+    final = (
+        complete(rules, sectors)
+        if calls.document_kind == "plu"
+        else sorted(rules, key=lambda r: (r.sector, r.kind, r.building_kind))
+    )
 
     # 4. Schreiben
     counts_total: dict[str, int] = defaultdict(int)
@@ -470,7 +484,7 @@ def _evaluate(
             return ChapterOutcome("skipped", "chapter_missing")
         # Während der Aufrufe kann ein Sektor dazugekommen sein (zweites Projekt, neue Gemeinde). Der Job
         # dafür endete mit `already_running`; ohne Folgeauftrag bliebe er ohne Regeln (AN2, 7.1 Nr. 11)
-        current_digest = input_hash(calls.settings, calls.source_sha256, chapter)
+        current_digest = input_hash(calls.settings, calls.source_sha256, chapter, calls.document_kind)
         by_sector: dict[str, list[AssessedRule]] = defaultdict(list)
         for assessed_rule in final:
             by_sector[assessed_rule.sector].append(assessed_rule)

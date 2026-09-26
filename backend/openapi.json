@@ -111,6 +111,446 @@
         "title": "AddressOut",
         "type": "object"
       },
+      "AnalysisAssumptionsOut": {
+        "properties": {
+          "custom": {
+            "title": "Custom",
+            "type": "boolean"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/AnalysisParametersOut"
+          },
+          "values": {
+            "$ref": "#/components/schemas/AnalysisParametersOut"
+          }
+        },
+        "required": [
+          "values",
+          "defaults",
+          "custom"
+        ],
+        "title": "AnalysisAssumptionsOut",
+        "type": "object"
+      },
+      "AnalysisFloorAreaOut": {
+        "properties": {
+          "cap_citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cap_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap M2"
+          },
+          "capped": {
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "high_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High M2"
+          },
+          "low_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low M2"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "capped",
+          "complete",
+          "reasons"
+        ],
+        "title": "AnalysisFloorAreaOut",
+        "type": "object"
+      },
+      "AnalysisFootprintOut": {
+        "properties": {
+          "binding": {
+            "anyOf": [
+              {
+                "enum": [
+                  "contour",
+                  "ratio",
+                  "absolute"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binding"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/FootprintCandidateOut"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "value_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value M2"
+          }
+        },
+        "required": [
+          "complete",
+          "reasons",
+          "candidates"
+        ],
+        "title": "AnalysisFootprintOut",
+        "type": "object"
+      },
+      "AnalysisOut": {
+        "properties": {
+          "assumptions": {
+            "$ref": "#/components/schemas/AnalysisAssumptionsOut"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "floor_area": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FloorAreaTotalOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "footprint": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FootprintTotalOut"
+            },
+            "propertyNames": {
+              "enum": [
+                "lenient",
+                "strict"
+              ]
+            },
+            "title": "Footprint",
+            "type": "object"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "not_counted": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Not Counted",
+            "type": "array"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisPartOut"
+            },
+            "title": "Parts",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "simulation": {
+            "const": true,
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "in_progress",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "supplement_stricter": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supplement Stricter",
+            "type": "array"
+          },
+          "supplements": {
+            "items": {
+              "$ref": "#/components/schemas/SupplementAnalysisOut"
+            },
+            "title": "Supplements",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "engine_version",
+          "input_hash",
+          "assumptions",
+          "footprint",
+          "parts",
+          "not_counted",
+          "supplements",
+          "supplement_stricter",
+          "warnings"
+        ],
+        "title": "AnalysisOut",
+        "type": "object"
+      },
+      "AnalysisParametersIn": {
+        "description": "Annahmen eines Projekts; jede als Bereich. Grenzen in `analysis.domain.parameters.BOUNDS`.",
+        "properties": {
+          "attic_share": {
+            "$ref": "#/components/schemas/SpanIn"
+          },
+          "attique_share": {
+            "$ref": "#/components/schemas/SpanIn"
+          },
+          "storey_height_m": {
+            "$ref": "#/components/schemas/SpanIn"
+          },
+          "wall_share": {
+            "$ref": "#/components/schemas/SpanIn"
+          }
+        },
+        "required": [
+          "storey_height_m",
+          "wall_share",
+          "attic_share",
+          "attique_share"
+        ],
+        "title": "AnalysisParametersIn",
+        "type": "object"
+      },
+      "AnalysisParametersOut": {
+        "properties": {
+          "attic_share": {
+            "$ref": "#/components/schemas/SpanOut"
+          },
+          "attique_share": {
+            "$ref": "#/components/schemas/SpanOut"
+          },
+          "storey_height_m": {
+            "$ref": "#/components/schemas/SpanOut"
+          },
+          "wall_share": {
+            "$ref": "#/components/schemas/SpanOut"
+          }
+        },
+        "required": [
+          "storey_height_m",
+          "wall_share",
+          "attic_share",
+          "attique_share"
+        ],
+        "title": "AnalysisParametersOut",
+        "type": "object"
+      },
+      "AnalysisPartOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded"
+          },
+          "floor_area": {
+            "$ref": "#/components/schemas/AnalysisFloorAreaOut"
+          },
+          "footprint": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AnalysisFootprintOut"
+            },
+            "propertyNames": {
+              "enum": [
+                "lenient",
+                "strict"
+              ]
+            },
+            "title": "Footprint",
+            "type": "object"
+          },
+          "storeys": {
+            "$ref": "#/components/schemas/AnalysisStoreysOut"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "area_m2",
+          "footprint",
+          "storeys",
+          "floor_area"
+        ],
+        "title": "AnalysisPartOut",
+        "type": "object"
+      },
+      "AnalysisStoreysOut": {
+        "properties": {
+          "citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "full_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Max"
+          },
+          "full_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Min"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "source": {
+            "enum": [
+              "storeys",
+              "eave",
+              "parapet",
+              "ridge",
+              "unknown"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "top": {
+            "enum": [
+              "none",
+              "attic",
+              "attique"
+            ],
+            "title": "Top",
+            "type": "string"
+          },
+          "top_certain": {
+            "title": "Top Certain",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "top",
+          "top_certain",
+          "source",
+          "status",
+          "notes"
+        ],
+        "title": "AnalysisStoreysOut",
+        "type": "object"
+      },
       "ArchitectEdgeIn": {
         "properties": {
           "kind": {
@@ -373,7 +813,9 @@
             "enum": [
               "PLU",
               "PLUi",
-              "PSMV"
+              "PSMV",
+              "lotissement",
+              "cahier_des_charges"
             ],
             "title": "Du Type",
             "type": "string"
@@ -2919,6 +3361,116 @@
         "title": "FlagOut",
         "type": "object"
       },
+      "FloorAreaTotalOut": {
+        "properties": {
+          "capped": {
+            "title": "Capped",
+            "type": "boolean"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "high_m2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High M2"
+          },
+          "low_m2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low M2"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "complete",
+          "capped",
+          "reasons"
+        ],
+        "title": "FloorAreaTotalOut",
+        "type": "object"
+      },
+      "FootprintCandidateOut": {
+        "properties": {
+          "citation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CitationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "enum": [
+              "contour",
+              "ratio",
+              "absolute"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "value_m2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value M2"
+          }
+        },
+        "required": [
+          "source",
+          "status"
+        ],
+        "title": "FootprintCandidateOut",
+        "type": "object"
+      },
+      "FootprintTotalOut": {
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "value_m2": {
+            "title": "Value M2",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value_m2",
+          "complete"
+        ],
+        "title": "FootprintTotalOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -3696,6 +4248,49 @@
           "candidates"
         ],
         "title": "LookupOut",
+        "type": "object"
+      },
+      "LotChoiceIn": {
+        "description": "Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). Ohne Lot gilt das Dokument als\nGanzes (`Ensemble`); ein Seitenbereich ersetzt das ganze Dokument, z. B. über 150 Seiten.",
+        "properties": {
+          "first_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Page"
+          },
+          "last_page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Page"
+          },
+          "lot": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9A-Za-z][0-9A-Za-z_\\-]{0,15}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lot"
+          }
+        },
+        "title": "LotChoiceIn",
         "type": "object"
       },
       "ManualEdgeIn": {
@@ -5385,7 +5980,8 @@
               "annex",
               "planting",
               "fence",
-              "text_only"
+              "text_only",
+              "max_area"
             ],
             "title": "Kind",
             "type": "string"
@@ -5520,7 +6116,10 @@
             "$ref": "#/components/schemas/RegulationDocumentOut"
           },
           "role": {
-            "const": "plu",
+            "enum": [
+              "plu",
+              "supplement"
+            ],
             "title": "Role",
             "type": "string"
           },
@@ -6002,6 +6601,67 @@
         "title": "RotationAreaOut",
         "type": "object"
       },
+      "RuleComparisonOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": {
+              "enum": [
+                "stricter",
+                "looser",
+                "equal",
+                "different"
+              ],
+              "type": "string"
+            },
+            "title": "Details",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "plu": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LimitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "supplement": {
+            "$ref": "#/components/schemas/LimitOut"
+          },
+          "verdict": {
+            "enum": [
+              "stricter",
+              "looser",
+              "equal",
+              "mixed",
+              "different",
+              "only_supplement",
+              "no_own_rule",
+              "unknown"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "verdict",
+          "supplement",
+          "details"
+        ],
+        "title": "RuleComparisonOut",
+        "type": "object"
+      },
       "RuleDetailOut": {
         "properties": {
           "alternatives": {
@@ -6171,7 +6831,8 @@
               "annex",
               "planting",
               "fence",
-              "text_only"
+              "text_only",
+              "max_area"
             ],
             "title": "Kind",
             "type": "string"
@@ -7007,6 +7668,42 @@
         "title": "SiteReviewItem",
         "type": "object"
       },
+      "SpanIn": {
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low",
+          "high"
+        ],
+        "title": "SpanIn",
+        "type": "object"
+      },
+      "SpanOut": {
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low",
+          "high"
+        ],
+        "title": "SpanOut",
+        "type": "object"
+      },
       "StaffInfo": {
         "properties": {
           "display_name": {
@@ -7400,6 +8097,78 @@
           "included"
         ],
         "title": "SummaryOptionOut",
+        "type": "object"
+      },
+      "SupplementAnalysisOut": {
+        "properties": {
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/RuleComparisonOut"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "du_type": {
+            "title": "Du Type",
+            "type": "string"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/LimitOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "lot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lot"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updating": {
+            "title": "Updating",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "document_id",
+          "title",
+          "du_type",
+          "status",
+          "updating",
+          "comparisons",
+          "hints"
+        ],
+        "title": "SupplementAnalysisOut",
         "type": "object"
       },
       "TerrainOut": {
@@ -11350,6 +12119,146 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/analysis": {
+      "get": {
+        "description": "Bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne und Vergleich der Zusatzdokumente.",
+        "operationId": "get_analysis_api_v1_projects__project_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/analysis/parameters": {
+      "delete": {
+        "description": "Zurück auf die Vorgaben.",
+        "operationId": "reset_analysis_parameters_api_v1_projects__project_id__analysis_parameters_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Analysis Parameters",
+        "tags": [
+          "analysis"
+        ]
+      },
+      "put": {
+        "description": "Annahmen des Projekts ändern (E-AN3-1); jede als Bereich innerhalb ihrer Grenzen.",
+        "operationId": "set_analysis_parameters_api_v1_projects__project_id__analysis_parameters_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisParametersIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Analysis Parameters",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
     "/api/v1/projects/{project_id}/catalog/options": {
       "get": {
         "description": "Linien und Optionen des gewählten Typs mit Preis, Zustand und Gründen (Plan H3 4.3).",
@@ -12191,7 +13100,7 @@
         ]
       },
       "post": {
-        "description": "règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im\nJob `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.",
+        "description": "règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im\nJob `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.\nMit `du_type` `lotissement` oder `cahier_des_charges` ein Zusatzdokument (AN3), höchstens drei.",
         "operationId": "upload_project_regulation_api_v1_projects__project_id__regulations_post",
         "parameters": [
           {
@@ -12285,6 +13194,70 @@
           }
         },
         "summary": "Remove Project Regulation",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/regulations/{document_id}/lot": {
+      "put": {
+        "description": "Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). **Kostet** wie die Zonenwahl:\nplant die Auswertung des Dokuments ein, wenn ein neues Lot dazukommt.",
+        "operationId": "choose_regulation_lot_api_v1_projects__project_id__regulations__document_id__lot_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LotChoiceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRegulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Choose Regulation Lot",
         "tags": [
           "rules"
         ]

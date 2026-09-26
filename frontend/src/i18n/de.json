@@ -23,7 +23,7 @@
     "step": {
       "site": {
         "title": "Parzelle einbringen",
-        "text": "Mit Bemaßung zeichnen oder als DXF oder GeoJSON hochladen."
+        "text": "Mit Bemaßung zeichnen oder als DXF, GeoJSON oder PDF hochladen."
       },
       "rules": {
         "title": "Regelwerk hochladen",
@@ -34,7 +34,7 @@
         "text": "Höhen, Abstände und Flächen mit Bericht und Ausgabe ins CAD."
       }
     },
-    "soon": "Parzelle und Bebauungsplan kommen schon herein, der Baurahmen steht; Nutzfläche, Bericht und CAD-Ausgabe folgen.",
+    "soon": "Parzelle, Bebauungsplan und Zusatzdokumente kommen herein; Baurahmen, bindende Grundfläche, Geschosse und Nutzfläche stehen. Bericht und CAD-Ausgabe folgen.",
     "login": {
       "intro": "Der Zugang gilt für Mitarbeitende des Büros; die Anmeldung läuft über den Identitätsdienst.",
       "denied": {
@@ -180,7 +180,167 @@
         "interrupted": "Das Lesen wurde unterbrochen. Bitte das PDF erneut hochladen."
       }
     },
-    "envelope": "Baurahmen"
+    "envelope": "Baurahmen",
+    "supplement": {
+      "title": "Zusatzdokumente",
+      "intro": "Règlement de lotissement oder cahier des charges, die neben dem Bebauungsplan gelten. Ihre Regeln erscheinen neben denen des PLU; das Strengere bindet, sofern das Dokument gilt.",
+      "add": "Zusatzdokument hochladen",
+      "limit": "Höchstens drei Zusatzdokumente je Projekt.",
+      "file": "Zusatzdokument (PDF)",
+      "titleHint": "z. B. Règlement du lotissement Les Chênes",
+      "type": {
+        "lotissement": "Règlement de lotissement",
+        "cahier_des_charges": "Cahier des charges"
+      },
+      "reading": "Das Dokument wird gelesen …",
+      "removeConfirm": "Zusatzdokument von diesem Projekt lösen? Das Dokument bleibt für andere Projekte erhalten.",
+      "lot": "Lot des Grundstücks (optional)",
+      "lotHint": "z. B. 12",
+      "lotExplain": "Wie im Dokument bezeichnet. Leer lassen, wenn das Dokument keine Lots unterscheidet.",
+      "lotLabel": "Lot {{lot}}",
+      "whole": "ganzes Dokument",
+      "manual": "Nur einen Seitenbereich auswerten (nötig über 150 Seiten)",
+      "costHint": "Die Auswertung kostet einmal je Dokument und Lot; ein weiteres Lot wertet das Dokument neu aus.",
+      "choose": "Lot übernehmen und auswerten",
+      "change": "Lot ändern",
+      "notApplied": "Nicht in Regeln, Baurahmen und Analyse eingerechnet. Ob das Dokument gilt – ein règlement de lotissement verliert zehn Jahre nach der Genehmigung seine Wirkung, wenn ein PLU gilt (L.442-9); ein cahier des charges bindet privatrechtlich –, beurteilen Sie.",
+      "updating": "Eine neue Auswertung läuft; bis dahin gelten diese Werte.",
+      "comparison": "Vergleich von {{title}} mit dem Bebauungsplan",
+      "plu": "Bebauungsplan",
+      "document": "Zusatzdokument",
+      "verdictColumn": "Einordnung",
+      "noRule": "keine Regel",
+      "verdict": {
+        "stricter": "strenger als der PLU",
+        "looser": "weniger streng – der PLU bindet",
+        "equal": "gleich",
+        "mixed": "teils strenger, teils weniger streng",
+        "different": "abweichend, nicht vergleichbar",
+        "only_supplement": "nur im Zusatzdokument",
+        "no_own_rule": "keine eigene Regel – der PLU gilt",
+        "unknown": "nicht ermittelt"
+      },
+      "error": {
+        "too_many_supplements": "Höchstens drei Zusatzdokumente je Projekt.",
+        "document_type_conflict": "Dieses PDF ist schon als Bebauungsplan hochgeladen.",
+        "chapter_too_long": "Das Dokument hat mehr als 150 Seiten; bitte einen Seitenbereich angeben."
+      }
+    },
+    "analysis": {
+      "title": "Analyse für den Entwurf",
+      "unavailable": "Die Analyse braucht den Baurahmen: Parzelle mit Kanten und einen ausgewerteten Bebauungsplan.",
+      "inProgress": "Die Regeln werden noch ausgewertet; danach erscheint die Analyse.",
+      "supplementStricter": "Ein Zusatzdokument ist strenger bei: {{kinds}}. In diesen Werten nicht eingerechnet – siehe Zusatzdokumente.",
+      "derivation": "Herleitung für Zone {{zone}}",
+      "footprint": {
+        "title": "Bindende Grundfläche",
+        "binding": {
+          "contour": "die bebaubare Fläche bindet",
+          "ratio": "die Grundflächenzahl bindet",
+          "absolute": "die Höchstfläche bindet"
+        },
+        "upperBound": "höchstens – Grundflächenzahl nicht ermittelt"
+      },
+      "storeys": {
+        "title": "Vollgeschosse",
+        "unknown": "nicht ermittelt",
+        "top": {
+          "attic": "+ Dachgeschoss",
+          "atticPossible": "+ Dachgeschoss möglich",
+          "attique": "+ Attikageschoss"
+        },
+        "source": {
+          "storeys": "laut Geschossangabe des Plans",
+          "eave": "aus der Traufhöhe",
+          "parapet": "aus der Attikahöhe",
+          "ridge": "nur aus der Firsthöhe – Dachform offen",
+          "unknown": "Höhe nicht ermittelt"
+        },
+        "note": {
+          "storeys_exceed_eave": "Die Geschosszahl passt mit der kleinsten Geschosshöhe nicht unter die Traufhöhe.",
+          "roof_form_open": "Unten mit geneigtem Dach, oben mit Flachdach bis zur Firsthöhe gerechnet.",
+          "height_without_value": "Die Höhenregel nennt keinen Wert."
+        }
+      },
+      "floorArea": {
+        "title": "Nutzfläche (SDP)",
+        "unknown": "nicht ermittelt",
+        "hint": "Spanne aus Grundfläche, Geschossen und Annahmen – kein Aufmaß",
+        "capped": "die Höchstfläche (SDP) des Plans bindet",
+        "upperBound": "Obergrenze – nicht alle Eingangswerte ermittelt",
+        "cap": "Obergrenze laut Plan {{value}} m²"
+      },
+      "reason": {
+        "height_unknown": "Höhe nicht ermittelt",
+        "footprint_unknown": "Grundfläche nicht ermittelt",
+        "footprint_ratio_unknown": "Grundflächenzahl nicht ermittelt",
+        "contour_incomplete": "nicht jeder Abstand ermittelt",
+        "zone_rules_unavailable": "Zone ohne Regeln",
+        "zone_rules_in_progress": "Regeln der Zone werden ausgewertet"
+      },
+      "candidate": {
+        "title": "Grundfläche",
+        "contour": "Bebaubare Fläche (Baurahmen)",
+        "ratio": "Grundflächenzahl",
+        "absolute": "Höchstfläche",
+        "binds": "bindet",
+        "envelope": "Baurahmen",
+        "status": {
+          "missing": "keine Regel",
+          "unknown": "nicht ermittelt",
+          "not_regulated": "nicht geregelt"
+        }
+      },
+      "reading": {
+        "strict": "engste Auslegung",
+        "lenient": "weiteste Auslegung"
+      },
+      "notCounted": {
+        "title": "Nicht gerechnet",
+        "stairs_lifts": "Treppen- und Aufzugsöffnungen",
+        "low_height": "Flächen unter 1,80 m Lichthöhe (nur über den Anteil des Dachgeschosses angenähert)",
+        "parking": "Stellplätze und Rampen im Gebäude",
+        "attic_unusable": "nicht ausbaufähige Dachräume",
+        "technical_cellars": "Technik- und Kellerräume",
+        "collective_ten_percent": "Abzug von 10 % bei Erschließung über gemeinsame Innenflure",
+        "embrasures": "Laibungen von Türen und Fenstern",
+        "boundary_height": "Höhenbegrenzung beim Bauen auf der Grenze",
+        "upper_setbacks": "höhenabhängige Abstände der oberen Geschosse (Gabarit)"
+      },
+      "assumptions": {
+        "title": "Annahmen",
+        "custom": "geändert",
+        "intro": "Das untere Ende der Nutzfläche rechnet mit der ungünstigen, das obere mit der günstigen Seite jeder Annahme.",
+        "storey_height_m": "Geschosshöhe Boden bis Boden (m)",
+        "wall_share": "Außenwandabzug (%)",
+        "attic_share": "Anrechenbarer Anteil des Dachgeschosses (%)",
+        "attique_share": "Anteil eines Attikageschosses (%)",
+        "low": "von",
+        "high": "bis",
+        "default": "Vorgabe {{low}} – {{high}}",
+        "invalid": "Bitte gültige Bereiche angeben (von ≤ bis, innerhalb der üblichen Grenzen).",
+        "save": "Annahmen übernehmen",
+        "reset": "Vorgaben wiederherstellen"
+      }
+    },
+    "distance": {
+      "title": "Abstände je Grenze",
+      "unknown": "nicht ermittelt",
+      "notRegulated": "nicht geregelt – kein Mindestabstand",
+      "alignment": "an der Flucht der Nachbarbebauung",
+      "fixed": "genau {{value}}",
+      "range": "zwischen {{min}} und {{max}}",
+      "rangeBuilding": "zwischen {{min}} und {{max}} (ganzer Baukörper im Band)",
+      "rangeFacade": "zwischen {{min}} und {{max}} (Straßenfassade im Band)",
+      "min": "mindestens {{value}}",
+      "factor": "{{factor}} ({{basis}})",
+      "atLeast": "mindestens {{value}}",
+      "atHeight": "bei {{height}} Höhe also {{value}}",
+      "heightUnknown": "Höhe nicht ermittelt",
+      "onBoundary": "auf der Grenze zulässig",
+      "onBoundaryHeight": "auf der Grenze zulässig bis {{value}} Höhe",
+      "otherwise": "{{first}}, sonst {{second}}"
+    }
   },
   "site": {
     "disabled": {
@@ -450,7 +610,8 @@
       "annex": "Nebengebäude",
       "planting": "Bepflanzung",
       "fence": "Einfriedung",
-      "text_only": "Hinweis"
+      "text_only": "Hinweis",
+      "max_area": "Höchstflächen"
     },
     "building": {
       "main": "Hauptgebäude",
@@ -488,7 +649,9 @@
       "onBoundaryHeight": "auf der Grenze höchstens {{value}} hoch",
       "fromRoofEdge": "ab Dachkante gemessen",
       "fromProjection": "ab äußerstem Bauteil gemessen",
-      "minDimensions": "Maße {{value}}"
+      "minDimensions": "Maße {{value}}",
+      "sdpMax": "Nutzfläche (SDP) ≤ {{value}} m²",
+      "footprintMax": "Grundfläche ≤ {{value}} m²"
     },
     "roofForm": {
       "gable": "Satteldach",
@@ -563,7 +726,7 @@
     "notices": {
       "simulation": "Die Regeln sind eine automatische, ungeprüfte Simulation und keine Bauauskunft. Verbindlich ist allein das Certificat d'urbanisme der Gemeinde.",
       "lotissement": "Liegt das Grundstück in einem Lotissement, gelten zusätzliche Regeln, die hier nicht berücksichtigt sind.",
-      "upload": "Ausgewertet ist nur das hochgeladene règlement écrit. Zonenplan, überlagernde Vorgaben, Servituden und Zusatzdokumente (Lotissement, cahier des charges) sind nicht berücksichtigt."
+      "upload": "Ausgewertet ist nur das hochgeladene règlement écrit. Zonenplan, überlagernde Vorgaben und Servituden sind nicht berücksichtigt; Zusatzdokumente (Lotissement, cahier des charges) erscheinen nur im Vergleich der Analyse, nicht in Regeln und Baurahmen."
     },
     "uploaded": "{{title}}, hochgeladen"
   },
@@ -815,7 +978,8 @@
       "text_only": "Vorgabe",
       "footprint_max_m2": "Höchste Grundfläche",
       "unsealed_min_m2": "Freifläche mindestens",
-      "full_soil_min_m2": "Unversiegelt mindestens"
+      "full_soil_min_m2": "Unversiegelt mindestens",
+      "max_area": "Höchstflächen"
     },
     "edge": {
       "street": "Grenze zur Straße {{seq}}",

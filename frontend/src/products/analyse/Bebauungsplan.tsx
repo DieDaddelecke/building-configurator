@@ -5,28 +5,29 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import {
   chosenChapter,
+  pluOf,
   useChooseZone,
   useProjectRegulations,
   useRefreshWhenStateChanges,
   useRemoveRegulation,
   useUploadRegulation,
   type DocumentChapterOut,
+  type PluDuType,
   type ProjectRegulationOut,
-  type UploadDuType,
   type ZoneChoiceIn,
 } from "../../api/regulations";
 import { formatNumber } from "../../site/geo";
 
-const DU_TYPES: UploadDuType[] = ["PLU", "PLUi", "PSMV"];
+const DU_TYPES: PluDuType[] = ["PLU", "PLUi", "PSMV"];
 
-function fehlerText(t: TFunction, error: unknown): string | null {
+export function fehlerText(t: TFunction, error: unknown, prefix = "analyse.plu"): string | null {
   if (!error) return null;
   const code = error instanceof ApiError ? error.problem.code : "";
-  return t([`analyse.plu.error.${code}`, "error.generic"]);
+  return t([`${prefix}.error.${code}`, `analyse.plu.error.${code}`, "error.generic"]);
 }
 
 /** Grund eines gescheiterten Lesens oder einer gescheiterten Auswertung in Worten des Büros. */
-function grund(t: TFunction, reason: string | null): string {
+export function grund(t: TFunction, reason: string | null): string {
   if (!reason) return "";
   if (reason.startsWith("interrupted")) return t("analyse.plu.error.interrupted");
   return t([`analyse.plu.reason.${reason}`, `analyse.plu.error.${reason}`, "analyse.plu.reason.other"], { reason });
@@ -37,8 +38,9 @@ export function Bebauungsplan({ projectId }: { projectId: string }) {
   const { t } = useTranslation();
   const regulations = useProjectRegulations(projectId);
   const [neu, setNeu] = useState(false);
-  const regulation = regulations.data?.[0];
-  useRefreshWhenStateChanges(projectId, regulation);
+  const regulation = pluOf(regulations.data);
+  // Für alle Dokumente, auch die Zusatzdokumente: Regeln, Baurahmen und Analyse hängen daran
+  useRefreshWhenStateChanges(projectId, regulations.data);
 
   return (
     <section aria-labelledby="bebauungsplan" className="karte p-5 flex flex-col gap-4">
@@ -60,7 +62,7 @@ function PluHochladen({ projectId, onDone, onCancel }: { projectId: string; onDo
   const typeId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [duType, setDuType] = useState<UploadDuType>("PLU");
+  const [duType, setDuType] = useState<PluDuType>("PLU");
   const upload = useUploadRegulation(projectId);
   const fehler = fehlerText(t, upload.error);
 
@@ -94,7 +96,7 @@ function PluHochladen({ projectId, onDone, onCancel }: { projectId: string; onDo
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={typeId}>{t("analyse.plu.duType")}</label>
-          <select id={typeId} className="field" value={duType} onChange={(event) => setDuType(event.target.value as UploadDuType)}>
+          <select id={typeId} className="field" value={duType} onChange={(event) => setDuType(event.target.value as PluDuType)}>
             {DU_TYPES.map((value) => (
               <option key={value} value={value}>
                 {value}
@@ -209,14 +211,23 @@ function Dokument({
   );
 }
 
-function Auswertung({ regulation, kapitel }: { regulation: ProjectRegulationOut; kapitel: DocumentChapterOut }) {
+/** Stand der Auswertung eines gewählten Kapitels mit Aufrufen und Kosten; `titel` ersetzt „Zone … · Kapitel …“. */
+export function Auswertung({
+  regulation,
+  kapitel,
+  titel,
+}: {
+  regulation: ProjectRegulationOut;
+  kapitel: DocumentChapterOut;
+  titel?: string;
+}) {
   const { t, i18n } = useTranslation();
   const laeuft = kapitel.status === "pending" || kapitel.status === "extracting";
   return (
     <div className="flex flex-col gap-1" role="status">
       <p className="m-0">
         <span className="font-medium t-ink">
-          {t("analyse.plu.zone", { zone: regulation.zone_code, chapter: kapitel.code })}
+          {titel ?? t("analyse.plu.zone", { zone: regulation.zone_code, chapter: kapitel.code })}
         </span>
         <span className="t-mute">
           {" "}

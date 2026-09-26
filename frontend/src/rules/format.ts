@@ -119,6 +119,11 @@ function values(rule: RuleOut, t: TFunction, language: string): string {
       ]);
     case "fence":
       return join([p.max_height_m != null && `≤ ${metres(p.max_height_m, language)}`, list(p.materials, t, "rules.material")]);
+    case "max_area":
+      return join([
+        p.sdp_m2 != null && t("rules.value.sdpMax", { value: num(p.sdp_m2, language, 0) }),
+        p.footprint_m2 != null && t("rules.value.footprintMax", { value: num(p.footprint_m2, language, 0) }),
+      ]);
     default:
       return String(p.summary ?? "");
   }

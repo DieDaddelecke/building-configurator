@@ -22,7 +22,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 |---|---|---|---|---|---|
 | P | 0001 | – | `mail_send`, `retention_cleanup` (täglich), `housekeeping` (stündlich) | SMTP-Anbieter (E2) | `staff-add` (3), SMTP (5) |
 | G1 | 0002, 0006, 0012 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
-| G2 | 0003, 0004, 0013 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich), `rules_document_read` (nur Analyse-Produkt, 15) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
+| G2 | 0003, 0004, 0013, 0014 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich), `rules_document_read` (nur Analyse-Produkt, 15) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
 | G3 | 0005 | `envelope_simulation` | `envelope_sheet` | – | WeasyPrint im Image (10) |
 | H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
 | A | 0008 | `inquiry` | `mail_send` | – | Büro-Postfach, `legal-seed` (11) |
@@ -118,7 +118,7 @@ Die Tabelle gilt für den Hauskonfigurator. Aus demselben Code läuft mit `EMPRI
 
 **Einrichten und Freischalten**
 
-1. Schlüssel der Claude API und Monatsbudget setzen: `EMPRISE_ANTHROPIC_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). An die API gehen nur öffentliche Planunterlagen (L8).
+1. Schlüssel der Claude API und Monatsbudget setzen: `EMPRISE_ANTHROPIC_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). Budget entschieden am 25.09.2026: **150 $ je Stack und Monat** auf Unraid, lokal 20 $ (Vorgaben in `.env.example`, `.env.analyse.example` und den Compose-Dateien). Den Schlüssel trägt der Nutzer selbst ein. An die API gehen nur öffentliche Planunterlagen (L8).
 2. Planstände importiert der Worker beim ersten Start und danach wöchentlich (`plu_import`); sofort: `python -m app.cli plu-import` (ohne Internet: `--from-dir`). Jedes Zonenkapitel wird danach als Job `rules_extract` ausgewertet.
 3. Flag und ausgehender Zugang: Tabelle in Abschnitt 1.
 
@@ -159,7 +159,7 @@ Der Baurahmen wird bei jedem Abruf aus Grundstück und Regeln gerechnet und nich
 **Fläche wirkt zu groß oder zu klein**
 
 - `strict.complete = false` mit `incomplete_reasons` nennt die Kante, deren Abstand fehlt. Ursache ist eine Regel mit Status `unknown` in G2; Abhilfe: Kapitel erneut auswerten oder Korrektur für die Zone (Abschnitt 9).
-- `band_unclear`: Das Modell hat nicht gesagt, ob das Bauband für den ganzen Baukörper gilt. Nach einer erneuten Auswertung mit `PROMPT_VERSION g2-prompt-3` ist der Parameter gesetzt.
+- `band_unclear`: Das Modell hat nicht gesagt, ob das Bauband für den ganzen Baukörper gilt. Nach einer erneuten Auswertung ab `PROMPT_VERSION g2-prompt-3` (heute `g2-prompt-4`, ANNAHMEN EA06) ist der Parameter gesetzt.
 - `zones_without_rules`: Eine Teilfläche ohne ausgewertete Regeln bleibt bewusst leer (BR04).
 
 **Steckbrief scheitert**
@@ -286,14 +286,14 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 - `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
 - Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.
 
-## 15. Zweites Produkt: Emprise Analyse (AN0–AN2)
+## 15. Zweites Produkt: Emprise Analyse (AN0–AN3)
 
-Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16 und PU01–PU10). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto) und **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen). Analyse und Nutzfläche (AN3), Regelformular und Zusatzdokumente (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
+Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16, PU01–PU10 und EA01–EA12). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) und **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich). Gabarit und Schnitt (RA2), Regelformular (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
 
 | | Hauskonfigurator | Emprise Analyse |
 |---|---|---|
 | `EMPRISE_PRODUCT` | `configurator` (Standard) | `analyse` |
-| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (91 Operationen im OpenAPI-Dokument, Stand AN2) | nur Kern: Plattform, G1, G2, G3 (51 Operationen) |
+| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (95 Operationen im OpenAPI-Dokument des Stacks, Stand AN3) | Kern (Plattform, G1, G2, G3) + Analyse (58 Operationen) |
 | Periodische Aufgaben | alle sechs | ohne `cadastre_import` und `plu_import` (D17: der Nutzer lädt hoch) |
 | Oberfläche | `index.html` | `analyse.html` über `SPA_INDEX` im Web-Container |
 | Datenbank, Speicher, Sicherung, Hostname, Authentik | eigene | eigene (E-A4) |
@@ -337,6 +337,15 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - **`document_no_text`:** mehr als die Hälfte der Seiten ohne Textschicht, meist ein Scan. Ein PDF mit Textschicht besorgen (Géoportail de l'Urbanisme, Gemeinde); OCR gibt es nicht (RW03).
 - **Kein Kapitel erkannt:** Der Architekt gibt den Seitenbereich von Hand an (Kapitel, optional allgemeine Bestimmungen). Mehrbändige Reglements (allgemeine Bestimmungen in eigener Datei) vorher zu einem PDF verbinden.
 - **Kapitel gescheitert:** Gründe und Wiederaufnahme wie in 9 (`not_configured`, `budget_exceeded` … nimmt `rules_housekeeping` von selbst wieder auf).
+
+**Analyse und Zusatzdokumente (AN3)**
+
+- Migration **0014**: Rolle `supplement` in `project_regulation`, Tabelle `analysis_parameters` (Annahmen je Projekt, gelöscht mit dem Projekt). Keine neuen Jobs, Flags oder Dienste; Zusatzdokumente laufen durch `rules_document_read` und `rules_extract` wie ein PLU.
+- **Kosten:** Das Lot eines Zusatzdokuments zu wählen kostet wie eine Zonenwahl (ein Kapitel `DOC`, Größenordnung 1 $ bei wenigen Seiten); ein weiteres Lot desselben Dokuments wertet es neu aus (E-AN3-4). Monatsbudget und Zählung gemeinsam mit den PLU-Kapiteln. Ohne Schlüssel steht das Lot auf „nicht eingerichtet“ wie ein Kapitel.
+- **Prompt:** Seit AN3 kennt der PLU-Prompt die Regelart `max_area` (`g2-prompt-4`); mit dem Schlüssel werden alle Kapitel ohnehin neu ausgewertet (9). Zusatzdokumente haben einen eigenen Prompt mit eigener Prüfsumme.
+- **Über 150 Seiten:** Die Lotwahl antwortet `422 chapter_too_long`; einen Seitenbereich angeben.
+- **Grenzen:** höchstens drei Zusatzdokumente je Projekt; dasselbe PDF nicht zugleich als PLU und als Zusatzdokument (`409 document_type_conflict`). Die Analyse rechnet Zusatzdokumente nicht ein (E-AN3-2).
+- **Annahmen zurücksetzen** ohne Oberfläche: `DELETE FROM analysis_parameters WHERE project_id = …`.
 
 **Störungen beim Hochladen einer Parzelle**
 

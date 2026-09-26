@@ -27,6 +27,8 @@ from app.rules.domain.extraction import (
     parse_output,
     parse_verification,
     prompt_fingerprint,
+    system_prompt,
+    user_instruction,
 )
 from app.rules.domain.kinds import MANDATORY_KINDS, ParamProblem, params_equal, validate_params
 from app.rules.domain.text import normalize, states_not_regulated, values_in_quote, verify_quote
@@ -413,6 +415,34 @@ def test_sector_names_are_matched_without_case_and_prefix() -> None:
     assert match_sector("secteur UH", ["Uh", "Uha"]) == "Uh"
     assert match_sector("Uba", ["Ub", "Uba"]) == "Uba"
     assert match_sector("uB", ["Ub", "UB"]) is None  # nicht eindeutig
+
+
+def test_lots_of_supplements_are_matched_without_separators() -> None:
+    """Zusatzdokumente (AN3): Das Modell schreibt „Lot 12“, angefragt ist `Lot-12`."""
+    assert match_sector("Lot 12", ["Lot-12", "Lot-7"]) == "Lot-12"
+    assert match_sector("lot n°12", ["Lot-12"]) is None
+    assert match_sector("Ensemble", ["Ensemble", "Lot-12"]) == "Ensemble"
+
+
+def test_max_area_needs_a_value_within_bounds() -> None:
+    assert validate_params("max_area", {"sdp_m2": 180.0}) == {"sdp_m2": 180.0}
+    with pytest.raises(ParamProblem) as empty:
+        validate_params("max_area", {})
+    assert empty.value.reason == "invalid_params"
+    with pytest.raises(ParamProblem) as implausible:
+        validate_params("max_area", {"footprint_m2": 2.0})
+    assert implausible.value.reason == "implausible"
+
+
+def test_supplement_prompt_is_separate_and_knows_lots() -> None:
+    assert "max_area" in OUTPUT_SCHEMA["properties"]["rules"]["items"]["properties"]["kind"]["enum"]
+    assert "max_area: sdp_m2" in system_prompt("plu")
+    assert "règlement de lotissement" in system_prompt("supplement")
+    assert "max_area: sdp_m2" in system_prompt("supplement")
+    assert prompt_fingerprint("supplement") != prompt_fingerprint("plu")
+    instruction = user_instruction(["Lot-12"], "DOC", [], [1, 2, 3], "supplement")
+    assert instruction.startswith("Requested lots: Lot-12.") and "pages 1–3" in instruction
+    assert user_instruction(["Uh"], "Uh", [1], [2]).startswith("Zone chapter: Uh.")
 
 
 def test_verification_agreement_disagreement_and_missing() -> None:

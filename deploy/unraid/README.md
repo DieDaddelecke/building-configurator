@@ -5,7 +5,7 @@ Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026). Zwei
 | Stack | Ordner | Adresse | Port auf Unraid |
 |---|---|---|---|
 | Emprise | `deploy/unraid` | `https://building-configurator.aslani.work` (vorläufig) | 8480 → `web` |
-| Authentik | `deploy/unraid/authentik` | z. B. `https://auth.aslani.work` | 9000 → `server` |
+| Authentik | `deploy/unraid/authentik` | `https://auth.aslani.work` (entschieden 25.09.2026) | 9000 → `server` |
 
 Nur diese beiden Ports bekommt der Reverse Proxy. Datenbank, Speicher und API haben keine Ports nach außen.
 
@@ -26,7 +26,7 @@ Zwei Einträge im Reverse Proxy, beide mit TLS-Zertifikat:
 | `building-configurator.aslani.work` | `http://<Unraid-IP>:8480` | `X-Forwarded-For` und `X-Forwarded-Proto` setzen |
 | `auth.aslani.work` | `http://<Unraid-IP>:9000` | Websockets erlauben |
 
-**Cloudflare:** `aslani.work` liegt bei Cloudflare. Ist ein Eintrag „proxied“ (orange Wolke) oder läuft ein Tunnel, sieht Cloudflare den gesamten Verkehr im Klartext, auch Anmeldedaten und später Kundendaten. Das widerspricht Leitplanke L8 und Plan 6.9 (keine US-Anbieter im Datenweg). Für die Beta: Einträge nur als DNS („DNS only“, graue Wolke) und TLS am eigenen Reverse Proxy. Bleibt der Cloudflare-Proxy, muss der Reverse Proxy die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
+**Cloudflare:** `aslani.work` liegt bei Cloudflare. Ist ein Eintrag „proxied“ (orange Wolke) oder läuft ein Tunnel, sieht Cloudflare den gesamten Verkehr im Klartext, auch Anmeldedaten und später Kundendaten. Das widerspricht Leitplanke L8 und Plan 6.9 (keine US-Anbieter im Datenweg). Für die Beta: Einträge nur als DNS („DNS only“, graue Wolke) und TLS am eigenen Reverse Proxy – **entschieden am 25.09.2026** für alle Einträge von Emprise und Authentik. Bliebe der Cloudflare-Proxy, müsste der Reverse Proxy die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
 
 **Erreichbarkeit aus dem Container:** Die API ruft Authentik über die öffentliche Adresse auf (`OIDC_ISSUER`). Unterstützt der Router keinen Zugriff von innen auf die eigene öffentliche Adresse, Datei `compose.override.yaml` neben `compose.yaml` anlegen:
 

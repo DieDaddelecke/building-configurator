@@ -12,6 +12,7 @@ export const LIMIT_ORDER = [
   "max_height",
   "max_footprint_ratio",
   "footprint_max_m2",
+  "max_area",
   "setback_street",
   "setback_side",
   "setback_rear",

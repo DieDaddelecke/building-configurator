@@ -106,6 +106,7 @@ const OVERRIDE_KINDS = [
   "setback_side",
   "setback_rear",
   "max_footprint_ratio",
+  "max_area",
   "max_height",
   "roof",
   "facade",

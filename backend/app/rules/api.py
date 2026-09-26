@@ -5,7 +5,8 @@ Büro: Abdeckung und Regelwerke lesen (`architect`, `rules_admin`, `ops`), Korre
 `rules_admin`), Import und erneute Auswertung (`ops`, `rules_admin`). Keine dieser Büroaktionen ist
 Voraussetzung für die Simulation beim Kunden (D11).
 „Emprise Analyse“ (AN2): Der Architekt lädt für eigene Projekte ein règlement écrit hoch und wählt die
-Zone (`require_owned_project`); die Datei liefert `GET /regulation-files/{id}` für die Zitate aus.
+Zone (`require_owned_project`); die Datei liefert `GET /regulation-files/{id}` für die Zitate aus. Seit
+AN3 auch Zusatzdokumente mit Lotwahl.
 """
 
 import uuid
@@ -32,6 +33,7 @@ from app.rules import documents, service
 from app.rules.schemas import (
     CoverageOut,
     ExtractIn,
+    LotChoiceIn,
     ProjectOverrideIn,
     ProjectOverrideOut,
     ProjectRegulationOut,
@@ -188,7 +190,8 @@ async def upload_project_regulation(
     db: Session = Depends(get_db),
 ) -> ProjectRegulationOut:
     """règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im
-    Job `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts."""
+    Job `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.
+    Mit `du_type` `lotissement` oder `cahier_des_charges` ein Zusatzdokument (AN3), höchstens drei."""
     settings = get_settings()
     rate_limit.check(request, "regulation_write", settings.site_write_limit_per_hour, 3600)
     data = await _read_limited(file, settings.regulation_upload_max_bytes)
@@ -220,6 +223,21 @@ def choose_regulation_zone(
     Eingabe ändert (neues Kapitel oder neuer Sektor); sonst nichts."""
     rate_limit.check(request, "regulation_write", get_settings().site_write_limit_per_hour, 3600)
     return documents.choose_zone(db, get_settings(), project_id, document_id, body, staff.actor_id)
+
+
+@router.put("/projects/{project_id}/regulations/{document_id}/lot", response_model=ProjectRegulationOut)
+def choose_regulation_lot(
+    request: Request,
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    body: LotChoiceIn,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> ProjectRegulationOut:
+    """Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). **Kostet** wie die Zonenwahl:
+    plant die Auswertung des Dokuments ein, wenn ein neues Lot dazukommt."""
+    rate_limit.check(request, "regulation_write", get_settings().site_write_limit_per_hour, 3600)
+    return documents.choose_lot(db, get_settings(), project_id, document_id, body, staff.actor_id)
 
 
 @router.delete("/projects/{project_id}/regulations/{document_id}", status_code=204)

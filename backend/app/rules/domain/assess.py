@@ -81,13 +81,22 @@ class DocumentPages:
 
 
 def match_sector(value: str, sectors: Iterable[str]) -> str | None:
-    """Sektor der Antwort einem angefragten Sektor zuordnen: „secteur UBa“ → „Uba“, wenn eindeutig."""
+    """Sektor der Antwort einem angefragten Sektor zuordnen: „secteur UBa“ → „Uba“, wenn eindeutig. Zuletzt
+    ohne Leer- und Satzzeichen, damit „Lot 12“ das angefragte Lot `Lot-12` eines Zusatzdokuments trifft
+    (AN3)."""
     candidate = _SECTOR_PREFIX.sub("", value.strip())
     requested = list(sectors)
     if candidate in requested:
         return candidate
     folded = [s for s in requested if s.lower() == candidate.lower()]
-    return folded[0] if len(folded) == 1 else None
+    if folded:
+        return folded[0] if len(folded) == 1 else None
+    compact = [s for s in requested if _compact(s) == _compact(candidate)]
+    return compact[0] if len(compact) == 1 else None
+
+
+def _compact(value: str) -> str:
+    return re.sub(r"[\W_]+", "", value).lower()
 
 
 def _check_quote(rule: ExtractedRule, documents: DocumentPages, page_texts: dict[int, str]) -> QuoteCheck:

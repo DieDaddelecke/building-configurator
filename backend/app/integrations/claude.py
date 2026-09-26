@@ -22,8 +22,9 @@ from app.config import Settings
 from app.platform.logging import get_logger
 from app.rules.domain.extraction import (
     OUTPUT_SCHEMA,
-    SYSTEM_PROMPT,
     VERIFICATION_SCHEMA,
+    DocumentKind,
+    system_prompt,
     user_instruction,
     verification_instruction,
 )
@@ -46,6 +47,8 @@ class ExtractionRequest:
     claims: list[dict[str, Any]] | None = None
     """Gegenprüfung: nummerierte Regeln ohne Werte (Sektor, Art, Baukörper, Seite, Zitat).
     None: Auswertung."""
+    document_kind: DocumentKind = "plu"
+    """`supplement`: Zusatzdokument mit eigenem Prompt, Sektoren sind Lots (AN3)."""
 
 
 @dataclass(frozen=True)
@@ -118,16 +121,18 @@ def _document(data: bytes, title: str) -> dict[str, Any]:
 
 def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
     content: list[dict[str, Any]] = []
+    kind = request.document_kind
     if request.general_pdf is not None:
         content.append(_document(request.general_pdf, "general provisions and definitions"))
-    content.append(_document(request.chapter_pdf, f"zone chapter {request.chapter_code}"))
+    title = "supplementary document" if kind == "supplement" else f"zone chapter {request.chapter_code}"
+    content.append(_document(request.chapter_pdf, title))
     if request.claims is None:
         instruction = user_instruction(
-            request.sectors, request.chapter_code, request.general_pages, request.chapter_pages
+            request.sectors, request.chapter_code, request.general_pages, request.chapter_pages, kind
         )
     else:
         instruction = verification_instruction(
-            request.claims, request.chapter_code, request.general_pages, request.chapter_pages
+            request.claims, request.chapter_code, request.general_pages, request.chapter_pages, kind
         )
     content.append({"type": "text", "text": instruction})
     return [{"role": "user", "content": content}]
@@ -171,7 +176,7 @@ class ClaudeExtractor:
                 system=[
                     {
                         "type": "text",
-                        "text": SYSTEM_PROMPT,
+                        "text": system_prompt(request.document_kind),
                         "cache_control": {"type": "ephemeral", "ttl": "1h"},
                     }
                 ],

@@ -324,6 +324,87 @@ def has_uploaded_plu(db: Session, project_id: uuid.UUID) -> bool:
 
 
 @dataclass(frozen=True)
+class SupplementRules:
+    """Regeln eines Zusatzdokuments für das gewählte Lot (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). Sie wirken
+    nicht in Regeln und Baurahmen, sondern nur im Vergleich der Analyse (E-AN3-2)."""
+
+    document_id: uuid.UUID
+    title: str
+    du_type: str
+    lot: str | None
+    """Sektor des Lots (`Lot-12`, `Ensemble`); leer, bis der Architekt es wählt."""
+    status: str
+    """`simulated`/`office_reviewed` mit Regeln, sonst `in_progress` oder `unavailable` mit Grund."""
+    reason: str | None
+    rules: list[RuleOut] = field(default_factory=list)
+    hints: list[RuleOut] = field(default_factory=list)
+    version_id: uuid.UUID | None = None
+    updating: bool = False
+    """Eine neue Auswertung läuft (z. B. weil ein weiteres Lot dazukam); bis dahin gelten diese Regeln."""
+
+
+def supplement_rules(db: Session, project_id: uuid.UUID) -> list[SupplementRules]:
+    """Regeln aller Zusatzdokumente des Projekts – dieselbe Zusammenstellung wie für das PLU (BR15)."""
+    result: list[SupplementRules] = []
+    for link in documents.supplement_links(db, project_id):
+        plan = db.get(LandUsePlan, link.land_use_plan_id)
+        assert plan is not None
+        base: dict[str, Any] = {
+            "document_id": plan.id,
+            "title": plan.title,
+            "du_type": plan.du_type,
+            "lot": link.zone_code,
+        }
+        if plan.status == "importing":
+            result.append(SupplementRules(**base, status="in_progress", reason="document_reading"))
+            continue
+        if plan.status != "active":
+            result.append(
+                SupplementRules(**base, status="unavailable", reason=plan.error or "document_failed")
+            )
+            continue
+        if link.zone_code is None:
+            result.append(SupplementRules(**base, status="unavailable", reason="lot_not_chosen"))
+            continue
+        warnings: list[str] = []
+        rules = _rules_for_zones(
+            db,
+            project_id,
+            plan,
+            [
+                _ZoneRow(
+                    code=link.zone_code,
+                    label=plan.title,
+                    chapter_code=link.chapter_code,
+                    area=1.0,
+                    part_wkb=None,
+                )
+            ],
+            site_area=1.0,
+            commune=None,
+            warnings=warnings,
+            ignored=[],
+            uncovered_share=0.0,
+            overlay_rows=[],
+            notices=[],
+            geometry=False,
+        )
+        zone = rules.out.zones[0]
+        result.append(
+            SupplementRules(
+                **base,
+                status=zone.status,
+                reason=zone.reason,
+                rules=list(zone.rules),
+                hints=list(zone.hints),
+                version_id=zone.version.id if zone.version else None,
+                updating="rules_updating" in warnings,
+            )
+        )
+    return result
+
+
+@dataclass(frozen=True)
 class _ZoneRow:
     """Teilfläche Grundstück × Zone: aus dem GPU verschnitten oder, beim Upload, das ganze Grundstück."""
 

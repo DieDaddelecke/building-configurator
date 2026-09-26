@@ -203,8 +203,10 @@ class ExtractIn(BaseModel):
 # Hochgeladenes Reglement (AN2, docs/PLAN_AN2_PLU.md)
 # ---------------------------------------------------------------------------
 
-UploadDuType = Literal["PLU", "PLUi", "PSMV"]
+UploadDuType = Literal["PLU", "PLUi", "PSMV", "lotissement", "cahier_des_charges"]
+"""Planwerke (PLU, PLUi, PSMV) und Zusatzdokumente (AN3, `extraction.SUPPLEMENT_DU_TYPES`)."""
 ZONE_CODE_PATTERN = r"^[0-9A-Za-z][0-9A-Za-z_\-]{0,19}$"
+LOT_PATTERN = r"^[0-9A-Za-z][0-9A-Za-z_\-]{0,15}$"
 
 
 class DocumentChapterOut(BaseModel):
@@ -240,10 +242,30 @@ class RegulationDocumentOut(BaseModel):
 
 
 class ProjectRegulationOut(BaseModel):
-    role: Literal["plu"]
+    role: Literal["plu", "supplement"]
+    """`plu`: das règlement écrit, aus dem Regeln und Baurahmen entstehen. `supplement`: Zusatzdokument
+    (lotissement, cahier des charges), nur im Vergleich der Analyse (AN3)."""
     zone_code: str | None
+    """Beim PLU der Sektor (`Uba`), beim Zusatzdokument das Lot (`Lot-12`, ohne Lot `Ensemble`)."""
     chapter_code: str | None
     document: RegulationDocumentOut
+
+
+class LotChoiceIn(BaseModel):
+    """Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). Ohne Lot gilt das Dokument als
+    Ganzes (`Ensemble`); ein Seitenbereich ersetzt das ganze Dokument, z. B. über 150 Seiten."""
+
+    lot: str | None = Field(default=None, pattern=LOT_PATTERN)
+    first_page: int | None = Field(default=None, ge=1)
+    last_page: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def _consistent(self) -> "LotChoiceIn":
+        if (self.first_page is None) != (self.last_page is None):
+            raise ValueError("first_page und last_page nur gemeinsam")
+        if self.first_page is not None and self.last_page is not None and self.last_page < self.first_page:
+            raise ValueError("last_page vor first_page")
+        return self
 
 
 class ZoneChoiceIn(BaseModel):

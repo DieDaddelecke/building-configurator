@@ -1102,6 +1102,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Analysis
+         * @description Bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne und Vergleich der Zusatzdokumente.
+         */
+        get: operations["get_analysis_api_v1_projects__project_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/analysis/parameters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Analysis Parameters
+         * @description Annahmen des Projekts ändern (E-AN3-1); jede als Bereich innerhalb ihrer Grenzen.
+         */
+        put: operations["set_analysis_parameters_api_v1_projects__project_id__analysis_parameters_put"];
+        post?: never;
+        /**
+         * Reset Analysis Parameters
+         * @description Zurück auf die Vorgaben.
+         */
+        delete: operations["reset_analysis_parameters_api_v1_projects__project_id__analysis_parameters_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/catalog/options": {
         parameters: {
             query?: never;
@@ -1393,6 +1437,7 @@ export interface paths {
          * Upload Project Regulation
          * @description règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im
          *     Job `rules_document_read`; ausgewertet erst nach der Zonenwahl – das Hochladen kostet nichts.
+         *     Mit `du_type` `lotissement` oder `cahier_des_charges` ein Zusatzdokument (AN3), höchstens drei.
          */
         post: operations["upload_project_regulation_api_v1_projects__project_id__regulations_post"];
         delete?: never;
@@ -1416,6 +1461,27 @@ export interface paths {
          * @description Dokument vom Projekt lösen; das Dokument bleibt für andere Projekte bestehen (E-AN2-4).
          */
         delete: operations["remove_project_regulation_api_v1_projects__project_id__regulations__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/regulations/{document_id}/lot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose Regulation Lot
+         * @description Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). **Kostet** wie die Zonenwahl:
+         *     plant die Auswertung des Dokuments ein, wenn ein neues Lot dazukommt.
+         */
+        put: operations["choose_regulation_lot_api_v1_projects__project_id__regulations__document_id__lot_put"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1664,6 +1730,134 @@ export interface components {
             /** Postcode */
             postcode: string | null;
         };
+        /** AnalysisAssumptionsOut */
+        AnalysisAssumptionsOut: {
+            /** Custom */
+            custom: boolean;
+            defaults: components["schemas"]["AnalysisParametersOut"];
+            values: components["schemas"]["AnalysisParametersOut"];
+        };
+        /** AnalysisFloorAreaOut */
+        AnalysisFloorAreaOut: {
+            cap_citation?: components["schemas"]["CitationOut"] | null;
+            /** Cap M2 */
+            cap_m2?: number | null;
+            /** Capped */
+            capped: boolean;
+            /** Complete */
+            complete: boolean;
+            /** High M2 */
+            high_m2?: number | null;
+            /** Low M2 */
+            low_m2?: number | null;
+            /** Reasons */
+            reasons: string[];
+        };
+        /** AnalysisFootprintOut */
+        AnalysisFootprintOut: {
+            /** Binding */
+            binding?: ("contour" | "ratio" | "absolute") | null;
+            /** Candidates */
+            candidates: components["schemas"]["FootprintCandidateOut"][];
+            /** Complete */
+            complete: boolean;
+            /** Reasons */
+            reasons: string[];
+            /** Value M2 */
+            value_m2?: number | null;
+        };
+        /** AnalysisOut */
+        AnalysisOut: {
+            assumptions: components["schemas"]["AnalysisAssumptionsOut"];
+            /** Engine Version */
+            engine_version: string;
+            floor_area?: components["schemas"]["FloorAreaTotalOut"] | null;
+            /** Footprint */
+            footprint: {
+                [key: string]: components["schemas"]["FootprintTotalOut"];
+            };
+            /** Input Hash */
+            input_hash: string;
+            /** Not Counted */
+            not_counted: string[];
+            /** Parts */
+            parts: components["schemas"]["AnalysisPartOut"][];
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Simulation
+             * @default true
+             * @constant
+             */
+            simulation: true;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "partial" | "in_progress" | "unavailable";
+            /** Supplement Stricter */
+            supplement_stricter: string[];
+            /** Supplements */
+            supplements: components["schemas"]["SupplementAnalysisOut"][];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * AnalysisParametersIn
+         * @description Annahmen eines Projekts; jede als Bereich. Grenzen in `analysis.domain.parameters.BOUNDS`.
+         */
+        AnalysisParametersIn: {
+            attic_share: components["schemas"]["SpanIn"];
+            attique_share: components["schemas"]["SpanIn"];
+            storey_height_m: components["schemas"]["SpanIn"];
+            wall_share: components["schemas"]["SpanIn"];
+        };
+        /** AnalysisParametersOut */
+        AnalysisParametersOut: {
+            attic_share: components["schemas"]["SpanOut"];
+            attique_share: components["schemas"]["SpanOut"];
+            storey_height_m: components["schemas"]["SpanOut"];
+            wall_share: components["schemas"]["SpanOut"];
+        };
+        /** AnalysisPartOut */
+        AnalysisPartOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Excluded */
+            excluded?: string | null;
+            floor_area: components["schemas"]["AnalysisFloorAreaOut"];
+            /** Footprint */
+            footprint: {
+                [key: string]: components["schemas"]["AnalysisFootprintOut"];
+            };
+            storeys: components["schemas"]["AnalysisStoreysOut"];
+            /** Zone Code */
+            zone_code: string;
+        };
+        /** AnalysisStoreysOut */
+        AnalysisStoreysOut: {
+            citation?: components["schemas"]["CitationOut"] | null;
+            /** Full Max */
+            full_max?: number | null;
+            /** Full Min */
+            full_min?: number | null;
+            /** Notes */
+            notes: string[];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "storeys" | "eave" | "parapet" | "ridge" | "unknown";
+            /** Status */
+            status: string;
+            /**
+             * Top
+             * @enum {string}
+             */
+            top: "none" | "attic" | "attique";
+            /** Top Certain */
+            top_certain: boolean;
+        };
         /** ArchitectEdgeIn */
         ArchitectEdgeIn: {
             /** Kind */
@@ -1762,7 +1956,7 @@ export interface components {
              * @default PLU
              * @enum {string}
              */
-            du_type: "PLU" | "PLUi" | "PSMV";
+            du_type: "PLU" | "PLUi" | "PSMV" | "lotissement" | "cahier_des_charges";
             /** File */
             file: string;
             /** Title */
@@ -2562,6 +2756,39 @@ export interface components {
             /** Updated By */
             updated_by: string | null;
         };
+        /** FloorAreaTotalOut */
+        FloorAreaTotalOut: {
+            /** Capped */
+            capped: boolean;
+            /** Complete */
+            complete: boolean;
+            /** High M2 */
+            high_m2?: number | null;
+            /** Low M2 */
+            low_m2?: number | null;
+            /** Reasons */
+            reasons: string[];
+        };
+        /** FootprintCandidateOut */
+        FootprintCandidateOut: {
+            citation?: components["schemas"]["CitationOut"] | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "contour" | "ratio" | "absolute";
+            /** Status */
+            status: string;
+            /** Value M2 */
+            value_m2?: number | null;
+        };
+        /** FootprintTotalOut */
+        FootprintTotalOut: {
+            /** Complete */
+            complete: boolean;
+            /** Value M2 */
+            value_m2: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2849,6 +3076,19 @@ export interface components {
             contained_idu: string | null;
             /** In Service Area */
             in_service_area: boolean;
+        };
+        /**
+         * LotChoiceIn
+         * @description Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). Ohne Lot gilt das Dokument als
+         *     Ganzes (`Ensemble`); ein Seitenbereich ersetzt das ganze Dokument, z. B. über 150 Seiten.
+         */
+        LotChoiceIn: {
+            /** First Page */
+            first_page?: number | null;
+            /** Last Page */
+            last_page?: number | null;
+            /** Lot */
+            lot?: string | null;
         };
         /**
          * ManualEdgeIn
@@ -3492,7 +3732,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only";
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only" | "max_area";
             /** Note */
             note: string;
             /** Params */
@@ -3546,9 +3786,9 @@ export interface components {
             document: components["schemas"]["RegulationDocumentOut"];
             /**
              * Role
-             * @constant
+             * @enum {string}
              */
-            role: "plu";
+            role: "plu" | "supplement";
             /** Zone Code */
             zone_code: string | null;
         };
@@ -3704,6 +3944,24 @@ export interface components {
             /** Rotation Deg */
             rotation_deg: number;
         };
+        /** RuleComparisonOut */
+        RuleComparisonOut: {
+            /** Building Kind */
+            building_kind: string;
+            /** Details */
+            details: {
+                [key: string]: "stricter" | "looser" | "equal" | "different";
+            };
+            /** Kind */
+            kind: string;
+            plu?: components["schemas"]["LimitOut"] | null;
+            supplement: components["schemas"]["LimitOut"];
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "stricter" | "looser" | "equal" | "mixed" | "different" | "only_supplement" | "no_own_rule" | "unknown";
+        };
         /** RuleDetailOut */
         RuleDetailOut: {
             /** Alternatives */
@@ -3759,7 +4017,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only";
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only" | "max_area";
             /** Notes */
             notes?: string | null;
             /** Page */
@@ -4014,6 +4272,20 @@ export interface components {
             /** Warnings */
             warnings: string[];
         };
+        /** SpanIn */
+        SpanIn: {
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+        };
+        /** SpanOut */
+        SpanOut: {
+            /** High */
+            high: number;
+            /** Low */
+            low: number;
+        };
         /** StaffInfo */
         StaffInfo: {
             /** Display Name */
@@ -4140,6 +4412,30 @@ export interface components {
             label_fr: string;
             /** Slug */
             slug: string;
+        };
+        /** SupplementAnalysisOut */
+        SupplementAnalysisOut: {
+            /** Comparisons */
+            comparisons: components["schemas"]["RuleComparisonOut"][];
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Du Type */
+            du_type: string;
+            /** Hints */
+            hints: components["schemas"]["LimitOut"][];
+            /** Lot */
+            lot?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Updating */
+            updating: boolean;
         };
         /** TerrainOut */
         TerrainOut: {
@@ -6440,6 +6736,103 @@ export interface operations {
             };
         };
     };
+    get_analysis_api_v1_projects__project_id__analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_analysis_parameters_api_v1_projects__project_id__analysis_parameters_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalysisParametersIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_analysis_parameters_api_v1_projects__project_id__analysis_parameters_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_options_api_v1_projects__project_id__catalog_options_get: {
         parameters: {
             query?: never;
@@ -7046,6 +7439,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    choose_regulation_lot_api_v1_projects__project_id__regulations__document_id__lot_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LotChoiceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRegulationOut"];
+                };
             };
             /** @description Validation Error */
             422: {

@@ -1,6 +1,6 @@
 # Emprise Analyse – eigenständige Web-App aus G1–G3
 
-> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026, AN2 am 25.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09, UP01–UP16 und PU01–PU10, Pläne [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md) und [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); AN3–AN6 offen · **Arbeitstitel:** „Emprise Analyse“
+> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026, AN2 am 25.09.2026, AN3 (RA1-Teil und Zusatzdokumente) am 26.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09, UP01–UP16, PU01–PU10 und EA01–EA12, Pläne [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md), [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und [PLAN_AN3_ANALYSE.md](PLAN_AN3_ANALYSE.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); Gabarit und Schnitt (RA2), AN4–AN6 offen · **Arbeitstitel:** „Emprise Analyse“
 > **Bezug:** `UMSETZUNGSPLAN.md` 2.1, 3.2–3.5 (Zuschnitt von P, G1, G2, G3), `docs/PLAN_G3_BAURAHMEN.md` (Ableitung), `docs/ANNAHMEN.md` G01–G30, RW01–RW27, BR01–BR15 (Stand von G1–G3), `BACKEND_SPEZIFIKATION.md` 5.1–5.3, 5.9 (Fachregeln)
 > **Verhältnis zum Umsetzungsplan:** Dieses Dokument beschreibt ein **zweites Produkt** neben dem Hauskonfigurator, nicht ein weiteres Modul von R1/R2. Es ändert nichts an G1–G3, A, H1–H3 oder V; wo es den Kern berührt, steht das in Kapitel 4 (AN0, AN1, AN2).
 
@@ -95,9 +95,9 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 - **Zusatzdokumente:** règlement de lotissement und cahier des charges als zweites Dokument derselben Art, dessen Regeln die PLU-Regeln überlagern. Heute nur ein Hinweistext, für Architekten aber ein echter Bedarf.
 - Kein extrahierbarer Text (Scan) → klare Meldung; OCR bleibt Ausbaustufe (RW03).
 
-*Ergebnis:* umgesetzt wie beschrieben, Einzelheiten in [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und ANNAHMEN PU01–PU10. Abweichungen: Das hochgeladene Reglement ist ein `land_use_plan` mit `origin = 'upload'` statt einer `source_file` mit Herkunft (die Kette Kapitel → Lauf → Regelwerk hängt am Planstand); dasselbe PDF ist dasselbe Dokument für alle Projekte des Büros (PU01); gelesen wird im Job `rules_document_read`, nicht im Request (PU03). **Die Zusatzdokumente sind nach AN4 verschoben** (PU09): Sie gelten neben dem PLU, das Strengere bindet – das gehört zum Regelformular, mit dem der Architekt Werte mit Zitat übernimmt. Die Gegenprobe aus Kapitel 7 Punkt 5 ist als Test umgesetzt: AD 65 über GPU und über Upload ergibt dieselben Regeln und Konturflächen.
+*Ergebnis:* umgesetzt wie beschrieben, Einzelheiten in [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und ANNAHMEN PU01–PU10. Abweichungen: Das hochgeladene Reglement ist ein `land_use_plan` mit `origin = 'upload'` statt einer `source_file` mit Herkunft (die Kette Kapitel → Lauf → Regelwerk hängt am Planstand); dasselbe PDF ist dasselbe Dokument für alle Projekte des Büros (PU01); gelesen wird im Job `rules_document_read`, nicht im Request (PU03). **Die Zusatzdokumente waren nach AN4 verschoben** (PU09; am 25.09.2026 in AN3 vorgezogen): Sie gelten neben dem PLU, das Strengere bindet – das gehört zum Regelformular, mit dem der Architekt Werte mit Zitat übernimmt. Die Gegenprobe aus Kapitel 7 Punkt 5 ist als Test umgesetzt: AD 65 über GPU und über Upload ergibt dieselben Regeln und Konturflächen.
 
-### AN3 – Analyse für den Entwurf (10–12 T)
+### AN3 – Analyse für den Entwurf (10–12 T) · **RA1-Teil und Zusatzdokumente umgesetzt am 26.09.2026** ([Plan](PLAN_AN3_ANALYSE.md))
 
 | Ergebnis | Herleitung |
 |---|---|
@@ -110,13 +110,15 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 
 Die Ableitung bleibt in `envelope/domain` rein und deterministisch; das Neue kommt als `analysis/domain` dazu und nutzt `derive_envelope` als Baustein.
 
+*Ergebnis:* bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt und Abstandsaussage je Grenze umgesetzt (ANNAHMEN EA01–EA05, EA10, EA11); Gabarit und Schnitt bleiben für RA2. Neu dazu, aus AN4 vorgezogen: **Zusatzdokumente** hochladen, Lot wählen, mit eigenem Prompt auswerten und neben den PLU-Regeln vergleichen (EA07–EA09) – nicht in die Werte eingerechnet (E-AN3-2). Neue Regelart `max_area` für SDP- und Grundflächen-Obergrenzen in m² (EA06).
+
 ### AN4 – Korrigieren und begründen (6–8 T)
 
 - **Regelformular statt JSON** (RW15): Formular aus den Pydantic-Regelarten in `rules/domain/kinds.py` erzeugt – eine Quelle für Schema, API, Modellausgabe und Formular.
 - Wert je Projekt übersteuern mit Pflichtbegründung, Herkunft `architect`; der Baurahmen zeigt die Herkunft an jedem Wert (vorhanden, L3).
 - Regeln ergänzen, die das Modell nicht gefunden hat.
 - Zwei Stände nebeneinander vergleichen (vor und nach Korrektur, zwei Auswertungsläufe).
-- **Zusatzdokumente** (aus AN2 verschoben, PU09): règlement de lotissement und cahier des charges hochladen, auswerten (eigener Prompt, ohne Pflichtarten) und neben den PLU-Regeln mit Zitat zeigen; der Architekt übernimmt den strengeren Wert als Projektkorrektur.
+- **Werte aus Zusatzdokumenten übernehmen:** Hochladen, Auswerten und Vergleich gibt es seit AN3 (EA07–EA09). Hier übernimmt der Architekt den strengeren Wert als Projektkorrektur **mit Zitat** – dazu bekommt `project_rule_override` eine Quelle (Seite, Datei), damit L3 gewahrt bleibt.
 
 ### AN5 – Ausgabe und Projektakte (8–10 T)
 
@@ -136,7 +138,7 @@ Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding
 
 | Release | Module | Nutzen | Größe |
 |---|---|---|---|
-| **RA1** | AN0, AN1, AN2, AN3 (bindende Grundfläche, Geschosse, Nutzfläche) | Grundstück zeichnen oder hochladen, PLU hochladen, Baurahmen mit Höhen, Abständen, Flächen und Nutzfläche – im eigenen Büro produktiv nutzbar | 28–36 T (6–7 PW) |
+| **RA1** | AN0, AN1, AN2, AN3 (bindende Grundfläche, Geschosse, Nutzfläche; Zusatzdokumente im Vergleich) | Grundstück zeichnen oder hochladen, PLU hochladen, Baurahmen mit Höhen, Abständen, Flächen und Nutzfläche – im eigenen Büro produktiv nutzbar | 28–36 T (6–7 PW) |
 | **RA2** | AN3 vollständig (Gabarit, Schnitt), AN4, AN5 | Entwurfsbegleitung: Hüllkörper, Schnitt, eigene Korrekturen, Bericht und CAD-Ausgabe | 24–30 T (5–6 PW) |
 | **RA3** | AN6 | Abo für fremde Büros | nach Auslöser |
 

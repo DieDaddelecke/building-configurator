@@ -5,6 +5,10 @@ Ablauf: PDF hochladen (schnelle Prüfung, Objektspeicher) → Job `rules_documen
 Job `rules_extract` ausgewertet. Kosten entstehen erst mit der Zonenwahl, einmal je Kapitel und
 Sektorenmenge. Dasselbe PDF ist dasselbe Dokument (E-AN2-1); es bleibt, wenn ein Projekt gelöscht wird
 (E-AN2-4).
+
+Zusatzdokumente (AN3, docs/PLAN_AN3_ANALYSE.md 3.7): règlement de lotissement und cahier des charges, bis
+zu drei je Projekt. Statt Zonenkapiteln ein Kapitel `DOC` über das ganze Dokument; der Architekt wählt das
+Lot (Sektor `Lot-12`, ohne Lot `Ensemble`), die Auswertung läuft mit eigenem Prompt.
 """
 
 import hashlib
@@ -24,6 +28,7 @@ from app.platform.logging import get_logger
 from app.platform.problems import Problem
 from app.rules import pdf
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES, detect_structure, sector_candidates
+from app.rules.domain.extraction import document_kind
 from app.rules.models import (
     LandUsePlan,
     ProjectRegulation,
@@ -34,6 +39,7 @@ from app.rules.models import (
 from app.rules.plan_import import ChapterValues, ensure_chapter, store_source
 from app.rules.schemas import (
     DocumentChapterOut,
+    LotChoiceIn,
     ProjectRegulationOut,
     RegulationDocumentOut,
     UploadDuType,
@@ -46,6 +52,18 @@ UPLOAD_PREFIX = "rules/uploads"
 NO_TEXT_SHARE = 0.5
 """Mehr als die Hälfte der Seiten ohne Text: gescanntes Reglement, keine Auswertung (RW03)."""
 FILE_URL = "/api/v1/regulation-files/{id}"
+SUPPLEMENT_CHAPTER = "DOC"
+"""Einziges Kapitel eines Zusatzdokuments: das ganze Dokument oder ein Seitenbereich (AN3, 3.7)."""
+SUPPLEMENT_WHOLE = "Ensemble"
+"""Sektor eines Zusatzdokuments ohne Lot: das Dokument als Ganzes."""
+MAX_SUPPLEMENTS = 3
+"""Zusatzdokumente je Projekt (E-AN3-6): lotissement, cahier des charges, ein Änderungsstand."""
+
+
+def supplement_sector(lot: str | None) -> str:
+    """Sektor eines Lots. Mit Vorsilbe, weil eine blanke Nummer („12“) in jedem Zitat als Zahl vorkäme und
+    die Zuordnung der Werte zu Sektoren (`assess.foreign_sector`) in die Irre führte (7.1 Nr. 3)."""
+    return f"Lot-{lot}" if lot else SUPPLEMENT_WHOLE
 
 
 def storage_key(sha256: str) -> str:
@@ -138,7 +156,7 @@ def _link_out(db: Session, link: ProjectRegulation) -> ProjectRegulationOut:
     plan = db.get(LandUsePlan, link.land_use_plan_id)
     assert plan is not None
     return ProjectRegulationOut(
-        role="plu",
+        role="supplement" if link.role == "supplement" else "plu",
         zone_code=link.zone_code,
         chapter_code=link.chapter_code,
         document=_document_out(db, plan),
@@ -146,12 +164,23 @@ def _link_out(db: Session, link: ProjectRegulation) -> ProjectRegulationOut:
 
 
 def project_regulations(db: Session, project_id: uuid.UUID) -> list[ProjectRegulationOut]:
+    """Das PLU zuerst, danach die Zusatzdokumente in der Reihenfolge des Hochladens."""
     links = db.execute(
         select(ProjectRegulation)
         .where(ProjectRegulation.project_id == project_id)
         .order_by(ProjectRegulation.created_at)
     ).scalars()
-    return [_link_out(db, link) for link in links]
+    return [_link_out(db, link) for link in sorted(links, key=lambda link: link.role != "plu")]
+
+
+def supplement_links(db: Session, project_id: uuid.UUID) -> list[ProjectRegulation]:
+    return list(
+        db.execute(
+            select(ProjectRegulation)
+            .where(ProjectRegulation.project_id == project_id, ProjectRegulation.role == "supplement")
+            .order_by(ProjectRegulation.created_at)
+        ).scalars()
+    )
 
 
 def file_content(db: Session, file_id: uuid.UUID) -> tuple[bytes, str]:
@@ -177,17 +206,24 @@ def upload(
     actor: str,
 ) -> ProjectRegulationOut:
     """Reglement als PLU des Projekts hinterlegen. Ein vorhandenes PLU des Projekts wird ersetzt (seine
-    Zone entfällt); ist dasselbe PDF schon bekannt, wird das Dokument wiederverwendet (E-AN2-1)."""
+    Zone entfällt); ist dasselbe PDF schon bekannt, wird das Dokument wiederverwendet (E-AN2-1).
+
+    Ein Zusatzdokument (`lotissement`, `cahier_des_charges`) kommt dazu, statt etwas zu ersetzen; höchstens
+    `MAX_SUPPLEMENTS` je Projekt (AN3). Dasselbe PDF einmal als PLU, einmal als Zusatzdokument: `409`,
+    sonst liefe es mit dem falschen Prompt (7.1 Nr. 6)."""
     try:
         pdf.check(data)
     except pdf.PdfProblem as exc:
         raise Problem(422, str(exc)) from None
     sha256 = hashlib.sha256(data).hexdigest()
+    role = "supplement" if document_kind(du_type) == "supplement" else "plu"
     # Immer und vor jeder Sperre ablegen: Der Schlüssel ist die Prüfsumme, doppeltes Ablegen schadet nicht,
     # ein erneuter Upload stellt eine verlorene Datei wieder her, und ein langsamer oder gestörter Speicher
     # hält keine Zeile der Datenbank fest
     storage.put_bytes(storage_key(sha256), data, "application/pdf")
     plan, created = _document_for_upload(db, sha256, file_name, title, du_type, actor)
+    if not created and document_kind(plan.du_type) != document_kind(du_type):
+        raise Problem(409, "document_type_conflict", du_type=plan.du_type)
     stuck = plan.status == "importing" and not created and _read_job_missing(db, plan.id)
     if created or plan.status == "failed" or stuck:
         # Neu, früher gescheitert oder ohne Job liegen geblieben: (noch einmal) lesen, das kostet nichts
@@ -195,6 +231,27 @@ def upload(
         retry = "" if created else f":{utcnow():%Y%m%d%H%M%S%f}"
         _enqueue_read(db, plan, file_name, actor, key_suffix=retry)
 
+    if role == "supplement":
+        link, before = _supplement_link(db, project_id, plan, actor)
+    else:
+        link, before = _plu_link(db, project_id, plan, actor)
+    audit.record(
+        db,
+        actor_type="staff",
+        actor_id=actor,
+        action="project_regulation.upload",
+        entity_type="project",
+        entity_id=str(project_id),
+        before=before,
+        after={"document": str(plan.id), "sha256": sha256, "file_name": file_name[:200], "role": role},
+    )
+    db.commit()
+    return _link_out(db, link)
+
+
+def _plu_link(
+    db: Session, project_id: uuid.UUID, plan: LandUsePlan, actor: str
+) -> tuple[ProjectRegulation, dict[str, Any] | None]:
     link = project_plu(db, project_id)
     before = {"document": str(link.land_use_plan_id), "zone": link.zone_code} if link else None
     if link is not None and link.land_use_plan_id != plan.id:
@@ -206,18 +263,28 @@ def upload(
             project_id=project_id, land_use_plan_id=plan.id, role="plu", created_by=actor, updated_by=actor
         )
         db.add(link)
-    audit.record(
-        db,
-        actor_type="staff",
-        actor_id=actor,
-        action="project_regulation.upload",
-        entity_type="project",
-        entity_id=str(project_id),
-        before=before,
-        after={"document": str(plan.id), "sha256": sha256, "file_name": file_name[:200]},
+    return link, before
+
+
+def _supplement_link(
+    db: Session, project_id: uuid.UUID, plan: LandUsePlan, actor: str
+) -> tuple[ProjectRegulation, dict[str, Any] | None]:
+    """Zusatzdokument dazunehmen; dasselbe Dokument ein zweites Mal ändert nichts."""
+    links = supplement_links(db, project_id)
+    existing = next((link for link in links if link.land_use_plan_id == plan.id), None)
+    if existing is not None:
+        return existing, {"document": str(plan.id), "zone": existing.zone_code}
+    if len(links) >= MAX_SUPPLEMENTS:
+        raise Problem(422, "too_many_supplements", limit=MAX_SUPPLEMENTS)
+    link = ProjectRegulation(
+        project_id=project_id,
+        land_use_plan_id=plan.id,
+        role="supplement",
+        created_by=actor,
+        updated_by=actor,
     )
-    db.commit()
-    return _link_out(db, link)
+    db.add(link)
+    return link, None
 
 
 def _document_for_upload(
@@ -288,6 +355,8 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
         return _failed(db, plan, str(exc))
     if not reader.pages or len(reader.empty_pages) > NO_TEXT_SHARE * len(reader.pages):
         return _failed(db, plan, "document_no_text")
+    if document_kind(plan.du_type) == "supplement":
+        return _read_supplement(db, plan, file_name, data, reader)
     structure = detect_structure(reader.pages)
     source_id = uuid.uuid4()
     source = store_source(
@@ -340,6 +409,59 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
     return {"status": "active", "pages": len(reader.pages), "chapters": len(structure.chapters)}
 
 
+def _read_supplement(
+    db: Session, plan: LandUsePlan, file_name: str, data: bytes, reader: pdf.PdfText
+) -> dict[str, Any]:
+    """Zusatzdokument: keine Zonenkapitel, sondern ein Kapitel `DOC` über das ganze Dokument, noch ohne
+    Sektoren – es kostet erst, wenn ein Lot gewählt wird (AN3, 3.7)."""
+    assert plan.document_sha256 is not None
+    source_id = uuid.uuid4()
+    source = store_source(
+        db,
+        plan,
+        sha256=plan.document_sha256,
+        filename=file_name or f"{plan.document_sha256[:12]}.pdf",
+        url=file_url(source_id),
+        storage_key=storage_key(plan.document_sha256),
+        size_bytes=len(data),
+        reader=reader,
+        actor=READ_ACTOR,
+        source_id=source_id,
+    )
+    exists = db.execute(
+        select(RegulationChapter.id).where(
+            RegulationChapter.land_use_plan_id == plan.id, RegulationChapter.code == SUPPLEMENT_CHAPTER
+        )
+    ).scalar_one_or_none()
+    if exists is None:
+        db.add(
+            RegulationChapter(
+                land_use_plan_id=plan.id,
+                source_file_id=source.id,
+                code=SUPPLEMENT_CHAPTER,
+                title=plan.title[:300],
+                first_page=1,
+                last_page=source.page_count,
+                general_pages=[],
+                sectors=[],
+                suggested_sectors=[],
+                detection="document",
+                created_by=READ_ACTOR,
+            )
+        )
+    plan.status, plan.error, plan.activated_at = "active", None, utcnow()
+    db.commit()
+    log.info(
+        "rules_document_read",
+        document=str(plan.id),
+        pages=len(reader.pages),
+        empty_pages=len(reader.empty_pages),
+        chapters=1,
+        detection="document",
+    )
+    return {"status": "active", "pages": len(reader.pages), "chapters": 1}
+
+
 def _failed(db: Session, plan: LandUsePlan, error: str) -> dict[str, Any]:
     plan.status, plan.error = "failed", error
     db.commit()
@@ -371,6 +493,18 @@ def _link(db: Session, project_id: uuid.UUID, document_id: uuid.UUID) -> Project
     return link
 
 
+def _ready_document(db: Session, document_id: uuid.UUID) -> tuple[LandUsePlan, SourceFile]:
+    """Dokument gesperrt und gelesen; solange es gelesen wird oder gescheitert ist, keine Auswahl."""
+    plan = db.execute(select(LandUsePlan).where(LandUsePlan.id == document_id).with_for_update()).scalar_one()
+    if plan.status == "importing":
+        raise Problem(409, "document_not_ready")
+    if plan.status != "active":
+        raise Problem(409, "document_failed", reason=plan.error)
+    source = latest_source(db, plan.id)
+    assert source is not None
+    return plan, source
+
+
 def _pages(first: int, last: int, page_count: int) -> list[int]:
     if last > page_count:
         raise Problem(422, "page_out_of_range", page_count=page_count)
@@ -390,13 +524,9 @@ def choose_zone(
     Hier entstehen die Kosten: Der Sektor kommt zu den Sektoren des Kapitels; geänderte Eingabe →
     `pending` und Job (Idempotenz über die Eingabe), unveränderte → nichts."""
     link = _link(db, project_id, document_id)
-    plan = db.execute(select(LandUsePlan).where(LandUsePlan.id == document_id).with_for_update()).scalar_one()
-    if plan.status == "importing":
-        raise Problem(409, "document_not_ready")
-    if plan.status != "active":
-        raise Problem(409, "document_failed", reason=plan.error)
-    source = latest_source(db, plan.id)
-    assert source is not None
+    if link.role != "plu":
+        raise Problem(409, "not_a_plu")
+    plan, source = _ready_document(db, document_id)
     chapters = {
         c.code: c
         for c in db.execute(
@@ -461,6 +591,64 @@ def choose_zone(
             "pages": [pages[0], pages[-1]],
             "detection": detection,
         },
+    )
+    db.commit()
+    return _link_out(db, link)
+
+
+def choose_lot(
+    db: Session,
+    settings: Settings,
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    body: LotChoiceIn,
+    actor: str,
+) -> ProjectRegulationOut:
+    """Lot eines Zusatzdokuments wählen und das Kapitel `DOC` einplanen (AN3, 3.7).
+
+    Wie bei der Zonenwahl entstehen hier die Kosten: Das Lot kommt zu den Sektoren des Kapitels; ein neues
+    Lot wertet das Dokument neu aus, auch für die Lots anderer Projekte (E-AN3-4)."""
+    link = _link(db, project_id, document_id)
+    if link.role != "supplement":
+        raise Problem(409, "not_a_supplement")
+    plan, source = _ready_document(db, document_id)
+    chapter = db.execute(
+        select(RegulationChapter)
+        .where(RegulationChapter.land_use_plan_id == plan.id, RegulationChapter.code == SUPPLEMENT_CHAPTER)
+        .with_for_update()
+    ).scalar_one_or_none()
+    if body.first_page is not None and body.last_page is not None:
+        pages = _pages(body.first_page, body.last_page, source.page_count)
+        detection = "manual"
+    else:
+        pages = list(range(1, source.page_count + 1))
+        detection = "document"
+    if len(pages) > CHAPTER_MAX_PAGES:
+        raise Problem(422, "chapter_too_long", pages=len(pages), limit=CHAPTER_MAX_PAGES)
+    sector = supplement_sector(body.lot)
+    values = ChapterValues(
+        title=plan.title,
+        first_page=pages[0],
+        last_page=pages[-1],
+        general_pages=[],
+        sectors=sorted({*(chapter.sectors if chapter is not None else []), sector}),
+        detection=detection,
+    )
+    ensure_chapter(
+        db, settings, plan, source, SUPPLEMENT_CHAPTER, values, chapter, actor=actor, reason="lot_choice"
+    )
+    before = {"lot": link.zone_code}
+    link.zone_code, link.chapter_code = sector, SUPPLEMENT_CHAPTER
+    link.updated_at, link.updated_by = utcnow(), actor
+    audit.record(
+        db,
+        actor_type="staff",
+        actor_id=actor,
+        action="project_regulation.lot",
+        entity_type="project",
+        entity_id=str(project_id),
+        before=before,
+        after={"document": str(plan.id), "lot": sector, "pages": [pages[0], pages[-1]]},
     )
     db.commit()
     return _link_out(db, link)

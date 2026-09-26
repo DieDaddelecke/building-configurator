@@ -77,10 +77,10 @@ PRODUCTS: dict[Product, ProductSpec] = {
         staff_home="/buero",
         staff_denied="/buero/kein-zugang",
     ),
-    # Eigene Module (`intake`, `analysis`) kommen mit AN1–AN3 dazu; AN0 schneidet nur den Kern heraus.
+    # Eigenes Modul `analysis` seit AN3 (docs/PLAN_AN3_ANALYSE.md); Parzelle und PLU liegen im Kern (AN1, AN2)
     "analyse": ProductSpec(
         name="analyse",
-        routers=CORE_ROUTERS,
+        routers=(*CORE_ROUTERS, "app.analysis.api"),
         job_modules=CORE_JOB_MODULES,
         periodic=CORE_PERIODIC,
         staff_home="/",
@@ -91,3 +91,8 @@ PRODUCTS: dict[Product, ProductSpec] = {
 
 def spec_for(product: Product) -> ProductSpec:
     return PRODUCTS[product]
+
+
+ALL_ROUTERS: tuple[str, ...] = tuple(dict.fromkeys(r for spec in PRODUCTS.values() for r in spec.routers))
+"""Vereinigung aller Profile für `openapi.json` (PLAN_ANALYSE 8.1 Nr. 5): Routen, die nur das Analyse-
+Produkt hat, stehen hinten – die Reihenfolge des Konfigurators bleibt unverändert."""
