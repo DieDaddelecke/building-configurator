@@ -27,7 +27,7 @@ from tests.integration.test_rules_upload import (
 )
 from tests.rules_support import FakeExtractor, regulation_fixture, rule, text_pdf
 
-# Fixtures aus AN2: Speicher im Arbeitsspeicher, Schlüssel der Claude API, Flags, angemeldeter Architekt und
+# Fixtures aus AN2: Speicher im Arbeitsspeicher, Schlüssel von OpenRouter, Flags, angemeldeter Architekt und
 # sein Projekt mit einer Parzelle aus einer DXF-Datei. Pytest nimmt den Namen der Zuweisung.
 memory_storage = an2.memory_storage
 settings = an2.settings

@@ -232,7 +232,7 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
 
     from sqlalchemy import select
 
-    from app.integrations.claude import ClaudeExtractor
+    from app.integrations.openrouter import OpenRouterExtractor
     from app.rules.extract import extract_chapter
     from app.rules.models import RegulationChapter
 
@@ -258,7 +258,7 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
             )
     for chapter_id in ids:
         outcome = extract_chapter(
-            sessions, settings, chapter_id, lambda: ClaudeExtractor(settings), force=args.force
+            sessions, settings, chapter_id, lambda: OpenRouterExtractor(settings), force=args.force
         )
         detail = outcome.detail or ""
         print(f"{chapter_id}: {outcome.status} {detail} ${outcome.cost_usd:.2f} {outcome.counts or ''}")

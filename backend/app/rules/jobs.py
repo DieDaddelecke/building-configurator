@@ -19,8 +19,8 @@ import httpx2
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.integrations.claude import ClaudeExtractor, RuleExtractor
 from app.integrations.http import ExternalServiceError, new_client
+from app.integrations.openrouter import OpenRouterExtractor, RuleExtractor
 from app.platform.db import get_sessionmaker
 from app.platform.jobs import JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
@@ -30,7 +30,7 @@ from app.rules.extract import RetryableExtractionError
 
 log = get_logger("rules_jobs")
 JOB_TIME_MARGIN_SECONDS = 120
-"""Rest des Zeitlimits, in dem kein neuer Aufruf der Claude API mehr beginnt."""
+"""Rest des Zeitlimits, in dem kein neuer Aufruf des Sprachmodells mehr beginnt."""
 
 
 # Austauschbar für Tests
@@ -43,7 +43,7 @@ def gpu_source_factory(client: httpx2.Client) -> plan_import.GpuSource:
 
 
 def extractor_factory() -> RuleExtractor:
-    return ClaudeExtractor(get_settings())
+    return OpenRouterExtractor(get_settings())
 
 
 @contextmanager

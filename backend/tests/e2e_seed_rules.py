@@ -1,8 +1,8 @@
 """Regelwerk-Ausschnitt für den Ende-zu-Ende-Test (G2): Planstand aus aufgezeichneten GPU-Antworten und die
-aufgezeichnete Auswertung der Zone Uh, ohne Aufruf der Claude API.
+aufgezeichnete Auswertung der Zone Uh, ohne Aufruf des Sprachmodells über OpenRouter.
 
     docker compose cp backend/tests api:/tmp/tests
-    docker compose exec -T -e EMPRISE_ANTHROPIC_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api \
+    docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api \
         python -m tests.e2e_seed_rules
 
 Der Worker kann parallel den echten Planstand desselben Dokuments laden. Beide Wege enden mit einem aktiven

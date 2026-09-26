@@ -157,7 +157,7 @@
         "failed": "Auswertung gescheitert"
       },
       "reason": {
-        "not_configured": "Die Auswertung ist nicht eingerichtet: Es fehlt der Schlüssel der Claude API. Sie startet von selbst, sobald er eingetragen ist.",
+        "not_configured": "Die Auswertung ist nicht eingerichtet: Es fehlt der Schlüssel von OpenRouter. Sie startet von selbst, sobald er eingetragen ist.",
         "budget_exceeded": "Das Monatsbudget der Auswertung ist erreicht. Sie startet von selbst im neuen Monat oder mit höherem Budget.",
         "chapter_too_long": "Kapitel und allgemeine Bestimmungen sind zusammen zu lang. Bitte den Seitenbereich eingrenzen.",
         "max_tokens": "Die Antwort war zu lang für eine Auswertung.",
@@ -819,7 +819,7 @@
       "intro": "Die Regeln entstehen automatisch aus den Planunterlagen und erscheinen beim Kunden sofort als Simulation. Korrekturen sind freiwillig: für die Zone gelten sie für spätere Simulationen, im Grundstück nur für das Projekt.",
       "model": "Modell",
       "cost": "Kosten diesen Monat / Budget",
-      "configured": "Claude API",
+      "configured": "OpenRouter",
       "yes": "eingerichtet",
       "notConfigured": "kein API-Schlüssel",
       "import": "Planstände prüfen",

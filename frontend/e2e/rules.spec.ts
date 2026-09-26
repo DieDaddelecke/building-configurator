@@ -2,9 +2,9 @@ import { expect, test } from "@playwright/test";
 
 // Module G2 und G3, Hauptpfad (Plan 4.1 Kriterium 2): Regeln des Grundstücks als Simulation und der daraus
 // abgeleitete Baurahmen. Voraussetzungen wie in site.spec.ts, zusätzlich Planstand und aufgezeichnete
-// Auswertung der Zone Uh (ohne Claude API):
+// Auswertung der Zone Uh (ohne OpenRouter):
 //   docker compose cp backend/tests api:/tmp/tests
-//   docker compose exec -T -e EMPRISE_ANTHROPIC_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
+//   docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
 
 test.describe.serial("Regeln und Baurahmen als Simulation (G2, G3)", () => {
   test("ops schaltet Grundstückswahl, Simulation und Baurahmen frei", async ({ page }) => {

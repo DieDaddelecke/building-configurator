@@ -10,7 +10,7 @@ from typing import Any
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
-from app.integrations.claude import ExtractionError, ExtractionRequest, ExtractionResponse
+from app.integrations.openrouter import ExtractionError, ExtractionRequest, ExtractionResponse
 
 FIXTURES = Path(__file__).parent / "fixtures" / "rules"
 DOC_ID = "911b23511c396d7211def55c6bf40bd4"
@@ -233,9 +233,9 @@ class FakeExtractor:
             item = verification_output(item, request.claims)
         return ExtractionResponse(
             output=item,
-            model="claude-opus-5",
+            model="anthropic/claude-opus-5",
             request_id=f"req_{len(self.requests)}",
-            stop_reason="end_turn",
+            stop_reason="stop",
             usage={"input_tokens": 1000, "output_tokens": 2000, "cache_read_input_tokens": 50000},
             served_by_fallback=False,
             duration_ms=1234,

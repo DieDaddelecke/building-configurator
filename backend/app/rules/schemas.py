@@ -133,7 +133,7 @@ class CommuneCoverageOut(BaseModel):
 
 class CoverageOut(BaseModel):
     configured: bool
-    """API-Schlüssel für die Claude API gesetzt."""
+    """API-Schlüssel für OpenRouter gesetzt."""
     model: str
     month_cost_usd: float
     budget_month_usd: float

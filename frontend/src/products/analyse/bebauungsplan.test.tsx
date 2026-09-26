@@ -128,7 +128,7 @@ it("nennt den Grund, wenn die Auswertung nicht eingerichtet ist", () => {
   zeige();
   expect(screen.getByText("Zone Uh · Kapitel Uh")).toBeInTheDocument();
   expect(screen.getByText("Auswertung gescheitert")).toBeInTheDocument();
-  expect(screen.getByText(/Es fehlt der Schlüssel der Claude API/)).toBeInTheDocument();
+  expect(screen.getByText(/Es fehlt der Schlüssel von OpenRouter/)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Zone ändern" })).toBeInTheDocument();
 });
 

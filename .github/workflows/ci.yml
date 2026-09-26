@@ -100,10 +100,10 @@ jobs:
         run: |
           docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures
           docker compose exec -T api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force
-      - name: Planstand und aufgezeichnete Auswertung einspielen (G2, ohne Claude API)
+      - name: Planstand und aufgezeichnete Auswertung einspielen (G2, ohne OpenRouter)
         run: |
           docker compose cp backend/tests api:/tmp/tests
-          docker compose exec -T -e EMPRISE_ANTHROPIC_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
+          docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
       - uses: pnpm/action-setup@v4
         with:
           # Version aus packageManager; package.json liegt nicht im Wurzelordner

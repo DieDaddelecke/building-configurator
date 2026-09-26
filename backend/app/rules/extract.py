@@ -1,9 +1,9 @@
 """Auswertung eines Zonenkapitels: Aufrufe des Sprachmodells, Schranken, neue Regelwerksversionen (Plan 3.4).
 
 Ablauf: Auswertung (Lauf 1) → Schranken → Gegenprüfung (Lauf 2, docs/ANNAHMEN.md RW19) → Regelwerk je Sektor.
-Datenbanktransaktionen umschließen nie einen Aufruf der Claude API (Minuten). Jeder Aufruf wird sofort mit
-Kosten gespeichert; eine Wiederholung nutzt bereits erfolgreiche Teile derselben Eingabe. Liegen alle Teile
-vor (z. B. nach einer neuen Version der Schranken), wird ohne Aufruf neu bewertet.
+Datenbanktransaktionen umschließen nie einen Aufruf des Sprachmodells über OpenRouter (Minuten). Jeder
+Aufruf wird sofort mit Kosten gespeichert; eine Wiederholung nutzt bereits erfolgreiche Teile derselben
+Eingabe. Liegen alle Teile vor (z. B. nach einer neuen Version der Schranken), wird ohne Aufruf neu bewertet.
 """
 
 import hashlib
@@ -21,7 +21,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.integrations.claude import ExtractionError, ExtractionRequest, RuleExtractor
+from app.integrations.openrouter import ExtractionError, ExtractionRequest, RuleExtractor
 from app.platform import storage
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
@@ -182,7 +182,7 @@ class _Calls:
                 session.commit()
 
     def _before_call(self) -> None:
-        if self.settings.anthropic_api_key is None:
+        if self.settings.openrouter_api_key is None:
             raise _Stop(ChapterOutcome("not_configured", None, self.cost), "not_configured")
         with self.sessions() as session:
             spent = month_cost(session)
@@ -545,7 +545,7 @@ def _enqueue_follow_up(session: Session, chapter: RegulationChapter, digest: str
 
 
 def _cost(settings: Settings, usage: dict[str, int]) -> float:
-    from app.integrations.claude import prices
+    from app.integrations.openrouter import prices
 
     return prices(settings).cost(usage) if usage else 0.0
 

@@ -118,7 +118,7 @@ Die Tabelle gilt für den Hauskonfigurator. Aus demselben Code läuft mit `EMPRI
 
 **Einrichten und Freischalten**
 
-1. Schlüssel der Claude API und Monatsbudget setzen: `EMPRISE_ANTHROPIC_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `ANTHROPIC_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). Budget entschieden am 25.09.2026: **150 $ je Stack und Monat** auf Unraid, lokal 20 $ (Vorgaben in `.env.example`, `.env.analyse.example` und den Compose-Dateien). Den Schlüssel trägt der Nutzer selbst ein. An die API gehen nur öffentliche Planunterlagen (L8).
+1. Schlüssel von OpenRouter und Monatsbudget setzen: `EMPRISE_OPENROUTER_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `OPENROUTER_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). Budget entschieden am 25.09.2026: **150 $ je Stack und Monat** auf Unraid, lokal 20 $ (Vorgaben in `.env.example`, `.env.analyse.example` und den Compose-Dateien). Den Schlüssel trägt der Nutzer selbst ein. An die Schnittstelle gehen nur öffentliche Planunterlagen (L8); seit E-D19 läuft der Aufruf über OpenRouter als zusätzlichen Drittanbieter statt direkt über die Claude API.
 2. Planstände importiert der Worker beim ersten Start und danach wöchentlich (`plu_import`); sofort: `python -m app.cli plu-import` (ohne Internet: `--from-dir`). Jedes Zonenkapitel wird danach als Job `rules_extract` ausgewertet.
 3. Flag und ausgehender Zugang: Tabelle in Abschnitt 1.
 
@@ -321,7 +321,7 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 1. Konto freischalten: `python -m app.cli staff-add person@buero.fr architect` – **im Analyse-Stack**, er hat eigene Tabellen (lokal: `docker compose -f compose.analyse.yaml exec api-analyse …`).
 2. Flag setzen: `python -m app.cli flag-set site_selection --role architect`. Ohne das Flag antworten alle Grundstücksendpunkte mit `403 feature_disabled` (UP10).
 3. Kein Katasterimport nötig: Die Parzelle kommt als DXF oder GeoJSON oder wird gezeichnet (D17). `CADASTRE_COMMUNES=[]` ist der Normalfall; mit einer Gemeinde darin läuft der Import von Hand (`cadastre-import`), dann funktioniert auch der Katasterklick.
-4. Für die Auswertung hochgeladener Reglements (AN2): `ANTHROPIC_API_KEY` und `RULES_BUDGET_MONTH_USD` in `.env.analyse` (lokal `EMPRISE_ANTHROPIC_API_KEY`, Budget-Vorgabe 20 $). Das Budget gilt je Datenbank, also getrennt vom Hauskonfigurator. Ohne Schlüssel steht das gewählte Kapitel auf „nicht eingerichtet“ und startet von selbst, sobald er eingetragen ist (RW22). Die Flags `rules_simulation` und `envelope_simulation` braucht das Analyse-Produkt nicht: Regeln und Baurahmen liest die Oberfläche über die Büro-Endpunkte (PU08). Ausgehender Zugang zusätzlich `api.anthropic.com`.
+4. Für die Auswertung hochgeladener Reglements (AN2): `OPENROUTER_API_KEY` und `RULES_BUDGET_MONTH_USD` in `.env.analyse` (lokal `EMPRISE_OPENROUTER_API_KEY`, Budget-Vorgabe 20 $). Das Budget gilt je Datenbank, also getrennt vom Hauskonfigurator. Ohne Schlüssel steht das gewählte Kapitel auf „nicht eingerichtet“ und startet von selbst, sobald er eingetragen ist (RW22). Die Flags `rules_simulation` und `envelope_simulation` braucht das Analyse-Produkt nicht: Regeln und Baurahmen liest die Oberfläche über die Büro-Endpunkte (PU08). Ausgehender Zugang zusätzlich `openrouter.ai`.
 
 **Prüfpunkte**
 

@@ -785,7 +785,7 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
             )
         )
     return CoverageOut(
-        configured=settings.anthropic_api_key is not None,
+        configured=settings.openrouter_api_key is not None,
         model=settings.rules_model,
         month_cost_usd=round(month_cost(db), 2),
         budget_month_usd=settings.rules_budget_month_usd,
@@ -1116,7 +1116,7 @@ def _restart_reason(
     if chapter.status != "failed" or chapter.error is None:
         return None
     if chapter.error == "not_configured":
-        return "configured" if settings.anthropic_api_key is not None else None
+        return "configured" if settings.openrouter_api_key is not None else None
     if chapter.error == "budget_exceeded":
         return "budget" if budget_left else None
     if chapter.error.startswith(TRANSIENT_ERRORS) and now - chapter.updated_at > RETRY_TRANSIENT_AFTER:

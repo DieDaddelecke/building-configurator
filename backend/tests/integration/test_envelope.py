@@ -45,7 +45,7 @@ def memory_storage(monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
 
 @pytest.fixture
 def settings(monkeypatch: pytest.MonkeyPatch) -> Any:
-    monkeypatch.setenv("EMPRISE_ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("EMPRISE_OPENROUTER_API_KEY", "test-key")
     get_settings.cache_clear()
     yield get_settings()
     get_settings.cache_clear()

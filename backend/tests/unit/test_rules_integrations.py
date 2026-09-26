@@ -1,17 +1,22 @@
-"""Adapter G2 mit aufgezeichneten Antworten: GPU (Treillières, 14.09.2026), Claude API (simulierter Strom)."""
+"""Adapter G2 mit aufgezeichneten Antworten: GPU (Treillières, 14.09.2026), OpenRouter (simulierter Strom)."""
 
 import json
 from dataclasses import replace
 from typing import Any
 
-import anthropic
-import httpx2
+import httpx
+import openai
 import pytest
 
 from app.config import Settings
 from app.integrations import gpu
-from app.integrations.claude import FALLBACK_BETA, ClaudeExtractor, ExtractionError, ExtractionRequest
 from app.integrations.http import ExternalServiceError
+from app.integrations.openrouter import (
+    EXTRACTION_TOOL,
+    ExtractionError,
+    ExtractionRequest,
+    OpenRouterExtractor,
+)
 from app.rules.plan_import import choose_partition
 from tests.rules_support import DOC_ID, fixture_json, text_pdf, uh_output
 
@@ -52,54 +57,60 @@ def test_regulation_file_and_partition_choice() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Claude API
+# OpenRouter
 # ---------------------------------------------------------------------------
 
 
-def _sse(events: list[dict[str, Any]]) -> bytes:
-    return b"".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n".encode() for e in events)
-
-
-def _stream(text: str, stop_reason: str = "end_turn") -> bytes:
-    return _sse(
-        [
+def _completion(
+    arguments: dict[str, Any],
+    *,
+    finish_reason: str = "tool_calls",
+    model: str = "test-model",
+    tool_name: str = EXTRACTION_TOOL,
+) -> dict[str, Any]:
+    return {
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "created": 0,
+        "model": model,
+        "choices": [
             {
-                "type": "message_start",
+                "index": 0,
+                "finish_reason": finish_reason,
                 "message": {
-                    "id": "msg_1",
-                    "type": "message",
                     "role": "assistant",
-                    "model": "claude-opus-5",
-                    "content": [],
-                    "stop_reason": None,
-                    "stop_sequence": None,
-                    "usage": {
-                        "input_tokens": 1200,
-                        "output_tokens": 1,
-                        "cache_creation_input_tokens": 90000,
-                        "cache_read_input_tokens": 0,
-                    },
+                    "content": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_1",
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "arguments": json.dumps(arguments, ensure_ascii=False),
+                            },
+                        }
+                    ],
                 },
-            },
-            {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}},
-            {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": text}},
-            {"type": "content_block_stop", "index": 0},
-            {
-                "type": "message_delta",
-                "delta": {"stop_reason": stop_reason, "stop_sequence": None},
-                "usage": {"output_tokens": 4000},
-            },
-            {"type": "message_stop"},
-        ]
-    )
+            }
+        ],
+        "usage": {
+            "prompt_tokens": 91200,
+            "completion_tokens": 4000,
+            "total_tokens": 95200,
+            "prompt_tokens_details": {"cached_tokens": 90000},
+        },
+    }
 
 
-def _extractor(handler: Any) -> ClaudeExtractor:
-    settings = Settings(anthropic_api_key="test-key")  # type: ignore[arg-type]
-    client = anthropic.Anthropic(
-        api_key="test-key", http_client=httpx2.Client(transport=httpx2.MockTransport(handler)), max_retries=0
+def _extractor(handler: Any) -> OpenRouterExtractor:
+    settings = Settings(openrouter_api_key="test-key")  # type: ignore[arg-type]
+    client = openai.OpenAI(
+        api_key="test-key",
+        base_url=settings.openrouter_base_url,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+        max_retries=0,
     )
-    return ClaudeExtractor(settings, client)
+    return OpenRouterExtractor(settings, client)
 
 
 REQUEST = ExtractionRequest(
@@ -112,42 +123,37 @@ REQUEST = ExtractionRequest(
 )
 
 
-def test_claude_request_shape_and_response() -> None:
+def test_openrouter_request_shape_and_response() -> None:
     seen: dict[str, Any] = {}
 
-    def handler(request: httpx2.Request) -> httpx2.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         seen["body"] = json.loads(request.content)
-        seen["beta"] = request.headers.get("anthropic-beta")
-        return httpx2.Response(
-            200,
-            content=_stream(json.dumps(uh_output())),
-            headers={"content-type": "text/event-stream", "request-id": "req_42"},
-        )
+        return httpx.Response(200, json=_completion(uh_output()))
 
     response = _extractor(handler).extract(REQUEST)
     body = seen["body"]
-    assert body["model"] == "claude-opus-5" and body["stream"] is True
-    assert body["fallbacks"] == "default" and FALLBACK_BETA in seen["beta"]
-    assert body["thinking"] == {"type": "adaptive"}
-    assert body["output_config"]["format"]["type"] == "json_schema"
-    documents = [b for b in body["messages"][0]["content"] if b["type"] == "document"]
-    assert len(documents) == 2 and all(d["cache_control"]["ttl"] == "1h" for d in documents)
-    assert "Uh" in body["messages"][0]["content"][-1]["text"]
+    assert body["model"] == "anthropic/claude-opus-5"
+    assert body["tool_choice"] == {"type": "function", "function": {"name": EXTRACTION_TOOL}}
+    assert body["tools"][0]["function"]["name"] == EXTRACTION_TOOL
+    assert body["reasoning"] == {"effort": "high"}
+    files = [b for b in body["messages"][1]["content"] if b["type"] == "file"]
+    assert len(files) == 2
+    assert all(f["file"]["file_data"].startswith("data:application/pdf;base64,") for f in files)
+    assert "Uh" in body["messages"][1]["content"][-1]["text"]
     assert response.output["rules"][0]["kind"] == "setback_street"
-    assert response.usage["cache_creation_input_tokens"] == 90000 and response.usage["output_tokens"] == 4000
-    # 1.200 × 5 $ + 4.000 × 25 $ + 90.000 × 10 $ (Cache 1 h) je Million
-    assert response.cost_usd == pytest.approx(1.006, abs=0.001)
+    assert response.usage["cache_read_input_tokens"] == 90000 and response.usage["output_tokens"] == 4000
+    assert response.usage["input_tokens"] == 1200
+    # 1.200 × 5 $ + 4.000 × 25 $ + 90.000 × 0,5 $ (Zwischenspeicher, gemeldet über OpenRouter) je Million
+    assert response.cost_usd == pytest.approx(0.151, abs=0.001)
 
 
 def test_verification_request_sends_claims_without_values() -> None:
     seen: dict[str, Any] = {}
 
-    def handler(request: httpx2.Request) -> httpx2.Response:
+    def handler(request: httpx.Request) -> httpx.Response:
         seen["body"] = json.loads(request.content)
         answer = {"checks": [{"claim": 1, "status": "regulated", "params": [], "notes": ""}], "remarks": ""}
-        return httpx2.Response(
-            200, content=_stream(json.dumps(answer)), headers={"content-type": "text/event-stream"}
-        )
+        return httpx.Response(200, json=_completion(answer, tool_name="submit_verification"))
 
     claims = [
         {
@@ -162,42 +168,37 @@ def test_verification_request_sends_claims_without_values() -> None:
     ]
     response = _extractor(handler).extract(replace(REQUEST, claims=claims))
     body = seen["body"]
-    assert body["output_config"]["format"]["schema"]["required"] == ["checks", "remarks"]
-    text = body["messages"][0]["content"][-1]["text"]
+    assert body["tools"][0]["function"]["parameters"]["required"] == ["checks", "remarks"]
+    text = body["messages"][1]["content"][-1]["text"]
     assert text.startswith("Verification task") and "Claim 1: sector Uh, kind setback_street" in text
     assert response.output["checks"][0]["claim"] == 1
 
 
 @pytest.mark.parametrize(
-    ("status", "stop_reason", "reason", "retryable"),
+    ("status", "finish_reason", "reason", "retryable"),
     [
-        (200, "refusal", "refusal", False),
-        (200, "max_tokens", "max_tokens", False),
+        (200, "length", "max_tokens", False),
         (401, None, "auth", False),
         (429, None, "rate_limited", True),
-        (529, None, "http_529", True),
+        (503, None, "http_503", True),
     ],
 )
-def test_claude_errors(status: int, stop_reason: str | None, reason: str, retryable: bool) -> None:
-    def handler(request: httpx2.Request) -> httpx2.Response:
+def test_openrouter_errors(status: int, finish_reason: str | None, reason: str, retryable: bool) -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
         if status == 200:
-            return httpx2.Response(
-                200,
-                content=_stream("{}", stop_reason or "end_turn"),
-                headers={"content-type": "text/event-stream"},
-            )
-        return httpx2.Response(status, json={"type": "error", "error": {"type": "error", "message": "x"}})
+            return httpx.Response(200, json=_completion({}, finish_reason=finish_reason or "stop"))
+        return httpx.Response(status, json={"error": {"message": "x", "type": "error"}})
 
     with pytest.raises(ExtractionError) as error:
         _extractor(handler).extract(REQUEST)
     assert error.value.reason == reason and error.value.retryable is retryable
 
 
-def test_claude_requires_api_key() -> None:
+def test_openrouter_requires_api_key() -> None:
     with pytest.raises(ExtractionError, match="not_configured"):
-        ClaudeExtractor(Settings(anthropic_api_key=None))
+        OpenRouterExtractor(Settings(openrouter_api_key=None))
 
 
 def test_empty_api_key_from_compose_counts_as_unset() -> None:
-    assert Settings(anthropic_api_key="  ").anthropic_api_key is None  # type: ignore[arg-type]
-    assert Settings(anthropic_api_key="sk-test").anthropic_api_key is not None  # type: ignore[arg-type]
+    assert Settings(openrouter_api_key="  ").openrouter_api_key is None  # type: ignore[arg-type]
+    assert Settings(openrouter_api_key="sk-test").openrouter_api_key is not None  # type: ignore[arg-type]

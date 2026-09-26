@@ -15,9 +15,9 @@ from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
-from app.integrations.claude import ExtractionError, ExtractionRequest, ExtractionResponse
 from app.integrations.etalab_cadastre import DirectoryCadastre
 from app.integrations.ign_bdtopo import DirectoryRoads
+from app.integrations.openrouter import ExtractionError, ExtractionRequest, ExtractionResponse
 from app.platform import storage
 from app.platform.db import get_sessionmaker
 from app.platform.models import AuditLog, FeatureFlag, Job
@@ -54,7 +54,7 @@ def memory_storage(monkeypatch: pytest.MonkeyPatch) -> dict[str, bytes]:
 
 @pytest.fixture
 def settings(monkeypatch: pytest.MonkeyPatch) -> Any:
-    monkeypatch.setenv("EMPRISE_ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setenv("EMPRISE_OPENROUTER_API_KEY", "test-key")
     get_settings.cache_clear()
     yield get_settings()
     get_settings.cache_clear()
@@ -251,7 +251,7 @@ def test_budget_and_missing_key_stop_before_calling_the_model(
     assert extractor.requests == []
     assert db_session.get(RegulationChapter, chapter_id(db_session)).error == "budget_exceeded"
 
-    monkeypatch.delenv("EMPRISE_ANTHROPIC_API_KEY")
+    monkeypatch.delenv("EMPRISE_OPENROUTER_API_KEY")
     get_settings.cache_clear()
     assert run_extraction(db_session, get_settings(), extractor).status == "not_configured"
 
@@ -584,7 +584,7 @@ def test_new_engine_version_reassesses_stored_answers_without_api(
     chapter = db_session.get(RegulationChapter, chapter_id(db_session))
     chapter.engine_version = "g2-0.9.0"
     db_session.commit()
-    monkeypatch.delenv("EMPRISE_ANTHROPIC_API_KEY")
+    monkeypatch.delenv("EMPRISE_OPENROUTER_API_KEY")
     get_settings.cache_clear()
     outcome = run_extraction(db_session, get_settings(), FakeExtractor([]))  # ein Aufruf schlüge fehl
     assert outcome.status == "succeeded" and outcome.cost_usd == 0

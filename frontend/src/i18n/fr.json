@@ -157,7 +157,7 @@
         "failed": "échec de l'analyse"
       },
       "reason": {
-        "not_configured": "L'analyse n'est pas configurée : la clé de l'API Claude manque. Elle démarrera d'elle-même dès que la clé sera saisie.",
+        "not_configured": "L'analyse n'est pas configurée : la clé OpenRouter manque. Elle démarrera d'elle-même dès que la clé sera saisie.",
         "budget_exceeded": "Le budget mensuel de l'analyse est atteint. Elle reprendra d'elle-même le mois prochain ou avec un budget plus élevé.",
         "chapter_too_long": "Le chapitre et les dispositions générales sont trop longs ensemble. Veuillez restreindre les pages.",
         "max_tokens": "La réponse était trop longue pour une analyse.",
@@ -819,7 +819,7 @@
       "intro": "Les règles sont extraites automatiquement des documents d'urbanisme et s'affichent immédiatement comme simulation pour le client. Les corrections sont facultatives : pour la zone, elles valent pour les simulations suivantes ; depuis un terrain, pour ce seul projet.",
       "model": "Modèle",
       "cost": "Coût du mois / budget",
-      "configured": "API Claude",
+      "configured": "OpenRouter",
       "yes": "configurée",
       "notConfigured": "aucune clé API",
       "import": "Vérifier les versions",
