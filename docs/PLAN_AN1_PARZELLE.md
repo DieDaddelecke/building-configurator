@@ -1,6 +1,6 @@
 # AN1 – Parzelle ohne Kataster (Emprise Analyse)
 
-> **Status:** geplant und umgesetzt am 20./21.09.2026 · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN1), 8.1 Nr. 2–4 und 10 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN1 (Präfix `UP`)
+> **Status:** geplant und umgesetzt am 20./21.09.2026, Nachtrag PDF am 21.09.2026, Konturen von Hand zusammenstellen am 28.09.2026 (Kapitel 9), kurze Stücke zu Kanten zusammenführen am 28.09.2026 (Kapitel 10), Beschriftungen als Umrisse übergehen am 28.09.2026 (Kapitel 11) · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN1), 8.1 Nr. 2–4 und 10 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN1 (Präfix `UP`)
 > **Voraussetzung:** AN0 (Produktschnitt, ANNAHMEN PS01–PS09).
 
 ---
@@ -329,3 +329,65 @@ Parzelle 144 aus dem echten Auszug (zwei Teile, 9.1) hat **32 Kanten, 10 davon u
 **Prüflauf:** Backend 636 Tests mit `TEST_S3=1` (vorher 629), ruff, Format und mypy grün; neu 5 Einheitstests zu `split_edges` (ohne Schwelle wie bisher; Kerbe und Zickzack → vier Kanten mit allen Punkten und derselben Länge; abgerundete Ecke; Kreis aus 60 Sehnen → 30 Kanten statt 60; Rückfall), einer zu `short_piece_m_for` und ein Integrationstest (GeoJSON mit Kerbe → vier Kanten, Herkunft; die Herkunft der Vereinigung nennt die Schwelle ebenfalls). Frontend 197 Tests (vorher 196; Herkunft nennt die Schwelle), Lint, Typprüfung und Build grün. `openapi.json` unverändert (`source_info` ist ein freies Objekt).
 
 **Browserprüfung am 28.09.2026** (neu gebaute Images, echter Auszug 1:500): Parzelle 144 aus ihren zwei Teilen übernommen → 13 Kanten, keine Nummern mehr übereinander, 1.441,1 m²; Herkunft „Kanten: Stücke unter 2 m zu einer Kante zusammengefasst“. Bei schmalem Fenster berühren sich die Nummern der Kanten 4 und 5 (4,2 und 3,5 m) knapp, bleiben aber lesbar. Das Testprojekt danach gelöscht.
+
+## 11. Nachtrag 28.09.2026: Beschriftungen als Umrisse übergehen
+
+**Auftrag des Nutzers:** „Kerben der Beschriftung kannst du gerne bearbeiten“ (zu 9.5, beim Bau Nr. 2, und 10.4). Festlegung: ANNAHMEN UP19.
+
+### 11.1 Befund
+
+- **Der Vorschlag aus 9.5 verliert Grenzen.** Nur gestrichene Pfade zu Flächen zu schließen, lässt in der Blattmitte des Auszugs Parzelle 1115 und ihre Nachbarin zu einer Fläche von 2 020 m² verschmelzen: Die Grenze zwischen beiden ist dort nur die Kante eines gefüllten Gebäudes.
+- **Farbe und Größe trennen sauber.** Auf beiden echten Auszügen sind alle nur gefüllten Pfade in Schwarz kleiner als 10 mm auf dem Papier (258 bzw. 870 Pfade – Buchstaben und Ziffern, die größten sind die Großbuchstaben des Flurnamens). Gebäude sind orange oder hellgelb gefüllt (3–64 mm), Wasser blau, Masken weiß. Grenzen sind gestrichen.
+
+### 11.2 Festlegungen
+
+- **Beschriftung:** Ein Pfad gilt als Beschriftung, wenn er nur gefüllt ist (ohne Strich), dunkel (Grau, RGB oder CMYK mit höchstens 25 % Helligkeit; ohne Farbangabe schwarz wie im PDF vorgegeben) und höchstens 10 mm auf dem Papier misst (längere Seite des umschließenden Rechtecks). Seine Strecken gehen nicht in die Flächen ein.
+- **Rückfall:** Ergibt sich ohne die Beschriftungen keine plausible Fläche, zählen alle Pfade wie bisher.
+- Texte mit Textschicht (Parzellennummern als Text) bleiben unberührt; Nummern als Umrisse bleiben unlesbar (9.4).
+- Gilt für jedes PDF, nicht nur für Auszüge von cadastre.gouv.fr. Bestehende Projekte behalten ihren gespeicherten Umriss.
+
+### 11.3 Arbeitsschritte
+
+1. `site/domain/pdfplan.py`: `_is_glyph`, `_is_dark`, `PdfPage.glyph_segments`; `read_plan` mit Rückfall.
+2. Tests: Einheit (Helligkeit in Grau, RGB und CMYK; Auszug mit einer kleinen schwarzen, einer großen schwarzen und einer kleinen farbigen Form auf der Grenze; Rückfall), Integration (Kandidat und Grundstück ohne Kerbe).
+3. Probe an beiden echten Auszügen, Browser an Parzelle 144.
+
+### 11.4 Grenzen
+
+- Zeichnet ein Plan kurze Grenzstücke als kleine schwarze Flächen statt als Linien, fehlen diese Stücke; bleibt trotzdem eine plausible Fläche, greift der Rückfall nicht. Auf den echten Auszügen nicht beobachtet.
+- Kleine schwarz gefüllte Gebäude (unter 10 mm, bei 1:500 unter 5 m) sind keine eigene Fläche mehr; für die Parzelle ohne Belang, weil Kandidaten Außenringe sind.
+- Einbuchtungen aus anderen Ursachen (Gebäudekanten auf der Grenze, fremde Linien) bleiben; dafür bleiben die Konturwahl (UP17) und das Zusammenführen kurzer Stücke (UP18).
+
+### 11.5 Prüfprotokoll
+
+**Vor dem Bau:**
+
+| Nr. | Befund | Folge | Festlegung |
+|---|---|---|---|
+| 1 | Nur gestrichene Pfade (Vorschlag 9.5) | Eine echte Grenze geht verloren (11.1) | Verworfen; Farbe und Größe entscheiden |
+| 2 | Die Großbuchstaben des Flurnamens messen bis rund 9 mm, die kleinsten Gebäude ab 3 mm | Allein mit der Größe wären kleine Gebäude Schrift | 10 mm **und** dunkel; Gebäude sind farbig |
+| 3 | Andere PDFs geben Farben in Grau oder CMYK an, manche gar nicht | RGB allein erkennte dort keine Schrift | Helligkeit aus allen drei Farbräumen; ohne Angabe schwarz |
+| 4 | Die Kerben fallen weg, die Fläche ändert sich (Parzelle 144 +1,1 m², auf Blatt 2 bis +24 m²) | Andere Fläche als bisher | Gewollt: Das ist die Fläche ohne Schrift; bestehende Projekte behalten ihren Umriss |
+
+**Geprüfte Alternativen:**
+
+| Alternative | Verworfen, weil | Besser, wenn … |
+|---|---|---|
+| Nur gestrichene Pfade | Verliert Grenzen, die nur als Gebäudekante gezeichnet sind (11.1) | Grenzen immer gestrichen wären |
+| Kerben geometrisch schließen (Puffer hin und zurück) | Schließt auch echte Einbuchtungen, breite Buchstaben nicht (10.5) | es nur um Spalten ginge |
+| Buchstaben an ihrer Form erkennen (Kurven, Innenringe) | Aufwendig; Farbe und Größe genügen auf den echten Auszügen | Pläne Schrift in Gebäudefarben setzten |
+
+**Probe mit dem eingebauten Code** (beide echten Auszüge):
+
+| | Blatt 1 (1:500) | Blatt 2 (1:1000) |
+|---|---|---|
+| Strecken | 3 906 → 1 010 | 13 120 → 2 561 |
+| Flächen | 849 → 484 | 2 333 → 1 060 |
+| Kandidaten (vor der Kappung auf 150) | 130 → 130, keine verschmolzen | 332 → 331, keine verschmolzen: 320 gleich, 8 größer (Kerben gefüllt, bis +24 m²), 4 schmale Streifen (1–2 m breit) zwischen einer Linie und einem Schriftzug fallen weg |
+| Kanten aller Kandidaten mit Schwelle (UP18) | 833 → 783 | 1 187 → 1 081 |
+
+Parzelle 144: Teile 866,5 und 575,7 m² (vorher 865,4 und 574,2), zusammen 1 442,2 m² (+1,1 m²); 18 statt 32 Kanten ohne Schwelle, 12 statt 13 mit. Der verbliebene Knick an Kante 11 kommt von der Kreislinie, nicht von Schrift.
+
+**Prüflauf:** Backend 649 Tests mit `TEST_S3=1` (vorher 636), ruff, Format und mypy grün; neu die Einheitstests zur Helligkeit (10 Fälle), zu kleinen, großen und farbigen Formen auf der Grenze und zum Rückfall sowie ein Integrationstest (Buchstabe auf der Grenze von 65: Kandidat 600 m², vier Kanten). Frontend unverändert.
+
+**Browserprüfung am 28.09.2026** (neu gebaute Images, echter Auszug 1:500): die Teile von Parzelle 144 mit 866,5 und 575,7 m² gewählt, „2 Flächen zusammen, ≈ 1.442 m²“ → Grundstück 1.442,2 m² mit 12 Kanten, ohne Kerben an den Kanten 3 und 6. Das Testprojekt danach gelöscht.

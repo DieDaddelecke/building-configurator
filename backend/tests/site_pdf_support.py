@@ -21,6 +21,15 @@ def polygon(points: list[tuple[float, float]], *, width: float = 0.3) -> str:
     return f'<polygon points="{coords}" fill="none" stroke="black" stroke-width="{width}"/>'
 
 
+def filled(x: float, y: float, w: float, h: float, colour: str) -> str:
+    """Nur gefüllt, ohne Strich – so stehen Beschriftungen und Gebäude auf Auszügen von cadastre.gouv.fr."""
+    return f'<path d="M{x} {y} h{w} v{h} h{-w} z" fill="{colour}" stroke="none"/>'
+
+
+def line(x1: float, y1: float, x2: float, y2: float) -> str:
+    return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="0.2"/>'
+
+
 def label(x: float, y: float, text: str) -> str:
     return f'<text x="{x}" y="{y}" font-size="3.5">{text}</text>'
 

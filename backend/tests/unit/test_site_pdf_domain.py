@@ -1,9 +1,9 @@
-"""Parzelle aus einem vektoriellen PDF, ohne Datenbank (UP13–UP16, `app/site/domain/pdfplan.py`)."""
+"""Parzelle aus einem vektoriellen PDF, ohne Datenbank (UP13–UP16, UP19, `app/site/domain/pdfplan.py`)."""
 
 import pytest
 
 from app.site.domain import pdfplan
-from tests.site_pdf_support import extract_pdf, label, plan_pdf, polygon, rect
+from tests.site_pdf_support import extract_pdf, filled, label, plan_pdf, polygon, rect
 
 
 def by_name(plan: pdfplan.PdfPlan) -> dict[str | None, float]:
@@ -62,6 +62,41 @@ def test_geometer_plan_with_a_slanted_parcel() -> None:
     xs, ys = zip(*points, strict=True)
     paper = abs(sum(xs[i] * ys[(i + 1) % 4] - xs[(i + 1) % 4] * ys[i] for i in range(4))) / 2
     assert by_name(plan)["AB 12"] == pytest.approx(paper * 0.2 * 0.2, rel=0.002)
+
+
+def test_lettering_drawn_as_outlines_does_not_notch_the_parcel() -> None:
+    """Auf der Südgrenze von 65 (y = 80 mm) je eine Form, 2 mm in die Parzelle hinein (bei 1:500 1 m): Der
+    kleine schwarze Buchstabe zählt nicht (UP19); die große schwarze Form (24 mm) und die farbige (Gebäude)
+    schon."""
+    extra = [filled(22, 78, 3, 4, "black"), filled(28, 78, 24, 4, "black"), filled(54, 78, 3, 4, "#fc3")]
+    plan = pdfplan.read_plan(extract_pdf(extra=extra))
+    # 600 m² ohne die Kerben der großen Form (12 × 1 m) und des Gebäudes (1,5 × 1 m)
+    assert by_name(plan)["65"] == pytest.approx(600.0 - 12.0 - 1.5, rel=0.002)
+
+
+def test_lettering_counts_when_nothing_else_forms_a_face() -> None:
+    # Nur eine schwarze Fläche von 9 mm; bei 1:5000 sind das 45 × 45 m
+    plan = pdfplan.read_plan(plan_pdf([filled(20, 20, 9, 9, "black")], "Échelle 1/5000"))
+    assert [round(face.polygon.area) for face in plan.faces] == [2025]
+
+
+@pytest.mark.parametrize(
+    ("colour", "dark"),
+    [
+        (None, True),
+        (0.0, True),
+        (0.2, True),
+        (0.5, False),
+        ((0.0, 0.0, 0.0), True),
+        ((1.0, 0.8, 0.2), False),
+        ((1.0, 0.898, 0.6), False),
+        ((0.0, 0.0, 0.0, 1.0), True),
+        ((0.0, 0.0, 0.0, 0.0), False),
+        ("P0", False),
+    ],
+)
+def test_dark_fill_colours(colour: object, dark: bool) -> None:
+    assert pdfplan._is_dark(colour) is dark
 
 
 @pytest.mark.parametrize(

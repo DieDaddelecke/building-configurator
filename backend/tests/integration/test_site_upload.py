@@ -17,7 +17,7 @@ from sqlalchemy import select, text
 from app.platform.jobs import enqueue
 from app.platform.jobs.worker import run_one
 from app.platform.models import FeatureFlag, Project
-from tests.site_pdf_support import extract_pdf, plan_pdf
+from tests.site_pdf_support import extract_pdf, filled, line, plan_pdf
 
 # Rechteck 20 × 30 m, lokal gezeichnet (ohne geografischen Bezug)
 LOCAL_RING = [(0.0, 0.0), (20.0, 0.0), (20.0, 30.0), (0.0, 30.0)]

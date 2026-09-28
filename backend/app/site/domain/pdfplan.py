@@ -4,6 +4,8 @@ Rein: Bytes hinein, Ringe in Metern heraus. Ein Plan-PDF enthält die Grenzen al
 Linien der ersten Seite mit Linien entstehen über `polygonize` die Flächen des Plans (Parzellen, Gebäude,
 Rahmen). Kandidaten sind ihre Außenringe; der Rahmen fällt weg, weil er viele andere Flächen enthält.
 Kurze Texte mit einer Ziffer (Parzellennummern) werden der kleinsten Fläche zugeordnet, in der sie stehen.
+Beschriftungen, die nur als gefüllte Umrisse im PDF stehen (Auszüge von cadastre.gouv.fr), zählen nicht zu den
+Linien: Wo Buchstaben eine Grenze kreuzen, kerbten sie sonst die Flächen ein (UP19).
 
 Der Maßstab kommt aus dem Text („Échelle d'édition : 1/500“, „1:500“) oder von Hand; ohne Maßstab gibt es
 keine Meter. Norden gilt als oben auf dem Blatt, eine Lage in Lambert-93 entsteht nicht (UP15).
@@ -38,6 +40,10 @@ SNAP_PT = 0.01
 SCALE_RANGE = (50, 10_000)
 LABEL_MAX_CHARS = 10
 SCALE_PATTERN = re.compile(r"(?<![\d/])1\s*[/:]\s*(\d{1,2}(?:[ \u00a0\u202f.]?\d{3})|\d{2,5})(?![\d/])")
+GLYPH_MAX_PT = 10 / 25.4 * 72
+"""Nur gefüllte, dunkle Pfade bis 10 mm auf dem Papier sind Beschriftungen als Umrisse (UP19)."""
+DARK_MAX = 0.25
+"""Höchste Helligkeit einer Füllfarbe (0 schwarz, 1 weiß), die noch als Schrift gilt; Gebäude sind farbig."""
 EDITION_WORDS = ("dition", "impression")
 """„Échelle d'édition“, „Edition“, „Échelle d'impression“: der Maßstab des Papiers, nicht der Erfassung."""
 
@@ -75,6 +81,8 @@ class Label:
 class PdfPage:
     number: int
     segments: list[tuple[tuple[float, float], tuple[float, float]]] = field(default_factory=list)
+    glyph_segments: list[tuple[tuple[float, float], tuple[float, float]]] = field(default_factory=list)
+    """Strecken der Beschriftungen als Umrisse (UP19); sie zählen nur im Rückfall."""
     labels: list[Label] = field(default_factory=list)
     text: str = ""
 
@@ -126,6 +134,34 @@ def _path_segments(item: Any) -> Iterator[tuple[tuple[float, float], tuple[float
     yield from _polyline(current, bool(getattr(item, "fill", False)))
 
 
+def _is_glyph(item: Any) -> bool:
+    """Beschriftung als Umriss (UP19): nur gefüllt, dunkel und klein. Auf Auszügen von cadastre.gouv.fr sind
+    Buchstaben und Ziffern so gezeichnet; Grenzen sind gestrichen, Gebäude farbig gefüllt."""
+    if getattr(item, "stroke", False) or not getattr(item, "fill", False):
+        return False
+    x0, y0, x1, y1 = item.bbox
+    return max(x1 - x0, y1 - y0) <= GLYPH_MAX_PT and _is_dark(getattr(item, "non_stroking_color", None))
+
+
+def _is_dark(colour: Any) -> bool:
+    """Grau, RGB oder CMYK mit höchstens `DARK_MAX` Helligkeit; ohne Angabe schwarz (Vorgabe im PDF)."""
+    if colour is None:
+        return True
+    if isinstance(colour, int | float):
+        return float(colour) <= DARK_MAX
+    if not isinstance(colour, tuple | list) or not all(isinstance(v, int | float) for v in colour):
+        return False  # Muster und benannte Farbräume
+    values = [float(v) for v in colour]
+    if len(values) == 1:
+        return values[0] <= DARK_MAX
+    if len(values) == 3:
+        return max(values) <= DARK_MAX
+    if len(values) == 4:
+        c, m, y, k = values
+        return max((1 - c) * (1 - k), (1 - m) * (1 - k), (1 - y) * (1 - k)) <= DARK_MAX
+    return False
+
+
 def _polyline(
     points: list[tuple[float, float]], closed: bool
 ) -> Iterator[tuple[tuple[float, float], tuple[float, float]]]:
@@ -148,8 +184,9 @@ def read_pages(data: bytes) -> list[PdfPage]:
     def walk(node: Any, page: PdfPage) -> None:
         nonlocal segments
         if isinstance(node, LTCurve):
+            target = page.glyph_segments if _is_glyph(node) else page.segments
             for segment in _path_segments(node):
-                page.segments.append(segment)
+                target.append(segment)
                 segments += 1
                 if segments > MAX_SEGMENTS:
                     raise PdfInvalid("Der Plan enthält zu viele Linien")
@@ -226,8 +263,10 @@ def resolve_scale(pages: list[PdfPage], given: int | None) -> tuple[int, Literal
 # ---------------------------------------------------------------------------
 
 
-def _faces_in_points(page: PdfPage) -> list[Polygon]:
-    lines = [LineString(segment) for segment in dict.fromkeys(page.segments)]
+def _faces_in_points(segments: list[tuple[tuple[float, float], tuple[float, float]]]) -> list[Polygon]:
+    if not segments:
+        return []
+    lines = [LineString(segment) for segment in dict.fromkeys(segments)]
     noded = shapely.unary_union(lines)
     polygons = shapely.get_parts(shapely.polygonize(shapely.get_parts(noded)))
     exteriors: dict[bytes, Polygon] = {}
@@ -264,23 +303,33 @@ def _name_faces(polygons: list[Polygon], labels: list[Label]) -> list[str | None
     return [" ".join(sorted(set(n)))[:40] or None for n in names]
 
 
+def _plausible_faces(
+    segments: list[tuple[tuple[float, float], tuple[float, float]]], factor: float
+) -> list[tuple[Polygon, Polygon]]:
+    """Flächen in Punkten und in Metern. Fläche erst in Metern prüfen: dieselbe Schranke wie bei Weg E und
+    den übrigen Uploads (G28)."""
+    polygons = _faces_in_points(segments)
+    in_metres = [affinity.scale(p, factor, factor, origin=(0, 0)) for p in polygons]
+    return [
+        (points, metres)
+        for points, metres in zip(polygons, in_metres, strict=True)
+        if tol.MANUAL_MIN_AREA_M2 <= metres.area <= tol.MANUAL_MAX_AREA_M2
+    ]
+
+
 def read_plan(data: bytes, scale: int | None = None) -> PdfPlan:
     """Kandidaten aus der ersten Seite mit Linien, in Metern (Maßstab aus dem Text oder von Hand)."""
     pages = read_pages(data)
-    page = next((p for p in pages if len(p.segments) >= 3), None)
+    page = next((p for p in pages if len(p.segments) + len(p.glyph_segments) >= 3), None)
     if page is None:
         raise PdfWithoutLines("Das PDF enthält keine Linien – vermutlich ein Scan")
     value, source = resolve_scale(pages, scale)
     factor = POINT_M * value
 
-    polygons = _faces_in_points(page)
-    # Fläche erst in Metern prüfen: dieselbe Schranke wie bei Weg E und den übrigen Uploads (G28)
-    in_metres = [affinity.scale(p, factor, factor, origin=(0, 0)) for p in polygons]
-    plausible = [
-        (points, metres)
-        for points, metres in zip(polygons, in_metres, strict=True)
-        if tol.MANUAL_MIN_AREA_M2 <= metres.area <= tol.MANUAL_MAX_AREA_M2
-    ]
+    plausible = _plausible_faces(page.segments, factor)
+    if not plausible and page.glyph_segments:
+        # Rückfall: Ohne die Beschriftungen bleibt keine Fläche – dann zählen alle Pfade wie bisher (UP19)
+        plausible = _plausible_faces([*page.segments, *page.glyph_segments], factor)
     if not plausible:
         raise PdfInvalid(
             f"Bei 1:{value} ergibt keine geschlossene Fläche eine plausible Parzelle (20–50 000 m²)"
