@@ -1,16 +1,19 @@
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 
+import { useSession } from "../../api/session";
 import { useCreateProject, useOwnProjects } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { formatNumber } from "../../site/geo";
 
-/** Projektliste des Büros (AN1). Benennung, Notiz und Archiv folgen mit AN5. */
+/** Projektliste des Büros (AN1), darunter das KI-Modell der Auswertung (PLAN_AN2_PLU 8). Benennung, Notiz und
+ *  Archiv folgen mit AN5. */
 export function Projekte() {
   const { t, i18n } = useTranslation();
   const projects = useOwnProjects();
   const create = useCreateProject();
   const navigate = useNavigate();
+  const roles = useSession().data?.staff?.roles ?? [];
 
   const anlegen = () =>
     create.mutate(undefined, { onSuccess: (project) => void navigate(`/projekt/${project.id}`) });

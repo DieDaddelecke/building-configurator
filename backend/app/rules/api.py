@@ -2,8 +2,8 @@
 
 Kunden lesen die Regeln ihres Grundstücks hinter dem Feature-Flag `rules_simulation` (Plan 4.2).
 Büro: Abdeckung und Regelwerke lesen (`architect`, `rules_admin`, `ops`), Korrekturen (`architect`,
-`rules_admin`), Import und erneute Auswertung (`ops`, `rules_admin`). Keine dieser Büroaktionen ist
-Voraussetzung für die Simulation beim Kunden (D11).
+`rules_admin`), Import, erneute Auswertung und das KI-Modell der Auswertung (`ops`, `rules_admin`). Keine
+dieser Büroaktionen ist Voraussetzung für die Simulation beim Kunden (D11).
 „Emprise Analyse“ (AN2): Der Architekt lädt für eigene Projekte ein règlement écrit hoch und wählt die
 Zone (`require_owned_project`); die Datei liefert `GET /regulation-files/{id}` für die Zitate aus. Seit
 AN3 auch Zusatzdokumente mit Lotwahl; seit AN4 Korrekturen je Projekt mit Begründung und Fundstelle und die
@@ -13,11 +13,13 @@ Formularbeschreibung der Regelarten (docs/PLAN_AN4_KORREKTUR.md).
 import uuid
 from urllib.parse import quote
 
+import httpx2
 from fastapi import APIRouter, Depends, File, Form, Request, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.integrations.http import ExternalServiceError, shared_client
 from app.platform import flags, rate_limit
 from app.platform.auth.context import (
     RequestAuth,
@@ -35,6 +37,7 @@ from app.rules.schemas import (
     CoverageOut,
     ExtractIn,
     LotChoiceIn,
+    ModelOptionOut,
     ProjectOverrideIn,
     ProjectOverrideOut,
     ProjectRegulationOut,
@@ -43,6 +46,8 @@ from app.rules.schemas import (
     RuleSetOut,
     RuleSetVersionIn,
     RulesImportIn,
+    RulesModelIn,
+    RulesModelOut,
     UploadDuType,
     ZoneChoiceIn,
 )
@@ -79,6 +84,61 @@ Operator = Depends(require_roles(Role.ops, Role.rules_admin))
 def rules_coverage(staff: StaffPrincipal = Reader, db: Session = Depends(get_db)) -> CoverageOut:
     """Abdeckung je Gemeinde und Kapitel mit Status, Läufen, Kosten und Monatsbudget (Plan 3.4, 6.8)."""
     return service.coverage(db, get_settings())
+
+
+@router.get("/admin/rules/model", response_model=RulesModelOut)
+def get_rules_model(
+    staff: StaffPrincipal = Reader, db: Session = Depends(get_db), shared_db: Session = Depends(get_shared_db)
+) -> RulesModelOut:
+    """KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,
+    VA09)."""
+    return service.rules_model_out(db, shared_db, get_settings())
+
+
+@router.get("/admin/rules/models", response_model=list[ModelOptionOut])
+def list_rules_models(
+    staff: StaffPrincipal = Operator, client: httpx2.Client = Depends(shared_client)
+) -> list[ModelOptionOut]:
+    """Wählbare Modelle aus der Liste von OpenRouter mit erzwungenem Werkzeug (PU11); ohne PDF-Eingabe
+    bekommen sie die Textschicht (PU12)."""
+    try:
+        options = model_choice.available_models(client, get_settings())
+    except ExternalServiceError:
+        raise Problem(503, "models_unavailable") from None
+    return [
+        ModelOptionOut(
+            id=o.id,
+            name=o.name,
+            price_input_per_mtok=o.price_input_per_mtok,
+            price_output_per_mtok=o.price_output_per_mtok,
+            context_length=o.context_length,
+            reads_pdf=o.reads_pdf,
+        )
+        for o in options
+    ]
+
+
+@router.put("/admin/rules/model", response_model=RulesModelOut)
+def set_rules_model(
+    body: RulesModelIn,
+    staff: StaffPrincipal = Operator,
+    db: Session = Depends(get_db),
+    shared_db: Session = Depends(get_shared_db),
+    client: httpx2.Client = Depends(shared_client),
+) -> RulesModelOut:
+    """Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf
+    (PU11, VA09)."""
+    settings = get_settings()
+    reset = body.model == settings.rules_model
+    try:
+        options = [] if reset else model_choice.available_models(client, settings)
+        name = staff.display_name or staff.email
+        model_choice.choose(shared_db, settings, options, body.model, staff.actor_id, name)
+    except ExternalServiceError:
+        raise Problem(503, "models_unavailable") from None
+    except model_choice.ModelNotAvailable:
+        raise Problem(422, "model_not_available") from None
+    return service.rules_model_out(db, shared_db, settings)
 
 
 @router.post("/admin/rules/imports", status_code=202)

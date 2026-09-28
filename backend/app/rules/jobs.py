@@ -18,14 +18,15 @@ from typing import Any
 import httpx2
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.integrations.http import ExternalServiceError, new_client
 from app.integrations.openrouter import OpenRouterExtractor, RuleExtractor
 from app.platform.db import get_sessionmaker
 from app.platform.jobs import JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
-from app.rules import documents, extract, plan_import, service
+from app.platform.shared import shared_session
+from app.rules import documents, extract, model_choice, plan_import, service
 from app.rules.extract import RetryableExtractionError
 
 log = get_logger("rules_jobs")
@@ -42,8 +43,8 @@ def gpu_source_factory(client: httpx2.Client) -> plan_import.GpuSource:
     return plan_import.ApiGpu(client, get_settings())
 
 
-def extractor_factory() -> RuleExtractor:
-    return OpenRouterExtractor(get_settings())
+def extractor_factory(settings: Settings) -> RuleExtractor:
+    return OpenRouterExtractor(settings)
 
 
 @contextmanager
@@ -97,12 +98,15 @@ RULES_EXTRACT_TIMEOUT_SECONDS = 3600
 def rules_extract(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     final_attempt = ctx.attempt >= get_job_spec("rules_extract").max_attempts
     started = time.monotonic()
+    with shared_session() as shared_db:
+        # Modell und Preise einmal beim Start: Eine Auswertung mischt keine Modelle (PLAN_AN2_PLU 8)
+        settings = model_choice.effective_settings(shared_db, get_settings())
     try:
         result = extract.extract_chapter(
             _session,
-            get_settings(),
+            settings,
             uuid.UUID(payload["chapter_id"]),
-            extractor_factory,
+            lambda: extractor_factory(settings),
             force=bool(payload.get("force", False)),
             final_attempt=final_attempt,
             skip_if_running=ctx.attempt == 1,

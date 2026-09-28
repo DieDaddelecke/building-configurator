@@ -20,7 +20,8 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.platform.problems import Problem
-from app.rules import documents
+from app.platform.shared import shared_session
+from app.rules import documents, model_choice
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.form import kind_forms
@@ -56,6 +57,9 @@ from app.rules.schemas import (
     RuleOut,
     RuleSetOut,
     RuleSetVersionIn,
+    RulesModelOut,
+    RuleSourceIn,
+    RuleSourceOut,
     VersionOut,
     ZoneRulesOut,
 )
@@ -835,11 +839,60 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
         )
     return CoverageOut(
         configured=settings.openrouter_api_key is not None,
-        model=settings.rules_model,
+        model=_effective_model(settings),
         month_cost_usd=round(month_cost(db), 2),
         budget_month_usd=settings.rules_budget_month_usd,
         communes=communes,
     )
+
+
+def _effective_model(settings: Settings) -> str:
+    with shared_session() as shared_db:
+        return model_choice.effective_settings(shared_db, settings).rules_model
+
+
+def rules_model_out(db: Session, shared_db: Session, settings: Settings) -> RulesModelOut:
+    """Eingestelltes KI-Modell mit Preisen, Kosten des Monats dieser Instanz und Budget (PLAN_AN2_PLU 8;
+    die Wahl steht in der gemeinsamen Datenbank, VA09)."""
+    chosen = model_choice.current(shared_db, settings)
+    return RulesModelOut(
+        model=chosen.model,
+        source=chosen.source,
+        default_model=chosen.default_model,
+        price_input_per_mtok=chosen.price_input_per_mtok,
+        price_output_per_mtok=chosen.price_output_per_mtok,
+        updated_at=chosen.updated_at,
+        input=chosen.input,
+        configured=settings.openrouter_api_key is not None,
+        month_cost_usd=round(month_cost(db), 2),
+        budget_month_usd=settings.rules_budget_month_usd,
+        updated_by_name=chosen.updated_by_name,
+    )
+
+
+def rule_kind_forms() -> list[RuleKindFormOut]:
+    """Formularbeschreibung aller Regelarten (AN4, docs/PLAN_AN4_KORREKTUR.md 3.1)."""
+    return [
+        RuleKindFormOut(
+            kind=form.kind,
+            building_specific=form.building_specific,
+            mandatory=form.mandatory,
+            params=[
+                ParamFieldOut(
+                    name=p.name,
+                    type=p.type,
+                    required=p.required,
+                    default=p.default,
+                    options=list(p.options),
+                    min=p.min,
+                    max=p.max,
+                    unit=p.unit,
+                )
+                for p in form.params
+            ],
+        )
+        for form in kind_forms()
+    ]
 
 
 def rule_set_detail(db: Session, rule_set_id: uuid.UUID) -> RuleSetOut:

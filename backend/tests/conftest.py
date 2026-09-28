@@ -93,6 +93,7 @@ CLEAN_TABLES = [
     "project",
     "periodic_schedule",
     "feature_flag",
+    "app_setting",
     "legal_text",
     "rate_limit_counter",
     "audit_log",

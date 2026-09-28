@@ -166,6 +166,18 @@ class FeatureFlag(Created, Base):
     updated_by: Mapped[str | None] = mapped_column(String(200))
 
 
+class AppSetting(Base):
+    """Einstellung einer Instanz, die der Betrieb in der Oberfläche ändert – etwa das KI-Modell der
+    Auswertung (PLAN_AN2_PLU 8). Ohne Zeile gilt die Umgebung."""
+
+    __tablename__ = "app_setting"
+
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_by: Mapped[str | None] = mapped_column(String(200))
+
+
 class LegalText(UuidPk, Created, Base):
     """Versionierte Hinweis-, Einwilligungs- und Rechtstexte (L7, Spez. 10.3). Unveränderlich."""
 

@@ -143,6 +143,39 @@ class CoverageOut(BaseModel):
     communes: list[CommuneCoverageOut]
 
 
+class RulesModelOut(BaseModel):
+    """KI-Modell der Auswertung für die ganze Instanz (PLAN_AN2_PLU 8, PU11)."""
+
+    model: str
+    source: Literal["setting", "default"]
+    """`default`: Modell aus der Umgebung; `setting`: im Büro gewählt."""
+    default_model: str
+    price_input_per_mtok: float
+    price_output_per_mtok: float
+    updated_at: datetime | None
+    input: Literal["pdf", "text"]
+    """Wie die Reglements ans Modell gehen: als PDF oder als Textschicht (PU12)."""
+    configured: bool
+    """API-Schlüssel für OpenRouter gesetzt."""
+    month_cost_usd: float
+    budget_month_usd: float
+    updated_by_name: str | None = None
+    """Wer zuletzt gewählt hat (Anzeigename; die Wahl gilt für beide Produkte, VA09)."""
+
+
+class ModelOptionOut(BaseModel):
+    id: str
+    name: str
+    price_input_per_mtok: float
+    price_output_per_mtok: float
+    context_length: int | None
+    reads_pdf: bool
+
+
+class RulesModelIn(BaseModel):
+    model: str = Field(min_length=3, max_length=60)
+
+
 class RuleSetOut(BaseModel):
     id: uuid.UUID
     zone_code: str

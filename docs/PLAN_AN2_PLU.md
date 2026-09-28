@@ -167,3 +167,85 @@ Ein PLU je Projekt, eine Zone je Grundstück. Stehen die allgemeinen Bestimmunge
 **Prüflauf:** Backend 541 Tests (vorher 526; neu `tests/integration/test_rules_upload.py` mit 14 Tests, ein Einheitstest für die Vorschläge), Frontend 157 (vorher 150; neu `bebauungsplan.test.tsx` mit 7 Tests), dazu ruff, Format, mypy, Typprüfung, Lint und Build grün; `openapi.json` und `schema.d.ts` neu erzeugt. Die Gegenprobe aus 5 Punkt 3 ist `test_upload_matches_the_gpu_path_for_the_same_parcel`: gleiche Regeln, Konturflächen gleich bis auf 0,5 m², gleiche Abstände je Kante.
 
 **Browserprüfung am 25.09.2026** (Analyse-Stack, Deutsch und Französisch, Telefonbreite ohne waagerechtes Verschieben): neues Projekt → Parzelle 20 × 30 m als DXF → Kante 3 als Straße → Test-Reglement (24 Seiten) als PLUi hochgeladen → „wird gelesen“ → Kapitel „Uh – CHAPITRE 4 : LA ZONE Uh (S. 4–24)“ vorgewählt → „Zone übernehmen und auswerten“ → „wartet auf die Auswertung“ → ohne Schlüssel „Auswertung gescheitert … Es fehlt der Schlüssel der Claude API“ → mit der aufgezeichneten Antwort ausgewertet: „ausgewertet · 2 Aufrufe · 0,16 $“, Baurahmen 300 m² (weiteste) und 210 m² (engste Auslegung), jede Zeile mit Seite, Zitat-Links auf `/api/v1/regulation-files/…#page=9` bis `#page=13`, Hinweise „nur das hochgeladene règlement écrit“ und „Parzelle nicht aus dem Kataster“.
+
+## 8. Nachtrag 28.09.2026: KI-Modell der Auswertung wählen
+
+**Auftrag des Nutzers:** „Kannst du einen Auswahldialog erstellen, in dem man die Möglichkeit hat, das verwendete Modell in OpenRouter zu ändern?“ – „Mir ging es darum, das KI-Modell, welches zur Auswertung der PLU verwendet wird, einstellen zu können.“ Auf die Rückfrage gewählt: **eine Einstellung für alle**, als Auswahldialog auf der Startseite von Emprise Analyse; das Modell gilt für alle künftigen Auswertungen, bis man es wieder ändert. Festlegung: ANNAHMEN PU11.
+
+### 8.1 Befund
+
+- Modell und Preise kommen bisher nur aus der Umgebung (`EMPRISE_RULES_MODEL`, `EMPRISE_RULES_PRICE_*`, seit 28.09.2026 über die `.env` einstellbar); eine Änderung wirkt erst nach dem Neuerstellen der Container. Vorgabe `anthropic/claude-opus-5`.
+- Das Modell steckt in jedem Aufruf, im Eingabe-Hash (Wiederverwendung gespeicherter Teilantworten), in der Kostenrechnung (Monatsbudget) und in jedem Lauf (`rule_extraction_run.model`). Die Preise müssen zum Modell passen, sonst stimmt das Budget nicht.
+- OpenRouter veröffentlicht die Modellliste ohne Schlüssel (`GET /api/v1/models`): Kennung, Name, Preise je Token (Eingabe, Ausgabe, Cache), Eingabearten, unterstützte Parameter. Am 28.09.2026 unter anderem `anthropic/claude-opus-5` (5 $/25 $ je Mio. Token), `anthropic/claude-opus-5.5` (4 $/20 $), `anthropic/claude-sonnet-5` (2 $/10 $), dazu Varianten `:batch` und gleitende Namen wie `~anthropic/claude-opus-latest`.
+
+### 8.2 Festlegungen
+
+- **Einstellung in der Datenbank:** neue Tabelle `app_setting` (Schlüssel, Wert als JSON, geändert am, geändert von) mit dem Eintrag `rules_model`: Kennung und Preise je Million Token (Eingabe, Ausgabe, Cache lesen, Cache schreiben). Ohne Eintrag gilt die Umgebung (**Vorgabe**). Die Einstellung gilt für die ganze Instanz, also für alle Projekte und alle Nutzer von Emprise Analyse.
+- **Wirksam ohne Neustart:** Jede Auswertung eines Kapitels liest die Einstellung beim Start einmal und rechnet damit – Aufruf, Eingabe-Hash, Kosten, Lauf. Eine laufende Auswertung bleibt beim Modell, mit dem sie begann. Schlüssel, Budget, Denkaufwand und Zahl der Läufe bleiben in der Umgebung.
+- **Auswahl nur aus der Liste von OpenRouter:** Der Server holt sie ohne Schlüssel und hält sie eine Stunde vor. Angeboten werden nur Modelle, die **PDF lesen** (Eingabeart `file`) und **ein Werkzeug erzwingen** können (`tools`, `tool_choice`) – ohne beides scheitert jeder Aufruf. Ausgeschlossen: Varianten mit Doppelpunkt (`:batch`, `:free`), gleitende Namen (`~…`) und Modelle ohne festen Preis.
+- **Preise übernimmt der Server aus der Liste**, nie von Hand. Fehlen die Cache-Preise, gelten wie bisher 10 % (lesen) und 200 % (schreiben) des Eingabepreises.
+- **Zurück zur Vorgabe:** Wer das Modell der Umgebung wählt, löscht den Eintrag; dann gelten wieder Modell und Preise der Umgebung.
+- **Rechte:** Ändern dürfen `ops` und `rules_admin`, weil die Wahl die Kosten aller Projekte bestimmt; `architect` sieht das eingestellte Modell ohne Knopf. Jede Änderung steht im Audit-Log mit altem und neuem Modell.
+- **Keine neue Auswertung von selbst:** Ausgewertete Kapitel bleiben, bis jemand sie neu auswertet (Kosten, D11).
+- **Startseite (Projektliste):** Abschnitt „KI-Modell der Auswertung“ unter der Liste mit Modell, Preisen und Kosten des Monats gegen das Budget, dazu „Ändern“. **Dialog:** modales Fenster mit Suchfeld und Liste (Name, Kennung, Preis für Eingabe und Ausgabe je Mio. Token), markiert „eingestellt“ und „Vorgabe“; Hinweise: gilt für künftige Auswertungen; auf Claude abgestimmt (Prompt `g2-prompt-4`), andere Anbieter sind nicht geprüft. „Übernehmen“ speichert, „Abbrechen“ und Escape schließen.
+- **Hauskonfigurator:** keine Oberfläche; die Seite „Regelwerke“ zeigt wie bisher das wirksame Modell. Die Endpunkte gehören zum Kern und wirken dort, falls jemand sie aufruft, ebenfalls nur auf die eigene Instanz.
+
+### 8.3 Schnittstelle
+
+| Methode | Pfad | Rollen | Inhalt |
+|---|---|---|---|
+| GET | `/admin/rules/model` | architect, rules_admin, ops | eingestelltes Modell, Herkunft (`setting`/`default`), Vorgabe, Preise, Kosten des Monats, Budget, geändert am |
+| GET | `/admin/rules/models` | rules_admin, ops | wählbare Modelle mit Preisen; `503 models_unavailable`, wenn OpenRouter nicht antwortet |
+| PUT | `/admin/rules/model` | rules_admin, ops | `{model}`; `422 model_not_available`, wenn das Modell nicht (mehr) wählbar ist |
+
+### 8.4 Arbeitsschritte
+
+1. Migration 0016 `app_setting`; Modell `AppSetting` in `platform/models.py`.
+2. `app/rules/model_choice.py`: Liste lesen und filtern, Zwischenspeicher, wirksame Einstellung, Wahl speichern.
+3. Einbau: Job `rules_extract` und CLI `rules-extract` rechnen mit der wirksamen Einstellung; `coverage` zeigt sie; `prices` nimmt Cache-Preise, wenn gesetzt.
+4. API, Schemas, Problemtexte de/fr; `openapi.json`, `schema.d.ts`.
+5. Frontend: `api/rules.ts`, `products/analyse/ModellWahl.tsx` (Abschnitt und Dialog), Einbau in `Projekte.tsx`; Texte de/fr.
+6. Tests: Einheit (Filter, Preise, wirksame Einstellung), Integration (Lesen, Wählen, Vorgabe, Rechte, unbekanntes Modell, OpenRouter nicht erreichbar, Auswertung rechnet mit dem gewählten Modell), Komponenten (Suche, Auswahl, Speichern, ohne Rolle kein Knopf).
+7. Browser; ANNAHMEN PU11, BETRIEB 9 und 15.
+
+### 8.5 Grenzen
+
+- Nur Claude-Modelle sind mit dem Prompt erprobt; andere Anbieter bietet der Dialog an, weist aber darauf hin.
+- Ein Wechsel ändert den Eingabe-Hash: Gespeicherte Teilantworten des alten Modells werden nicht wiederverwendet.
+- Kein Modell je Projekt oder Dokument (auf Rückfrage bewusst so gewählt); keine Wahl des Denkaufwands.
+- Ist OpenRouter nicht erreichbar, lässt sich das Modell nicht ändern; die Auswertung läuft mit der bisherigen Einstellung weiter.
+
+### 8.6 Prüfprotokoll
+
+**Vor dem Bau:**
+
+| Nr. | Befund | Folge | Festlegung |
+|---|---|---|---|
+| 1 | Preise von Hand im Dialog | Falsche Kosten, das Budget greift zu früh oder zu spät | Preise aus der Liste von OpenRouter (8.2) |
+| 2 | Gleitende Namen (`~…-latest`) | Das Modell wechselt still, Ergebnisse und Preise mit | Ausgeschlossen |
+| 3 | Varianten `:batch` rechnen asynchron ab, `:free` hat enge Grenzen | Aufruf scheitert oder bricht ab | Ausgeschlossen |
+| 4 | Modelle ohne PDF-Eingabe oder ohne erzwungenes Werkzeug | Jeder Aufruf scheitert (`bad_request`) | Nur Modelle mit `file`, `tools`, `tool_choice` |
+| 5 | Wechsel während einer Auswertung | Teile eines Kapitels mit verschiedenen Modellen; Hash und Kosten gemischt | Einstellung einmal beim Start des Jobs lesen |
+| 6 | Nach einem Wechsel alles neu auswerten? | Unerwartete Kosten | Nein; neu auswerten bleibt eine Entscheidung je Kapitel |
+| 7 | Jeder Architekt könnte das Modell für alle umstellen | Kosten für alle Projekte ändern sich ohne Absprache | Nur `ops` und `rules_admin`; Audit-Log |
+| 8 | Die Liste holt die API, nicht der Worker | Ausgehender Zugang der API zu `openrouter.ai` | Wie für den Worker freigegeben (BETRIEB 1); eine Stunde Zwischenspeicher |
+
+**Geprüfte Alternativen:**
+
+| Alternative | Verworfen, weil | Besser, wenn … |
+|---|---|---|
+| Modell beim Hochladen je Dokument wählen | Auf Rückfrage nicht gewählt | Architekten Modelle vergleichen wollen |
+| Freitextfeld für die Kennung | Tippfehler erst beim nächsten Aufruf sichtbar, Preise fehlen | – |
+| Feste Liste im Code | Veraltet schnell (am 28.09. war die Vorgabe schon nicht mehr das neueste Opus) | OpenRouter aus der API nicht erreichbar sein darf |
+| Weiter nur über die Umgebung | Neustart nötig, kein Dialog | nur der Betrieb das Modell ändern soll |
+
+**Beim Bau gefunden:**
+
+| Nr. | Befund | Folge | Behoben in |
+|---|---|---|---|
+| 1 | Die Liste von OpenRouter bot am 28.09.2026 98 geeignete Modelle, sortiert nach Anbieter; das eingestellte stand beim Öffnen außer Sicht | Man sah nicht, was gerade gilt | Der Dialog rückt das eingestellte Modell beim Öffnen in die Mitte der Liste |
+| 2 | Die Cache-Preise von OpenRouter weichen von der bisherigen Ableitung ab (Opus 5.5: Cache lesen 0,20 $ statt 10 % = 0,40 $) | Mit der Ableitung wären die Kosten zu hoch gezählt | Preise des Cache aus der Liste (`rules_price_cache_*`), sonst wie bisher abgeleitet |
+
+**Prüflauf:** Backend 657 Tests mit `TEST_S3=1` (vorher 649; neu 4 Einheitstests zu Filter, Zwischenspeicher und Preisen, 4 Integrationstests zu Rechten, Wahl, Vorgabe, Ausfall von OpenRouter und dem Job), ruff, Format und mypy grün; Migration 0016 in beiden lokalen Datenbanken. Frontend 202 Tests (vorher 197; Anzeige, Suche und Wahl, Hinweis bei anderen Anbietern, Escape, Vorgabe ohne Liste, fehlender Schlüssel), Lint, Typprüfung und Build grün. `openapi.json` und `schema.d.ts` neu erzeugt.
+
+**Browserprüfung am 28.09.2026** (Analyse-Stack mit neuen Images, Liste echt von OpenRouter, Schlüssel noch nicht aktiv): Startseite zeigt „KI-Modell der Auswertung“ mit `anthropic/claude-opus-5`, „Vorgabe“, 5 $/25 $ je Mio. Token, Kosten des Monats und den Hinweis auf den fehlenden Schlüssel → „Ändern“ → Dialog mit 98 Modellen → Suche „opus 5“ → Opus 5.5 gewählt → „Übernehmen“ → Abschnitt zeigt `anthropic/claude-opus-5.5` mit 4 $/20 $; in `app_setting` Modell und Preise (Cache lesen 0,20 $, schreiben 5 $), im Audit-Log der Wechsel → „Vorgabe wiederherstellen“ → wieder `anthropic/claude-opus-5`, Eintrag gelöscht.

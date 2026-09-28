@@ -357,6 +357,13 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - **Stände vergleichen** (`GET /projects/{id}/analysis/comparison`) rechnet Baurahmen und Analyse zweimal: lokal für das Testprojekt Median 82 ms, höchstens 92 ms bei zehn Abrufen; `GET /analysis` Median 53 ms. Der Vergleich rechnet erst, wenn der Architekt ihn aufklappt.
 - **Frühere Auswertungen** erscheinen im Vergleich, sobald ein Regelwerk eine zweite Version hat – etwa nach der Neuauswertung aller Kapitel mit dem Schlüssel (9, `g2-prompt-4`). Dann zeigt „Stände vergleichen“, was sich geändert hat, und ob eigene Korrekturen überflüssig geworden sind.
 
+**KI-Modell der Auswertung (PLAN_AN2_PLU 8, PU11)**
+
+- Migration **0016**: Tabelle `app_setting` (leer). Keine neuen Jobs oder Flags. Die API holt die Liste der Modelle bei `openrouter.ai` ohne Schlüssel und hält sie eine Stunde vor; ist OpenRouter nicht erreichbar, meldet der Dialog das (`503 models_unavailable`) und das Modell bleibt.
+- **Seit VA09 in der gemeinsamen Datenbank** (Abschnitt 16): `app_setting` gilt nicht mehr; `shared-migrate` zieht eine vorhandene Wahl einmal um. Die folgenden Befehle betreffen deshalb `shared_setting` statt `app_setting` in `emprise_shared`, das Audit steht in `shared_audit`.
+- **Ansehen ohne Oberfläche:** `SELECT value, updated_at, updated_by FROM app_setting WHERE key = 'rules_model'`; keine Zeile = Vorgabe aus der Umgebung. **Zurück zur Vorgabe** ohne Oberfläche: `DELETE FROM app_setting WHERE key = 'rules_model'`. Jede Wahl steht im Audit-Log (`rules_model_changed`, altes und neues Modell).
+- Ein Wechsel gilt für die nächste Auswertung eines Kapitels; eine laufende bleibt beim alten Modell. Ausgewertete Kapitel werden nicht von selbst neu ausgewertet; der Lauf nennt das Modell (`rule_extraction_run.model`).
+
 **Störungen beim Hochladen einer Parzelle**
 
 - `422 upload_invalid`: kein lesbares DXF oder GeoJSON, keine geschlossene Polylinie, oder keine Kontur mit plausibler Fläche (20–50 000 m², UP08). Im DXF muss die Parzelle eine **geschlossene** Polylinie sein; einzelne Linien werden nicht verbunden.

@@ -70,6 +70,43 @@ export function useStartExtraction() {
   });
 }
 
+// ---------------------------------------------------------------------------
+// KI-Modell der Auswertung (PLAN_AN2_PLU 8): eine Einstellung für die ganze Instanz
+// ---------------------------------------------------------------------------
+
+export type RulesModelOut = components["schemas"]["RulesModelOut"];
+export type ModelOptionOut = components["schemas"]["ModelOptionOut"];
+
+const rulesModelKey = ["admin", "rules-model"] as const;
+
+export function useRulesModel() {
+  return useQuery({
+    queryKey: rulesModelKey,
+    queryFn: async () => unwrap(await api.GET("/api/v1/admin/rules/model")),
+  });
+}
+
+/** Wählbare Modelle; erst beim Öffnen des Dialogs geladen (der Server hält die Liste eine Stunde vor). */
+export function useRulesModels(enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "rules-models"],
+    enabled,
+    queryFn: async () => unwrap(await api.GET("/api/v1/admin/rules/models")),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useSetRulesModel() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (model: string) => unwrap(await api.PUT("/api/v1/admin/rules/model", { body: { model } })),
+    onSuccess: (data) => {
+      client.setQueryData(rulesModelKey, data);
+      void client.invalidateQueries({ queryKey: ["admin", "rules-coverage"] });
+    },
+  });
+}
+
 const ruleSetKey = (id: string) => ["admin", "rule-set", id] as const;
 
 export function useRuleSet(ruleSetId: string) {

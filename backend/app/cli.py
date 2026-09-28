@@ -233,10 +233,14 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
     from sqlalchemy import select
 
     from app.integrations.openrouter import OpenRouterExtractor
+    from app.platform.shared import shared_session
     from app.rules.extract import extract_chapter
+    from app.rules.model_choice import effective_settings
     from app.rules.models import RegulationChapter
 
-    settings = get_settings()
+    with shared_session() as shared_db:
+        # Dasselbe Modell wie der Worker: in der Verwaltung gewählt oder aus der Umgebung (VA09)
+        settings = effective_settings(shared_db, get_settings())
 
     @contextmanager
     def sessions():  # type: ignore[no-untyped-def]

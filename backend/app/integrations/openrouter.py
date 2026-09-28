@@ -104,11 +104,14 @@ class Prices:
 
 
 def prices(settings: Settings) -> Prices:
+    """Preise je Million Token; Cache-Preise aus der Liste von OpenRouter, sonst wie bei Anthropic."""
+    cache_write = settings.rules_price_cache_write_per_mtok
+    cache_read = settings.rules_price_cache_read_per_mtok
     return Prices(
         input=settings.rules_price_input_per_mtok,
         output=settings.rules_price_output_per_mtok,
-        cache_write_1h=settings.rules_price_input_per_mtok * 2,
-        cache_read=settings.rules_price_input_per_mtok * 0.1,
+        cache_write_1h=settings.rules_price_input_per_mtok * 2 if cache_write is None else cache_write,
+        cache_read=settings.rules_price_input_per_mtok * 0.1 if cache_read is None else cache_read,
     )
 
 
