@@ -206,6 +206,69 @@ def test_split_is_independent_of_start_vertex_and_extra_vertices() -> None:
     assert {(e.start, e.end) for e in a} == {(e.start, e.end) for e in b}
 
 
+# ---------------------------------------------------------------------------
+# Kurze Stücke hochgeladener Pläne (UP18)
+# ---------------------------------------------------------------------------
+
+
+def local(*points: tuple[float, float]) -> Polygon:
+    return Polygon([(E0 + x, N0 + y) for x, y in points])
+
+
+# 30 × 20 m; unten kerbt eine Beschriftung ein (0,5 m breit, 0,9 m tief), oben ein Zickzack unter 1 m
+NOTCHED = local(
+    (0, 0),
+    (14, 0),
+    (14, 0.9),
+    (14.5, 0.9),
+    (14.5, 0),
+    (30, 0),
+    (30, 20),
+    (16, 20),
+    (15.4, 20.15),
+    (14.8, 19.9),
+    (14.2, 20.1),
+    (13.6, 20),
+    (0, 20),
+)
+
+
+def test_without_a_threshold_every_short_piece_is_an_edge() -> None:
+    assert len(split_edges(NOTCHED)) == 13
+    assert split_edges(NOTCHED, 0.0) == split_edges(NOTCHED)
+
+
+def test_short_pieces_join_the_edge_of_their_line_and_keep_every_point() -> None:
+    edges = split_edges(NOTCHED, 2.0)
+    assert len(edges) == 4
+    assert [e.start for e in edges] == [(E0, N0), (E0 + 30, N0), (E0 + 30, N0 + 20), (E0, N0 + 20)]
+    assert sum(len(e.coords) - 1 for e in edges) == len(NOTCHED.exterior.coords) - 1
+    assert sum(e.length_m for e in edges) == pytest.approx(NOTCHED.exterior.length)
+
+
+def test_a_rounded_corner_of_short_pieces_becomes_an_edge_of_its_own() -> None:
+    # Ecke oben rechts aus drei Stücken von 1,4–1,7 m: zwei bilden eine Kante, das dritte gehört zur Oberkante
+    rounded = local((0, 0), (30, 0), (30, 17), (29.6, 18.6), (28.6, 19.6), (27, 20), (0, 20))
+    assert len(split_edges(rounded)) == 7
+    edges = split_edges(rounded, 2.0)
+    assert [len(e.coords) for e in edges] == [2, 2, 3, 3, 2]
+    assert min(math.dist(e.start, e.end) for e in edges) >= 2.0
+
+
+def test_a_finely_drawn_curve_is_not_swallowed_by_one_edge() -> None:
+    # Kreis aus 60 Sehnen von gut 1 m: jede knickt um 6°, ohne Schwelle ist jede eine Kante
+    circle = local(*[(10 * math.cos(k * math.pi / 30), 10 * math.sin(k * math.pi / 30)) for k in range(60)])
+    assert len(split_edges(circle)) == 60
+    edges = split_edges(circle, 2.0)
+    assert len(edges) == 30
+    assert min(math.dist(e.start, e.end) for e in edges) >= 2.0
+
+
+def test_a_threshold_above_the_outline_falls_back_to_the_plain_split() -> None:
+    small = local((0, 0), (6, 0), (6, 4), (0, 4))
+    assert split_edges(small, 10.0) == split_edges(small)
+
+
 def test_customer_street_correction_is_not_binding_and_keeps_auto_kind() -> None:
     _, auto = run(MOCKUP_PARCEL, MOCKUP_NEIGHBOURS)
     rear_seq = next(e.geometry.seq for e in auto.edges if e.kind == "rear")

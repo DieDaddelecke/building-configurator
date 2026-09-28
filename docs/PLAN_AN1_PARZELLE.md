@@ -254,3 +254,78 @@ Die zweite und dritte Beobachtung bleiben Grenzen (9.4); die erste behebt dieser
 **Prüflauf:** Backend 629 Tests mit `TEST_S3=1` (vorher 623), ruff, Format und mypy grün; neu 5 Einheitstests (`merge_candidates`) und ein Integrationstest (Auszug mit einer Linie quer durch Parzelle 65 und ihr Haus: kein Kandidat mit 600 m², die Teile 210 und 342 m² ergeben 600 m² mit vier Kanten; nicht zusammenhängend, unbekannte Fläche, 21 Flächen). Frontend 196 Tests (vorher 194; Mehrfachwahl mit enthaltener Fläche, Herkunft „aus 2 Flächen“), Lint, Typprüfung und Build grün; `openapi.json` und `schema.d.ts` neu erzeugt (`index` als Liste).
 
 **Browserprüfung am 28.09.2026** (Analyse-Stack mit neu gebauten Images, echter „plan cadastral normalisé“ 1:500): 130 Flächen; die zwei Teile von Parzelle 144 im Plan angeklickt (865,4 und 574,2 m²) → beide hervorgehoben, darunter als Auswahl, „2 Flächen zusammen, ≈ 1.440 m²“ → „Auswahl übernehmen“ → Grundstück 1.441,1 m², Herkunft „aus 2 Flächen der Datei zusammengesetzt“, Maßstab 1:500 angegeben. Das Testprojekt danach gelöscht.
+
+## 10. Nachtrag 28.09.2026: Kurze Stücke zu Kanten zusammenführen
+
+**Auftrag des Nutzers:** „Die Art und Weise, wie Katasterpläne aufgebaut sind, bedingt leider oft extrem viele Punkte auf sehr engem Raum. Gibt es eine Möglichkeit, Linien zusammenzuführen, wenn Punkte zu eng beieinander liegen?“ (mit Bildschirmfoto: Kantennummern 13–17 übereinander). Nach Probe und Vorschlag: „Ja, setze das so um.“ Festlegung: ANNAHMEN UP18.
+
+### 10.1 Befund
+
+Parzelle 144 aus dem echten Auszug (zwei Teile, 9.1) hat **32 Kanten, 10 davon unter 1 m und 17 unter 2 m**. Die kurzen Stücke kommen aus drei Quellen:
+
+- **Kerben der Beschriftungen** (9.5, beim Bau Nr. 2): Wo Buchstaben eine Grenze kreuzen, springt der Umriss für Bruchteile eines Meters ein und wieder zurück (etwa 0,90 m hinein, 0,46 m quer, 0,94 m zurück).
+- **Zickzack auf einer geraden Grenze:** fünf Stücke von 0,30–1,02 m, die kaum von der Geraden abweichen, aber je mehr als 5° knicken (`MERGE_ANGLE_DEG`).
+- **Abgerundete Ecken:** drei Stücke von je etwa 1,5 m.
+
+`split_edges` beendet eine Kante bei jedem Knick über 5°, gleich wie kurz das Stück ist. Jede Kante erhält eine Nummer in der Mitte; bei Stücken unter 1 m liegen die Nummern übereinander (Bildschirmfoto), und jede Kante will eingeordnet sein.
+
+### 10.2 Festlegungen
+
+- **Stücke sammeln, dann die Richtung prüfen:** Beim Bilden der Kanten werden die Stücke ab dem Ende der laufenden Kante gesammelt, bis ihr Endpunkt mindestens die **Schwelle** entfernt liegt. Erst dieser gesammelte Schritt wird wie bisher geprüft: Weicht seine Richtung um weniger als 5° von der Sehne der laufenden Kante ab, gehört er dazu, sonst beginnt mit ihm eine neue Kante. Ein kürzerer Rest am Ende des Rings gehört zur laufenden Kante.
+- **Folgen:** Kerben und Zickzack auf einer Geraden verschwinden in der Kante, zu der die Gerade gehört; zwei Kanten, die nur eine Kerbe trennt, werden eine. Eine abgerundete Ecke aus kurzen Stücken wird eine eigene Kante von mindestens der Schwelle; ein Rest unter der Schwelle gehört zur folgenden Kante. Eine Kante mit einer Sehne unter der Schwelle bleibt nur, wo ein Ring zu klein für drei solche Kanten ist (Rückfall) oder der Rest am Ende des Rings zurückbiegt (10.5, beim Bau Nr. 2).
+- **Kein Punkt wird verschoben oder gelöscht.** Umriss, Fläche und Stützpunkte bleiben, wie die Datei sie liefert; die Kante ist ein Linienzug über alle Punkte (Länge entlang des Zugs, Richtung und Normale aus der Sehne, wie bei jeder Kante mit mehreren Punkten).
+- **Ecke als Anfang:** Der Ring beginnt wie bisher an der Ecke mit der stärksten Richtungsänderung; die Richtungen werden dafür zu den Punkten gemessen, die mindestens die Schwelle entfernt liegen, damit eine Kerbe nicht als Ecke zählt.
+- **Schwelle:** 2 m (`UPLOAD_SHORT_PIECE_M`); bei PDF mindestens 1 mm auf dem Papier (`UPLOAD_SHORT_PIECE_PAPER_M` × Maßstab), weil Beschriftungen mit dem Maßstab wachsen: 1:500 und 1:1000 → 2 m, 1:2500 → 2,5 m, 1:5000 → 5 m.
+- **Rückfall:** Bleiben auf einem Ring weniger als drei Kanten, wird er wie bisher zerlegt.
+- **Geltung:** nur für hochgeladene Grundstücke (`origin = upload`), nur beim Bilden. Frei gezeichnete Grundstücke (Kanten ab 1 m gewollt) und Grundstücke aus dem Kataster (Hauskonfigurator) bleiben unverändert (Schwelle 0 ergibt genau die bisherige Zerlegung). Bestehende Projekte behalten ihre Kanten und Einordnungen.
+- **Herkunft (L3):** `source_info.short_piece_m` hält die Schwelle fest; die Projektseite nennt „Stücke unter n m zusammengefasst“.
+
+### 10.3 Arbeitsschritte
+
+1. `site/domain/tolerances.py`: `UPLOAD_SHORT_PIECE_M`, `UPLOAD_SHORT_PIECE_PAPER_M`.
+2. `site/domain/edges.py`: `split_edges(polygon, short_piece_m=0.0)`; Sammeln, Ecke als Anfang, Rückfall.
+3. `site/domain/upload.py`: `short_piece_m_for(scale)`.
+4. `site/service.py`: Schwelle beim Hochladen durchreichen und in die Herkunft schreiben.
+5. Frontend: Herkunft auf der Projektseite; Texte de/fr.
+6. Tests: Einheit (Schwelle 0 wie bisher; Kerbe und Zickzack → vier Kanten mit allen Punkten; abgerundete Ecke → eigene Kante; fein abgetasteter Kreis → mehrere Kanten; Rückfall; Schwelle je Maßstab), Integration (Upload mit Kerbe → vier Kanten, Herkunft), Komponente (Herkunft).
+7. Browser am echten Auszug: Parzelle 144.
+
+### 10.4 Grenzen
+
+- Die Kerben bleiben als Knicke innerhalb einer Kante sichtbar und gehen in Länge und Fläche ein; Kerben aus Beschriftungen beseitigt Kapitel 11 (UP19), andere bleiben.
+- Ein echter Versprung unter der Schwelle (etwa eine um 1,5 m versetzte Grenze in einem Geometerplan) wird Teil einer Kante und bekommt deren Einordnung; die Geometrie bleibt erhalten.
+- Eine abgerundete Ecke zwischen Straße und Nachbar ist eine eigene Kante und will eingeordnet sein.
+
+### 10.5 Prüfprotokoll
+
+**Vor dem Bau:**
+
+| Nr. | Befund | Folge | Festlegung |
+|---|---|---|---|
+| 1 | Die im Chat beschriebene einfachste Regel („ein Stück unter 2 m beendet keine Kante, es gehört zur Kante davor“) hängt jedes kurze Stück an, auch eine ganze Kurve aus 1-m-Sehnen | Eine fein gezeichnete Kurve (Geometerplan, DXF) ginge vollständig in der Kante davor auf; ein Umriss nur aus kurzen Stücken (Rundung) würde **eine** Kante | Stücke bis zur Schwelle sammeln, dann die Richtung prüfen (10.2). Für Kerben und Zickzack gleiches Ergebnis; eine Rundung wird eigene Kante statt Teil der Kante davor – so dem Nutzer berichtet |
+| 2 | Die bisherige Wahl des Anfangs (stärkster Knick) kann in einer Kerbe liegen (Knicke bis 180°) | Die erste Kante begänne mitten in einer Kerbe; die Kerbe teilte die Gerade in zwei Kanten | Richtung zum Punkt in Schwellenabstand messen (10.2) |
+| 3 | Bei 1:5000 ist die Schwelle 5 m; ein kleines Grundstück könnte weniger als drei Kanten behalten | Einordnung ohne Ecken | Rückfall auf die bisherige Zerlegung |
+| 4 | Die Schwelle später zu ändern, änderte die Kanten neuer Uploads, nicht der bestehenden | Zwei Projekte aus derselben Datei mit verschiedenen Kanten | Schwelle in der Herkunft (`source_info.short_piece_m`) |
+| 5 | `_store_sketch_site` gibt bei gleichem Umriss, gleicher Herkunft und Anschrift das vorhandene Grundstück zurück | Eine erneut hochgeladene Datei eines Altprojekts bekommt die neuen Kanten nicht | Gewollt: Kanten und Einordnungen bestehender Projekte bleiben (10.2) |
+
+**Geprüfte Alternativen:**
+
+| Alternative | Verworfen, weil | Besser, wenn … |
+|---|---|---|
+| Punkte ausdünnen (Douglas-Peucker) | Probe an Parzelle 144: bei 0,2 m noch 26 Kanten, erst bei 1 m keine Kurzkante mehr – dann weicht die Fläche um 35 m² ab | die kurzen Stücke Messrauschen wären statt Kerben |
+| Einkerbungen morphologisch schließen (Puffer hin und zurück) | Bei 0,25 m nur die schmalsten Kerben (27 Kanten), bei 0,5 m noch 24 Kanten, Fläche +1 m²; ändert den Umriss | es nur um Spalten ginge |
+| Kanten von Hand zusammenlegen und teilen | Eigener Editor; die Mehrzahl der Fälle löst die Regel ohne Zutun | die Schwelle in der Praxis oft falsch greift – dann als Ergänzung |
+| Auch für den Hauskonfigurator (Kataster) | Kataster-Grundstücke kommen aus Etalab ohne Beschriftungskerben; die Einordnung dort nutzt Nachbarn je Kante und ist getestet | dort ähnliche Kurzkanten auffallen |
+
+**Beim Bau gefunden:**
+
+| Nr. | Befund | Folge | Behoben in |
+|---|---|---|---|
+| 1 | Eine abgerundete Ecke aus drei Stücken von rund 1,5 m wird nicht ganz eine Kante: Die ersten zwei Stücke erreichen die Schwelle und bilden sie, das dritte bleibt als Rest unter der Schwelle und geht in die folgende Kante (Parzelle 144 oben links: Kante 11 aus zwei Stücken, das dritte beginnt Kante 12) | Die Rundung verteilt sich auf zwei Kanten; die Nummern liegen trotzdem mindestens 2 m auseinander | Hingenommen und in 10.2 benannt; ein Einheitstest hält das Verhalten fest |
+| 2 | Auf beiden echten Blättern (280 Flächen) bleiben 34 Kanten mit einer Sehne unter der Schwelle; 33 davon in Flächen, die zu klein für drei Kanten ab 2 m sind (Rückfall), eine in einer Fläche von 42 m², deren Rest am Ringende zurückbiegt | Nur Kleinflächen (Gebäude, Ziffern), keine Parzelle | Hingenommen; 10.2 genauer gefasst |
+
+**Probe mit dem eingebauten Code** (beide echten Auszüge, alle Flächen): 1:500, Schwelle 2 m, 130 Flächen: 1 520 → 833 Kanten, Kanten mit Sehne unter 2 m 698 → 5. 1:1000, Schwelle 2 m, 150 Flächen: 2 597 → 1 187 Kanten, 1 413 → 29. In jeder Fläche bleibt jeder Stützpunkt Teil genau einer Kante. Parzelle 144: 32 → 13 Kanten, 1 441,1 m² unverändert.
+
+**Prüflauf:** Backend 636 Tests mit `TEST_S3=1` (vorher 629), ruff, Format und mypy grün; neu 5 Einheitstests zu `split_edges` (ohne Schwelle wie bisher; Kerbe und Zickzack → vier Kanten mit allen Punkten und derselben Länge; abgerundete Ecke; Kreis aus 60 Sehnen → 30 Kanten statt 60; Rückfall), einer zu `short_piece_m_for` und ein Integrationstest (GeoJSON mit Kerbe → vier Kanten, Herkunft; die Herkunft der Vereinigung nennt die Schwelle ebenfalls). Frontend 197 Tests (vorher 196; Herkunft nennt die Schwelle), Lint, Typprüfung und Build grün. `openapi.json` unverändert (`source_info` ist ein freies Objekt).
+
+**Browserprüfung am 28.09.2026** (neu gebaute Images, echter Auszug 1:500): Parzelle 144 aus ihren zwei Teilen übernommen → 13 Kanten, keine Nummern mehr übereinander, 1.441,1 m²; Herkunft „Kanten: Stücke unter 2 m zu einer Kante zusammengefasst“. Bei schmalem Fenster berühren sich die Nummern der Kanten 4 und 5 (4,2 und 3,5 m) knapp, bleiben aber lesbar. Das Testprojekt danach gelöscht.

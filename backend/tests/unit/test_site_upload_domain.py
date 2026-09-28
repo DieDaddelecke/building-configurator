@@ -14,6 +14,7 @@ from app.site.domain.upload import (
     merge_candidates,
     read_geojson,
     read_parcel_file,
+    short_piece_m_for,
 )
 
 LOCAL = [(0.0, 0.0), (20.0, 0.0), (20.0, 30.0), (0.0, 30.0)]
@@ -95,3 +96,59 @@ def test_self_intersecting_ring_is_dropped() -> None:
 def test_unknown_format_is_rejected() -> None:
     with pytest.raises(UploadInvalid):
         read_parcel_file("parzelle.dwg", b"egal")
+
+
+# ---------------------------------------------------------------------------
+# Mehrere Konturen zu einem Grundstück (UP17)
+# ---------------------------------------------------------------------------
+
+
+def piece(
+    index: int, points: list[tuple[float, float]], name: str | None = None, crs: Crs = "local"
+) -> Candidate:
+    polygon = Polygon(points)
+    return Candidate(index=index, polygon=polygon, area_m2=polygon.area, crs=crs, name=name)
+
+
+def test_a_single_contour_stays_as_it_is() -> None:
+    only = piece(3, LOCAL, "65")
+    assert merge_candidates([only]) is only
+
+
+def test_two_pieces_of_a_split_parcel_become_one_outline() -> None:
+    # Parzelle 20 × 30 m, von einer fremden Linie bei x = 7,5 geteilt
+    left = piece(4, [(0.0, 0.0), (7.5, 0.0), (7.5, 30.0), (0.0, 30.0)], "65")
+    right = piece(9, [(7.5, 0.0), (20.0, 0.0), (20.0, 30.0), (7.5, 30.0)])
+    merged = merge_candidates([left, right])
+    assert merged.area_m2 == pytest.approx(600.0)
+    assert len(merged.polygon.exterior.coords) == 5  # Stützpunkte der Teilungslinie fallen weg
+    assert (merged.index, merged.name, merged.crs) == (4, "65", "local")
+
+
+def test_a_house_on_the_dividing_line_does_not_leave_a_hole() -> None:
+    # Beide Teile haben am Haus (x 5–11, y 10–16) nur eine Einbuchtung
+    left = piece(1, [(0, 0), (8, 0), (8, 10), (5, 10), (5, 16), (8, 16), (8, 30), (0, 30)])
+    right = piece(2, [(8, 0), (20, 0), (20, 30), (8, 30), (8, 16), (11, 16), (11, 10), (8, 10)])
+    merged = merge_candidates([left, right])
+    assert not merged.polygon.interiors and merged.area_m2 == pytest.approx(600.0)
+
+
+def test_separate_contours_are_not_one_site() -> None:
+    far = piece(2, [(50.0, 0.0), (70.0, 0.0), (70.0, 30.0), (50.0, 30.0)])
+    with pytest.raises(UploadInvalid) as caught:
+        merge_candidates([piece(1, LOCAL), far])
+    assert caught.value.code == "site_not_contiguous"
+
+
+def test_contours_with_and_without_position_are_not_merged() -> None:
+    with pytest.raises(UploadInvalid) as caught:
+        merge_candidates([piece(1, LOCAL), piece(2, L93, crs="EPSG:2154")])
+    assert caught.value.code == "upload_outlines_incompatible"
+
+
+def test_the_short_piece_threshold_grows_with_the_plan_scale() -> None:
+    # Ohne Maßstab (DXF, GeoJSON) 2 m; bei PDF 1 mm auf dem Papier, mindestens 2 m (UP18)
+    assert short_piece_m_for(None) == 2.0
+    assert short_piece_m_for(500) == 2.0
+    assert short_piece_m_for(2500) == pytest.approx(2.5)
+    assert short_piece_m_for(5000) == pytest.approx(5.0)

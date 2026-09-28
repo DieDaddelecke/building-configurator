@@ -84,7 +84,10 @@
       "deleteConfirm": "Projekt mit Parzelle und allen Daten löschen?",
       "scale": "Maßstab",
       "scaleFile": "aus dem Plan",
-      "scaleInput": "angegeben"
+      "scaleInput": "angegeben",
+      "outline": "Umriss",
+      "pieces": "aus {{count}} Flächen der Datei zusammengesetzt",
+      "shortPieces": "Stücke unter {{length}} m zu einer Kante zusammengefasst"
     },
     "upload": {
       "title": "Parzelle aus einer Datei",

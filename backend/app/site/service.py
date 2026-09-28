@@ -47,6 +47,7 @@ from app.site.domain.upload import (
     build_candidates,
     merge_candidates,
     read_parcel_file,
+    short_piece_m_for,
 )
 from app.site.models import L93, Site, SiteEdge, SiteParcel, SiteRisk, Terrain
 from app.site.schemas import (
@@ -410,14 +411,15 @@ SKETCH_ORIGINS = ("manual_sketch", "upload")
 """Herkünfte ohne Kataster: keine Nachbarn, kein Gelände, keine Risiken, keine Zonensuche."""
 
 
-def _sketch_classification(polygon: Polygon, area_m2: float) -> Classification:
+def _sketch_classification(polygon: Polygon, area_m2: float, short_piece_m: float = 0.0) -> Classification:
     """Kanten eines Grundstücks ohne Kataster: Geometrie ja, Beobachtungen nein.
 
     Ohne Nachbarn und ohne Straßenachsen ordnet `classify` jede Kante als `other` mit Vertrauen 0 ein
     und warnt (`no_neighbour_data`, `no_street_edge`, `edges_need_review`). Der Architekt setzt die
-    Arten von Hand; erst eine Straßenkante ergibt Hauptstraße und Azimute (UP02).
+    Arten von Hand; erst eine Straßenkante ergibt Hauptstraße und Azimute (UP02). Bei hochgeladenen
+    Plänen bilden Stücke unter `short_piece_m` keine eigene Kante (UP18).
     """
-    edges = split_edges(polygon)
+    edges = split_edges(polygon, short_piece_m)
     facts = [
         EdgeFacts(neighbour_share=0.0, adjacent=(), street_candidate="none", probe_in_parcel=False)
         for _ in edges
@@ -437,6 +439,7 @@ def _store_sketch_site(
     georeferenced: bool,
     source_info: dict[str, Any],
     actor: str,
+    short_piece_m: float = 0.0,
 ) -> SiteOut:
     """Grundstück ohne Kataster speichern, mit Kanten (UP02).
 
@@ -466,7 +469,7 @@ def _store_sketch_site(
         site.revision += 1
         for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
             db.execute(delete(model).where(model.site_id == site.id))
-    classification = _sketch_classification(polygon, area_m2)
+    classification = _sketch_classification(polygon, area_m2, short_piece_m)
     site.origin = origin
     site.georeferenced = georeferenced
     site.source_info = source_info
@@ -623,6 +626,8 @@ def form_uploaded_site(
         "name": chosen.name,
         "index": chosen.index,
         "crs": chosen.crs,
+        # Kurze Stücke bilden keine eigene Kante (UP18); die Schwelle gehört zur Herkunft
+        "short_piece_m": short_piece_m_for(parcel_file.scale),
     }
     if len(wanted) > 1:
         # Herkunft der Vereinigung (UP17, L3): welche Konturen der Datei das Grundstück bilden
@@ -640,6 +645,7 @@ def form_uploaded_site(
         georeferenced=chosen.georeferenced,
         source_info=source_info,
         actor=actor,
+        short_piece_m=source_info["short_piece_m"],
     )
     return UploadResultOut(site=site, candidates=[], format=parcel_file.format, **scale_info)
 

@@ -144,22 +144,30 @@ def axis_angle_deg(a: float, b: float) -> float:
 # ---------------------------------------------------------------------------
 
 
-def split_edges(polygon: Polygon) -> list[EdgeGeometry]:
+def split_edges(polygon: Polygon, short_piece_m: float = 0.0) -> list[EdgeGeometry]:
     """Zerlegt die Ringe in Kanten. Aufeinanderfolgende Segmente, deren Richtung um weniger als
     `MERGE_ANGLE_DEG` von der Sehne der laufenden Kante abweicht, bilden eine Kante.
 
     Ein Ring beginnt am Eckpunkt mit der größten Richtungsänderung; damit ist die Zerlegung
     unabhängig vom Startpunkt der Quelldaten.
+
+    `short_piece_m` > 0 (hochgeladene Pläne, UP18): Die Segmente werden gesammelt, bis ihr Ende so weit
+    vom Ende der laufenden Kante entfernt liegt; erst dieser Schritt wird an der Richtung geprüft. Kerben
+    und Zickzack auf einer Geraden beenden so keine Kante, und kein Punkt geht verloren. Bleiben auf einem
+    Ring weniger als drei Kanten, wird er ohne Schwelle zerlegt.
     """
     edges: list[EdgeGeometry] = []
     rings = [polygon.exterior, *polygon.interiors]
     for ring_index, ring in enumerate(rings):
-        for coords in _ring_edges(list(ring.coords)):
+        parts = _ring_edges(list(ring.coords), short_piece_m)
+        if short_piece_m > 0 and len(parts) < 3:
+            parts = _ring_edges(list(ring.coords), 0.0)
+        for coords in parts:
             edges.append(EdgeGeometry(seq=len(edges) + 1, ring=ring_index, coords=tuple(coords)))
     return edges
 
 
-def _ring_edges(ring: list[tuple[float, ...]]) -> list[list[Coord]]:
+def _ring_edges(ring: list[tuple[float, ...]], short_piece_m: float) -> list[list[Coord]]:
     points: list[Coord] = []
     for raw in ring[:-1]:
         point = (float(raw[0]), float(raw[1]))
@@ -171,22 +179,35 @@ def _ring_edges(ring: list[tuple[float, ...]]) -> list[list[Coord]]:
     if count < 3:
         return [[*points, points[0]]] if points else []
 
+    def reach(i: int, step: int) -> Coord:
+        """Erster Punkt in Richtung `step`, der mindestens `short_piece_m` von Punkt i entfernt liegt."""
+        j = (i + step) % count
+        while math.dist(points[i], points[j]) < short_piece_m and (j + step) % count != i:
+            j = (j + step) % count
+        return points[j]
+
     def turn_at(i: int) -> float:
-        return turn_deg(azimuth(points[i - 1], points[i]), azimuth(points[i], points[(i + 1) % count]))
+        # Mit Schwelle zu den Punkten in Schwellenabstand gemessen: Eine Kerbe ist keine Ecke
+        return turn_deg(azimuth(reach(i, -1), points[i]), azimuth(points[i], reach(i, 1)))
 
     start = max(range(count), key=lambda i: (round(turn_at(i), 6), -i))
-    ordered = points[start:] + points[:start]
+    ordered = [*points[start:], *points[:start], points[start]]
     result: list[list[Coord]] = []
-    current = [ordered[0], ordered[1]]
-    for index in range(2, count + 1):
-        nxt = ordered[index % count]
-        chord = azimuth(current[0], current[-1])
-        segment = azimuth(current[-1], nxt)
-        if turn_deg(chord, segment) < tol.MERGE_ANGLE_DEG:
-            current.append(nxt)
-        else:
-            result.append(current)
-            current = [current[-1], nxt]
+    current = [ordered[0]]
+    index = 1
+    while index < len(ordered):
+        step = [ordered[index]]
+        index += 1
+        while index < len(ordered) and math.dist(current[-1], step[-1]) < short_piece_m:
+            step.append(ordered[index])
+            index += 1
+        # Ein kürzerer Rest am Ende des Rings gehört zur laufenden Kante
+        if len(current) > 1 and math.dist(current[-1], step[-1]) >= short_piece_m:
+            chord = azimuth(current[0], current[-1])
+            if turn_deg(chord, azimuth(current[-1], step[-1])) >= tol.MERGE_ANGLE_DEG:
+                result.append(current)
+                current = [current[-1]]
+        current.extend(step)
     result.append(current)
     return result
 

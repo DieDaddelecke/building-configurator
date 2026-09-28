@@ -109,6 +109,18 @@ def test_geojson_in_wgs84_is_converted_to_metres(client: Any, project: str) -> N
     assert len(site["edges"]) == 4
 
 
+def test_short_pieces_of_a_boundary_do_not_become_edges(client: Any, project: str) -> None:
+    """Eine Beschriftung kerbt die Südgrenze ein (0,5 m breit, 0,9 m tief): vier Kanten, die Kerbe bleibt im
+    Umriss (UP18)."""
+    x0, y0 = L93_RING[0]
+    ring = [(0, 0), (9, 0), (9, 0.9), (9.5, 0.9), (9.5, 0), (20, 0), (20, 30), (0, 30)]
+    notched = [(x0 + x, y0 + y) for x, y in ring]
+    site = upload(client, project, "parzelle.geojson", geojson_bytes(notched)).json()["site"]
+    assert site["area_m2"] == pytest.approx(600.0 - 0.45)
+    assert len(site["edges"]) == 4
+    assert site["source_info"]["short_piece_m"] == 2.0
+
+
 def test_local_dxf_forms_a_site_without_georeference(client: Any, project: str) -> None:
     site = upload(client, project, "plan.dxf", dxf_bytes((LOCAL_RING, "PARCELLE"))).json()["site"]
     assert site["origin"] == "upload" and site["georeferenced"] is False

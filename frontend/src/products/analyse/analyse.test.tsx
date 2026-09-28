@@ -138,6 +138,18 @@ it("bietet ohne Parzelle Datei und Zeichnung an", async () => {
   expect(screen.getByText(/DXF mit geschlossener Polylinie/)).toBeInTheDocument();
 });
 
+it("nennt, aus wie vielen Flächen der Datei der Umriss zusammengesetzt ist", () => {
+  state.site = { ...site, source_info: { ...site.source_info, index: null, indices: [3, 7] } };
+  zeige("/projekt/p1");
+  expect(screen.getByText("aus 2 Flächen der Datei zusammengesetzt")).toBeInTheDocument();
+});
+
+it("nennt die Schwelle, unter der kurze Stücke zu einer Kante gehören", () => {
+  state.site = { ...site, source_info: { ...site.source_info, short_piece_m: 2 } };
+  zeige("/projekt/p1");
+  expect(screen.getByText("Stücke unter 2 m zu einer Kante zusammengefasst")).toBeInTheDocument();
+});
+
 it("zeigt Herkunft und nicht eingeordnete Kanten und setzt eine Straßenkante", async () => {
   state.site = site;
   zeige("/projekt/p1");

@@ -6,8 +6,12 @@ Bezug (wie Weg E, G26). Die Umrechnung von WGS84 nach Lambert-93 macht PostGIS, 
 `build_candidates` bekommt sie als Funktion übergeben. PDFs liest `pdfplan` – dort braucht es einen
 Maßstab, und ihre Flächen haben nie eine Lage.
 
-Was bewusst fehlt: DWG (E-A2), gescannte PDFs (UP16), Löcher im Umriss, das Zusammenführen mehrerer
-Konturen zu einem Grundstück (E-A3).
+Mehrere Konturen werden zu einem Grundstück vereinigt, wenn der Architekt sie zusammen wählt (UP17): Eine
+fremde Linie im Plan (Kreis, Maßkette) zerschneidet sonst eine Parzelle in Teile, von denen keiner passt.
+Kurze Stücke des Umrisses (Kerben von Beschriftungen) bilden keine eigene Kante; die Schwelle dafür liefert
+`short_piece_m_for` (UP18).
+
+Was bewusst fehlt: DWG (E-A2), gescannte PDFs (UP16), Löcher im Umriss.
 """
 
 import io
@@ -308,3 +312,47 @@ def build_candidates(rings: Sequence[RawRing], to_metres: ToMetres) -> list[Cand
     if not candidates:
         raise UploadInvalid("Keine Kontur mit plausibler Fläche gefunden")
     return sorted(candidates, key=lambda c: (c.name is None, -c.area_m2, c.index))
+
+
+def merge_candidates(chosen: Sequence[Candidate]) -> Candidate:
+    """Gewählte Konturen zu einem Grundstück vereinigen (UP17); eine einzige bleibt, wie sie ist.
+
+    Wie beim Kataster (`merge_parcels`): Spalten schließen, vereinfachen, zusammenhängend. Löcher werden
+    gefüllt wie bei jedem Kandidaten – ein Gebäude auf der Linie, die die Parzelle teilt, ist in beiden
+    Teilen nur eine Einbuchtung und bliebe sonst als Loch zurück.
+    """
+    if not chosen:
+        raise ValueError("mindestens eine Kontur")
+    if len(chosen) == 1:
+        return chosen[0]
+    if len({c.georeferenced for c in chosen}) > 1:
+        raise UploadInvalid(
+            "Konturen mit und ohne Lage lassen sich nicht vereinigen", "upload_outlines_incompatible"
+        )
+    try:
+        outline = merge_parcels([ParcelInput(str(c.index), c.polygon, None) for c in chosen])
+    except SiteNotContiguous:
+        raise UploadInvalid("Die gewählten Konturen hängen nicht zusammen", "site_not_contiguous") from None
+    polygon = orient(Polygon(outline.polygon.exterior), sign=1.0)
+    area = float(polygon.area)
+    if not tol.MANUAL_MIN_AREA_M2 <= area <= tol.MANUAL_MAX_AREA_M2:
+        raise UploadInvalid(f"Die vereinigte Fläche ({area:.0f} m²) liegt außerhalb von 20–50 000 m²")
+    crs = {c.crs for c in chosen}
+    layers = {c.layer for c in chosen}
+    names = [c.name for c in chosen if c.name]
+    return Candidate(
+        index=chosen[0].index,
+        polygon=polygon,
+        area_m2=area,
+        crs=crs.pop() if len(crs) == 1 else "EPSG:2154",
+        layer=layers.pop() if len(layers) == 1 else None,
+        name=" + ".join(names) or None,
+    )
+
+
+def short_piece_m_for(scale: int | None) -> float:
+    """Schwelle, unter der Stücke des Umrisses keine eigene Kante bilden (UP18): 2 m, bei PDF mindestens
+    1 mm auf dem Papier, weil Beschriftungen und ihre Kerben mit dem Maßstab wachsen."""
+    if scale is None:
+        return tol.UPLOAD_SHORT_PIECE_M
+    return max(tol.UPLOAD_SHORT_PIECE_M, tol.UPLOAD_SHORT_PIECE_PAPER_M * scale)

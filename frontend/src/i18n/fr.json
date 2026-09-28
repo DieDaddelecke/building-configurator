@@ -84,7 +84,10 @@
       "deleteConfirm": "Supprimer le projet, la parcelle et toutes ses données ?",
       "scale": "Échelle",
       "scaleFile": "lue dans le plan",
-      "scaleInput": "indiquée"
+      "scaleInput": "indiquée",
+      "outline": "Contour",
+      "pieces": "réuni à partir de {{count}} surfaces du fichier",
+      "shortPieces": "tronçons de moins de {{length}} m regroupés dans une limite"
     },
     "upload": {
       "title": "Parcelle depuis un fichier",

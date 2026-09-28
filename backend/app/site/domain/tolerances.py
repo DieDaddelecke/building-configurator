@@ -10,6 +10,10 @@ MAX_PARCELS = 10
 SIMPLIFY_TOLERANCE_M = 0.05
 MERGE_ANGLE_DEG = 5.0
 MIN_SEGMENT_M = 1e-6
+UPLOAD_SHORT_PIECE_M = 2.0
+"""Hochgeladene Pläne: Stücke werden bis zu diesem Abstand gesammelt, dann entscheidet die Richtung (UP18)."""
+UPLOAD_SHORT_PIECE_PAPER_M = 0.001
+"""Bei PDF mindestens 1 mm auf dem Papier: Beschriftungen und ihre Kerben wachsen mit dem Maßstab."""
 
 # Kanten einordnen (Spez. 5.1.4 Schritte 2–5)
 NEIGHBOUR_DISTANCE_M = 0.5

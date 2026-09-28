@@ -29,6 +29,8 @@ function Herkunft({ site }: { site: SiteOut }) {
     crs?: string;
     scale?: number;
     scale_source?: "file" | "input";
+    indices?: number[];
+    short_piece_m?: number;
   };
   return (
     <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm m-0">
@@ -46,6 +48,22 @@ function Herkunft({ site }: { site: SiteOut }) {
           <dd className="m-0 break-all">
             {quelle.file_name}
             {quelle.layer && <span className="t-mute"> · {quelle.layer}</span>}
+          </dd>
+        </>
+      )}
+      {quelle.indices && quelle.indices.length > 1 && (
+        <>
+          <dt className="t-mute">{t("analyse.site.outline")}</dt>
+          <dd className="m-0">{t("analyse.site.pieces", { count: quelle.indices.length })}</dd>
+        </>
+      )}
+      {quelle.short_piece_m && (
+        <>
+          <dt className="t-mute">{t("analyse.site.edges")}</dt>
+          <dd className="m-0">
+            {t("analyse.site.shortPieces", {
+              length: formatNumber(quelle.short_piece_m, i18n.language, Number.isInteger(quelle.short_piece_m) ? 0 : 1),
+            })}
           </dd>
         </>
       )}
