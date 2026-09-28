@@ -21,6 +21,7 @@ from shapely.geometry import Polygon
 from shapely.geometry.polygon import orient
 
 from app.site.domain import tolerances as tol
+from app.site.domain.outline import ParcelInput, SiteNotContiguous, merge_parcels
 
 Crs = Literal["EPSG:2154", "EPSG:4326", "local"]
 Coord = tuple[float, float]
@@ -30,6 +31,8 @@ ToMetres = Callable[[list[Coord]], list[Coord]]
 MAX_VERTICES = 2000
 """Stützpunkte je Kontur. `split_edges` fasst zusammen, deshalb ist die Kantenzahl nicht begrenzt."""
 MAX_CANDIDATES = 50
+MAX_SELECTED = 20
+"""Konturen, die zu einem Grundstück vereinigt werden dürfen (UP17)."""
 L93_BOUNDS = (100_000.0, 6_000_000.0, 1_300_000.0, 7_200_000.0)
 """Lambert-93 über Frankreich (x, y): alles darin gilt als georeferenziert."""
 WGS84_BOUNDS = (-5.5, 41.0, 10.0, 51.5)

@@ -182,3 +182,75 @@ Gescannte PDFs enthalten keine Linien; sie werden mit `upload_pdf_no_vector` abg
 | 4 | Texte in Form-XObjects fasst `pdfminer` ohne `all_texts` nicht zu Zeilen zusammen | Parzellennummern fehlten bei manchen Erzeugern | `LAParams(all_texts=True)` |
 | 5 | Beim zweiten Aufruf (Übernahme) hätte die Oberfläche den gelesenen Maßstab als „angegeben“ mitgeschickt | Herkunft falsch: `scale_source = input` statt `file` | Nur ein von Hand eingegebener Maßstab geht mit |
 | 6 | Die Fehlercodes aus AN1 (`upload_invalid` usw.) hatten keine Übersetzung im Backend | Der Titel der Fehlermeldung war der rohe Schlüssel | Texte in `app/platform/locales/*.json`, zusammen mit den drei neuen Codes |
+
+## 9. Nachtrag 28.09.2026: Konturen von Hand zusammenstellen
+
+**Auftrag des Nutzers:** „Beim Auswählen der Parzellen nach dem Upload gibt es Parzellen, die falsch analysiert werden – die Konturen stimmen nicht unbedingt mit den tatsächlichen Parzellen überein. Füge eine Option zur händischen Korrektur hinzu – es sollten Konturen hinzu- und abgewählt werden können.“ Festlegung: ANNAHMEN UP17.
+
+### 9.1 Befund an echten Auszügen
+
+Zwei echte „plans cadastraux normalisés“ von cadastre.gouv.fr (1:500) durch `pdfplan` gelesen:
+
+- **Fremde Linien zerschneiden Parzellen.** Über den Plan läuft eine Kreislinie; sie teilt Parzelle 144 in zwei Flächen (865 und 574 m²), ebenso 638, 840, 961 und andere. Keine Fläche ist dann die ganze Parzelle – mit einer einzigen Wahl lässt sie sich nicht übernehmen.
+- **Parzellennummern sind Umrisse, kein Text.** Die Ziffern stehen als Zeichenpfade im PDF; `pdfminer` findet nur Einzelziffern der Randbeschriftung. Die Kandidaten tragen deshalb keine Nummer, und die Umrisse der Ziffern ergeben viele kleine Flächen (719 bzw. 2 132 unter 20 m²).
+- Kopf und Legende des Blatts liefern große Rechtecke (600, 889, 1 200 m²) als Kandidaten.
+
+Die zweite und dritte Beobachtung bleiben Grenzen (9.4); die erste behebt dieser Nachtrag.
+
+### 9.2 Festlegungen
+
+- **Mehrere Konturen wählen:** Ein Klick nimmt eine Fläche in die Auswahl, ein zweiter nimmt sie heraus; ohne Maus über eine Liste „Fläche hinzufügen“ und je gewählter Fläche „Entfernen“. Das Grundstück ist die **Vereinigung** der gewählten Flächen.
+- **Vereinigen wie beim Kataster** (`outline.merge_parcels`, Spez. 5.1.3): Spalten bis 2 × 2 cm schließen, vereinfachen, ein zusammenhängendes Polygon (`422 site_not_contiguous`). **Löcher werden gefüllt** wie bei jedem Kandidaten (UP13): Liegt ein Gebäude auf der fremden Linie, fällt es in keine der Teilflächen und bliebe sonst als Loch zurück.
+- **Enthaltene Flächen zählen mit:** Eine Fläche innerhalb einer gewählten (Gebäude in der Parzelle) ist schon Teil des Grundstücks; die Übersicht zeigt sie mit an, die Flächensumme zählt sie nicht doppelt.
+- **Schranken:** höchstens 20 Flächen; Ergebnis 20–50 000 m² wie jeder Kandidat (G28); Flächen mit und ohne Lage lassen sich nicht mischen (`422 upload_outlines_incompatible`).
+- **API:** Das Formularfeld `index` darf mehrfach stehen (Liste, jede Zahl ≥ 0). Mit einer Zahl verhält sich alles wie bisher.
+- **Herkunft (L3):** `source_info.indices` nennt die vereinigten Flächen, `name` ihre Nummern mit „+“; die Projektseite zeigt „aus n Flächen zusammengesetzt“.
+- **Fläche vor der Übernahme:** Die Oberfläche zeigt die Summe der gewählten Flächen ohne die enthaltenen, mit „≈“; maßgeblich ist die Fläche nach der Übernahme (Spalten geschlossen, vereinfacht).
+
+### 9.3 Arbeitsschritte
+
+1. `site/domain/upload.py`: `MAX_SELECTED`, `merge_candidates` (über `merge_parcels`, Löcher füllen, Schranken, Lage prüfen).
+2. `site/service.py` und `site/api.py`: `index` als Liste, Herkunft; Problemtexte de/fr.
+3. `openapi.json`, `schema.d.ts`.
+4. Frontend: `api/site.ts`, `KonturWahl` (Mehrfachwahl, enthaltene Flächen, Liste), `ParzelleHochladen` (Summe, „Auswahl übernehmen“), Herkunft auf der Projektseite; Texte de/fr.
+5. Tests: Einheit (`merge_candidates`), Integration (Auszug mit einer Linie quer durch Parzelle und Haus → beide Teile ergeben 600 m² mit vier Kanten; nicht zusammenhängend; unbekannte Fläche), Komponente (hinzu- und abwählen, Liste, Summe ohne enthaltene Fläche).
+6. Browser am echten Auszug: Parzelle 144 aus ihren zwei Teilen.
+
+### 9.4 Grenzen
+
+- Fehlt eine Grenzlinie oder schließt sie nicht, gibt es keine Fläche, die sich wählen ließe; zwei Parzellen ohne trennende Linie lassen sich nicht teilen. Dafür bleibt „Zeichnen und bemaßen“.
+- Kleine Flächen unter 20 m² (Schuppen auf der Grenze) sind keine Kandidaten und lassen sich nicht hinzunehmen; Gebäude innerhalb der Parzelle gehören über das Füllen der Löcher ohnehin dazu.
+- Eine eingeschlossene fremde Fläche (Enklave) lässt sich nicht ausschneiden, weil Löcher gefüllt werden.
+- Nummern als Umrisse und Kandidaten aus Kopf und Legende: unverändert (9.1); die Nummer ließe sich nur mit Bilderkennung lesen (AN7).
+- **Beschriftungen als Umrisse kerben die Flächen ein** (9.5, beim Bau Nr. 2): Wo Buchstaben einer Beschriftung eine Grenze kreuzen, entstehen kleine Einbuchtungen und damit viele kurze Kanten – das trifft jede Fläche aus einem solchen PDF, auch eine einzeln gewählte. Behoben in Kapitel 11 (UP19), mit anderer Regel als in 9.5 vorgeschlagen.
+
+### 9.5 Prüfprotokoll
+
+**Vor dem Bau:**
+
+| Nr. | Befund | Folge | Festlegung |
+|---|---|---|---|
+| 1 | Die Vereinigung zweier Teilflächen lässt ein Loch, wo ein Gebäude auf der fremden Linie liegt (es ist in beiden nur eine Einbuchtung) | Grundstück mit falschem Loch, Fläche zu klein | Löcher füllen, wie beim einzelnen Kandidaten |
+| 2 | Kandidaten sind Außenringe und können einander enthalten (Parzelle und ihr Gebäude) | Eine einfache Summe zählte das Gebäude doppelt | Enthaltene Flächen zählen nicht; die Übersicht zeigt sie als Teil der Auswahl |
+| 3 | Die fremde Linie hinterlässt auf dem Umriss Stützpunkte ohne Knick | Zusätzliche, geteilte Kanten | `merge_parcels` vereinfacht (5 cm), wie beim Kataster |
+| 4 | Aus DXF oder GeoJSON können Konturen mit und ohne Lage kommen | Vereinigung zweier Koordinatenräume ohne Sinn | `upload_outlines_incompatible` |
+| 5 | Nach jedem Klick den Server rechnen lassen (Vorschau) hieße, die Datei jedes Mal neu zu senden und zu lesen (bis 20 MB, ein Plan mit 13 000 Linien) | Träge Bedienung | Summe im Browser, exakte Fläche nach der Übernahme |
+
+**Geprüfte Alternativen:**
+
+| Alternative | Verworfen, weil | Besser, wenn … |
+|---|---|---|
+| Kleinste Flächen (Zellen der Zeichnung) statt Außenringen wählbar machen | Schraffuren und Ziffernumrisse zerlegen Gebäude und Nummern in Hunderte Splitter; jede Parzelle müsste man aus vielen Zellen zusammenklicken | Pläne ohne Schraffur und Textumrisse die Regel wären |
+| Teilflächen selbst zusammenführen, wenn die trennende Linie keine Parzellengrenze ist | Im PDF unterscheidet nichts sicher eine Grenze von einer fremden Linie (Kreis, Maßkette, Straßenrand) | die Linienstile verlässlich wären |
+| Eckpunkte des Umrisses von Hand verschieben | Deckt auch fehlende Linien ab, ist aber ein eigener Editor; die Aufgabe ist Hinzu- und Abwählen | Linien häufig fehlen – dann als Weiterentwicklung von „Zeichnen und bemaßen“ |
+
+**Beim Bau gefunden:**
+
+| Nr. | Befund | Folge | Behoben in |
+|---|---|---|---|
+| 1 | Die Summe vor der Übernahme mit einer Nachkommastelle („≈ 1.440,0 m²“) | Scheingenau neben „≈“ | Auf ganze m² gerundet; die Einzelflächen behalten eine Nachkommastelle |
+| 2 | Im echten Auszug sind Beschriftungen („Sente rurale“, „DEVANT LA TUILERIE“) und Nummern als **gefüllte Umrisse ohne Strich** gezeichnet, die Grenzen als **Striche**. Die Buchstaben kerben die Flächen ein: Parzelle 144 aus zwei Teilen hat 32 Kanten, viele unter 1 m | Lange Kantenliste, jede Kante will eingeordnet sein | **Behoben in Kapitel 11** mit anderer Regel (Farbe und Größe, 11.1). Ursprünglicher Vorschlag: nur gestrichene Pfade zu Flächen schließen, gefüllte ohne Strich übergehen, mit Rückfall auf alle Pfade, wenn dann keine plausible Fläche bleibt. Probe am Auszug: 3 906 → 751 Linien, 849 → 251 Flächen, Buchstaben- und Ziffernflächen und Kerben verschwinden; auch die Gebäude fallen weg (ebenfalls nur gefüllt), was für die Parzelle nichts ändert, weil Kandidaten Außenringe sind. Vor dem Umbau am Original zu klären: In der Mitte des Blatts verschmelzen zwei Flächen zu einer (2 020 m²) – ob dort eine Grenze nur gefüllt gezeichnet ist, war am PDF nicht zu sehen |
+
+**Prüflauf:** Backend 629 Tests mit `TEST_S3=1` (vorher 623), ruff, Format und mypy grün; neu 5 Einheitstests (`merge_candidates`) und ein Integrationstest (Auszug mit einer Linie quer durch Parzelle 65 und ihr Haus: kein Kandidat mit 600 m², die Teile 210 und 342 m² ergeben 600 m² mit vier Kanten; nicht zusammenhängend, unbekannte Fläche, 21 Flächen). Frontend 196 Tests (vorher 194; Mehrfachwahl mit enthaltener Fläche, Herkunft „aus 2 Flächen“), Lint, Typprüfung und Build grün; `openapi.json` und `schema.d.ts` neu erzeugt (`index` als Liste).
+
+**Browserprüfung am 28.09.2026** (Analyse-Stack mit neu gebauten Images, echter „plan cadastral normalisé“ 1:500): 130 Flächen; die zwei Teile von Parzelle 144 im Plan angeklickt (865,4 und 574,2 m²) → beide hervorgehoben, darunter als Auswahl, „2 Flächen zusammen, ≈ 1.440 m²“ → „Auswahl übernehmen“ → Grundstück 1.441,1 m², Herkunft „aus 2 Flächen der Datei zusammengesetzt“, Maßstab 1:500 angegeben. Das Testprojekt danach gelöscht.

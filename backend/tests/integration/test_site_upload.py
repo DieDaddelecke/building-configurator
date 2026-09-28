@@ -258,6 +258,43 @@ def test_pdf_extract_offers_the_parcels_and_forms_the_chosen_one(client: Any, pr
     assert [e["kind"] for e in chosen["edges"]] == ["other"] * 4
 
 
+def test_parcel_cut_by_a_foreign_line_is_joined_from_its_pieces(client: Any, project: str) -> None:
+    """Eine fremde Linie (auf echten Auszügen etwa ein Kreis) teilt Parzelle 65 und ihr Haus: Keine Fläche ist
+    die ganze Parzelle, die zwei Teile zusammen schon – das Haus auf der Linie bleibt kein Loch (UP17)."""
+    data = extract_pdf(extra=[line(35, 10, 35, 90)])
+    candidates = upload(client, project, "extrait.pdf", data).json()["candidates"]
+
+    def near(area: float) -> int:
+        return next(c["index"] for c in candidates if c["area_m2"] == pytest.approx(area, rel=0.01))
+
+    assert not any(c["area_m2"] == pytest.approx(600.0, rel=0.01) for c in candidates)
+    # links 7,5 × 30 m ohne den Hausteil (15 m²), rechts 12,5 × 30 m ohne den Hausteil (33 m²)
+    pieces = [near(210.0), near(342.0)]
+    site = upload(client, project, "extrait.pdf", data, index=pieces).json()["site"]
+    assert site["area_m2"] == pytest.approx(600.0, rel=0.002)
+    assert [e["kind"] for e in site["edges"]] == ["other"] * 4
+    info = site["source_info"]
+    assert (info["indices"], info["index"], info["name"], info["scale"]) == (pieces, None, "65", 500)
+    assert info["short_piece_m"] == 2.0
+
+    apart = upload(client, project, "extrait.pdf", data, index=[pieces[0], near(360.0)])
+    assert apart.status_code == 422 and apart.json()["code"] == "site_not_contiguous"
+    unknown = upload(client, project, "extrait.pdf", data, index=[pieces[0], 999])
+    assert unknown.status_code == 422 and unknown.json()["code"] == "upload_outline_not_found"
+    too_many = upload(client, project, "extrait.pdf", data, index=list(range(21)))
+    assert too_many.status_code == 422
+
+
+def test_lettering_across_a_boundary_leaves_no_notch(client: Any, project: str) -> None:
+    """Ein Buchstabe als gefüllter Umriss auf der Südgrenze von 65 kerbt das Grundstück nicht ein (UP19)."""
+    data = extract_pdf(extra=[filled(38, 78, 4, 4, "black")])
+    candidates = upload(client, project, "extrait.pdf", data).json()["candidates"]
+    first = next(c for c in candidates if c["name"] == "65")
+    assert first["area_m2"] == pytest.approx(600.0, rel=0.002)
+    site = upload(client, project, "extrait.pdf", data, index=first["index"]).json()["site"]
+    assert len(site["edges"]) == 4
+
+
 def test_pdf_without_scale_asks_for_it(client: Any, project: str) -> None:
     data = extract_pdf(header="Plan de situation")
     missing = upload(client, project, "plan.pdf", data)

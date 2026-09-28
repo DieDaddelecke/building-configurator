@@ -21,6 +21,7 @@
   "problem.site_origin_mismatch": "Un terrain d'une autre origine existe déjà pour ce projet ; veuillez créer un nouveau projet",
   "problem.upload_invalid": "Le fichier ne peut pas être lu comme une parcelle",
   "problem.upload_outline_not_found": "Ce contour n’est pas proposé dans le fichier",
+  "problem.upload_outlines_incompatible": "Des contours avec et sans localisation ne peuvent pas être réunis",
   "problem.upload_too_large": "Le fichier est trop volumineux",
   "problem.upload_pdf_no_vector": "Le PDF ne contient aucun trait, probablement un scan ; les plans scannés ne sont pas encore lus",
   "problem.upload_scale_missing": "Aucune échelle dans le plan ; veuillez indiquer l’échelle",

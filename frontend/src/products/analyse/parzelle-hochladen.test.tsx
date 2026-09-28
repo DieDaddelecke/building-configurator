@@ -20,15 +20,21 @@ vi.mock("../../api/site", async (importOriginal) => ({
   useUploadParcel: () => ({ mutate: state.mutate, reset: vi.fn(), isPending: false, error: state.error }),
 }));
 
-const kandidat = (index: number, name: string | null, x0: number, area: number): UploadCandidateOut => ({
+const kandidat = (
+  index: number,
+  name: string | null,
+  x0: number,
+  area: number,
+  [w, h, y0]: [number, number, number] = [20, 30, 0],
+): UploadCandidateOut => ({
   index,
   area_m2: area,
   layer: null,
   name,
   crs: "local",
   georeferenced: false,
-  outline_local: [[[0, 0], [20, 0], [20, 30], [0, 30], [0, 0]]],
-  outline_overview: [[[x0, 0], [x0 + 20, 0], [x0 + 20, 30], [x0, 30], [x0, 0]]],
+  outline_local: [[[0, 0], [w, 0], [w, h], [0, h], [0, 0]]],
+  outline_overview: [[[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h], [x0, y0]]],
 });
 
 const auswahl: UploadResultOut = {
@@ -69,17 +75,52 @@ it("lässt die Parzelle im Plan wählen und übernimmt sie ohne eigenen Maßstab
 
   expect(screen.getByText(/2 geschlossene Flächen gefunden/)).toBeInTheDocument();
   expect(screen.getByText("Maßstab 1:500 aus dem Plan.")).toBeInTheDocument();
+  // Im Plan gewählt, über die Auswahl wieder herausgenommen, dann aus der Liste gewählt
   await userEvent.click(screen.getByTestId("kontur-1"));
-  expect(screen.getByRole("combobox")).toHaveValue("1");
-  await userEvent.selectOptions(screen.getByRole("combobox"), "0");
+  expect(screen.getByTestId("kontur-1")).toHaveAttribute("data-auswahl", "gewaehlt");
+  await userEvent.click(screen.getByRole("button", { name: "66 · 360,0 m² aus der Auswahl nehmen" }));
+  expect(screen.queryByRole("button", { name: "Auswahl übernehmen" })).not.toBeInTheDocument();
+  await userEvent.selectOptions(screen.getByLabelText("oder aus der Liste hinzufügen"), "0");
+  expect(screen.getByTestId("kontur-0")).toHaveAttribute("data-auswahl", "gewaehlt");
 
   state.next = { ...auswahl, candidates: [] };
-  await userEvent.click(screen.getByRole("button", { name: "Diese übernehmen" }));
+  await userEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
   // Der Maßstab aus dem Plan geht nicht mit – so bleibt er in der Herkunft „aus dem Plan“
   expect(state.mutate).toHaveBeenLastCalledWith(
-    expect.objectContaining({ index: 0, scale: undefined, addressLabel: "Parzelle 65" }),
+    expect.objectContaining({ index: [0], scale: undefined, addressLabel: "Parzelle 65" }),
     expect.anything(),
   );
+});
+
+it("legt die Teile einer zerschnittenen Parzelle zusammen und nimmt eine Fläche per zweitem Klick heraus", async () => {
+  // 0 und 1 grenzen aneinander; 2 ist ein Haus in 0, 3 liegt abseits
+  state.next = {
+    ...auswahl,
+    candidates: [
+      kandidat(0, "65", 0, 600),
+      kandidat(1, null, 20, 360, [12, 30, 0]),
+      kandidat(2, null, 5, 48, [8, 6, 10]),
+      kandidat(3, null, 60, 100, [10, 10, 0]),
+    ],
+  };
+  render(<ParzelleHochladen projectId="p1" onFormed={vi.fn()} onCancel={vi.fn()} />);
+  await waehleDatei("extrait.pdf");
+  await userEvent.click(screen.getByRole("button", { name: "Übernehmen" }));
+
+  await userEvent.click(screen.getByTestId("kontur-0"));
+  await userEvent.click(screen.getByTestId("kontur-1"));
+  await userEvent.click(screen.getByTestId("kontur-3"));
+  expect(screen.getByText("3 Flächen zusammen, ≈ 1.060 m²")).toBeInTheDocument();
+  await userEvent.click(screen.getByTestId("kontur-3"));
+  expect(screen.getByText("2 Flächen zusammen, ≈ 960 m²")).toBeInTheDocument();
+  // Das Haus liegt in 65: Es gehört ohne Klick dazu und zählt auch mit Klick nicht doppelt
+  expect(screen.getByTestId("kontur-2")).toHaveAttribute("data-auswahl", "enthalten");
+  await userEvent.click(screen.getByTestId("kontur-2"));
+  expect(screen.getByText("3 Flächen zusammen, ≈ 960 m²")).toBeInTheDocument();
+  expect(screen.getByTestId("kontur-3")).not.toHaveAttribute("data-auswahl");
+
+  await userEvent.click(screen.getByRole("button", { name: "Auswahl übernehmen" }));
+  expect(state.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ index: [0, 1, 2] }), expect.anything());
 });
 
 it("bietet bei zwei Maßstäben beide zur Wahl an", async () => {

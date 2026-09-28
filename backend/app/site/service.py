@@ -45,6 +45,7 @@ from app.site.domain.upload import (
     ParcelFile,
     UploadInvalid,
     build_candidates,
+    merge_candidates,
     read_parcel_file,
 )
 from app.site.models import L93, Site, SiteEdge, SiteParcel, SiteRisk, Terrain
@@ -578,19 +579,20 @@ def form_uploaded_site(
     file_name: str,
     data: bytes,
     address_label: str,
-    index: int | None,
+    indices: Sequence[int] | None,
     scale: int | None,
     actor: str,
 ) -> UploadResultOut:
     """Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1).
 
     Mehrere Konturen und keine Auswahl: die Kandidaten kommen zurück, das Grundstück entsteht erst im
-    zweiten Aufruf mit `index`. Die Datei wird nicht gespeichert, ihre Herkunft schon (E-AN1-1); bei PDF
-    gehören Maßstab und Seite dazu, damit der Umriss nachvollziehbar bleibt (UP14).
+    zweiten Aufruf mit `indices`. Mehrere gewählte Konturen werden vereinigt (UP17). Die Datei wird nicht
+    gespeichert, ihre Herkunft schon (E-AN1-1); bei PDF gehören Maßstab und Seite dazu, damit der Umriss
+    nachvollziehbar bleibt (UP14).
     """
     parcel_file, candidates = read_parcel_upload(db, file_name, data, scale)
     scale_info = {"scale": parcel_file.scale, "scale_source": parcel_file.scale_source}
-    if index is None:
+    if not indices:
         if len(candidates) > 1:
             min_x = min(c.polygon.bounds[0] for c in candidates)
             min_y = min(c.polygon.bounds[1] for c in candidates)
@@ -602,11 +604,16 @@ def form_uploaded_site(
                 **scale_info,
             )
         chosen = candidates[0]
+        wanted = [chosen.index]
     else:
-        found = next((c for c in candidates if c.index == index), None)
-        if found is None:
+        by_index = {c.index: c for c in candidates}
+        wanted = list(dict.fromkeys(indices))
+        if any(i not in by_index for i in wanted):
             raise Problem(422, "upload_outline_not_found")
-        chosen = found
+        try:
+            chosen = merge_candidates([by_index[i] for i in wanted])
+        except UploadInvalid as exc:
+            raise Problem(422, exc.code, detail=str(exc), **exc.extra) from None
     min_x, min_y, _, _ = chosen.polygon.bounds
     source_info: dict[str, Any] = {
         "file_name": file_name,
@@ -617,6 +624,9 @@ def form_uploaded_site(
         "index": chosen.index,
         "crs": chosen.crs,
     }
+    if len(wanted) > 1:
+        # Herkunft der Vereinigung (UP17, L3): welche Konturen der Datei das Grundstück bilden
+        source_info |= {"index": None, "indices": wanted}
     if parcel_file.format == "pdf":
         source_info |= {**scale_info, "page": parcel_file.page}
     site = _store_sketch_site(

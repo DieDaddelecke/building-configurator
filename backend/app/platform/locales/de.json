@@ -21,6 +21,7 @@
   "problem.site_origin_mismatch": "Für dieses Projekt besteht bereits ein Grundstück anderer Herkunft; bitte ein neues Projekt anlegen",
   "problem.upload_invalid": "Die Datei lässt sich nicht als Parzelle lesen",
   "problem.upload_outline_not_found": "Diese Kontur steht in der Datei nicht zur Wahl",
+  "problem.upload_outlines_incompatible": "Konturen mit und ohne Lage lassen sich nicht vereinigen",
   "problem.upload_too_large": "Die Datei ist zu groß",
   "problem.upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan; gescannte Pläne lassen sich noch nicht lesen",
   "problem.upload_scale_missing": "Im Plan steht kein Maßstab; bitte den Maßstab angeben",

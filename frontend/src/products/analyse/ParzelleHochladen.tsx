@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ApiError, type Problem } from "../../api/client";
 import { useUploadParcel, type UploadResultOut } from "../../api/site";
 import { formatNumber } from "../../site/geo";
-import { bezeichnung, KonturWahl } from "./KonturWahl";
+import { auswahlFlaeche, bezeichnung, KonturWahl } from "./KonturWahl";
 
 interface ParzelleHochladenProps {
   projectId: string;
@@ -15,9 +15,9 @@ interface ParzelleHochladenProps {
 const istPdf = (file: File | null) => Boolean(file?.name.toLowerCase().endsWith(".pdf"));
 
 /**
- * Parzelle aus DXF, GeoJSON oder vektoriellem PDF (AN1, PLAN_AN1 3.2 und 8). Mehrere Konturen: erst im Plan
- * wählen, dann übernehmen. Bei PDF braucht es einen Maßstab; steht er im Plan, wird er übernommen, sonst
- * hier angegeben (UP14).
+ * Parzelle aus DXF, GeoJSON oder vektoriellem PDF (AN1, PLAN_AN1 3.2, 8 und 9). Mehrere Konturen: erst im Plan
+ * wählen, dann übernehmen; zerschneidet eine fremde Linie die Parzelle, werden ihre Teile zusammen gewählt
+ * (UP17). Bei PDF braucht es einen Maßstab; steht er im Plan, wird er übernommen, sonst hier angegeben (UP14).
  */
 export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHochladenProps) {
   const { t, i18n } = useTranslation();
@@ -28,12 +28,12 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
   const [label, setLabel] = useState("");
   const [massstab, setMassstab] = useState("");
   const [auswahl, setAuswahl] = useState<UploadResultOut | null>(null);
-  const [gewaehlt, setGewaehlt] = useState<number | null>(null);
+  const [gewaehlt, setGewaehlt] = useState<number[]>([]);
   const upload = useUploadParcel(projectId);
 
   const scale = istPdf(file) && /^\d+$/.test(massstab.trim()) ? Number(massstab.trim()) : undefined;
 
-  const senden = (index?: number, festerMassstab?: number) => {
+  const senden = (index?: readonly number[], festerMassstab?: number) => {
     if (!file || !label.trim()) return;
     upload.mutate(
       // Nur ein von Hand angegebener Maßstab geht mit; einer aus dem Plan wird beim zweiten Lesen wieder
@@ -44,7 +44,7 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
           if (result.site) onFormed();
           else {
             setAuswahl(result);
-            setGewaehlt(null);
+            setGewaehlt([]);
           }
         },
       },
@@ -54,12 +54,14 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
   const neueDatei = (next: File | null) => {
     setFile(next);
     setAuswahl(null);
-    setGewaehlt(null);
+    setGewaehlt([]);
     upload.reset();
   };
 
   const fehler = upload.error instanceof ApiError ? (upload.error.problem as Problem & { scales?: number[] }) : null;
-  const gefunden = auswahl?.candidates.find((c) => c.index === gewaehlt) ?? null;
+  const umschalten = (index: number) =>
+    setGewaehlt((liste) => (liste.includes(index) ? liste.filter((i) => i !== index) : [...liste, index]));
+  const einzeln = gewaehlt.length === 1 ? (auswahl?.candidates.find((c) => c.index === gewaehlt[0]) ?? null) : null;
 
   return (
     <section className="karte p-5 flex flex-col gap-4" aria-labelledby="upload-titel">
@@ -143,14 +145,23 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
               })}
             </p>
           )}
-          <KonturWahl candidates={auswahl.candidates} selected={gewaehlt} onSelect={setGewaehlt} />
-          {gefunden && (
+          <KonturWahl candidates={auswahl.candidates} selected={gewaehlt} onToggle={umschalten} />
+          {gewaehlt.length > 0 && (
             <div className="flex flex-wrap items-center gap-3">
-              <span>
-                <span className="font-medium">{bezeichnung(gefunden)}</span>
-                <span className="t-mute f-mono num"> · {formatNumber(gefunden.area_m2, i18n.language)} m²</span>
-              </span>
-              <button type="button" className="btn btn-primary" disabled={upload.isPending} onClick={() => senden(gefunden.index)}>
+              {einzeln ? (
+                <span>
+                  <span className="font-medium">{bezeichnung(einzeln)}</span>
+                  <span className="t-mute f-mono num"> · {formatNumber(einzeln.area_m2, i18n.language)} m²</span>
+                </span>
+              ) : (
+                <span>
+                  {t("analyse.upload.selectedSum", {
+                    count: gewaehlt.length,
+                    area: formatNumber(auswahlFlaeche(auswahl.candidates, gewaehlt), i18n.language, 0),
+                  })}
+                </span>
+              )}
+              <button type="button" className="btn btn-primary" disabled={upload.isPending} onClick={() => senden(gewaehlt)}>
                 {t("analyse.upload.take")}
               </button>
             </div>

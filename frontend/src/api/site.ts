@@ -258,7 +258,8 @@ export function useDeleteProject() {
 }
 
 /** Parzelle als DXF, GeoJSON oder vektorielles PDF (AN1). Ohne `index` und mit mehreren Konturen kommt die
- *  Auswahl zurück; `scale` (1:n) gilt nur für PDF und ersetzt den Maßstab aus dem Plan. */
+ *  Auswahl zurück; mehrere gewählte Konturen vereinigt der Server (UP17). `scale` (1:n) gilt nur für PDF und
+ *  ersetzt den Maßstab aus dem Plan. */
 export function useUploadParcel(projectId: string) {
   const client = useQueryClient();
   return useMutation({
@@ -270,13 +271,14 @@ export function useUploadParcel(projectId: string) {
     }: {
       file: File;
       addressLabel: string;
-      index?: number;
+      index?: readonly number[];
       scale?: number;
     }) => {
       const form = new FormData();
       form.append("file", file);
       form.append("address_label", addressLabel);
-      if (index !== undefined) form.append("index", String(index));
+      // Mehrere Konturen: das Feld wiederholt, der Server vereinigt sie (UP17)
+      for (const i of index ?? []) form.append("index", String(i));
       if (scale !== undefined) form.append("scale", String(scale));
       return unwrap(
         await api.POST("/api/v1/projects/{project_id}/site/upload", {

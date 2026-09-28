@@ -4,6 +4,8 @@ Die Zeichnung ist in Millimetern auf dem Papier angegeben: Bei 1:500 ist 1 mm = 
 die erwarteten Flächen exakt bekannt, ohne Beispieldateien im Repository.
 """
 
+from collections.abc import Sequence
+
 from weasyprint import HTML
 
 
@@ -37,8 +39,9 @@ EXTRACT_HEADER = "Échelle d'origine : 1/1000 · Échelle d'édition : 1/500"
 """Wie auf einem Auszug von cadastre.gouv.fr: Erfassungs- und Ausgabemaßstab."""
 
 
-def extract_pdf(header: str = EXTRACT_HEADER) -> bytes:
-    """Katasterauszug im Kleinen: Parzelle 65 (20 × 30 m) mit Haus, Nachbar 66 (12 × 30 m), bei 1:500."""
+def extract_pdf(header: str = EXTRACT_HEADER, extra: Sequence[str] = ()) -> bytes:
+    """Katasterauszug im Kleinen: Parzelle 65 (20 × 30 m) mit Haus, Nachbar 66 (12 × 30 m), bei 1:500.
+    `extra` zeichnet weitere Linien darüber (etwa eine, die Parzelle und Haus zerschneidet)."""
     return plan_pdf(
         [
             polygon([(20, 20), (60, 20), (60, 80), (20, 80)]),
@@ -46,6 +49,7 @@ def extract_pdf(header: str = EXTRACT_HEADER) -> bytes:
             rect(30, 40, 16, 12, fill="#ccc", width=0.2),
             label(38, 30, "65"),
             label(70, 30, "66"),
+            *extra,
         ],
         header,
     )

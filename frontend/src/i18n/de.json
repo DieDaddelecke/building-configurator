@@ -93,8 +93,8 @@
       "labelHint": "z. B. Adresse oder Parzellennummer",
       "file": "Datei",
       "submit": "Übernehmen",
-      "take": "Diese übernehmen",
-      "choose": "{{count}} geschlossene Flächen gefunden – klicken Sie die Parzelle im Plan an.",
+      "take": "Auswahl übernehmen",
+      "choose": "{{count}} geschlossene Flächen gefunden – klicken Sie die Parzelle im Plan an. Ist sie in mehrere Flächen zerteilt, klicken Sie alle Teile an; ein zweiter Klick nimmt eine Fläche wieder heraus.",
       "error": {
         "upload_invalid": "Die Datei lässt sich nicht als Parzelle lesen.",
         "upload_outline_not_found": "Diese Kontur steht nicht mehr zur Wahl.",
@@ -102,7 +102,9 @@
         "site_origin_mismatch": "Dieses Projekt hat schon ein Grundstück aus dem Kataster.",
         "upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan. Gescannte Pläne lassen sich noch nicht lesen – bitte das PDF aus dem CAD oder von cadastre.gouv.fr nehmen.",
         "upload_scale_missing": "Im Plan steht kein Maßstab. Bitte oben den Maßstab angeben und erneut übernehmen.",
-        "upload_scale_ambiguous": "Im Plan stehen mehrere Maßstäbe. Welcher gilt für die Zeichnung?"
+        "upload_scale_ambiguous": "Im Plan stehen mehrere Maßstäbe. Welcher gilt für die Zeichnung?",
+        "site_not_contiguous": "Die gewählten Flächen hängen nicht zusammen – bitte nur aneinandergrenzende Flächen wählen.",
+        "upload_outlines_incompatible": "Die gewählten Flächen liegen teils mit, teils ohne Lage vor und lassen sich nicht zusammenlegen."
       },
       "cancel": "Abbrechen",
       "scale": "Maßstab des Plans",
@@ -111,8 +113,13 @@
       "scaleUsedFile": "Maßstab 1:{{scale}} aus dem Plan.",
       "scaleUsedInput": "Maßstab 1:{{scale}} wie angegeben.",
       "overview": "Übersicht der Flächen aus der Datei",
-      "list": "oder aus der Liste wählen",
-      "pick": "Fläche wählen …"
+      "list": "oder aus der Liste hinzufügen",
+      "pick": "Fläche hinzufügen …",
+      "selection": "Gewählte Flächen",
+      "remove": "{{name}} aus der Auswahl nehmen",
+      "selectedSum": "{{count}} Flächen zusammen, ≈ {{area}} m²",
+      "selectionHint": "Flächen innerhalb einer gewählten – etwa Gebäude – gehören ohne Klick dazu. Die genaue Fläche steht nach der Übernahme fest.",
+      "maxSelected": "Höchstens {{count}} Flächen lassen sich zusammenlegen."
     },
     "disclaimer": "Analyse auf Grundlage der eingereichten Unterlagen. Keine Rechtsauskunft; maßgeblich bleibt das Certificat d’urbanisme.",
     "plu": {

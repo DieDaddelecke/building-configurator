@@ -93,8 +93,8 @@
       "labelHint": "adresse ou référence cadastrale",
       "file": "Fichier",
       "submit": "Importer",
-      "take": "Choisir celle-ci",
-      "choose": "{{count}} surfaces fermées trouvées – cliquez sur la parcelle dans le plan.",
+      "take": "Reprendre la sélection",
+      "choose": "{{count}} surfaces fermées trouvées – cliquez sur la parcelle dans le plan. Si elle est découpée en plusieurs surfaces, cliquez sur toutes les parties ; un second clic retire une surface.",
       "error": {
         "upload_invalid": "Le fichier ne peut pas être lu comme une parcelle.",
         "upload_outline_not_found": "Ce contour n'est plus proposé.",
@@ -102,7 +102,9 @@
         "site_origin_mismatch": "Ce projet a déjà un terrain issu du cadastre.",
         "upload_pdf_no_vector": "Le PDF ne contient aucun trait, probablement un scan. Les plans scannés ne sont pas encore lus – utilisez le PDF issu de la CAO ou de cadastre.gouv.fr.",
         "upload_scale_missing": "Aucune échelle sur le plan. Indiquez l’échelle ci-dessus puis importez à nouveau.",
-        "upload_scale_ambiguous": "Le plan indique plusieurs échelles. Laquelle vaut pour le dessin ?"
+        "upload_scale_ambiguous": "Le plan indique plusieurs échelles. Laquelle vaut pour le dessin ?",
+        "site_not_contiguous": "Les surfaces choisies ne se touchent pas – choisissez uniquement des surfaces contiguës.",
+        "upload_outlines_incompatible": "Les surfaces choisies sont en partie localisées, en partie non : elles ne peuvent pas être réunies."
       },
       "cancel": "Annuler",
       "scale": "Échelle du plan",
@@ -111,8 +113,13 @@
       "scaleUsedFile": "Échelle 1:{{scale}} lue dans le plan.",
       "scaleUsedInput": "Échelle 1:{{scale}} indiquée.",
       "overview": "Aperçu des surfaces du fichier",
-      "list": "ou choisir dans la liste",
-      "pick": "Choisir une surface…"
+      "list": "ou ajouter depuis la liste",
+      "pick": "Ajouter une surface…",
+      "selection": "Surfaces choisies",
+      "remove": "Retirer {{name}} de la sélection",
+      "selectedSum": "{{count}} surfaces réunies, ≈ {{area}} m²",
+      "selectionHint": "Les surfaces situées à l’intérieur d’une surface choisie – par exemple les bâtiments – en font partie sans clic. La surface exacte est fixée après la reprise.",
+      "maxSelected": "Au plus {{count}} surfaces peuvent être réunies."
     },
     "disclaimer": "Analyse fondée sur les documents fournis. Sans valeur juridique ; seul le certificat d’urbanisme fait foi.",
     "plu": {

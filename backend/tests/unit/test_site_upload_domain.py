@@ -3,11 +3,15 @@
 import json
 
 import pytest
+from shapely.geometry import Polygon
 
 from app.site.domain.upload import (
+    Candidate,
+    Crs,
     UploadInvalid,
     build_candidates,
     detect_crs,
+    merge_candidates,
     read_geojson,
     read_parcel_file,
 )

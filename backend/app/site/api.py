@@ -13,6 +13,7 @@ from typing import Annotated, Any, Literal, cast
 
 import httpx2
 from fastapi import APIRouter, Depends, File, Form, Header, Query, Request, UploadFile
+from pydantic import Field
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -35,6 +36,7 @@ from app.platform.problems import Problem
 from app.site import service
 from app.site.domain.edges import OverrideKind
 from app.site.domain.manual import ManualEdgeInput
+from app.site.domain.upload import MAX_SELECTED
 from app.site.jobs import latest_imports
 from app.site.schemas import (
     AddressOut,
@@ -223,7 +225,7 @@ async def upload_site(
     request: Request,
     file: UploadFile = File(...),
     address_label: str = Form(..., min_length=1, max_length=200),
-    index: int | None = Form(default=None, ge=0),
+    index: list[Annotated[int, Field(ge=0)]] | None = Form(default=None, max_length=MAX_SELECTED),
     scale: int | None = Form(default=None, ge=50, le=10_000),
     project_id: uuid.UUID = Depends(require_project_access),
     db: Session = Depends(get_db),
@@ -231,8 +233,9 @@ async def upload_site(
     """Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).
 
     Ohne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;
-    der zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den
-    Maßstab aus dem Text des Plans.
+    der zweite Aufruf nennt die gewählte Kontur – oder mehrere (`index` wiederholt), die zu einem
+    Grundstück vereinigt werden (UP17). `scale` (1:n) gilt nur für PDF und ersetzt den Maßstab aus dem
+    Text des Plans.
     """
     rate_limit.check(request, "site_write", get_settings().site_write_limit_per_hour, 3600)
     data = await file.read()
@@ -246,7 +249,7 @@ async def upload_site(
         file_name=file.filename or "",
         data=data,
         address_label=address_label,
-        index=index,
+        indices=index,
         scale=scale,
         actor=f"project:{project_id}",
     )
