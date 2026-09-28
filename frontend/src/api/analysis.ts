@@ -1,5 +1,6 @@
-/** Analyse für den Entwurf (AN3, docs/PLAN_AN3_ANALYSE.md): bindende Grundfläche, Vollgeschosse, Nutzfläche
- *  als Spanne mit Annahmen je Projekt und der Vergleich der Zusatzdokumente mit dem PLU. */
+/** Analyse für den Entwurf (AN3, docs/PLAN_AN3_ANALYSE.md, PLAN_AN3_GABARIT.md): bindende Grundfläche,
+ *  Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt, Gabarit und Schnitte, der Vergleich der
+ *  Zusatzdokumente mit dem PLU. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -13,6 +14,10 @@ export type AnalysisStoreysOut = components["schemas"]["AnalysisStoreysOut"];
 export type AnalysisParametersIn = components["schemas"]["AnalysisParametersIn"];
 export type AnalysisParametersOut = components["schemas"]["AnalysisParametersOut"];
 export type SupplementAnalysisOut = components["schemas"]["SupplementAnalysisOut"];
+export type GabaritOut = components["schemas"]["GabaritOut"];
+export type GabaritLevelOut = components["schemas"]["GabaritLevelOut"];
+export type SectionOut = components["schemas"]["SectionOut"];
+export type StoreyAreaOut = components["schemas"]["StoreyAreaOut"];
 export type RuleComparisonOut = components["schemas"]["RuleComparisonOut"];
 
 export const analysisKey = (projectId: string) => ["analysis", projectId] as const;

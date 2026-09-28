@@ -5,7 +5,7 @@ Ergebnis sind zwei Konturen der bebaubaren Fläche (weiteste und engste Auslegun
 Grenzwerte je Zonen-Teilfläche, der Abstand je Kante und die Flächen überlagernder Vorgaben.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 import shapely
@@ -21,6 +21,7 @@ from app.envelope.domain.local import polygons
 from app.envelope.domain.setbacks import (
     RuleIndex,
     Setback,
+    at_height,
     distances,
     incomplete_reasons,
     index_rules,
@@ -274,6 +275,43 @@ def _edges(
 # ---------------------------------------------------------------------------
 # Konturen
 # ---------------------------------------------------------------------------
+
+
+def contour_at_height(
+    data: EnvelopeInput,
+    envelope: Envelope,
+    height_m: float,
+    reading: str,
+    heights: dict[str, Heights] | None = None,
+) -> Contour:
+    """Kontur für Baukörperteile, die bis `height_m` reichen (Gabarit der Analyse, PLAN_AN3_GABARIT.md 3.2).
+
+    Dieselbe Ableitung wie die Konturen des Baurahmens, aber jeder Abstand mit der Höhe der Stufe
+    (`setbacks.at_height`). Teilflächen, deren Höchsthöhe darunter liegt oder nicht ermittelt ist, tragen
+    nichts bei. `heights` ersetzt die Höhen einer Zone (Geschossangabe mit anderer Geschosshöhe umgerechnet).
+    """
+    override = heights or {}
+    zone_heights = {part.zone_code: override.get(part.zone_code, part.heights) for part in envelope.parts}
+    parts = [
+        part
+        if part.excluded is not None or reaches(zone_heights[part.zone_code], height_m)
+        else replace(part, excluded="above_max_height")
+        for part in envelope.parts
+    ]
+    edges = [
+        replace(edge, setbacks=[at_height(s, zone_heights[s.zone_code], height_m) for s in edge.setbacks])
+        for edge in envelope.edges
+    ]
+    zone_bands: dict[str, list[Band]] = {}
+    for band in envelope.bands:
+        zone_bands.setdefault(band.zone_code, []).append(band)
+    return _contour(reading, data, parts, edges, zone_bands, envelope.constraints)
+
+
+def reaches(heights: Heights, height_m: float) -> bool:
+    """Darf in der Zone bis `height_m` gebaut werden? Ohne ermittelte Höchsthöhe nicht bestimmt: nein."""
+    top = heights.highest_m
+    return top is not None and height_m <= top + tol.DISTANCE_EPSILON_M
 
 
 def _contour(

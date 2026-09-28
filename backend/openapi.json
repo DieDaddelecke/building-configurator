@@ -185,18 +185,42 @@
             ],
             "title": "Low M2"
           },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
           "reasons": {
             "items": {
               "type": "string"
             },
             "title": "Reasons",
             "type": "array"
+          },
+          "storeys_high": {
+            "items": {
+              "$ref": "#/components/schemas/StoreyAreaOut"
+            },
+            "title": "Storeys High",
+            "type": "array"
+          },
+          "storeys_low": {
+            "items": {
+              "$ref": "#/components/schemas/StoreyAreaOut"
+            },
+            "title": "Storeys Low",
+            "type": "array"
           }
         },
         "required": [
           "capped",
           "complete",
-          "reasons"
+          "reasons",
+          "storeys_low",
+          "storeys_high",
+          "notes"
         ],
         "title": "AnalysisFloorAreaOut",
         "type": "object"
@@ -289,6 +313,16 @@
             "title": "Footprint",
             "type": "object"
           },
+          "gabarit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GabaritOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "input_hash": {
             "title": "Input Hash",
             "type": "string"
@@ -317,6 +351,13 @@
               }
             ],
             "title": "Reason"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionOut"
+            },
+            "title": "Sections",
+            "type": "array"
           },
           "simulation": {
             "const": true,
@@ -366,7 +407,8 @@
           "not_counted",
           "supplements",
           "supplement_stricter",
-          "warnings"
+          "warnings",
+          "sections"
         ],
         "title": "AnalysisOut",
         "type": "object"
@@ -3469,6 +3511,227 @@
           "complete"
         ],
         "title": "FootprintTotalOut",
+        "type": "object"
+      },
+      "GabaritContourOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "rings_local": {
+            "items": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "title": "Rings Local",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rings_local",
+          "area_m2",
+          "complete",
+          "reasons"
+        ],
+        "title": "GabaritContourOut",
+        "type": "object"
+      },
+      "GabaritHeightsOut": {
+        "properties": {
+          "derived": {
+            "title": "Derived",
+            "type": "boolean"
+          },
+          "eave_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eave M"
+          },
+          "parapet_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parapet M"
+          },
+          "ridge_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge M"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "derived"
+        ],
+        "title": "GabaritHeightsOut",
+        "type": "object"
+      },
+      "GabaritLevelOut": {
+        "description": "Stufe `(from_m, to_m]`: Baukörperteile, die bis `to_m` reichen, liegen in ihrer Kontur.",
+        "properties": {
+          "contours": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GabaritContourOut"
+            },
+            "propertyNames": {
+              "enum": [
+                "lenient",
+                "strict"
+              ]
+            },
+            "title": "Contours",
+            "type": "object"
+          },
+          "from_m": {
+            "title": "From M",
+            "type": "number"
+          },
+          "roof": {
+            "title": "Roof",
+            "type": "boolean"
+          },
+          "to_m": {
+            "title": "To M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from_m",
+          "to_m",
+          "roof",
+          "contours"
+        ],
+        "title": "GabaritLevelOut",
+        "type": "object"
+      },
+      "GabaritOut": {
+        "description": "Hüllkörper in Stufen (docs/PLAN_AN3_GABARIT.md 3.2); Höhen über der Bezugshöhe der Regeln.",
+        "properties": {
+          "heights": {
+            "items": {
+              "$ref": "#/components/schemas/GabaritHeightsOut"
+            },
+            "title": "Heights",
+            "type": "array"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/GabaritLevelOut"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "storey_height_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storey Height M"
+          },
+          "terrain_slope_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terrain Slope Percent"
+          },
+          "terrain_status": {
+            "title": "Terrain Status",
+            "type": "string"
+          },
+          "top_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top M"
+          }
+        },
+        "required": [
+          "status",
+          "reasons",
+          "heights",
+          "levels",
+          "terrain_status"
+        ],
+        "title": "GabaritOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -7112,6 +7375,253 @@
         "title": "RulesImportIn",
         "type": "object"
       },
+      "SectionCrossingOut": {
+        "properties": {
+          "edge_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edge Seq"
+          },
+          "inward": {
+            "title": "Inward",
+            "type": "integer"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "street",
+                  "side",
+                  "rear",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "s": {
+            "title": "S",
+            "type": "number"
+          }
+        },
+        "required": [
+          "s",
+          "inward"
+        ],
+        "title": "SectionCrossingOut",
+        "type": "object"
+      },
+      "SectionHeightLineOut": {
+        "properties": {
+          "derived": {
+            "title": "Derived",
+            "type": "boolean"
+          },
+          "end": {
+            "title": "End",
+            "type": "number"
+          },
+          "height_m": {
+            "title": "Height M",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "eave",
+              "ridge",
+              "parapet"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "number"
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "kind",
+          "height_m",
+          "start",
+          "end",
+          "derived"
+        ],
+        "title": "SectionHeightLineOut",
+        "type": "object"
+      },
+      "SectionLevelOut": {
+        "properties": {
+          "from_m": {
+            "title": "From M",
+            "type": "number"
+          },
+          "intervals": {
+            "additionalProperties": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "enum": [
+                "lenient",
+                "strict"
+              ]
+            },
+            "title": "Intervals",
+            "type": "object"
+          },
+          "roof": {
+            "title": "Roof",
+            "type": "boolean"
+          },
+          "to_m": {
+            "title": "To M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "from_m",
+          "to_m",
+          "roof",
+          "intervals"
+        ],
+        "title": "SectionLevelOut",
+        "type": "object"
+      },
+      "SectionOut": {
+        "description": "Schnitt A–A (von der Hauptstraße nach hinten) oder B–B (rechtwinklig dazu), docs/PLAN_AN3_GABARIT.md\n3.3. `s` in Metern ab der ersten Grenze; Gelände eben auf ±0.",
+        "properties": {
+          "crossings": {
+            "items": {
+              "$ref": "#/components/schemas/SectionCrossingOut"
+            },
+            "title": "Crossings",
+            "type": "array"
+          },
+          "end_local": {
+            "items": {
+              "type": "number"
+            },
+            "title": "End Local",
+            "type": "array"
+          },
+          "height_lines": {
+            "items": {
+              "$ref": "#/components/schemas/SectionHeightLineOut"
+            },
+            "title": "Height Lines",
+            "type": "array"
+          },
+          "key": {
+            "enum": [
+              "A",
+              "B"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "length_m": {
+            "title": "Length M",
+            "type": "number"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/SectionLevelOut"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "parcel": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Parcel",
+            "type": "array"
+          },
+          "prospects": {
+            "items": {
+              "$ref": "#/components/schemas/SectionProspectOut"
+            },
+            "title": "Prospects",
+            "type": "array"
+          },
+          "start_local": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Start Local",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "start_local",
+          "end_local",
+          "length_m",
+          "parcel",
+          "crossings",
+          "levels",
+          "height_lines",
+          "prospects"
+        ],
+        "title": "SectionOut",
+        "type": "object"
+      },
+      "SectionProspectOut": {
+        "properties": {
+          "edge_seq": {
+            "title": "Edge Seq",
+            "type": "integer"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reading": {
+            "enum": [
+              "lenient",
+              "strict"
+            ],
+            "title": "Reading",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge_seq",
+          "reading",
+          "points"
+        ],
+        "title": "SectionProspectOut",
+        "type": "object"
+      },
       "SelectionOut": {
         "properties": {
           "dropped": {
@@ -7822,6 +8332,29 @@
           "summary"
         ],
         "title": "StaffSubmissionOut",
+        "type": "object"
+      },
+      "StoreyAreaOut": {
+        "properties": {
+          "area_m2": {
+            "title": "Area M2",
+            "type": "number"
+          },
+          "level_m": {
+            "title": "Level M",
+            "type": "number"
+          },
+          "share": {
+            "title": "Share",
+            "type": "number"
+          }
+        },
+        "required": [
+          "level_m",
+          "area_m2",
+          "share"
+        ],
+        "title": "StoreyAreaOut",
         "type": "object"
       },
       "SubmissionFileOut": {

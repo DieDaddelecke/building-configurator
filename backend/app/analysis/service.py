@@ -14,9 +14,11 @@ from sqlalchemy.orm import Session
 
 from app.analysis.domain import ENGINE_VERSION
 from app.analysis.domain.analyse import Analysis, PartAnalysis, SupplementInput, SupplementResult, analyse
-from app.analysis.domain.floor_area import NOT_COUNTED
+from app.analysis.domain.floor_area import NOT_COUNTED, StoreyArea
 from app.analysis.domain.footprint import Footprint
+from app.analysis.domain.gabarit import Gabarit
 from app.analysis.domain.parameters import DEFAULTS, Parameters
+from app.analysis.domain.section import Section
 from app.analysis.models import AnalysisParameters
 from app.analysis.schemas import (
     AnalysisAssumptionsOut,
@@ -30,12 +32,19 @@ from app.analysis.schemas import (
     FloorAreaTotalOut,
     FootprintCandidateOut,
     FootprintTotalOut,
+    GabaritContourOut,
+    GabaritHeightsOut,
+    GabaritLevelOut,
+    GabaritOut,
     RuleComparisonOut,
+    SectionOut,
     SpanOut,
+    StoreyAreaOut,
     SupplementAnalysisOut,
 )
 from app.envelope import service as envelope_service
-from app.envelope.domain.inputs import Citation, RuleInput
+from app.envelope.domain import local as local_coords
+from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
 from app.platform import audit
 from app.platform.db import utcnow
@@ -147,7 +156,7 @@ def project_analysis(db: Session, project_id: uuid.UUID) -> AnalysisOut:
     raw = json.dumps(
         [ENGINE_VERSION, envelope_service.fingerprint(data), params.as_json(), stamps], sort_keys=True
     )
-    return _out(result, params, custom=_stored(db, project_id) is not None, input_hash=raw)
+    return _out(result, params, data, custom=_stored(db, project_id) is not None, input_hash=raw)
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +243,87 @@ def _part_out(part: PartAnalysis) -> AnalysisPartOut:
             complete=floor.complete,
             reasons=floor.reasons,
             cap_citation=_citation(floor.cap_citation),
+            storeys_low=[_storey_out(s) for s in floor.storeys_low],
+            storeys_high=[_storey_out(s) for s in floor.storeys_high],
+            notes=floor.notes,
         ),
+    )
+
+
+def _storey_out(storey: StoreyArea) -> StoreyAreaOut:
+    return StoreyAreaOut(level_m=storey.level_m, area_m2=storey.area_m2, share=storey.share)
+
+
+def _gabarit_out(hull: Gabarit, data: EnvelopeInput) -> GabaritOut:
+    origin = data.site.local_origin
+    status: Literal["ok", "partial", "unavailable"] = (
+        "ok" if hull.status == "ok" else "partial" if hull.status == "partial" else "unavailable"
+    )
+    return GabaritOut(
+        status=status,
+        reason=hull.reason,
+        top_m=hull.top_m,
+        storey_height_m=hull.storey_height_m,
+        reasons=hull.reasons,
+        heights=[
+            GabaritHeightsOut(
+                zone_code=zone,
+                eave_m=heights.eave_m,
+                ridge_m=heights.ridge_m,
+                parapet_m=heights.parapet_m,
+                derived=bool(heights.assumptions),
+            )
+            for zone, heights in hull.heights.items()
+        ],
+        levels=[
+            GabaritLevelOut.model_validate(
+                {
+                    "from_m": level.from_m,
+                    "to_m": level.to_m,
+                    "roof": level.roof,
+                    "contours": {
+                        reading: GabaritContourOut(
+                            rings_local=local_coords.rings(contour.geometry, origin),
+                            area_m2=contour.area_m2,
+                            complete=contour.complete,
+                            reasons=contour.reasons,
+                        )
+                        for reading, contour in level.contours.items()
+                    },
+                }
+            )
+            for level in hull.levels
+        ],
+        terrain_status=data.site.terrain.status,
+        terrain_slope_percent=data.site.terrain.slope_percent,
+    )
+
+
+def _section_out(section: Section, origin: tuple[float, float]) -> SectionOut:
+    """Die Fachlogik trägt Schlüssel, Arten und Auslegungen als Text; die Prüfung übernimmt Pydantic."""
+    return SectionOut.model_validate(
+        {
+            "key": section.key,
+            "start_local": local_coords.point(section.start, origin),
+            "end_local": local_coords.point(section.end, origin),
+            "length_m": section.length_m,
+            "parcel": [list(interval) for interval in section.parcel],
+            "crossings": [asdict(crossing) for crossing in section.crossings],
+            "levels": [
+                {
+                    "from_m": level.from_m,
+                    "to_m": level.to_m,
+                    "roof": level.roof,
+                    "intervals": {r: [list(i) for i in items] for r, items in level.intervals.items()},
+                }
+                for level in section.levels
+            ],
+            "height_lines": [asdict(line) for line in section.height_lines],
+            "prospects": [
+                {"edge_seq": p.edge_seq, "reading": p.reading, "points": [list(x) for x in p.points]}
+                for p in section.prospects
+            ],
+        }
     )
 
 
@@ -263,7 +352,9 @@ def _supplement_out(result: SupplementResult) -> SupplementAnalysisOut:
     )
 
 
-def _out(result: Analysis, params: Parameters, *, custom: bool, input_hash: str) -> AnalysisOut:
+def _out(
+    result: Analysis, params: Parameters, data: EnvelopeInput, *, custom: bool, input_hash: str
+) -> AnalysisOut:
     floor = result.floor_area
     return AnalysisOut(
         status=result.status,
@@ -293,4 +384,6 @@ def _out(result: Analysis, params: Parameters, *, custom: bool, input_hash: str)
         supplements=[_supplement_out(item) for item in result.supplements],
         supplement_stricter=result.supplement_stricter,
         warnings=result.warnings,
+        gabarit=_gabarit_out(result.gabarit, data) if result.gabarit is not None else None,
+        sections=[_section_out(section, data.site.local_origin) for section in result.sections],
     )

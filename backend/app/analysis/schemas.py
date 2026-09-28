@@ -11,6 +11,7 @@ from pydantic import BaseModel, model_validator
 
 from app.analysis.domain.parameters import BOUNDS
 from app.envelope.schemas import CitationOut, EnvelopeStatus, LimitOut, Reading
+from app.site.schemas import LocalRing
 
 
 class SpanIn(BaseModel):
@@ -84,6 +85,15 @@ class AnalysisStoreysOut(BaseModel):
     notes: list[str]
 
 
+class StoreyAreaOut(BaseModel):
+    level_m: float
+    """Oberkante des Geschosses; mit der Gabarit-Kontur dieser Höhe gerechnet."""
+    area_m2: float
+    """`min(Grundfläche, Kontur)`, ohne Anteil und Wandabzug."""
+    share: float
+    """1 für ein Vollgeschoss, sonst der Anteil des obersten Geschosses."""
+
+
 class AnalysisFloorAreaOut(BaseModel):
     low_m2: float | None = None
     high_m2: float | None = None
@@ -92,6 +102,10 @@ class AnalysisFloorAreaOut(BaseModel):
     complete: bool
     reasons: list[str]
     cap_citation: CitationOut | None = None
+    storeys_low: list[StoreyAreaOut]
+    storeys_high: list[StoreyAreaOut]
+    notes: list[str]
+    """`gabarit_limits_storeys`: Der Gabarit macht das obere Ende kleiner."""
 
 
 class AnalysisPartOut(BaseModel):
@@ -139,6 +153,94 @@ class SupplementAnalysisOut(BaseModel):
     hints: list[LimitOut]
 
 
+class GabaritContourOut(BaseModel):
+    rings_local: list[LocalRing]
+    area_m2: float
+    complete: bool
+    reasons: list[str]
+
+
+class GabaritLevelOut(BaseModel):
+    """Stufe `(from_m, to_m]`: Baukörperteile, die bis `to_m` reichen, liegen in ihrer Kontur."""
+
+    from_m: float
+    to_m: float
+    roof: bool
+    """Über der Traufe: Dachzone, senkrecht bis zum First (E-AN3G-7)."""
+    contours: dict[Reading, GabaritContourOut]
+
+
+class GabaritHeightsOut(BaseModel):
+    zone_code: str
+    eave_m: float | None = None
+    ridge_m: float | None = None
+    parapet_m: float | None = None
+    derived: bool
+    """Aus einer Geschossangabe mit der Geschosshöhe der Annahmen umgerechnet."""
+
+
+class GabaritOut(BaseModel):
+    """Hüllkörper in Stufen (docs/PLAN_AN3_GABARIT.md 3.2); Höhen über der Bezugshöhe der Regeln."""
+
+    status: Literal["ok", "partial", "unavailable"]
+    reason: str | None = None
+    top_m: float | None = None
+    storey_height_m: float | None = None
+    """Geschosshöhe, mit der eine reine Geschossangabe umgerechnet ist."""
+    reasons: list[str]
+    heights: list[GabaritHeightsOut]
+    levels: list[GabaritLevelOut]
+    terrain_status: str
+    terrain_slope_percent: float | None = None
+
+
+class SectionCrossingOut(BaseModel):
+    s: float
+    edge_seq: int | None = None
+    kind: Literal["street", "side", "rear", "other"] | None = None
+    inward: int
+    """+1: Das Grundstück liegt bei größerem `s`, −1: bei kleinerem."""
+
+
+class SectionLevelOut(BaseModel):
+    from_m: float
+    to_m: float
+    roof: bool
+    intervals: dict[Reading, list[list[float]]]
+    """Abschnitte `[s0, s1]` der Kontur der Stufe auf der Schnittlinie."""
+
+
+class SectionHeightLineOut(BaseModel):
+    zone_code: str
+    kind: Literal["eave", "ridge", "parapet"]
+    height_m: float
+    start: float
+    end: float
+    derived: bool
+
+
+class SectionProspectOut(BaseModel):
+    edge_seq: int
+    reading: Reading
+    points: list[list[float]]
+    """`[s, Höhe]`: Grenze der zulässigen Bebauung an dieser Kante."""
+
+
+class SectionOut(BaseModel):
+    """Schnitt A–A (von der Hauptstraße nach hinten) oder B–B (rechtwinklig dazu), docs/PLAN_AN3_GABARIT.md
+    3.3. `s` in Metern ab der ersten Grenze; Gelände eben auf ±0."""
+
+    key: Literal["A", "B"]
+    start_local: list[float]
+    end_local: list[float]
+    length_m: float
+    parcel: list[list[float]]
+    crossings: list[SectionCrossingOut]
+    levels: list[SectionLevelOut]
+    height_lines: list[SectionHeightLineOut]
+    prospects: list[SectionProspectOut]
+
+
 class AnalysisOut(BaseModel):
     simulation: Literal[True] = True
     status: EnvelopeStatus
@@ -155,3 +257,6 @@ class AnalysisOut(BaseModel):
     supplements: list[SupplementAnalysisOut]
     supplement_stricter: list[str]
     warnings: list[str]
+    gabarit: GabaritOut | None = None
+    """Ohne Baurahmen `None`."""
+    sections: list[SectionOut]

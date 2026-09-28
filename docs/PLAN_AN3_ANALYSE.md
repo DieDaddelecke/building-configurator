@@ -1,6 +1,6 @@
 # AN3 – Analyse für den Entwurf und Zusatzdokumente (Emprise Analyse)
 
-> **Status:** geplant und umgesetzt am 26.09.2026 (Befunde beim Bau in 7.4) · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN3, dazu die Zusatzdokumente aus AN4), 8.1 Nr. 8 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN3 (Präfix `EA`)
+> **Status:** geplant und umgesetzt am 26.09.2026 (Befunde beim Bau in 7.4); Gabarit und Schnitt am 28.09.2026 nach [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md) · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN3, dazu die Zusatzdokumente aus AN4), 8.1 Nr. 8 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN3 (Präfix `EA`)
 > **Voraussetzung:** AN0–AN2 (PS, UP, PU). Fachregeln: `BACKEND_SPEZIFIKATION.md` 5.2 (Regelarten), 5.3 (Baurahmen), 5.8 (Flächen, SDP nach R.111-22); Umsetzung G3 nach ANNAHMEN BR01–BR15.
 > **Entscheidungen des Nutzers vom 25.09.2026:** AN3 mit dem RA1-Teil (bindende Grundfläche, Vollgeschosse, Nutzflächenspanne); **Zusatzdokumente aus AN4 vorgezogen** (E-AN2-5 anders entschieden als empfohlen): hochladen, auswerten, neben den PLU-Regeln zeigen – den Vergleich trifft der Architekt, die Übernahme als Projektkorrektur bleibt bei AN4.
 
@@ -14,7 +14,7 @@ Zweiter Teil: **Zusatzdokumente** – règlement de lotissement und cahier des c
 
 **Enthalten:** Modul `analysis` (nur Analyse-Produkt) mit reiner Fachlogik; Annahmen je Projekt; neue Regelart `max_area` (Höchstflächen in m²) für PLU und Zusatzdokumente; Zusatzdokumente hochladen, lesen, Lot wählen, auswerten; Vergleich mit dem PLU; Oberfläche „Analyse“ und „Zusatzdokumente“ auf der Projektseite; Abstandsaussage je Grenze.
 
-**Nicht enthalten:** Gabarit (Höhenstufen) und Schnitt – RA2, wie in PLAN_ANALYSE 5; Übernahme eines Werts aus einem Zusatzdokument als Projektkorrektur mit Zitat (AN4, zusammen mit dem Regelformular); Verrechnung der Zusatzdokumente in die Analysewerte (E-AN3-2); Bericht-PDF (AN5); SDP aus einem echten Grundriss (X3).
+**Nicht enthalten:** Gabarit (Höhenstufen) und Schnitt – RA2, wie in PLAN_ANALYSE 5 (umgesetzt am 28.09.2026 nach [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md)); Übernahme eines Werts aus einem Zusatzdokument als Projektkorrektur mit Zitat (AN4, zusammen mit dem Regelformular); Verrechnung der Zusatzdokumente in die Analysewerte (E-AN3-2); Bericht-PDF (AN5); SDP aus einem echten Grundriss (X3).
 
 ## 2. Befund
 
@@ -70,7 +70,7 @@ Je Teilfläche: **SDP = F × (n + s) × (1 − w)** mit F bindender Grundfläche
 - **oben:** F aus der weitesten Auslegung, n_max, s_max, w_min
 - Obergrenze `max_area.sdp_m2` der Zone → beide Enden höchstens so groß; die Ausgabe nennt, dass sie bindet.
 - Summe über die Teilflächen, gerundet auf 1 m².
-- **Nicht gerechnet und benannt** (R.111-22 und Entwurf): Treppen- und Aufzugsöffnungen, Flächen unter 1,80 m (nur über den Anteil s angenähert), Stellplätze und Rampen, nicht ausbaufähige Dachräume, Technik- und Kellerräume, Abzug von 10 % bei Sammelerschließung, Laibungen; außerdem Höhenbegrenzung auf der Grenze (`on_boundary_max_height_m`) und höhenabhängige Abstände oberer Geschosse in der weitesten Auslegung (Gabarit, RA2).
+- **Nicht gerechnet und benannt** (R.111-22 und Entwurf): Treppen- und Aufzugsöffnungen, Flächen unter 1,80 m (nur über den Anteil s angenähert), Stellplätze und Rampen, nicht ausbaufähige Dachräume, Technik- und Kellerräume, Abzug von 10 % bei Sammelerschließung, Laibungen; außerdem Höhenbegrenzung auf der Grenze (`on_boundary_max_height_m`) und höhenabhängige Abstände oberer Geschosse in der weitesten Auslegung (Gabarit, RA2; seit 28.09.2026 je Geschoss gerechnet, EA15).
 
 *Beispiel* Uh mit Vorgaben: unten 150 × (2 + 0) × 0,85 = **255 m²**, oben 150 × (2 + 0,75) × 0,92 = **380 m²** (379,5).
 
@@ -164,7 +164,7 @@ Projektseite in der Reihenfolge Grundstück → Bebauungsplan → **Zusatzdokume
 | E-AN3-4 | Lot als Sektor eines Kapitels oder ein Kapitel je Lot? | **Sektor.** Ein Dokument, ein Kapitel; ein neues Lot wertet das Kapitel neu aus (Kosten wie E-AN2-2), Tabellen je Lot liest das Modell in einem Durchgang |
 | E-AN3-5 | Nur mögliches Dachgeschoss (aus Höhen abgeleitet) am unteren Ende mitzählen? | **Nein.** Unten steht, was der Plan sicher trägt; oben das Mögliche |
 | E-AN3-6 | Wie viele Zusatzdokumente je Projekt? | **Drei** (lotissement, cahier des charges, ein Änderungsstand); mehr deutet auf falsch zugeordnete Dateien |
-| E-AN3-7 | Gabarit und Schnitt jetzt? | **Nein, RA2** wie geplant; die Analyse braucht sie für die drei Zahlen nicht |
+| E-AN3-7 | Gabarit und Schnitt jetzt? | **Nein, RA2** wie geplant; die Analyse braucht sie für die drei Zahlen nicht. Umgesetzt am 28.09.2026 (PLAN_AN3_GABARIT) |
 
 ## 7. Prüfprotokoll
 
@@ -180,7 +180,7 @@ Projektseite in der Reihenfolge Grundstück → Bebauungsplan → **Zusatzdokume
 | 6 | Dasselbe PDF einmal als PLU, einmal als Zusatzdokument | Auswertung mit falschem Prompt, Regeln eines PLU als Lotregeln | 3.7: `409 document_type_conflict` |
 | 7 | Kapitel `DOC` über das ganze Dokument | über 150 Seiten scheitert jede Auswertung | 3.7: Seitenbereich beim Lot |
 | 8 | `ProjektSeite`/`Bebauungsplan` nehmen den ersten Eintrag als PLU | mit Zusatzdokumenten falsches Dokument, Ergebnis auch ohne gewählte PLU-Zone | 3.10, Schritt 6 |
-| 9 | SDP oben mit weitester Kontur auf allen Geschossen | Bauen auf der Grenze ist oft nur bis zu einer Höhe erlaubt, obere Geschosse brauchen dann Abstand – die Spanne ist oben zu hoch | 3.3: als nicht gerechnet benannt; Gabarit (RA2) löst es |
+| 9 | SDP oben mit weitester Kontur auf allen Geschossen | Bauen auf der Grenze ist oft nur bis zu einer Höhe erlaubt, obere Geschosse brauchen dann Abstand – die Spanne ist oben zu hoch | 3.3: als nicht gerechnet benannt; **gelöst am 28.09.2026**: Nutzfläche je Geschoss aus dem Gabarit (PLAN_AN3_GABARIT 3.4, EA15) |
 | 10 | Grundflächenzahl nicht ermittelt | Minimum nur aus der Kontur wäre eine Scheinzahl | 3.1: Obergrenze, `complete: false` |
 | 11 | `max_footprint_ratio` um `max_m2` erweitern lag nahe | H2/H3 setzen `ratio` voraus; `derive._part` schlösse die Teilfläche als `footprint_zero` aus | 3.6: eigene Art |
 | 12 | Rückfalltext von `notice.rules_upload` sagt „Zusatzdokumente … nicht berücksichtigt“ | stünde über einer Seite, die sie vergleicht | Text: Zusatzdokumente nur im Vergleich der Analyse, nicht in Regeln und Baurahmen |

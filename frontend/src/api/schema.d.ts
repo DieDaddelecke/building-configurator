@@ -1750,8 +1750,14 @@ export interface components {
             high_m2?: number | null;
             /** Low M2 */
             low_m2?: number | null;
+            /** Notes */
+            notes: string[];
             /** Reasons */
             reasons: string[];
+            /** Storeys High */
+            storeys_high: components["schemas"]["StoreyAreaOut"][];
+            /** Storeys Low */
+            storeys_low: components["schemas"]["StoreyAreaOut"][];
         };
         /** AnalysisFootprintOut */
         AnalysisFootprintOut: {
@@ -1776,6 +1782,7 @@ export interface components {
             footprint: {
                 [key: string]: components["schemas"]["FootprintTotalOut"];
             };
+            gabarit?: components["schemas"]["GabaritOut"] | null;
             /** Input Hash */
             input_hash: string;
             /** Not Counted */
@@ -1784,6 +1791,8 @@ export interface components {
             parts: components["schemas"]["AnalysisPartOut"][];
             /** Reason */
             reason?: string | null;
+            /** Sections */
+            sections: components["schemas"]["SectionOut"][];
             /**
              * Simulation
              * @default true
@@ -2788,6 +2797,73 @@ export interface components {
             complete: boolean;
             /** Value M2 */
             value_m2: number;
+        };
+        /** GabaritContourOut */
+        GabaritContourOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Complete */
+            complete: boolean;
+            /** Reasons */
+            reasons: string[];
+            /** Rings Local */
+            rings_local: number[][][];
+        };
+        /** GabaritHeightsOut */
+        GabaritHeightsOut: {
+            /** Derived */
+            derived: boolean;
+            /** Eave M */
+            eave_m?: number | null;
+            /** Parapet M */
+            parapet_m?: number | null;
+            /** Ridge M */
+            ridge_m?: number | null;
+            /** Zone Code */
+            zone_code: string;
+        };
+        /**
+         * GabaritLevelOut
+         * @description Stufe `(from_m, to_m]`: Baukörperteile, die bis `to_m` reichen, liegen in ihrer Kontur.
+         */
+        GabaritLevelOut: {
+            /** Contours */
+            contours: {
+                [key: string]: components["schemas"]["GabaritContourOut"];
+            };
+            /** From M */
+            from_m: number;
+            /** Roof */
+            roof: boolean;
+            /** To M */
+            to_m: number;
+        };
+        /**
+         * GabaritOut
+         * @description Hüllkörper in Stufen (docs/PLAN_AN3_GABARIT.md 3.2); Höhen über der Bezugshöhe der Regeln.
+         */
+        GabaritOut: {
+            /** Heights */
+            heights: components["schemas"]["GabaritHeightsOut"][];
+            /** Levels */
+            levels: components["schemas"]["GabaritLevelOut"][];
+            /** Reason */
+            reason?: string | null;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "partial" | "unavailable";
+            /** Storey Height M */
+            storey_height_m?: number | null;
+            /** Terrain Slope Percent */
+            terrain_slope_percent?: number | null;
+            /** Terrain Status */
+            terrain_status: string;
+            /** Top M */
+            top_m?: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4105,6 +4181,88 @@ export interface components {
              */
             force: boolean;
         };
+        /** SectionCrossingOut */
+        SectionCrossingOut: {
+            /** Edge Seq */
+            edge_seq?: number | null;
+            /** Inward */
+            inward: number;
+            /** Kind */
+            kind?: ("street" | "side" | "rear" | "other") | null;
+            /** S */
+            s: number;
+        };
+        /** SectionHeightLineOut */
+        SectionHeightLineOut: {
+            /** Derived */
+            derived: boolean;
+            /** End */
+            end: number;
+            /** Height M */
+            height_m: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "eave" | "ridge" | "parapet";
+            /** Start */
+            start: number;
+            /** Zone Code */
+            zone_code: string;
+        };
+        /** SectionLevelOut */
+        SectionLevelOut: {
+            /** From M */
+            from_m: number;
+            /** Intervals */
+            intervals: {
+                [key: string]: number[][];
+            };
+            /** Roof */
+            roof: boolean;
+            /** To M */
+            to_m: number;
+        };
+        /**
+         * SectionOut
+         * @description Schnitt A–A (von der Hauptstraße nach hinten) oder B–B (rechtwinklig dazu), docs/PLAN_AN3_GABARIT.md
+         *     3.3. `s` in Metern ab der ersten Grenze; Gelände eben auf ±0.
+         */
+        SectionOut: {
+            /** Crossings */
+            crossings: components["schemas"]["SectionCrossingOut"][];
+            /** End Local */
+            end_local: number[];
+            /** Height Lines */
+            height_lines: components["schemas"]["SectionHeightLineOut"][];
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "A" | "B";
+            /** Length M */
+            length_m: number;
+            /** Levels */
+            levels: components["schemas"]["SectionLevelOut"][];
+            /** Parcel */
+            parcel: number[][];
+            /** Prospects */
+            prospects: components["schemas"]["SectionProspectOut"][];
+            /** Start Local */
+            start_local: number[];
+        };
+        /** SectionProspectOut */
+        SectionProspectOut: {
+            /** Edge Seq */
+            edge_seq: number;
+            /** Points */
+            points: number[][];
+            /**
+             * Reading
+             * @enum {string}
+             */
+            reading: "lenient" | "strict";
+        };
         /** SelectionOut */
         SelectionOut: {
             /** Dropped */
@@ -4329,6 +4487,15 @@ export interface components {
              */
             status: "current" | "superseded";
             summary: components["schemas"]["SubmissionSummaryOut"];
+        };
+        /** StoreyAreaOut */
+        StoreyAreaOut: {
+            /** Area M2 */
+            area_m2: number;
+            /** Level M */
+            level_m: number;
+            /** Share */
+            share: number;
         };
         /** SubmissionFileOut */
         SubmissionFileOut: {

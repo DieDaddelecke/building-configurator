@@ -6,9 +6,11 @@ import math
 from dataclasses import dataclass, field
 
 from app.analysis.domain.compare import Comparison, compare, stricter_kinds
-from app.analysis.domain.floor_area import FloorArea, part_floor_area
+from app.analysis.domain.floor_area import AreaAt, FloorArea, part_floor_area
 from app.analysis.domain.footprint import Footprint, part_footprint
+from app.analysis.domain.gabarit import Gabarit, gabarit
 from app.analysis.domain.parameters import Parameters
+from app.analysis.domain.section import Section, sections
 from app.analysis.domain.storeys import Storeys, storeys_for
 from app.envelope.domain.derive import READINGS, ZONE_WITHOUT_RULES, Envelope
 from app.envelope.domain.inputs import EnvelopeInput, RuleInput
@@ -75,6 +77,9 @@ class Analysis:
     supplement_stricter: list[str]
     """Arten der Kennzahlen, bei denen ein Zusatzdokument strenger ist – in den Werten nicht verrechnet."""
     warnings: list[str]
+    gabarit: Gabarit | None = None
+    """Hüllkörper in Stufen (docs/PLAN_AN3_GABARIT.md 3.2); ohne Baurahmen `None`."""
+    sections: list[Section] = field(default_factory=list)
 
 
 def round_m2(value: float) -> int:
@@ -118,6 +123,7 @@ def analyse(
         )
 
     zones = {zone.code: zone for zone in data.zones}
+    hull = gabarit(data, envelope, params.storey_height_m.high)
     parts: list[PartAnalysis] = []
     for part in envelope.parts:
         rules = index_rules(zones[part.zone_code].rules) if part.zone_code in zones else {}
@@ -131,7 +137,12 @@ def analyse(
         else:
             storeys = storeys_for(rule_for(rules, "max_height"), params)
             floor = part_floor_area(
-                footprint["strict"], footprint["lenient"], storeys, rule_for(rules, "max_area"), params
+                footprint["strict"],
+                footprint["lenient"],
+                storeys,
+                rule_for(rules, "max_area"),
+                params,
+                _area_at(hull, part.zone_code),
             )
         parts.append(
             PartAnalysis(
@@ -160,7 +171,18 @@ def analyse(
         supplements=results,
         supplement_stricter=stricter,
         warnings=warnings,
+        gabarit=hull,
+        sections=sections(data, envelope, hull),
     )
+
+
+def _area_at(hull: Gabarit, zone_code: str) -> AreaAt | None:
+    """Fläche der Gabarit-Kontur in der Teilfläche; ohne Gabarit für die Zone (keine Höhe) keine Begrenzung –
+    dann fehlen ohnehin die Geschosse."""
+    contours = hull.contours
+    if contours is None or f"height_unknown:{zone_code}" in hull.reasons:
+        return None
+    return lambda height, reading: contours.area_in(height, reading, zone_code)
 
 
 def _floor_total(parts: list[PartAnalysis]) -> FloorAreaTotal:

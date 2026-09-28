@@ -34,7 +34,7 @@
         "text": "Hauteurs, reculs et surfaces, avec rapport et export CAO."
       }
     },
-    "soon": "La parcelle, le règlement et les documents complémentaires entrent ; cadre constructible, emprise déterminante, niveaux et surface de plancher sont calculés. Rapport et export CAO suivent.",
+    "soon": "La parcelle, le règlement et les documents complémentaires entrent ; cadre constructible, emprise déterminante, niveaux, surface de plancher, gabarit et coupe sont calculés. Rapport et export CAO suivent.",
     "login": {
       "intro": "L'accès est réservé au cabinet ; l'authentification passe par le fournisseur d'identité.",
       "denied": {
@@ -268,7 +268,10 @@
         "hint": "Fourchette issue de l'emprise, des niveaux et des hypothèses – pas un métré",
         "capped": "la surface de plancher maximale du règlement est déterminante",
         "upperBound": "Maximum – toutes les données d'entrée ne sont pas déterminées",
-        "cap": "Maximum selon le règlement : {{value}} m²"
+        "cap": "Maximum selon le règlement : {{value}} m²",
+        "storeys": "Surfaces par niveau (haut) : {{list}}",
+        "top": "{{share}} % de {{area}}",
+        "gabaritLimits": "Le gabarit limite les niveaux supérieurs."
       },
       "reason": {
         "height_unknown": "hauteur non déterminée",
@@ -303,9 +306,7 @@
         "attic_unusable": "Combles non aménageables",
         "technical_cellars": "Locaux techniques et caves",
         "collective_ten_percent": "Déduction de 10 % en cas de desserte par des parties communes intérieures",
-        "embrasures": "Embrasures des portes et fenêtres",
-        "boundary_height": "Hauteur limitée en cas d'implantation en limite",
-        "upper_setbacks": "Reculs dépendant de la hauteur aux étages supérieurs (gabarit)"
+        "embrasures": "Embrasures des portes et fenêtres"
       },
       "assumptions": {
         "title": "Hypothèses",
@@ -321,6 +322,50 @@
         "invalid": "Veuillez indiquer des plages valides (de ≤ à, dans les limites usuelles).",
         "save": "Appliquer les hypothèses",
         "reset": "Rétablir les valeurs par défaut"
+      }
+    },
+    "gabarit": {
+      "title": "Gabarit et coupe",
+      "intro": "Où construire et jusqu'à quelle hauteur : pour chaque tranche de hauteur, la surface constructible des parties de bâtiment qui atteignent son niveau supérieur – selon les mêmes règles que l'enveloppe constructible.",
+      "readingLabel": "Lecture",
+      "unavailable": {
+        "height_unknown": "Sans hauteur maximale déterminée, pas de gabarit.",
+        "no_buildable_zone": "Aucune zone avec des règles analysées – pas de gabarit."
+      },
+      "plan": {
+        "label": "Plan de masse avec les contours des tranches de hauteur et les traits de coupe"
+      },
+      "levels": {
+        "caption": "Tranches de hauteur du gabarit",
+        "level": "Tranche",
+        "range": "{{from}} – {{to}} m",
+        "roof": "Volume de toiture au-dessus de l'égout"
+      },
+      "section": {
+        "choose": "Coupe",
+        "A": "Coupe A–A' perpendiculaire à la voie",
+        "B": "Coupe B–B' parallèle à la voie",
+        "label": "Coupe {{key}}–{{key}}' avec limites, tranches de hauteur, lignes de prospect et hauteurs",
+        "legend": "Foncé : lecture stricte, clair : lecture large. Orange : prospect de la limite (trait plein strict, tirets large). * converti depuis les niveaux.",
+        "eave": "Égout",
+        "ridge": "Faîtage",
+        "parapet": "Acrotère",
+        "kind": {
+          "street": "voie",
+          "side": "latérale",
+          "rear": "fond",
+          "other": "limite"
+        }
+      },
+      "notes": {
+        "reading": "Une tranche vaut jusqu'à son niveau supérieur : les parties de bâtiment qui l'atteignent se situent dans son contour.",
+        "terrain": "Terrain inconnu – représenté plat ; hauteurs au-dessus du niveau de référence de la règle.",
+        "terrainFlat": "Terrain quasi plat (pente {{slope}} %) – représenté plat.",
+        "terrainSteep": "Pente du terrain {{slope}} % – coupe représentée à plat ; hauteurs à vérifier par l'architecte.",
+        "roof": "Au-dessus de l'égout, vertical jusqu'au faîtage ; pente et sens du faîtage non représentés.",
+        "storeys": "Le plan ne fixe que des niveaux : convertis avec {{height}} m de hauteur d'étage (hypothèse haute).",
+        "heightUnknown": "Zone {{zone}} sans hauteur maximale déterminée – hors gabarit.",
+        "incomplete": "* Lecture stricte incomplète : tous les reculs ne sont pas déterminés."
       }
     },
     "distance": {

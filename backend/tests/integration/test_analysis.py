@@ -320,7 +320,35 @@ def test_analysis_of_the_uploaded_parcel(
     )
     assert storeys["notes"] == ["attic_possible"]
     assert (analysis["floor_area"]["low_m2"], analysis["floor_area"]["high_m2"]) == (255, 380)
-    assert "stairs_lifts" in analysis["not_counted"]
+    assert "stairs_lifts" in analysis["not_counted"] and "upper_setbacks" not in analysis["not_counted"]
+    high = part["floor_area"]["storeys_high"]
+    assert [(s["level_m"], s["area_m2"], s["share"]) for s in high] == [
+        (2.7, 150.0, 1.0),
+        (5.4, 150.0, 1.0),
+        (5.4, 150.0, 0.75),
+    ]
+    assert part["floor_area"]["notes"] == []
+
+    # Gabarit und Schnitt (PLAN_AN3_GABARIT): ohne höhenabhängigen Abstand bestätigt er den Baurahmen
+    gabarit = analysis["gabarit"]
+    assert (gabarit["status"], gabarit["top_m"], gabarit["terrain_status"]) == ("ok", 10.0, "unavailable")
+    levels = gabarit["levels"]
+    assert [(level["from_m"], level["to_m"], level["roof"]) for level in levels] == [
+        (0.0, 7.0, False),
+        (7.0, 10.0, True),
+    ]
+    envelope = client.get(f"/api/v1/admin/projects/{upload_project}/envelope").json()
+    for reading in ("lenient", "strict"):
+        assert {level["contours"][reading]["area_m2"] for level in levels} == {
+            envelope["contours"][reading]["area_m2"]
+        }
+    assert [section["key"] for section in analysis["sections"]] == ["A", "B"]
+    section = analysis["sections"][0]
+    assert section["parcel"][0][0] == 0.0 and len(section["crossings"]) == 2
+    assert {(line["kind"], line["height_m"]) for line in section["height_lines"]} == {
+        ("eave", 7.0),
+        ("ridge", 10.0),
+    }
     assert analysis["assumptions"]["custom"] is False
     assert analysis["assumptions"]["values"]["storey_height_m"] == {"low": 2.7, "high": 3.0}
 

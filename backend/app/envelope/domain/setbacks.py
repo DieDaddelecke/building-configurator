@@ -22,6 +22,10 @@ Einordnung: Beide Regeln kommen in Betracht, die günstigere gilt weit, die stre
 
 RuleIndex = dict[tuple[str, str], RuleInput]
 
+HEIGHT_EPSILON_M = 1e-6
+"""Vergleich einer Stufenhöhe mit `on_boundary_max_height_m`: nur Gleitkommafehler, denn schon 1 mm darüber
+darf der Baukörper nicht mehr auf der Grenze stehen (die Abstandslinie im Schnitt springt dort)."""
+
 
 @dataclass(frozen=True)
 class Setback:
@@ -119,6 +123,32 @@ def _boundary(base: Setback, rule: RuleInput, heights: Heights) -> Setback:
         else:
             strict = max(minimum, factor * height)
     return _with(base, lenient, strict, markers)
+
+
+def at_height(setback: Setback, heights: Heights, height_m: float) -> Setback:
+    """Derselbe Abstand für einen Baukörperteil, der bis `height_m` reicht (Gabarit, docs/PLAN_AN3_GABARIT.md
+    3.1).
+
+    Wie `_boundary`, aber mit der Höhe der Stufe statt der Höchsthöhe: Über der Bezugshöhe der Regel (Traufe
+    bei `eave`) wächst der Abstand nicht weiter, und auf der Grenze darf weit ausgelegt nur bis
+    `on_boundary_max_height_m` gebaut werden. Abstände zur Straße, nicht geregelte und nicht ermittelte
+    bleiben, wie sie sind.
+    """
+    if setback.kind == "setback_street" or setback.status != "effective":
+        return setback
+    params = setback.params
+    minimum = _number(params.get("min_m")) or 0.0
+    factor = _number(params.get("height_factor"))
+    cap = heights.for_basis(params.get("height_basis"))
+    height = min(height_m, cap) if cap is not None else height_m
+    strict = max(minimum, factor * height) if factor is not None else minimum
+    lenient = strict
+    markers = [m for m in setback.markers if m not in ("height_unknown", "on_boundary_allowed")]
+    limit = _number(params.get("on_boundary_max_height_m"))
+    if params.get("allow_on_boundary") and (limit is None or height_m <= limit + HEIGHT_EPSILON_M):
+        lenient = 0.0
+        markers.append("on_boundary_allowed")
+    return _with(setback, lenient, strict, markers)
 
 
 def distances(setbacks: list[Setback]) -> tuple[float | None, float | None, list[str]]:

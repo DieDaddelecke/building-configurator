@@ -34,7 +34,7 @@
         "text": "Höhen, Abstände und Flächen mit Bericht und Ausgabe ins CAD."
       }
     },
-    "soon": "Parzelle, Bebauungsplan und Zusatzdokumente kommen herein; Baurahmen, bindende Grundfläche, Geschosse und Nutzfläche stehen. Bericht und CAD-Ausgabe folgen.",
+    "soon": "Parzelle, Bebauungsplan und Zusatzdokumente kommen herein; Baurahmen, bindende Grundfläche, Geschosse, Nutzfläche, Gabarit und Schnitt stehen. Bericht und CAD-Ausgabe folgen.",
     "login": {
       "intro": "Der Zugang gilt für Mitarbeitende des Büros; die Anmeldung läuft über den Identitätsdienst.",
       "denied": {
@@ -268,7 +268,10 @@
         "hint": "Spanne aus Grundfläche, Geschossen und Annahmen – kein Aufmaß",
         "capped": "die Höchstfläche (SDP) des Plans bindet",
         "upperBound": "Obergrenze – nicht alle Eingangswerte ermittelt",
-        "cap": "Obergrenze laut Plan {{value}} m²"
+        "cap": "Obergrenze laut Plan {{value}} m²",
+        "storeys": "Geschossflächen oben: {{list}}",
+        "top": "{{share}} % von {{area}}",
+        "gabaritLimits": "Der Gabarit begrenzt die oberen Geschosse."
       },
       "reason": {
         "height_unknown": "Höhe nicht ermittelt",
@@ -303,9 +306,7 @@
         "attic_unusable": "nicht ausbaufähige Dachräume",
         "technical_cellars": "Technik- und Kellerräume",
         "collective_ten_percent": "Abzug von 10 % bei Erschließung über gemeinsame Innenflure",
-        "embrasures": "Laibungen von Türen und Fenstern",
-        "boundary_height": "Höhenbegrenzung beim Bauen auf der Grenze",
-        "upper_setbacks": "höhenabhängige Abstände der oberen Geschosse (Gabarit)"
+        "embrasures": "Laibungen von Türen und Fenstern"
       },
       "assumptions": {
         "title": "Annahmen",
@@ -321,6 +322,50 @@
         "invalid": "Bitte gültige Bereiche angeben (von ≤ bis, innerhalb der üblichen Grenzen).",
         "save": "Annahmen übernehmen",
         "reset": "Vorgaben wiederherstellen"
+      }
+    },
+    "gabarit": {
+      "title": "Gabarit und Schnitt",
+      "intro": "Wo wie hoch gebaut werden darf: je Höhenstufe die bebaubare Fläche für Baukörperteile, die bis zu ihrer Oberkante reichen – aus denselben Regeln wie der Baurahmen.",
+      "readingLabel": "Auslegung",
+      "unavailable": {
+        "height_unknown": "Ohne ermittelte Höchsthöhe gibt es keinen Gabarit.",
+        "no_buildable_zone": "Keine Zone mit ausgewerteten Regeln – kein Gabarit."
+      },
+      "plan": {
+        "label": "Lageplan mit den Konturen der Höhenstufen und den Schnittlinien"
+      },
+      "levels": {
+        "caption": "Höhenstufen des Gabarits",
+        "level": "Stufe",
+        "range": "{{from}} – {{to}} m",
+        "roof": "Dachzone über der Traufe"
+      },
+      "section": {
+        "choose": "Schnitt",
+        "A": "Schnitt A–A' quer zur Straße",
+        "B": "Schnitt B–B' längs zur Straße",
+        "label": "Schnitt {{key}}–{{key}}' mit Grenzen, Höhenstufen, Abstandslinien und Höhen",
+        "legend": "Dunkel: engste Auslegung, hell: weiteste. Orange: Abstandslinie der Grenze (durchgezogen eng, gestrichelt weit). * aus Geschossen umgerechnet.",
+        "eave": "Traufe",
+        "ridge": "First",
+        "parapet": "Attika",
+        "kind": {
+          "street": "Straße",
+          "side": "seitlich",
+          "rear": "hinten",
+          "other": "Grenze"
+        }
+      },
+      "notes": {
+        "reading": "Eine Stufe gilt bis zu ihrer Oberkante: Baukörperteile, die so hoch reichen, liegen in ihrer Kontur.",
+        "terrain": "Gelände nicht bekannt – eben dargestellt; Höhen über der Bezugshöhe der Regel.",
+        "terrainFlat": "Gelände nahezu eben (Neigung {{slope}} %) – eben dargestellt.",
+        "terrainSteep": "Geländeneigung {{slope}} % – im Schnitt eben dargestellt; Höhen durch Architekt prüfen.",
+        "roof": "Über der Traufe senkrecht bis zum First; Dachneigung und Firstrichtung sind nicht dargestellt.",
+        "storeys": "Der Plan nennt nur Geschosse: mit {{height}} m Geschosshöhe umgerechnet (obere Annahme).",
+        "heightUnknown": "Zone {{zone}} ohne ermittelte Höchsthöhe – nicht im Gabarit.",
+        "incomplete": "* Engste Auslegung unvollständig: nicht jeder Abstand ermittelt."
       }
     },
     "distance": {

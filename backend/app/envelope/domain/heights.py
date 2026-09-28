@@ -75,22 +75,23 @@ def from_rule(rule: RuleInput | None) -> Heights:
     )
 
 
-def from_storeys(storeys: str) -> tuple[float, float] | None:
+def from_storeys(storeys: str, storey_height_m: float | None = None) -> tuple[float, float] | None:
     """Geschossangabe in Traufe und First umrechnen (Annahme, nur für die engste Kontur).
 
-    `R+1+C`: Erdgeschoss und ein Obergeschoss ergeben die Traufe, das Dachgeschoss den First.
+    `R+1+C`: Erdgeschoss und ein Obergeschoss ergeben die Traufe, das Dachgeschoss den First. Der Gabarit der
+    Analyse (AN3) übergibt die Geschosshöhe aus den Annahmen des Projekts; sonst gelten die Standardhöhen.
     """
     match = _STOREYS.match(storeys.replace(" ", ""))
     if match is None:
         return None
     upper = int(match.group(1) or 0)
     top = (match.group(2) or "").upper()
-    eave = (1 + upper) * tol.STOREY_HEIGHT_M
+    eave = (1 + upper) * (storey_height_m or tol.STOREY_HEIGHT_M)
     if top in ("C", "CA", "COMBLES"):
         return eave, eave + tol.ROOF_STOREY_RIDGE_M
     if top == "A":
         # Attikageschoss ist zurückgesetzt: die Traufe des Hauptbaukörpers bleibt, oben liegt die Attika
-        return eave, eave + tol.ATTIC_STOREY_HEIGHT_M
+        return eave, eave + (storey_height_m or tol.ATTIC_STOREY_HEIGHT_M)
     return eave, eave
 
 

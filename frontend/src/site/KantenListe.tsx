@@ -43,7 +43,7 @@ export function KantenListe({ edges, rolle, onChange, pending = false, highlight
   const options: string[] = rolle === "customer" ? ["auto", "street", "neighbour"] : ["auto", "street", "side", "rear", "other"];
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
       <table className="w-full text-sm border-collapse">
         <caption className="eyebrow text-left pb-2">{t("site.edges.caption")}</caption>
         <thead>

@@ -18,6 +18,7 @@ import {
   type AnalysisParametersOut,
   type AnalysisPartOut,
   type AnalysisStoreysOut,
+  type StoreyAreaOut,
 } from "../../api/analysis";
 import type { EnvelopeOut } from "../../api/envelope";
 import { edgeLabel } from "../../envelope/format";
@@ -53,6 +54,19 @@ function geschosse(storeys: AnalysisStoreysOut, t: TFunction): string {
   if (storeys.top === "none") return full;
   const top = storeys.top === "attique" ? "attique" : storeys.top_certain ? "attic" : "atticPossible";
   return `${full} ${t(`analyse.analysis.storeys.top.${top}`)}`;
+}
+
+/** Geschossflächen des oberen Endes (PLAN_AN3_GABARIT 3.4): Vollgeschosse als Fläche, das oberste mit Anteil. */
+function geschossflaechen(storeys: StoreyAreaOut[], t: TFunction, language: string): string {
+  const liste = storeys.map((storey) =>
+    storey.share === 1
+      ? formatNumber(storey.area_m2, language, 0)
+      : t("analyse.analysis.floorArea.top", {
+          share: formatNumber(storey.share * 100, language, 0),
+          area: formatNumber(storey.area_m2, language, 0),
+        }),
+  );
+  return `${liste.join(" · ")} m²`;
 }
 
 function Kennzahl({ titel, wert, zusatz, warnung }: { titel: string; wert: string; zusatz?: string; warnung?: string }) {
@@ -162,6 +176,14 @@ function Herleitung({ part }: { part: AnalysisPartOut }) {
                   <span className="block text-xs t-mute">
                     {t("analyse.analysis.floorArea.cap", { value: formatNumber(floor.cap_m2, lng, 0) })}
                   </span>
+                )}
+                {floor.storeys_high.length > 0 && (
+                  <span className="block text-xs t-mute">
+                    {t("analyse.analysis.floorArea.storeys", { list: geschossflaechen(floor.storeys_high, t, lng) })}
+                  </span>
+                )}
+                {floor.notes.includes("gabarit_limits_storeys") && (
+                  <span className="block text-xs t-accent">{t("analyse.analysis.floorArea.gabaritLimits")}</span>
                 )}
                 {floor.reasons.map((reason) => (
                   <span key={reason} className="block text-xs t-warn">

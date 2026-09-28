@@ -43,7 +43,7 @@ function analysis(overrides: Partial<AnalysisOut> = {}): AnalysisOut {
     simulation: true,
     status: "ok",
     reason: null,
-    engine_version: "an3-1.0.0",
+    engine_version: "an3-1.1.0",
     input_hash: "sha256:abc",
     assumptions: { values: parameters, defaults: parameters, custom: false },
     footprint: { strict: { value_m2: 150, complete: true }, lenient: { value_m2: 150, complete: true } },
@@ -64,13 +64,30 @@ function analysis(overrides: Partial<AnalysisOut> = {}): AnalysisOut {
           citation,
           notes: ["attic_possible"],
         },
-        floor_area: { low_m2: 255, high_m2: 379.5, cap_m2: null, capped: false, complete: true, reasons: [], cap_citation: null },
+        floor_area: {
+          low_m2: 255,
+          high_m2: 379.5,
+          cap_m2: null,
+          capped: false,
+          complete: true,
+          reasons: [],
+          cap_citation: null,
+          storeys_low: [],
+          storeys_high: [
+            { level_m: 2.7, area_m2: 150, share: 1 },
+            { level_m: 5.4, area_m2: 150, share: 1 },
+            { level_m: 5.4, area_m2: 150, share: 0.75 },
+          ],
+          notes: [],
+        },
       },
     ],
     not_counted: ["stairs_lifts", "parking"],
     supplements: [],
     supplement_stricter: [],
     warnings: [],
+    gabarit: null,
+    sections: [],
     ...overrides,
   };
 }
@@ -104,6 +121,17 @@ it("zeigt die drei Kennzahlen mit bindendem Wert und Quelle", () => {
   expect(ratio).toHaveTextContent("bindet");
   expect(within(ratio).getByRole("link", { name: "S. 9" })).toHaveAttribute("href", "/api/v1/regulation-files/f1#page=9");
   expect(within(herleitung).getByRole("row", { name: /Bebaubare Fläche/ })).toHaveTextContent("336 m²600 m²");
+  expect(within(herleitung).getByText("Geschossflächen oben: 150 · 150 · 75 % von 150 m²")).toBeInTheDocument();
+  expect(screen.queryByText("Der Gabarit begrenzt die oberen Geschosse.")).not.toBeInTheDocument();
+});
+
+it("sagt, wenn der Gabarit die oberen Geschosse begrenzt", () => {
+  const part = analysis().parts[0]!;
+  state.analysis = analysis({
+    parts: [{ ...part, floor_area: { ...part.floor_area, notes: ["gabarit_limits_storeys"] } }],
+  });
+  zeige();
+  expect(screen.getByText("Der Gabarit begrenzt die oberen Geschosse.")).toBeInTheDocument();
 });
 
 it("nennt Abstände je Grenze im Klartext und was nicht gerechnet ist", () => {

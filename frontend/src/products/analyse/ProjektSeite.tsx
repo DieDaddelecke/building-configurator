@@ -15,6 +15,7 @@ import { KantenListe } from "../../site/KantenListe";
 import { SiteLageplan } from "../../site/SiteLageplan";
 import { Analyse } from "./Analyse";
 import { Bebauungsplan } from "./Bebauungsplan";
+import { GabaritSchnitt } from "./GabaritSchnitt";
 import { ParzelleHochladen } from "./ParzelleHochladen";
 import { Zusatzdokumente } from "./Zusatzdokumente";
 
@@ -61,8 +62,8 @@ function Herkunft({ site }: { site: SiteOut }) {
   );
 }
 
-/** Analyse (AN3), Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die Büro-Endpunkte
- *  (E-AN2-7). */
+/** Analyse, Gabarit und Schnitt (AN3), Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die
+ *  Büro-Endpunkte (E-AN2-7). */
 function Ergebnis({ projectId, revision }: { projectId: string; revision: number }) {
   const { t } = useTranslation();
   const envelope = useStaffEnvelope(projectId);
@@ -72,6 +73,7 @@ function Ergebnis({ projectId, revision }: { projectId: string; revision: number
   return (
     <>
       <Analyse projectId={projectId} envelope={envelope.data} />
+      <GabaritSchnitt projectId={projectId} envelope={envelope.data} />
       <section aria-labelledby="baurahmen" className="flex flex-col gap-5">
         <h2 id="baurahmen" className="eyebrow m-0">{t("analyse.envelope")}</h2>
         <Baurahmen key={revision} envelope={envelope.data} projectId={projectId} rolle="architect" />
@@ -191,7 +193,7 @@ function Grundstueck({
   const classify = useClassifyEdge(site);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[3fr_2fr] items-start">
+    <div className="grid gap-8 lg:grid-cols-[3fr_2fr] items-start [&>*]:min-w-0">
       <div className="karte p-4">
         <SiteLageplan site={site} highlightedSeq={highlighted} onHighlight={onHighlight} />
       </div>

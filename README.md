@@ -144,6 +144,7 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 - i18n ist verschachtelt (`inquiry.contact.name`), die Backend-Übersetzungen sind flach (`problem.…`) mit `{param}` statt `{{param}}`.
 - Datei-Uploads: `openapi-fetch` mit `bodySerializer: () => formData` und Platzhalter-Rumpf (`frontend/src/api/catalog.ts`); Content-Type nicht setzen.
 - React-Hooks-Lint (Version 7): keine Ref-Zugriffe beim Rendern, keine `setState`-Effekte; `Implantation` baut deshalb mit `key={revision}` neu auf.
+- Telefonbreite: Ein Rasterfeld (`grid`) wächst auf die Mindestbreite seines Inhalts, auch wenn eine Tabelle darin in `overflow-x-auto` steht – Rasterkinder brauchen `min-w-0` (`[&>*]:min-w-0` am Raster). Und `sr-only`-Beschriftungen in einer verschiebbaren Tabelle sind absolut positioniert: Ist der Rahmen nicht `relative`, beschneidet er sie nicht, und die ganze Seite wird breiter (`KantenListe`, 28.09.2026). Prüfen mit `document.documentElement.scrollWidth` gegen `clientWidth`.
 - E2E unter Windows: Chromium von Playwright löst `oidc.localhost` nicht auf; Tests mit Büro-Anmeldung laufen nur in der CI. Lokal nur der Kundenpfad: Flags per `flag-set … --all`, `corepack pnpm exec playwright test -g Kunde`, danach wieder `--role architect`.
 
 **Browserprüfung**

@@ -288,7 +288,7 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 
 ## 15. Zweites Produkt: Emprise Analyse (AN0–AN3)
 
-Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16, PU01–PU10 und EA01–EA12). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) und **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich). Gabarit und Schnitt (RA2), Regelformular (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
+Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16, PU01–PU10 und EA01–EA17). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) und **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich; Gabarit in Höhenstufen und zwei Schnitte). Regelformular (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
 
 | | Hauskonfigurator | Emprise Analyse |
 |---|---|---|
@@ -346,6 +346,8 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - **Über 150 Seiten:** Die Lotwahl antwortet `422 chapter_too_long`; einen Seitenbereich angeben.
 - **Grenzen:** höchstens drei Zusatzdokumente je Projekt; dasselbe PDF nicht zugleich als PLU und als Zusatzdokument (`409 document_type_conflict`). Die Analyse rechnet Zusatzdokumente nicht ein (E-AN3-2).
 - **Annahmen zurücksetzen** ohne Oberfläche: `DELETE FROM analysis_parameters WHERE project_id = …`.
+- **Gabarit und Schnitt** (28.09.2026, EA13–EA17): keine Migration, keine Jobs; gerechnet mit jedem Abruf von `GET /projects/{id}/analysis` (`gabarit`, `sections`). Laufzeit lokal für das Testprojekt (20 × 30 m, Zone Uh): Median 59 ms, höchstens 61 ms bei zehn Abrufen, Antwort 9 KB. Aufwand wächst mit Kantenzahl und Stufen (bis zu zwei Auslegungen × Stufen + Geschosse, gleiche Abstandssätze nur einmal); an einem echten Katasterstück mit Regeln nachmessen.
+- **Gabarit „nicht verfügbar“:** Die Höhenregel der Zone fehlt oder ist nicht ermittelt (`height_unknown`); Regeln im Abschnitt „Bebauungsplan“ prüfen. Die übrigen Kennzahlen bleiben, die Nutzfläche fehlt dann ohnehin.
 
 **Störungen beim Hochladen einer Parzelle**
 
