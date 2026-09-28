@@ -6,11 +6,11 @@ Nur der angemeldete Architekt und nur für Projekte mit Eigentümer (`require_ow
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.analysis import service
-from app.analysis.schemas import AnalysisOut, AnalysisParametersIn
+from app.analysis.schemas import AnalysisComparisonOut, AnalysisOut, AnalysisParametersIn
 from app.platform.auth.context import StaffPrincipal, require_owned_project
 from app.platform.db import get_db
 
@@ -48,3 +48,16 @@ def reset_analysis_parameters(
     """Zurück auf die Vorgaben."""
     service.reset_parameters(db, project_id, staff.actor_id)
     return service.project_analysis(db, project_id)
+
+
+@router.get("/projects/{project_id}/analysis/comparison", response_model=AnalysisComparisonOut)
+def get_analysis_comparison(
+    project_id: uuid.UUID,
+    base: str = Query(default="automatic", max_length=40),
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> AnalysisComparisonOut:
+    """Zwei Stände nebeneinander (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5): `automatic` – ohne und mit den
+    Korrekturen des Projekts; eine Versions-ID – diese frühere Auswertung und die aktuelle, beide ohne
+    Korrekturen. Die Antwort nennt auch alle angebotenen Vergleiche."""
+    return service.comparison(db, project_id, base)

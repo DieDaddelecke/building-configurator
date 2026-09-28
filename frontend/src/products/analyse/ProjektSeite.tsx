@@ -8,7 +8,6 @@ import { useStaffProjectRules } from "../../api/rules";
 import { useClassifyEdge, useDeleteProject, useSite, type EdgeKind, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { Baurahmen } from "../../envelope/Baurahmen";
-import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { FreiesZeichnen } from "../../site/FreiesZeichnen";
 import { formatNumber } from "../../site/geo";
 import { KantenListe } from "../../site/KantenListe";
@@ -17,6 +16,7 @@ import { Analyse } from "./Analyse";
 import { Bebauungsplan } from "./Bebauungsplan";
 import { GabaritSchnitt } from "./GabaritSchnitt";
 import { ParzelleHochladen } from "./ParzelleHochladen";
+import { RegelnKorrekturen } from "./RegelnKorrekturen";
 import { Zusatzdokumente } from "./Zusatzdokumente";
 
 type Weg = "wahl" | "datei" | "zeichnen";
@@ -62,8 +62,9 @@ function Herkunft({ site }: { site: SiteOut }) {
   );
 }
 
-/** Analyse, Gabarit und Schnitt (AN3), Baurahmen und Regeln aus dem hochgeladenen Bebauungsplan (AN2), über die
- *  Büro-Endpunkte (E-AN2-7). */
+/** Regeln mit Korrekturen (AN4), dann Analyse, Gabarit und Schnitt (AN3) und Baurahmen aus dem hochgeladenen
+ *  Bebauungsplan (AN2), über die Büro-Endpunkte (E-AN2-7). Die Regeln stehen vor den Ergebnissen, weil alles darunter
+ *  aus ihnen folgt (E-AN4-6). */
 function Ergebnis({ projectId, revision }: { projectId: string; revision: number }) {
   const { t } = useTranslation();
   const envelope = useStaffEnvelope(projectId);
@@ -72,24 +73,20 @@ function Ergebnis({ projectId, revision }: { projectId: string; revision: number
   if (envelope.isError || rules.isError) return <p className="t-alert" role="alert">{t("error.generic")}</p>;
   return (
     <>
+      <RegelnKorrekturen key={revision} projectId={projectId} rules={rules.data} />
       <Analyse projectId={projectId} envelope={envelope.data} />
       <GabaritSchnitt projectId={projectId} envelope={envelope.data} />
       <section aria-labelledby="baurahmen" className="flex flex-col gap-5">
         <h2 id="baurahmen" className="eyebrow m-0">{t("analyse.envelope")}</h2>
         <Baurahmen key={revision} envelope={envelope.data} projectId={projectId} rolle="architect" />
       </section>
-      <details className="flex flex-col gap-4">
-        <summary className="cursor-pointer eyebrow t-accent">{t("envelope.rulesDetails")}</summary>
-        <div className="pt-6">
-          <RegelnSimulation key={revision} rules={rules.data} rolle="architect" />
-        </div>
-      </details>
     </>
   );
 }
 
 /** Ein Projekt: Parzelle einbringen, Kanten einordnen (AN1), Bebauungsplan hochladen und Zone wählen; daraus
- *  Regeln und Baurahmen (AN2). Zusatzdokumente und die Analyse für den Entwurf (AN3). */
+ *  Regeln und Baurahmen (AN2). Zusatzdokumente und die Analyse für den Entwurf (AN3). Regeln korrigieren, ergänzen,
+ *  aus Zusatzdokumenten übernehmen und Stände vergleichen (AN4). */
 export function ProjektSeite() {
   const { t } = useTranslation();
   const { projectId = "" } = useParams();

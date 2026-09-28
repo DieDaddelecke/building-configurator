@@ -14,7 +14,7 @@ Zweiter Teil: **Zusatzdokumente** – règlement de lotissement und cahier des c
 
 **Enthalten:** Modul `analysis` (nur Analyse-Produkt) mit reiner Fachlogik; Annahmen je Projekt; neue Regelart `max_area` (Höchstflächen in m²) für PLU und Zusatzdokumente; Zusatzdokumente hochladen, lesen, Lot wählen, auswerten; Vergleich mit dem PLU; Oberfläche „Analyse“ und „Zusatzdokumente“ auf der Projektseite; Abstandsaussage je Grenze.
 
-**Nicht enthalten:** Gabarit (Höhenstufen) und Schnitt – RA2, wie in PLAN_ANALYSE 5 (umgesetzt am 28.09.2026 nach [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md)); Übernahme eines Werts aus einem Zusatzdokument als Projektkorrektur mit Zitat (AN4, zusammen mit dem Regelformular); Verrechnung der Zusatzdokumente in die Analysewerte (E-AN3-2); Bericht-PDF (AN5); SDP aus einem echten Grundriss (X3).
+**Nicht enthalten:** Gabarit (Höhenstufen) und Schnitt – RA2, wie in PLAN_ANALYSE 5 (umgesetzt am 28.09.2026 nach [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md)); Übernahme eines Werts aus einem Zusatzdokument als Projektkorrektur mit Zitat (AN4, zusammen mit dem Regelformular; umgesetzt am 28.09.2026 nach [PLAN_AN4_KORREKTUR.md](PLAN_AN4_KORREKTUR.md)); Verrechnung der Zusatzdokumente in die Analysewerte (E-AN3-2); Bericht-PDF (AN5); SDP aus einem echten Grundriss (X3).
 
 ## 2. Befund
 

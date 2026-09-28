@@ -203,7 +203,7 @@
       "costHint": "Die Auswertung kostet einmal je Dokument und Lot; ein weiteres Lot wertet das Dokument neu aus.",
       "choose": "Lot übernehmen und auswerten",
       "change": "Lot ändern",
-      "notApplied": "Nicht in Regeln, Baurahmen und Analyse eingerechnet. Ob das Dokument gilt – ein règlement de lotissement verliert zehn Jahre nach der Genehmigung seine Wirkung, wenn ein PLU gilt (L.442-9); ein cahier des charges bindet privatrechtlich –, beurteilen Sie.",
+      "notApplied": "Nicht von selbst in Regeln, Baurahmen und Analyse eingerechnet. Ob das Dokument gilt – ein règlement de lotissement verliert zehn Jahre nach der Genehmigung seine Wirkung, wenn ein PLU gilt (L.442-9); ein cahier des charges bindet privatrechtlich –, beurteilen Sie. Mit „Übernehmen“ wird ein Wert zur Korrektur des Projekts.",
       "updating": "Eine neue Auswertung läuft; bis dahin gelten diese Werte.",
       "comparison": "Vergleich von {{title}} mit dem Bebauungsplan",
       "plu": "Bebauungsplan",
@@ -218,13 +218,17 @@
         "different": "abweichend, nicht vergleichbar",
         "only_supplement": "nur im Zusatzdokument",
         "no_own_rule": "keine eigene Regel – der PLU gilt",
-        "unknown": "nicht ermittelt"
+        "unknown": "nicht ermittelt",
+        "adopted": "übernommen"
       },
       "error": {
         "too_many_supplements": "Höchstens drei Zusatzdokumente je Projekt.",
         "document_type_conflict": "Dieses PDF ist schon als Bebauungsplan hochgeladen.",
         "chapter_too_long": "Das Dokument hat mehr als 150 Seiten; bitte einen Seitenbereich angeben."
-      }
+      },
+      "adopt": "Übernehmen",
+      "adoptHint": "Vorgeschlagen ist das Strengere je Angabe aus dem Bebauungsplan und „{{title}}“; Angaben nur im Bebauungsplan bleiben. Die Fundstelle ist die Regel im Zusatzdokument.",
+      "adoptCheck": "Die Regeln weichen voneinander ab: Bitte die Werte prüfen."
     },
     "analysis": {
       "title": "Analyse für den Entwurf",
@@ -613,7 +617,8 @@
     "column": {
       "kind": "Regel",
       "value": "Wert",
-      "source": "Quelle"
+      "source": "Quelle",
+      "action": "Aktion"
     },
     "zoneStatus": {
       "simulated": "automatisch ausgewertet",
@@ -737,7 +742,8 @@
     },
     "origin": {
       "office": "Büro",
-      "project": "Büro, nur dieses Projekt"
+      "project": "Büro, nur dieses Projekt",
+      "correction": "Korrektur"
     },
     "unavailable": {
       "not_imported": "Für diese Gemeinde liegen noch keine Planunterlagen vor.",
@@ -771,7 +777,126 @@
     "notices": {
       "simulation": "Die Regeln sind eine automatische, ungeprüfte Simulation und keine Bauauskunft. Verbindlich ist allein das Certificat d'urbanisme der Gemeinde.",
       "lotissement": "Liegt das Grundstück in einem Lotissement, gelten zusätzliche Regeln, die hier nicht berücksichtigt sind.",
-      "upload": "Ausgewertet ist nur das hochgeladene règlement écrit. Zonenplan, überlagernde Vorgaben und Servituden sind nicht berücksichtigt; Zusatzdokumente (Lotissement, cahier des charges) erscheinen nur im Vergleich der Analyse, nicht in Regeln und Baurahmen."
+      "upload": "Ausgewertet ist nur das hochgeladene règlement écrit. Zonenplan, überlagernde Vorgaben und Servituden sind nicht berücksichtigt; Zusatzdokumente (Lotissement, cahier des charges) erscheinen im Vergleich der Analyse; in Regeln und Baurahmen nur Werte, die Sie als Korrektur übernehmen."
+    },
+    "uploaded": "{{title}}, hochgeladen",
+    "param": {
+      "min_m": "Mindestabstand",
+      "max_m": "Höchstabstand",
+      "mode": "Art der Festsetzung",
+      "band": "Was im Band liegen muss",
+      "measured_from": "Gemessen ab",
+      "height_factor": "Faktor der Höhe (H/2 = 0,5)",
+      "height_basis": "Bezugshöhe des Faktors",
+      "allow_on_boundary": "Bauen auf der Grenze zulässig",
+      "on_boundary_max_height_m": "Höchste Höhe auf der Grenze",
+      "ratio": "Anteil",
+      "counts_overhangs": "Dachüberstände zählen mit",
+      "terrace_counts_above_m": "Terrassen zählen ab einer Höhe von",
+      "ridge_m": "Firsthöhe",
+      "eave_m": "Traufhöhe",
+      "parapet_m": "Attikahöhe",
+      "storeys": "Geschosse (z. B. R+1+C)",
+      "reference": "Höhenbezug",
+      "measured_at": "Gemessen an",
+      "includes_roof_installations": "Dachaufbauten eingeschlossen",
+      "allowed_forms": "Zulässige Dachformen",
+      "pitch_min_deg": "Dachneigung mindestens",
+      "pitch_max_deg": "Dachneigung höchstens",
+      "flat_roof": "Flachdach",
+      "ridge_orientation": "Firstrichtung",
+      "materials_allowed": "Zulässige Materialien",
+      "materials_forbidden": "Verbotene Materialien",
+      "color_families_allowed": "Zulässige Farbfamilien",
+      "full_soil_ratio": "davon offener Boden (pleine terre)",
+      "counting": "Anrechnung",
+      "spaces_per_dwelling": "Stellplätze je Wohnung",
+      "spaces_per_m2_sdp": "Stellplätze je Nutzfläche",
+      "min_dimensions": "Mindestmaße",
+      "max_footprint_m2": "Grundfläche höchstens",
+      "max_height_m": "Höhe höchstens",
+      "trees_per_m2": "Bäume je Fläche",
+      "min_green_ratio": "Grünanteil mindestens",
+      "materials": "Materialien",
+      "summary": "Hinweis",
+      "sdp_m2": "Nutzfläche (SDP) höchstens",
+      "footprint_m2": "Grundfläche höchstens"
+    },
+    "option": {
+      "mode": {
+        "min": "Mindestabstand",
+        "fixed": "fester Abstand",
+        "range": "Band (von–bis)",
+        "alignment": "auf der Baulinie"
+      },
+      "band": {
+        "building": "der ganze Baukörper",
+        "facade": "nur die Straßenfassade"
+      },
+      "measured_from": {
+        "facade": "Fassade",
+        "roof_edge": "Dachkante",
+        "any_projection": "jedem Vorsprung"
+      },
+      "counts_overhangs": {
+        "yes": "ja",
+        "no": "nein",
+        "per_code": "nach Code de l'urbanisme"
+      },
+      "reference": {
+        "natural_terrain": "natürliches Gelände",
+        "street_level": "Straßenniveau"
+      },
+      "measured_at": {
+        "highest_point": "höchster Punkt des Geländes",
+        "mean": "Mittel des Geländes"
+      },
+      "ridge_orientation": {
+        "any": "beliebig",
+        "parallel_to_street": "parallel zur Straße",
+        "perpendicular_to_street": "quer zur Straße"
+      }
+    },
+    "form": {
+      "title": "Korrektur: {{kind}}",
+      "none": "keine Angabe",
+      "onePer": "1 je",
+      "building": "Baukörper",
+      "buildingKind": {
+        "main": "Hauptgebäude",
+        "annex": "Nebengebäude",
+        "pool": "Schwimmbecken",
+        "any": "alle Baukörper"
+      },
+      "status": {
+        "effective": "Wert gilt",
+        "not_regulated": "nicht geregelt",
+        "unknown": "nicht ermittelt (aus der Rechnung nehmen)"
+      },
+      "source": "Fundstelle",
+      "document": "Dokument",
+      "noSource": "keine Fundstelle",
+      "page": "Seite",
+      "pageRequired": "Bitte die Seite im Dokument angeben.",
+      "quote": "Zitat (optional)",
+      "quoteHint": "Wörtlich aus dem Dokument; es wird auf der Seite gesucht. Nicht gefundene Zitate erscheinen mit *.",
+      "note": "Begründung",
+      "noteHint": "Pflicht. Nur für das Büro sichtbar, nicht für Kunden.",
+      "save": "Korrektur speichern",
+      "cancel": "Abbrechen",
+      "invalid": "Bitte die markierten Felder prüfen.",
+      "fieldError": {
+        "required": "Pflichtangabe",
+        "number": "Bitte eine Zahl eingeben.",
+        "range": "Zwischen {{low}} und {{high}}."
+      },
+      "error": {
+        "zone_unknown": "Diese Zone gehört nicht zu den aktuellen Regeln des Projekts.",
+        "source_document_unknown": "Die Fundstelle muss in einem Dokument dieses Projekts liegen.",
+        "source_page_invalid": "Diese Seite gibt es im Dokument nicht.",
+        "site_not_found": "Das Projekt hat noch kein Grundstück.",
+        "not_found": "Die Korrektur gibt es nicht mehr."
+      }
     },
     "uploaded": "{{title}}, hochgeladen"
   },
@@ -906,7 +1031,6 @@
       "note": "Begründung",
       "save": "Speichern",
       "saved": "Gespeichert.",
-      "jsonInvalid": "Die Parameter sind kein gültiges JSON.",
       "projectOverride": "Nur für dieses Projekt korrigieren (Zone {{code}})",
       "overrides": "Korrekturen für dieses Projekt",
       "removeOverride": "Entfernen"

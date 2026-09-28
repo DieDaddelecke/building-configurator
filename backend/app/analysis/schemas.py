@@ -5,12 +5,13 @@ Planunterlagen, mit offengelegten Annahmen (D11, L7). Flächen in m², Anteile 0
 """
 
 import uuid
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, model_validator
 
 from app.analysis.domain.parameters import BOUNDS
 from app.envelope.schemas import CitationOut, EnvelopeStatus, LimitOut, Reading
+from app.rules.schemas import VersionOut
 from app.site.schemas import LocalRing
 
 
@@ -134,11 +135,23 @@ class RuleComparisonOut(BaseModel):
     kind: str
     building_kind: str
     verdict: Literal[
-        "stricter", "looser", "equal", "mixed", "different", "only_supplement", "no_own_rule", "unknown"
+        "stricter",
+        "looser",
+        "equal",
+        "mixed",
+        "different",
+        "only_supplement",
+        "no_own_rule",
+        "unknown",
+        "adopted",
     ]
+    """`adopted`: Die wirksame Regel ist eine Projektkorrektur mit Fundstelle in diesem Dokument (AN4 3.4)."""
     supplement: LimitOut
     plu: LimitOut | None = None
+    """Wirksame Regel der verglichenen PLU-Zone – mit Projektkorrekturen."""
     details: dict[str, Literal["stricter", "looser", "equal", "different"]]
+    proposal: dict[str, Any] | None = None
+    """Parameter für die Übernahme als Projektkorrektur: das Strengere je Parameter (AN4 3.4)."""
 
 
 class SupplementAnalysisOut(BaseModel):
@@ -260,3 +273,70 @@ class AnalysisOut(BaseModel):
     gabarit: GabaritOut | None = None
     """Ohne Baurahmen `None`."""
     sections: list[SectionOut]
+
+
+# ---------------------------------------------------------------------------
+# Zwei Stände vergleichen (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5)
+# ---------------------------------------------------------------------------
+
+ComparisonKind = Literal["corrections", "versions"]
+"""`corrections`: ohne ↔ mit den Korrekturen des Projekts. `versions`: frühere ↔ aktuelle Auswertung, beide
+ohne Korrekturen, damit diese die Änderungen der Auswertung nicht überdecken (7.1 Nr. 5)."""
+
+
+class ComparisonBaseOut(BaseModel):
+    """Angebotener Vergleich; `base` ist der Wert für `?base=`."""
+
+    base: str
+    kind: ComparisonKind
+    zone_code: str | None = None
+    version: VersionOut | None = None
+
+
+class ComparisonStateOut(BaseModel):
+    corrections: bool
+    """Mit den Korrekturen des Projekts gerechnet?"""
+    version: VersionOut | None = None
+    """Beim Versionsvergleich die Version der verglichenen Zone."""
+    status: EnvelopeStatus
+    reason: str | None = None
+
+
+class ComparisonFigureOut(BaseModel):
+    key: Literal[
+        "footprint_lenient",
+        "footprint_strict",
+        "contour_lenient",
+        "contour_strict",
+        "storeys_min",
+        "storeys_max",
+        "floor_area_low",
+        "floor_area_high",
+        "height_top",
+    ]
+    unit: Literal["m2", "m", "count"]
+    left: float | None = None
+    right: float | None = None
+    changed: bool
+
+
+class ComparisonRuleOut(BaseModel):
+    zone_code: str
+    kind: str
+    building_kind: str
+    left: LimitOut | None = None
+    right: LimitOut | None = None
+    changed: bool
+    """Status, Grund oder Parameter verschieden (Zahlen auf 1 cm genau)."""
+
+
+class AnalysisComparisonOut(BaseModel):
+    simulation: Literal[True] = True
+    kind: ComparisonKind
+    base: str
+    left: ComparisonStateOut
+    right: ComparisonStateOut
+    bases: list[ComparisonBaseOut]
+    """Alle Vergleiche, die das Projekt gerade anbietet (für die Auswahl)."""
+    figures: list[ComparisonFigureOut]
+    rules: list[ComparisonRuleOut]

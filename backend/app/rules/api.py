@@ -6,7 +6,8 @@ Büro: Abdeckung und Regelwerke lesen (`architect`, `rules_admin`, `ops`), Korre
 Voraussetzung für die Simulation beim Kunden (D11).
 „Emprise Analyse“ (AN2): Der Architekt lädt für eigene Projekte ein règlement écrit hoch und wählt die
 Zone (`require_owned_project`); die Datei liefert `GET /regulation-files/{id}` für die Zitate aus. Seit
-AN3 auch Zusatzdokumente mit Lotwahl.
+AN3 auch Zusatzdokumente mit Lotwahl; seit AN4 Korrekturen je Projekt mit Begründung und Fundstelle und die
+Formularbeschreibung der Regelarten (docs/PLAN_AN4_KORREKTUR.md).
 """
 
 import uuid
@@ -38,6 +39,7 @@ from app.rules.schemas import (
     ProjectOverrideOut,
     ProjectRegulationOut,
     ProjectRulesOut,
+    RuleKindFormOut,
     RuleSetOut,
     RuleSetVersionIn,
     RulesImportIn,
@@ -146,6 +148,50 @@ def delete_project_override(
     staff: StaffPrincipal = Editor,
     db: Session = Depends(get_db),
 ) -> list[ProjectOverrideOut]:
+    return service.delete_override(db, project_id, override_id, staff.actor_id)
+
+
+@router.get("/admin/rule-kinds", response_model=list[RuleKindFormOut])
+def get_rule_kinds(staff: StaffPrincipal = Reader) -> list[RuleKindFormOut]:
+    """Formularbeschreibung der Regelarten aus demselben Schema wie Prüfung und Modellausgabe (AN4, 3.1)."""
+    return service.rule_kind_forms()
+
+
+# ---------------------------------------------------------------------------
+# Korrekturen im Analyse-Produkt (AN4, docs/PLAN_AN4_KORREKTUR.md 3.2): der Architekt für eigene Projekte,
+# mit Pflichtbegründung und optionaler Fundstelle; dieselben Funktionen wie die Büro-Endpunkte oben
+# ---------------------------------------------------------------------------
+
+
+@router.get("/projects/{project_id}/rule-overrides", response_model=list[ProjectOverrideOut])
+def list_own_overrides(
+    project_id: uuid.UUID,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> list[ProjectOverrideOut]:
+    """Korrekturen des Projekts mit Begründung, Fundstelle und ob sie wirken."""
+    return service.list_overrides(db, project_id)
+
+
+@router.put("/projects/{project_id}/rule-overrides", response_model=list[ProjectOverrideOut])
+def put_own_override(
+    project_id: uuid.UUID,
+    body: ProjectOverrideIn,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> list[ProjectOverrideOut]:
+    """Regel korrigieren oder ergänzen; wirkt sofort in Regeln, Baurahmen und Analyse (kostet nichts)."""
+    return service.set_override(db, project_id, body, staff.actor_id)
+
+
+@router.delete("/projects/{project_id}/rule-overrides/{override_id}", response_model=list[ProjectOverrideOut])
+def delete_own_override(
+    project_id: uuid.UUID,
+    override_id: uuid.UUID,
+    staff: StaffPrincipal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> list[ProjectOverrideOut]:
+    """Korrektur zurücknehmen: Es gilt wieder der gelesene Wert."""
     return service.delete_override(db, project_id, override_id, staff.actor_id)
 
 

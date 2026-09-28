@@ -2,12 +2,14 @@
 
 Die Analyse wird bei jedem Abruf aus Baurahmen (G3), Regeln (G2) und den Annahmen des Projekts gerechnet,
 wie der Baurahmen selbst (Plan G3 11.1 Nr. 1). Die Prüfsumme benennt den Eingabestand für den Bericht (AN5).
+Seit AN4 auch für einen anderen Stand der Regeln – ohne Korrekturen oder mit einer früheren Auswertung –,
+um zwei Stände nebeneinanderzustellen (docs/PLAN_AN4_KORREKTUR.md 3.5).
 """
 
 import hashlib
 import json
 import uuid
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Literal
 
 from sqlalchemy.orm import Session
@@ -22,6 +24,7 @@ from app.analysis.domain.section import Section
 from app.analysis.models import AnalysisParameters
 from app.analysis.schemas import (
     AnalysisAssumptionsOut,
+    AnalysisComparisonOut,
     AnalysisFloorAreaOut,
     AnalysisFootprintOut,
     AnalysisOut,
@@ -29,6 +32,10 @@ from app.analysis.schemas import (
     AnalysisParametersOut,
     AnalysisPartOut,
     AnalysisStoreysOut,
+    ComparisonBaseOut,
+    ComparisonFigureOut,
+    ComparisonRuleOut,
+    ComparisonStateOut,
     FloorAreaTotalOut,
     FootprintCandidateOut,
     FootprintTotalOut,
@@ -44,12 +51,15 @@ from app.analysis.schemas import (
 )
 from app.envelope import service as envelope_service
 from app.envelope.domain import local as local_coords
+from app.envelope.domain.derive import ZONE_WITHOUT_RULES, Envelope
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
 from app.platform import audit
 from app.platform.db import utcnow
+from app.platform.problems import Problem
 from app.rules import service as rules_service
-from app.rules.schemas import RuleOut
+from app.rules.domain.kinds import params_equal
+from app.rules.schemas import RuleOut, VersionOut
 
 # ---------------------------------------------------------------------------
 # Annahmen
@@ -123,6 +133,7 @@ def _rule_input(rule: RuleOut) -> RuleInput:
             origin=rule.origin,
             confidence=rule.confidence,
             notes=rule.notes,
+            document_id=str(rule.source_document_id) if rule.source_document_id else None,
         ),
     )
 
@@ -345,6 +356,7 @@ def _supplement_out(result: SupplementResult) -> SupplementAnalysisOut:
                 supplement=_limit(c.supplement),
                 plu=_limit(c.plu) if c.plu is not None else None,
                 details=c.details,
+                proposal=c.proposal,
             )
             for c in result.comparisons
         ],
@@ -386,4 +398,158 @@ def _out(
         warnings=result.warnings,
         gabarit=_gabarit_out(result.gabarit, data) if result.gabarit is not None else None,
         sections=[_section_out(section, data.site.local_origin) for section in result.sections],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Zwei Stände vergleichen (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5)
+# ---------------------------------------------------------------------------
+
+AUTOMATIC = "automatic"
+
+
+@dataclass(frozen=True)
+class _Offer:
+    """Angebotene Vergleiche und je Versions-ID die Zone; dazu die aktuelle Version je Zone."""
+
+    bases: list[ComparisonBaseOut]
+    zone_of: dict[str, str]
+    current: dict[str, VersionOut]
+
+
+def _offer(db: Session, project_id: uuid.UUID) -> _Offer:
+    """Ohne Korrekturen, wenn eine wirkt; je frühere Version eines Regelwerks einer Zone des Projekts."""
+    states = rules_service.rule_states(db, project_id)
+    bases = [ComparisonBaseOut(base=AUTOMATIC, kind="corrections")] if states.corrected else []
+    bases += [
+        ComparisonBaseOut(base=str(version.id), kind="versions", zone_code=zone, version=version)
+        for zone, version in states.earlier
+    ]
+    return _Offer(bases, {str(v.id): zone for zone, v in states.earlier}, states.current)
+
+
+def _state(
+    db: Session, project_id: uuid.UUID, options: rules_service.RulesOptions, params: Parameters
+) -> tuple[EnvelopeInput, Envelope | None, Analysis]:
+    data, envelope = envelope_service.derived(db, project_id, options)
+    return data, envelope, analyse(data, envelope, params, [])
+
+
+FIGURE_UNITS: dict[str, Literal["m2", "m", "count"]] = {
+    "storeys_min": "count",
+    "storeys_max": "count",
+    "height_top": "m",
+}
+
+
+def _figures(envelope: Envelope | None, result: Analysis) -> dict[str, float | None]:
+    """Kennzahlen eines Stands; Geschosse der größten Teilfläche mit Regeln (die Teilflächen kommen nach
+    Fläche sortiert)."""
+    usable = envelope is not None and envelope.status not in ZONE_WITHOUT_RULES
+    contours = envelope.contours if envelope is not None and usable else {}
+    part = next((p for p in result.parts if p.excluded is None), None)
+    floor = result.floor_area
+    footprint = result.footprint
+    return {
+        "footprint_lenient": footprint["lenient"].value_m2 if footprint else None,
+        "footprint_strict": footprint["strict"].value_m2 if footprint else None,
+        "contour_lenient": contours["lenient"].area_m2 if contours else None,
+        "contour_strict": contours["strict"].area_m2 if contours else None,
+        "storeys_min": part.storeys.full_min if part else None,
+        "storeys_max": part.storeys.full_max if part else None,
+        "floor_area_low": floor.low_m2 if floor else None,
+        "floor_area_high": floor.high_m2 if floor else None,
+        "height_top": result.gabarit.top_m if result.gabarit else None,
+    }
+
+
+def _reason(rule: RuleInput) -> str | None:
+    """Grund einer nicht ermittelten Regel; ohne Grund wie `missing`, so zeigt ihn die Oberfläche. Eine
+    Büro-Version kennt keine Gründe; sonst stünde „nicht ermittelt“ links und rechts als Änderung (7.4)."""
+    return (rule.reason or "missing") if rule.status == "unknown" else None
+
+
+def _rule_rows(left: EnvelopeInput, right: EnvelopeInput) -> list[ComparisonRuleOut]:
+    """Regeln beider Stände je Zone, Art und Baukörper; ohne Hinweise."""
+
+    def index(data: EnvelopeInput) -> dict[tuple[str, str, str], RuleInput]:
+        return {(z.code, r.kind, r.building_kind): r for z in data.zones for r in z.rules}
+
+    before, after = index(left), index(right)
+    rows: list[ComparisonRuleOut] = []
+    for key in sorted(set(before) | set(after)):
+        a, b = before.get(key), after.get(key)
+        changed = (
+            a is None
+            or b is None
+            or (a.status, _reason(a)) != (b.status, _reason(b))
+            or not params_equal(a.params, b.params)
+        )
+        rows.append(
+            ComparisonRuleOut(
+                zone_code=key[0],
+                kind=key[1],
+                building_kind=key[2],
+                left=_limit(a) if a is not None else None,
+                right=_limit(b) if b is not None else None,
+                changed=changed,
+            )
+        )
+    return rows
+
+
+def _state_out(
+    envelope: Envelope | None, data: EnvelopeInput, *, corrections: bool, version: VersionOut | None
+) -> ComparisonStateOut:
+    status = envelope.status if envelope is not None else "unavailable"
+    return ComparisonStateOut(
+        corrections=corrections,
+        version=version,
+        status=status if status in ("ok", "partial", "in_progress") else "unavailable",
+        reason=envelope.reason if envelope is not None else data.rules_reason,
+    )
+
+
+def comparison(db: Session, project_id: uuid.UUID, base: str) -> AnalysisComparisonOut:
+    """Zwei Stände nebeneinander (3.5): `automatic` – ohne ↔ mit den Korrekturen des Projekts; eine
+    Versions-ID – diese frühere Auswertung ↔ die aktuelle, beide ohne Korrekturen (7.1 Nr. 5)."""
+    offer = _offer(db, project_id)
+    kind: Literal["corrections", "versions"]
+    left_version: VersionOut | None = None
+    right_version: VersionOut | None = None
+    if base == AUTOMATIC:
+        kind = "corrections"
+        left_options, right_options = rules_service.RulesOptions(overrides=False), rules_service.CURRENT
+    elif base in offer.zone_of:
+        kind = "versions"
+        zone = offer.zone_of[base]
+        left_options = rules_service.RulesOptions(overrides=False, versions={zone: uuid.UUID(base)})
+        right_options = rules_service.RulesOptions(overrides=False)
+        left_version = next(b.version for b in offer.bases if b.base == base)
+        right_version = offer.current.get(zone)
+    else:
+        raise Problem(404, "version_not_found")
+    params = parameters(db, project_id)
+    left_data, left_envelope, left = _state(db, project_id, left_options, params)
+    right_data, right_envelope, right = _state(db, project_id, right_options, params)
+    before, after = _figures(left_envelope, left), _figures(right_envelope, right)
+    return AnalysisComparisonOut(
+        kind=kind,
+        base=base,
+        left=_state_out(left_envelope, left_data, corrections=False, version=left_version),
+        right=_state_out(
+            right_envelope, right_data, corrections=kind == "corrections", version=right_version
+        ),
+        bases=offer.bases,
+        figures=[
+            ComparisonFigureOut(
+                key=key,
+                unit=FIGURE_UNITS.get(key, "m2"),
+                left=before[key],
+                right=after[key],
+                changed=before[key] != after[key],
+            )
+            for key in before
+        ],
+        rules=_rule_rows(left_data, right_data),
     )

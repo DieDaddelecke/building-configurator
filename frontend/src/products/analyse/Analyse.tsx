@@ -33,10 +33,13 @@ function Seite({ citation }: { citation: Citation | undefined }) {
   const label = t("rules.page", { page: citation.page });
   if (!citation.source_url) return <span className="t-mute">{label}</span>;
   return (
-    <a className="link" href={citation.source_url} target="_blank" rel="noreferrer" title={citation.quote ?? undefined}>
-      {label}
-      {!citation.quote_verified && <span className="t-warn"> *</span>}
-    </a>
+    <>
+      <a className="link" href={citation.source_url} target="_blank" rel="noreferrer" title={citation.quote ?? undefined}>
+        {label}
+        {!citation.quote_verified && <span className="t-warn"> *</span>}
+      </a>
+      {citation.origin === "project" && <span className="t-mute"> · {t("rules.origin.correction")}</span>}
+    </>
   );
 }
 

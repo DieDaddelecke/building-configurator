@@ -1,8 +1,9 @@
 /**
  * Zusatzdokumente eines Projekts (AN3, docs/PLAN_AN3_ANALYSE.md 3.7, 3.8): règlement de lotissement und cahier
  * des charges hochladen, das Lot wählen (kostet wie die Zonenwahl), Stand der Auswertung und Vergleich mit den
- * PLU-Regeln. Die Werte wirken nicht in Regeln, Baurahmen und Analyse – ob das Dokument gilt, beurteilt der
- * Architekt (E-AN3-2).
+ * PLU-Regeln. Die Werte wirken nicht von selbst in Regeln, Baurahmen und Analyse – ob das Dokument gilt, beurteilt der
+ * Architekt (E-AN3-2). Seit AN4 übernimmt er einen Wert mit „Übernehmen“ als Projektkorrektur mit Fundstelle
+ * (docs/PLAN_AN4_KORREKTUR.md 3.4); vorgeschlagen ist das Strengere je Parameter.
  */
 
 import type { TFunction } from "i18next";
@@ -23,9 +24,11 @@ import {
   type ProjectRegulationOut,
   type SupplementDuType,
 } from "../../api/regulations";
-import type { RuleOut } from "../../api/rules";
+import { useStaffProjectRules, type RuleOut } from "../../api/rules";
 import { ruleValue } from "../../rules/format";
+import type { Baukoerper } from "../../rules/RegelFormular";
 import { Auswertung, fehlerText, grund } from "./Bebauungsplan";
+import { KorrekturFormular } from "./RegelnKorrekturen";
 
 const TYPES: SupplementDuType[] = ["lotissement", "cahier_des_charges"];
 const PREFIX = "analyse.supplement";
@@ -198,7 +201,7 @@ function Zusatzdokument({
           onCancel={aendern ? () => setAendern(false) : undefined}
         />
       )}
-      {vergleich && vergleich.comparisons.length > 0 && <Vergleich vergleich={vergleich} />}
+      {vergleich && vergleich.comparisons.length > 0 && <Vergleich projectId={projectId} vergleich={vergleich} />}
       <div className="flex flex-wrap gap-3">
         {document.status === "active" && regulation.zone_code && !aendern && (
           <button type="button" className="btn btn-ghost" onClick={() => setAendern(true)}>
@@ -325,6 +328,7 @@ const VERDICT_TONE: Record<RuleComparisonOut["verdict"], string> = {
   equal: "t-mute",
   no_own_rule: "t-mute",
   unknown: "t-mute",
+  adopted: "t-accent",
 };
 
 function Wert({ limit }: { limit: LimitOut | null | undefined }) {
@@ -342,17 +346,62 @@ function Wert({ limit }: { limit: LimitOut | null | undefined }) {
           </a>
         </>
       )}
+      {/* Wirksamer Wert aus einer Projektkorrektur (AN4): Die Seite kann im Zusatzdokument liegen */}
+      {citation?.origin === "project" && <span className="t-mute"> · {t("rules.origin.correction")}</span>}
     </>
   );
 }
 
-function Vergleich({ vergleich }: { vergleich: SupplementAnalysisOut }) {
+/** Übernahme als Projektkorrektur (AN4 3.4): Vorschlag des Servers (das Strengere je Parameter), Fundstelle der Regel
+ *  im Zusatzdokument, Begründung Pflicht. Ziel ist die verglichene PLU-Zone (die größte, wie der Vergleich). */
+function Uebernahme({
+  projectId,
+  vergleich,
+  comparison,
+  onDone,
+}: {
+  projectId: string;
+  vergleich: SupplementAnalysisOut;
+  comparison: RuleComparisonOut;
+  onDone: () => void;
+}) {
   const { t } = useTranslation();
+  const rules = useStaffProjectRules(projectId);
+  const zone = rules.data?.zones[0];
+  if (!zone) return <p className="t-mute m-0">{t("loading")}</p>;
+  const citation = comparison.supplement.citation;
+  const pruefen = comparison.verdict === "mixed" || comparison.verdict === "different";
+  return (
+    <KorrekturFormular
+      projectId={projectId}
+      zoneCode={zone.code}
+      rules={rules.data}
+      vorlage={{
+        kind: comparison.kind,
+        building_kind: comparison.building_kind as Baukoerper,
+        status: "effective",
+        params: comparison.proposal ?? {},
+        source: citation?.page != null ? { document_id: vergleich.document_id, page: citation.page, quote: citation.quote } : null,
+      }}
+      hint={
+        <p className="t-mute text-xs m-0">
+          {t(`${PREFIX}.adoptHint`, { title: vergleich.title })}
+          {pruefen && <span className="t-warn"> {t(`${PREFIX}.adoptCheck`)}</span>}
+        </p>
+      }
+      onDone={onDone}
+    />
+  );
+}
+
+function Vergleich({ projectId, vergleich }: { projectId: string; vergleich: SupplementAnalysisOut }) {
+  const { t } = useTranslation();
+  const [uebernahme, setUebernahme] = useState<RuleComparisonOut | null>(null);
   return (
     <div className="flex flex-col gap-2">
       <p className="t-mute text-xs m-0">{t(`${PREFIX}.notApplied`)}</p>
       {vergleich.updating && <p className="t-warn text-xs m-0">{t(`${PREFIX}.updating`)}</p>}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto relative">
         <table className="w-full text-sm border-collapse">
           <caption className="sr-only">{t(`${PREFIX}.comparison`, { title: vergleich.title })}</caption>
           <thead>
@@ -361,6 +410,9 @@ function Vergleich({ vergleich }: { vergleich: SupplementAnalysisOut }) {
               <th scope="col" className="py-2 pr-3 font-medium">{t(`${PREFIX}.plu`)}</th>
               <th scope="col" className="py-2 pr-3 font-medium">{t(`${PREFIX}.document`)}</th>
               <th scope="col" className="py-2 font-medium">{t(`${PREFIX}.verdictColumn`)}</th>
+              <th scope="col" className="py-2 pl-3 font-medium">
+                <span className="sr-only">{t("rules.column.action")}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -379,11 +431,27 @@ function Vergleich({ vergleich }: { vergleich: SupplementAnalysisOut }) {
                   <Wert limit={comparison.supplement} />
                 </td>
                 <td className={`py-2 ${VERDICT_TONE[comparison.verdict]}`}>{t(`${PREFIX}.verdict.${comparison.verdict}`)}</td>
+                <td className="py-2 pl-3 text-right whitespace-nowrap">
+                  {comparison.proposal && (
+                    <button type="button" className="link text-sm" onClick={() => setUebernahme(comparison)}>
+                      {t(`${PREFIX}.adopt`)}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {uebernahme && (
+        <Uebernahme
+          key={`${uebernahme.kind}-${uebernahme.building_kind}`}
+          projectId={projectId}
+          vergleich={vergleich}
+          comparison={uebernahme}
+          onDone={() => setUebernahme(null)}
+        />
+      )}
       {vergleich.hints.length > 0 && (
         <ul className="m-0 pl-5 text-sm t-mute flex flex-col gap-1">
           {vergleich.hints.map((hint, index) => (

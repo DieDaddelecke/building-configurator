@@ -104,7 +104,8 @@ def analyse(
 ) -> Analysis:
     plu = _plu_rules(data)
     results = [
-        SupplementResult(s, compare(s.rules, plu) if s.status in RESULT_STATUSES else []) for s in supplements
+        SupplementResult(s, compare(s.rules, plu, s.document_id) if s.status in RESULT_STATUSES else [])
+        for s in supplements
     ]
     stricter = sorted({kind for result in results for kind in stricter_kinds(result.comparisons)})
     warnings = ["supplement_stricter"] if stricter else []

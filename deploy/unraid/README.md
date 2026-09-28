@@ -19,12 +19,13 @@ Lokal geprüft am 14.09.2026: Stack startet, Migration mit getrennten Rollen, Se
 
 ## 2. DNS und Reverse Proxy
 
-Zwei Einträge im Reverse Proxy, beide mit TLS-Zertifikat:
+Einträge im Reverse Proxy, alle mit TLS-Zertifikat (der dritte erst mit dem Analyse-Stack):
 
 | Hostname | Ziel | Hinweise |
 |---|---|---|
 | `building-configurator.aslani.work` | `http://<Unraid-IP>:8480` | `X-Forwarded-For` und `X-Forwarded-Proto` setzen |
 | `auth.aslani.work` | `http://<Unraid-IP>:9000` | Websockets erlauben |
+| `emprise-analyse.aslani.work` | `http://<Unraid-IP>:8481` | zweiter Stack (`WEB_PORT` in `.env.analyse`, BETRIEB 15); Header wie beim ersten Eintrag |
 
 **Cloudflare:** `aslani.work` liegt bei Cloudflare. Ist ein Eintrag „proxied“ (orange Wolke) oder läuft ein Tunnel, sieht Cloudflare den gesamten Verkehr im Klartext, auch Anmeldedaten und später Kundendaten. Das widerspricht Leitplanke L8 und Plan 6.9 (keine US-Anbieter im Datenweg). Für die Beta: Einträge nur als DNS („DNS only“, graue Wolke) und TLS am eigenen Reverse Proxy – **entschieden am 25.09.2026** für alle Einträge von Emprise und Authentik. Bliebe der Cloudflare-Proxy, müsste der Reverse Proxy die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
 

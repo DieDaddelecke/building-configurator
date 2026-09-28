@@ -286,14 +286,14 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 - `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
 - Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.
 
-## 15. Zweites Produkt: Emprise Analyse (AN0–AN3)
+## 15. Zweites Produkt: Emprise Analyse (AN0–AN4)
 
-Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16, PU01–PU10 und EA01–EA17). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) und **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich; Gabarit in Höhenstufen und zwei Schnitte). Regelformular (AN4), Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
+Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP16, PU01–PU10, EA01–EA17 und KR01–KR09). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich; Gabarit in Höhenstufen und zwei Schnitte) und **AN4** (Regeln korrigieren und ergänzen mit Begründung und Fundstelle, Werte aus Zusatzdokumenten übernehmen, zwei Stände vergleichen). Bericht und CAD-Ausgabe (AN5) fehlen noch; Gelände und Risiken bleiben aus, auch bei georeferenzierten Dateien.
 
 | | Hauskonfigurator | Emprise Analyse |
 |---|---|---|
 | `EMPRISE_PRODUCT` | `configurator` (Standard) | `analyse` |
-| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (95 Operationen im OpenAPI-Dokument des Stacks, Stand AN3) | Kern (Plattform, G1, G2, G3) + Analyse (58 Operationen) |
+| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (99 Operationen im OpenAPI-Dokument des Stacks, Stand AN4) | Kern (Plattform, G1, G2, G3) + Analyse (63 Operationen) |
 | Periodische Aufgaben | alle sechs | ohne `cadastre_import` und `plu_import` (D17: der Nutzer lädt hoch) |
 | Oberfläche | `index.html` | `analyse.html` über `SPA_INDEX` im Web-Container |
 | Datenbank, Speicher, Sicherung, Hostname, Authentik | eigene | eigene (E-A4) |
@@ -348,6 +348,14 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - **Annahmen zurücksetzen** ohne Oberfläche: `DELETE FROM analysis_parameters WHERE project_id = …`.
 - **Gabarit und Schnitt** (28.09.2026, EA13–EA17): keine Migration, keine Jobs; gerechnet mit jedem Abruf von `GET /projects/{id}/analysis` (`gabarit`, `sections`). Laufzeit lokal für das Testprojekt (20 × 30 m, Zone Uh): Median 59 ms, höchstens 61 ms bei zehn Abrufen, Antwort 9 KB. Aufwand wächst mit Kantenzahl und Stufen (bis zu zwei Auslegungen × Stufen + Geschosse, gleiche Abstandssätze nur einmal); an einem echten Katasterstück mit Regeln nachmessen.
 - **Gabarit „nicht verfügbar“:** Die Höhenregel der Zone fehlt oder ist nicht ermittelt (`height_unknown`); Regeln im Abschnitt „Bebauungsplan“ prüfen. Die übrigen Kennzahlen bleiben, die Nutzfläche fehlt dann ohnehin.
+
+**Korrekturen und Stände (AN4)**
+
+- Migration **0015**: Fundstelle an `project_rule_override` (`source_file_id`, `page`, `quote`, `quote_verified`; nur neue, leere Spalten). Keine neuen Jobs, Flags oder Dienste. Korrekturen kosten nichts; sie wirken sofort in Regeln, Baurahmen und Analyse und stehen im Audit-Log (`project_rule_override.put`/`.delete` mit Fundstelle).
+- **Korrekturen eines Projekts ansehen** ohne Oberfläche: `SELECT zone_code, kind, building_kind, status, params, note, page, quote_verified, updated_by FROM project_rule_override WHERE project_id = …`. Eine Korrektur einer Zone, die das Projekt nicht mehr hat (Zone oder PLU gewechselt), wirkt nicht und steht in der Oberfläche unter „Nicht wirksame Korrekturen“; mit gleichem Zonencode wirkt sie auch in einem neuen PLU weiter (KR04).
+- **`422 zone_unknown`:** Die Zone gehört nicht zu den aktuellen Regeln – meist ein Zonenwechsel in einem anderen Tab; Seite neu laden. **`422 source_document_unknown`:** Die Fundstelle liegt in einem Dokument, das nicht (mehr) am Projekt hängt. **Zitat mit `*`:** nicht auf der Seite gefunden (zu kurz, anders geschrieben, falsche Seite); die Korrektur gilt trotzdem.
+- **Stände vergleichen** (`GET /projects/{id}/analysis/comparison`) rechnet Baurahmen und Analyse zweimal: lokal für das Testprojekt Median 82 ms, höchstens 92 ms bei zehn Abrufen; `GET /analysis` Median 53 ms. Der Vergleich rechnet erst, wenn der Architekt ihn aufklappt.
+- **Frühere Auswertungen** erscheinen im Vergleich, sobald ein Regelwerk eine zweite Version hat – etwa nach der Neuauswertung aller Kapitel mit dem Schlüssel (9, `g2-prompt-4`). Dann zeigt „Stände vergleichen“, was sich geändert hat, und ob eigene Korrekturen überflüssig geworden sind.
 
 **Störungen beim Hochladen einer Parzelle**
 

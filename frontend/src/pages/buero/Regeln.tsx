@@ -1,7 +1,7 @@
 /**
  * Büro: Abdeckung der Regelwerke je Gemeinde und Kapitel, Regelwerk mit Zitaten und Korrektur für die Zone
  * (Plan 3.4). Nichts davon ist Voraussetzung für die Simulation beim Kunden (D11); Korrekturen verbessern
- * spätere Simulationen.
+ * spätere Simulationen. Parameter über Felder aus der Beschreibung der Regelarten statt JSON (AN4, RW15).
  */
 
 import { useState } from "react";
@@ -11,16 +11,19 @@ import { Link, useOutletContext, useParams } from "react-router";
 import { ApiError } from "../../api/client";
 import {
   useCreateRuleSetVersion,
+  useRuleKinds,
   useRuleSet,
   useRulesCoverage,
   useStartExtraction,
   useStartRulesImport,
   type RuleDetailOut,
   type RuleIn,
+  type RuleKindFormOut,
 } from "../../api/rules";
 import type { components } from "../../api/schema";
 import { Kopf } from "../../components/Kopf";
 import { ruleValue } from "../../rules/format";
+import { RegelFelder } from "../../rules/RegelFormular";
 import { sortRules } from "../../rules/RegelnSimulation";
 
 type Staff = components["schemas"]["StaffInfo"];
@@ -179,13 +182,14 @@ export function Regeln() {
 // Regelwerk
 // ---------------------------------------------------------------------------
 
-interface Entwurf {
+interface Zeile {
   key: string;
   rule: RuleIn;
-  paramsText: string;
+  draft: Entwurf;
+  errors: FeldFehler;
 }
 
-function entwurfAus(rule: RuleDetailOut): Entwurf {
+function zeileAus(rule: RuleDetailOut, form: RuleKindFormOut | undefined, language: string): Zeile {
   return {
     key: `${rule.kind}-${rule.building_kind}`,
     rule: {
@@ -197,28 +201,33 @@ function entwurfAus(rule: RuleDetailOut): Entwurf {
       quote: rule.quote,
       notes: rule.notes,
     },
-    paramsText: JSON.stringify(rule.params),
+    draft: entwurfAus(form?.params ?? [], rule.params, language),
+    errors: {},
   };
 }
 
-function Korrektur({ ruleSetId, rules }: { ruleSetId: string; rules: RuleDetailOut[] }) {
-  const { t } = useTranslation();
+function Korrektur({ ruleSetId, rules, kinds }: { ruleSetId: string; rules: RuleDetailOut[]; kinds: RuleKindFormOut[] }) {
+  const { t, i18n } = useTranslation();
   const create = useCreateRuleSetVersion(ruleSetId);
-  const [entwuerfe, setEntwuerfe] = useState<Entwurf[]>(() => sortRules(rules).map(entwurfAus));
+  const forms = new Map(kinds.map((k) => [k.kind as string, k]));
+  const [zeilen, setZeilen] = useState<Zeile[]>(() => sortRules(rules).map((r) => zeileAus(r, forms.get(r.kind), i18n.language)));
   const [note, setNote] = useState("");
-  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
 
-  const update = (index: number, change: Partial<Entwurf>) =>
-    setEntwuerfe((current) => current.map((item, i) => (i === index ? { ...item, ...change } : item)));
+  const update = (index: number, change: Partial<Zeile>) =>
+    setZeilen((current) => current.map((item, i) => (i === index ? { ...item, ...change } : item)));
 
   const submit = () => {
-    try {
-      const payload = entwuerfe.map((e) => ({ ...e.rule, params: e.rule.status === "effective" || e.rule.kind === "text_only" ? (JSON.parse(e.paramsText || "{}") as Record<string, unknown>) : {} }));
-      setJsonError(null);
-      create.mutate({ rules: payload, note });
-    } catch {
-      setJsonError(t("office.rules.jsonInvalid"));
-    }
+    const checked = zeilen.map((z) => {
+      const form = forms.get(z.rule.kind);
+      const withParams = z.rule.status === "effective" || z.rule.kind === "text_only";
+      const result = withParams && form ? parameterAus(form.params, z.draft) : { params: {}, errors: {} };
+      return { ...z, errors: result.errors, rule: { ...z.rule, params: withParams ? result.params : {} } };
+    });
+    setZeilen(checked);
+    const hasErrors = checked.some((z) => Object.keys(z.errors).length > 0);
+    setInvalid(hasErrors);
+    if (!hasErrors) create.mutate({ rules: checked.map((z) => z.rule), note });
   };
 
   return (
@@ -241,18 +250,18 @@ function Korrektur({ ruleSetId, rules }: { ruleSetId: string; rules: RuleDetailO
             </tr>
           </thead>
           <tbody>
-            {entwuerfe.map((entwurf, index) => (
-              <tr key={entwurf.key} className="border-b bd align-top">
+            {zeilen.map((zeile, index) => (
+              <tr key={zeile.key} className="border-b bd align-top">
                 <th scope="row" className="py-2 pr-3 font-normal text-left">
-                  {t(`rules.kind.${entwurf.rule.kind}`)}
-                  {entwurf.rule.building_kind !== "main" && <span className="t-mute"> · {t(`rules.building.${entwurf.rule.building_kind}`)}</span>}
+                  {t(`rules.kind.${zeile.rule.kind}`)}
+                  {zeile.rule.building_kind !== "main" && <span className="t-mute"> · {t(`rules.building.${zeile.rule.building_kind}`)}</span>}
                 </th>
                 <td className="py-2 pr-3">
                   <select
                     className="field"
-                    aria-label={t("office.rules.statusFor", { kind: t(`rules.kind.${entwurf.rule.kind}`) })}
-                    value={entwurf.rule.status}
-                    onChange={(e) => update(index, { rule: { ...entwurf.rule, status: e.target.value as RuleIn["status"] } })}
+                    aria-label={t("office.rules.statusFor", { kind: t(`rules.kind.${zeile.rule.kind}`) })}
+                    value={zeile.rule.status}
+                    onChange={(e) => update(index, { rule: { ...zeile.rule, status: e.target.value as RuleIn["status"] } })}
                   >
                     {(["effective", "unknown", "not_regulated", "text_only"] as const).map((status) => (
                       <option key={status} value={status}>
@@ -261,14 +270,15 @@ function Korrektur({ ruleSetId, rules }: { ruleSetId: string; rules: RuleDetailO
                     ))}
                   </select>
                 </td>
-                <td className="py-2">
-                  <textarea
-                    className="field f-mono text-xs"
-                    rows={2}
-                    aria-label={t("office.rules.paramsFor", { kind: t(`rules.kind.${entwurf.rule.kind}`) })}
-                    value={entwurf.paramsText}
-                    onChange={(e) => update(index, { paramsText: e.target.value })}
-                  />
+                <td className="py-2" aria-label={t("office.rules.paramsFor", { kind: t(`rules.kind.${zeile.rule.kind}`) })}>
+                  {(zeile.rule.status === "effective" || zeile.rule.kind === "text_only") && forms.get(zeile.rule.kind) && (
+                    <RegelFelder
+                      form={forms.get(zeile.rule.kind)!}
+                      draft={zeile.draft}
+                      errors={zeile.errors}
+                      onChange={(draft) => update(index, { draft })}
+                    />
+                  )}
                 </td>
               </tr>
             ))}
@@ -279,7 +289,7 @@ function Korrektur({ ruleSetId, rules }: { ruleSetId: string; rules: RuleDetailO
         {t("office.rules.note")}
         <textarea className="field" rows={2} required minLength={3} value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
-      {jsonError && <p role="alert" className="t-alert text-sm m-0">{jsonError}</p>}
+      {invalid && <p role="alert" className="t-alert text-sm m-0">{t("rules.form.invalid")}</p>}
       {create.isError && <Fehler error={create.error} />}
       {create.isSuccess && <p role="status" className="text-sm m-0">{t("office.rules.saved")}</p>}
       <button type="submit" className="btn btn-primary self-start" disabled={create.isPending}>
@@ -293,6 +303,7 @@ export function Regelwerk() {
   const { t, i18n } = useTranslation();
   const { ruleSetId = "" } = useParams();
   const ruleSet = useRuleSet(ruleSetId);
+  const kinds = useRuleKinds();
   const data = ruleSet.data;
   return (
     <div className="flex flex-col gap-6">
@@ -351,7 +362,7 @@ export function Regelwerk() {
               </tbody>
             </table>
           </div>
-          <Korrektur key={data.current?.id ?? "none"} ruleSetId={data.id} rules={data.rules} />
+          {kinds.data && <Korrektur key={data.current?.id ?? "none"} ruleSetId={data.id} rules={data.rules} kinds={kinds.data} />}
         </>
       )}
     </div>

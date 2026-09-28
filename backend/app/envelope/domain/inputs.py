@@ -20,6 +20,8 @@ class Citation:
     origin: str = "extraction"
     confidence: float = 0.0
     notes: str | None = None
+    document_id: str | None = None
+    """Dokument der Fundstelle; die Analyse erkennt daran Übernahmen aus Zusatzdokumenten (AN4)."""
 
 
 @dataclass(frozen=True)

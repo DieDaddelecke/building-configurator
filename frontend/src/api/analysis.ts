@@ -58,3 +58,21 @@ export function useResetAnalysisParameters(projectId: string) {
     onSuccess: (data) => client.setQueryData(analysisKey(projectId), data),
   });
 }
+
+export type AnalysisComparisonOut = components["schemas"]["AnalysisComparisonOut"];
+export type ComparisonBaseOut = components["schemas"]["ComparisonBaseOut"];
+
+/** Zwei Stände nebeneinander (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5); `base` `automatic` oder eine Versions-ID. Erst
+ *  rechnen, wenn der Architekt den Vergleich öffnet (`base` gesetzt). */
+export function useAnalysisComparison(projectId: string, base: string | null) {
+  return useQuery({
+    queryKey: [...analysisKey(projectId), "comparison", base ?? ""],
+    enabled: base !== null,
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/projects/{project_id}/analysis/comparison", {
+          params: { path: { project_id: projectId }, query: { base: base ?? "automatic" } },
+        }),
+      ),
+  });
+}

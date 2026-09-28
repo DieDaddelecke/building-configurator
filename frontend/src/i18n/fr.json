@@ -203,7 +203,7 @@
       "costHint": "L'analyse est facturée une fois par document et par lot ; un lot supplémentaire relance l'analyse du document.",
       "choose": "Retenir le lot et analyser",
       "change": "Changer de lot",
-      "notApplied": "Non intégré aux règles, à l'enveloppe ni à l'analyse. C'est à vous d'apprécier si le document s'applique – les règles d'un lotissement deviennent caduques dix ans après l'autorisation lorsqu'un PLU est en vigueur (L.442-9) ; un cahier des charges engage sur le plan contractuel.",
+      "notApplied": "Pas intégré d'office aux règles, à l'enveloppe et à l'analyse. C'est à vous de juger si le document s'applique – un règlement de lotissement cesse de s'appliquer dix ans après l'autorisation lorsqu'un PLU est en vigueur (L.442-9) ; un cahier des charges engage en droit privé. « Reprendre » fait d'une valeur une correction du projet.",
       "updating": "Une nouvelle analyse est en cours ; ces valeurs restent valables d'ici là.",
       "comparison": "Comparaison de {{title}} avec le PLU",
       "plu": "PLU",
@@ -218,13 +218,17 @@
         "different": "différent, non comparable",
         "only_supplement": "uniquement dans le document",
         "no_own_rule": "pas de règle propre – le PLU s'applique",
-        "unknown": "non déterminé"
+        "unknown": "non déterminé",
+        "adopted": "repris"
       },
       "error": {
         "too_many_supplements": "Trois documents complémentaires au plus par projet.",
         "document_type_conflict": "Ce PDF a déjà été déposé comme règlement de PLU.",
         "chapter_too_long": "Le document dépasse 150 pages ; veuillez indiquer une plage de pages."
-      }
+      },
+      "adopt": "Reprendre",
+      "adoptHint": "Proposé : le plus strict, indication par indication, du PLU et de « {{title}} » ; ce qui ne figure qu'au PLU est conservé. La référence est la règle du document.",
+      "adoptCheck": "Les règles divergent : veuillez vérifier les valeurs."
     },
     "analysis": {
       "title": "Analyse pour le projet",
@@ -613,7 +617,8 @@
     "column": {
       "kind": "Règle",
       "value": "Valeur",
-      "source": "Source"
+      "source": "Source",
+      "action": "Action"
     },
     "zoneStatus": {
       "simulated": "analyse automatique",
@@ -737,7 +742,8 @@
     },
     "origin": {
       "office": "cabinet",
-      "project": "cabinet, ce projet uniquement"
+      "project": "cabinet, ce projet uniquement",
+      "correction": "correction"
     },
     "unavailable": {
       "not_imported": "Les documents d'urbanisme de cette commune ne sont pas encore disponibles.",
@@ -771,7 +777,126 @@
     "notices": {
       "simulation": "Les règles sont une simulation automatique, non vérifiée, et ne valent pas renseignement d'urbanisme. Seul le certificat d'urbanisme délivré par la commune fait foi.",
       "lotissement": "Si le terrain fait partie d'un lotissement, des règles supplémentaires s'appliquent et ne sont pas prises en compte ici.",
-      "upload": "Seul le règlement écrit déposé est analysé. Le plan de zonage, les prescriptions superposées et les servitudes ne sont pas pris en compte ; les documents complémentaires (lotissement, cahier des charges) figurent seulement dans la comparaison de l'analyse, pas dans les règles ni dans l'enveloppe constructible."
+      "upload": "Seul le règlement écrit déposé est analysé. Le plan de zonage, les prescriptions superposées et les servitudes ne sont pas pris en compte ; les documents complémentaires (lotissement, cahier des charges) figurent dans la comparaison de l'analyse ; dans les règles et l'enveloppe constructible, seules les valeurs que vous reprenez comme correction."
+    },
+    "uploaded": "{{title}}, déposé",
+    "param": {
+      "min_m": "Retrait minimal",
+      "max_m": "Retrait maximal",
+      "mode": "Type de règle",
+      "band": "Ce qui doit se trouver dans la bande",
+      "measured_from": "Mesuré depuis",
+      "height_factor": "Facteur de hauteur (H/2 = 0,5)",
+      "height_basis": "Hauteur de référence du facteur",
+      "allow_on_boundary": "Implantation en limite autorisée",
+      "on_boundary_max_height_m": "Hauteur maximale en limite",
+      "ratio": "Part",
+      "counts_overhangs": "Débords de toiture comptés",
+      "terrace_counts_above_m": "Terrasses comptées au-delà de",
+      "ridge_m": "Hauteur au faîtage",
+      "eave_m": "Hauteur à l'égout",
+      "parapet_m": "Hauteur à l'acrotère",
+      "storeys": "Niveaux (p. ex. R+1+C)",
+      "reference": "Référence de hauteur",
+      "measured_at": "Mesurée au",
+      "includes_roof_installations": "Superstructures comprises",
+      "allowed_forms": "Formes de toiture autorisées",
+      "pitch_min_deg": "Pente minimale",
+      "pitch_max_deg": "Pente maximale",
+      "flat_roof": "Toiture terrasse",
+      "ridge_orientation": "Sens du faîtage",
+      "materials_allowed": "Matériaux autorisés",
+      "materials_forbidden": "Matériaux interdits",
+      "color_families_allowed": "Familles de couleurs autorisées",
+      "full_soil_ratio": "dont pleine terre",
+      "counting": "Mode de calcul",
+      "spaces_per_dwelling": "Places par logement",
+      "spaces_per_m2_sdp": "Places par surface de plancher",
+      "min_dimensions": "Dimensions minimales",
+      "max_footprint_m2": "Emprise maximale",
+      "max_height_m": "Hauteur maximale",
+      "trees_per_m2": "Arbres par surface",
+      "min_green_ratio": "Part d'espaces verts minimale",
+      "materials": "Matériaux",
+      "summary": "Remarque",
+      "sdp_m2": "Surface de plancher maximale",
+      "footprint_m2": "Emprise au sol maximale"
+    },
+    "option": {
+      "mode": {
+        "min": "retrait minimal",
+        "fixed": "retrait imposé",
+        "range": "bande (de–à)",
+        "alignment": "à l'alignement"
+      },
+      "band": {
+        "building": "toute la construction",
+        "facade": "la façade sur rue seulement"
+      },
+      "measured_from": {
+        "facade": "la façade",
+        "roof_edge": "le bord du toit",
+        "any_projection": "toute saillie"
+      },
+      "counts_overhangs": {
+        "yes": "oui",
+        "no": "non",
+        "per_code": "selon le Code de l'urbanisme"
+      },
+      "reference": {
+        "natural_terrain": "terrain naturel",
+        "street_level": "niveau de la voie"
+      },
+      "measured_at": {
+        "highest_point": "point le plus haut du terrain",
+        "mean": "moyenne du terrain"
+      },
+      "ridge_orientation": {
+        "any": "libre",
+        "parallel_to_street": "parallèle à la voie",
+        "perpendicular_to_street": "perpendiculaire à la voie"
+      }
+    },
+    "form": {
+      "title": "Correction : {{kind}}",
+      "none": "non précisé",
+      "onePer": "1 pour",
+      "building": "Construction",
+      "buildingKind": {
+        "main": "construction principale",
+        "annex": "annexe",
+        "pool": "piscine",
+        "any": "toutes les constructions"
+      },
+      "status": {
+        "effective": "valeur applicable",
+        "not_regulated": "non réglementé",
+        "unknown": "non déterminé (exclure du calcul)"
+      },
+      "source": "Référence",
+      "document": "Document",
+      "noSource": "sans référence",
+      "page": "Page",
+      "pageRequired": "Veuillez indiquer la page du document.",
+      "quote": "Citation (facultatif)",
+      "quoteHint": "Mot pour mot ; elle est recherchée sur la page. Une citation introuvable est marquée d'un *.",
+      "note": "Justification",
+      "noteHint": "Obligatoire. Visible par l'agence seulement, pas par les clients.",
+      "save": "Enregistrer la correction",
+      "cancel": "Annuler",
+      "invalid": "Veuillez vérifier les champs signalés.",
+      "fieldError": {
+        "required": "Obligatoire",
+        "number": "Veuillez saisir un nombre.",
+        "range": "Entre {{low}} et {{high}}."
+      },
+      "error": {
+        "zone_unknown": "Cette zone ne fait pas partie des règles actuelles du projet.",
+        "source_document_unknown": "La référence doit se trouver dans un document de ce projet.",
+        "source_page_invalid": "Cette page n'existe pas dans le document.",
+        "site_not_found": "Le projet n'a pas encore de terrain.",
+        "not_found": "Cette correction n'existe plus."
+      }
     },
     "uploaded": "{{title}}, déposé"
   },
@@ -906,7 +1031,6 @@
       "note": "Justification",
       "save": "Enregistrer",
       "saved": "Enregistré.",
-      "jsonInvalid": "Les paramètres ne sont pas un JSON valide.",
       "projectOverride": "Corriger pour ce projet uniquement (zone {{code}})",
       "overrides": "Corrections pour ce projet",
       "removeOverride": "Supprimer"

@@ -31,6 +31,9 @@ class RuleOut(BaseModel):
     confidence: float
     notes: str | None
     origin: Literal["extraction", "office", "project"]
+    source_document_id: uuid.UUID | None = None
+    """Dokument der Fundstelle (Planstand oder Zusatzdokument). Bei einer Projektkorrektur mit Fundstelle in
+    einem Zusatzdokument ist sie eine Übernahme daraus (AN4, docs/PLAN_AN4_KORREKTUR.md 3.4)."""
 
 
 class RuleDetailOut(RuleOut):
@@ -166,15 +169,38 @@ class RuleSetVersionIn(BaseModel):
     note: str = Field(min_length=3, max_length=2000)
 
 
+class RuleSourceIn(BaseModel):
+    """Fundstelle einer Korrektur (AN4, docs/PLAN_AN4_KORREKTUR.md 3.2): ein Dokument des Projekts, eine
+    Seite und optional ein Zitat, das auf der Seite gesucht wird."""
+
+    document_id: uuid.UUID
+    page: int = Field(ge=1)
+    quote: str | None = Field(default=None, max_length=4000)
+
+
 class ProjectOverrideIn(BaseModel):
-    """Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement)."""
+    """Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement). Die Begründung ist Pflicht und nur für
+    das Büro sichtbar."""
 
     zone_code: str = Field(min_length=1, max_length=20)
     kind: RuleKind
     building_kind: BuildingKind = "main"
-    status: RuleStatus
+    status: Literal["effective", "unknown", "not_regulated"]
     params: dict[str, Any] = Field(default_factory=dict)
     note: str = Field(min_length=3, max_length=2000)
+    source: RuleSourceIn | None = None
+
+
+class RuleSourceOut(BaseModel):
+    document_id: uuid.UUID | None
+    """Leer, wenn die Datei nicht mehr besteht; Seite und Zitat bleiben als Text."""
+    document_title: str | None
+    page: int
+    quote: str | None
+    quote_verified: bool
+    source_url: str | None
+    attached: bool
+    """Hängt das Dokument noch am Projekt (PLU, Zusatzdokument oder Planstand der Regeln)?"""
 
 
 class ProjectOverrideOut(BaseModel):
@@ -185,8 +211,34 @@ class ProjectOverrideOut(BaseModel):
     status: RuleStatus
     params: dict[str, Any]
     note: str | None
+    source: RuleSourceOut | None
+    active: bool
+    """Wirkt die Korrektur? Nicht, wenn das Projekt die Zone nicht mehr hat (Zone oder PLU gewechselt)."""
+    created_at: datetime | None
+    created_by: str | None
     updated_at: datetime
     updated_by: str | None
+
+
+class ParamFieldOut(BaseModel):
+    """Feld des Regelformulars (AN4, 3.1), abgeleitet aus `rules/domain/kinds.py`."""
+
+    name: str
+    type: Literal["number", "flag", "choice", "items", "text"]
+    required: bool
+    default: Any = None
+    options: list[str]
+    min: float | None = None
+    max: float | None = None
+    unit: Literal["m", "m2", "deg", "share", "factor", "per_area", "count"] | None = None
+
+
+class RuleKindFormOut(BaseModel):
+    kind: RuleKind
+    building_specific: bool
+    """Kann je Baukörper verschieden sein (Abstände, Höhe, Dach, Fassade); sonst gilt sie fürs Grundstück."""
+    mandatory: bool
+    params: list[ParamFieldOut]
 
 
 class RulesImportIn(BaseModel):

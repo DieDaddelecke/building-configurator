@@ -93,7 +93,7 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 - **Eingriff in `rules/service.py`:** `resolve_rules` startet heute zwingend bei Gemeinde-INSEE → `rules_commune` → `land_use_plan` → Zonen per `ST_Intersection`. Für hochgeladene Dokumente braucht es einen zweiten Einstieg: Projekt → gewähltes Dokument und Kapitel → Regeln, Teilfläche = ganzes Grundstück. Die gemeinsame Ausgabe (`RulesResult`) bleibt gleich, damit `envelope_rules` und alle Anzeigen unverändert funktionieren (BR15). **Das ist der größte verdeckte Aufwand des Vorhabens.**
 - Auswertung über den vorhandenen Job `rules_extract` – unverändert inklusive Schranken, Zitatprüfung, zweitem Lauf und Kostenzählung. Ausgewertet wird nur das gewählte Zonenkapitel und die allgemeinen Bestimmungen, nicht das ganze Dokument.
 - **Zusatzdokumente:** règlement de lotissement und cahier des charges als zweites Dokument derselben Art, dessen Regeln die PLU-Regeln überlagern. Heute nur ein Hinweistext, für Architekten aber ein echter Bedarf.
-- Kein extrahierbarer Text (Scan) → klare Meldung; OCR bleibt Ausbaustufe (RW03).
+- Kein extrahierbarer Text (Scan) → klare Meldung; OCR bleibt Ausbaustufe (RW03; seit 28.09.2026 Modul AN7).
 
 *Ergebnis:* umgesetzt wie beschrieben, Einzelheiten in [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und ANNAHMEN PU01–PU10. Abweichungen: Das hochgeladene Reglement ist ein `land_use_plan` mit `origin = 'upload'` statt einer `source_file` mit Herkunft (die Kette Kapitel → Lauf → Regelwerk hängt am Planstand); dasselbe PDF ist dasselbe Dokument für alle Projekte des Büros (PU01); gelesen wird im Job `rules_document_read`, nicht im Request (PU03). **Die Zusatzdokumente waren nach AN4 verschoben** (PU09; am 25.09.2026 in AN3 vorgezogen): Sie gelten neben dem PLU, das Strengere bindet – das gehört zum Regelformular, mit dem der Architekt Werte mit Zitat übernimmt. Die Gegenprobe aus Kapitel 7 Punkt 5 ist als Test umgesetzt: AD 65 über GPU und über Upload ergibt dieselben Regeln und Konturflächen.
 
@@ -114,13 +114,15 @@ Die Ableitung bleibt in `envelope/domain` rein und deterministisch; das Neue kom
 
 *Ergebnis Gabarit und Schnitt (28.09.2026):* Konturen je Höhenstufe in beiden Auslegungen, mit Höhengrenze der Grenzbebauung und Traufbezug (EA13, EA14); die Nutzfläche rechnet jedes Geschoss mit der Kontur seiner Höhe (EA15, behebt PLAN_AN3_ANALYSE 7.1 Nr. 9); zwei Schnitte A–A' und B–B' mit Stufen, Abstandslinien, Trauf- und Firsthöhe, Gelände eben bis AN5 (EA16); Oberfläche mit Lageplan, Stufentabelle und Schnitt (EA17). Abweichung von der Tabelle oben: Die Ableitung „mit fixiertem `Heights`“ genügte nicht (PLAN_AN3_GABARIT 7.1 Nr. 1); das 3D-DXF der Stufen gehört zur Ausgabe in AN5.
 
-### AN4 – Korrigieren und begründen (6–8 T)
+### AN4 – Korrigieren und begründen (6–8 T) · **umgesetzt am 28.09.2026** ([Plan](PLAN_AN4_KORREKTUR.md))
 
 - **Regelformular statt JSON** (RW15): Formular aus den Pydantic-Regelarten in `rules/domain/kinds.py` erzeugt – eine Quelle für Schema, API, Modellausgabe und Formular.
 - Wert je Projekt übersteuern mit Pflichtbegründung, Herkunft `architect`; der Baurahmen zeigt die Herkunft an jedem Wert (vorhanden, L3).
 - Regeln ergänzen, die das Modell nicht gefunden hat.
 - Zwei Stände nebeneinander vergleichen (vor und nach Korrektur, zwei Auswertungsläufe).
 - **Werte aus Zusatzdokumenten übernehmen:** Hochladen, Auswerten und Vergleich gibt es seit AN3 (EA07–EA09). Hier übernimmt der Architekt den strengeren Wert als Projektkorrektur **mit Zitat** – dazu bekommt `project_rule_override` eine Quelle (Seite, Datei), damit L3 gewahrt bleibt.
+
+*Ergebnis:* umgesetzt wie beschrieben (ANNAHMEN KR01–KR09): Formularbeschreibung `GET /admin/rule-kinds` aus den Regelarten, ein gemeinsames Regelformular auch für beide Büro-Formulare des Konfigurators (RW15 erledigt); Korrektur je Projekt mit Pflichtbegründung und geprüfter Fundstelle (Migration 0015), Regeln ergänzen; Übernahme aus Zusatzdokumenten mit dem Strengeren je Parameter als Vorschlag und Ergebnis „übernommen“; zwei gerechnete Stände (ohne ↔ mit Korrekturen, frühere ↔ aktuelle Auswertung). Abweichungen: Herkunft bleibt `project` statt eines neuen Werts `architect` (E-AN4-7); die Begründung ist nur für das Büro sichtbar und steht nicht mehr in `RuleOut.notes` (KR03); „vor und nach Korrektur“ und „zwei Auswertungsläufe“ sind zwei feste Vergleiche statt frei wählbarer Stände (E-AN4-5).
 
 ### AN5 – Ausgabe und Projektakte (8–10 T)
 
@@ -132,7 +134,15 @@ Die Ableitung bleibt in `envelope/domain` rein und deterministisch; das Neue kom
 
 ### AN6 – Abo, Mandanten, Branding, API (später, eigener Auslöser)
 
-Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding (Logo, Farben, Schriftfeld in PDF und DXF); API mit Token je Organisation; Kontingente und Weiterberechnung der Claude-Kosten (Zählung je Lauf existiert); AGB, Haftungsausschluss, Auftragsverarbeitung. **Jetzt schon offengehalten, ohne Mehrkosten:** die nullable Spalte `organisation_id` aus AN1, Ausgaben ausschließlich über `app/plan/` und die API, Farben nur als Tokens.
+Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding (Logo, Farben, Schriftfeld in PDF und DXF); API mit Token je Organisation; Kontingente und Weiterberechnung der Claude-Kosten (Zählung je Lauf existiert); AGB, Haftungsausschluss, Auftragsverarbeitung; gescannte PDFs mit eigenem Kontingent (E-A7). **Jetzt schon offengehalten, ohne Mehrkosten:** die nullable Spalte `organisation_id` aus AN1, Ausgaben ausschließlich über `app/plan/` und die API, Farben nur als Tokens.
+
+### AN7 – Gescannte PDFs (6–8 T, braucht den Schlüssel) · **entschieden am 28.09.2026 (Nutzer)**, noch ohne Modulplan
+
+- Scans werden gelesen statt abgelehnt: die Parzelle (heute `422 upload_pdf_no_vector`, UP16), das règlement und die Zusatzdokumente (heute zählen Seiten ohne Textschicht als leer, `document_no_text`; RW03, PU03).
+- Gelesen wird mit Bilderkennung über die Schnittstelle (OpenRouter); eine lokale OCR-Bibliothek prüft der Modulplan als Alternative.
+- **Hinweis vor der Verarbeitung:** Die Oberfläche sagt, dass ein Scan mehr kostet als ein PDF mit Textschicht, und verarbeitet erst nach Bestätigung.
+- Die Kosten zählen wie jeder Lauf ins Monatsbudget; **im Abo (AN6) ein eigenes Limit für Scans**.
+- Für den Modulplan offen: Zitatprüfung (L3) gegen den erkannten Text statt gegen die Textschicht und Kennzeichnung erkannter Werte; bei der Parzelle Maßstab und Verzerrung des Scans (eher die Maße lesen und als Zeichnung vorschlagen als den Umriss aus dem Bild übernehmen).
 
 ---
 
@@ -141,7 +151,7 @@ Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding
 | Release | Module | Nutzen | Größe |
 |---|---|---|---|
 | **RA1** | AN0, AN1, AN2, AN3 (bindende Grundfläche, Geschosse, Nutzfläche; Zusatzdokumente im Vergleich) | Grundstück zeichnen oder hochladen, PLU hochladen, Baurahmen mit Höhen, Abständen, Flächen und Nutzfläche – im eigenen Büro produktiv nutzbar | 28–36 T (6–7 PW) |
-| **RA2** | AN3 vollständig (Gabarit, Schnitt – umgesetzt 28.09.2026), AN4, AN5 | Entwurfsbegleitung: Hüllkörper, Schnitt, eigene Korrekturen, Bericht und CAD-Ausgabe | 24–30 T (5–6 PW) |
+| **RA2** | AN3 vollständig (Gabarit, Schnitt – umgesetzt 28.09.2026), AN4 (umgesetzt 28.09.2026), AN5, AN7 (sobald der Schlüssel da ist) | Entwurfsbegleitung: Hüllkörper, Schnitt, eigene Korrekturen, Bericht und CAD-Ausgabe; gescannte Unterlagen | 30–38 T (6–8 PW) |
 | **RA3** | AN6 | Abo für fremde Büros | nach Auslöser |
 
 Größen in Personentagen für eine Person mit Claude Code, ohne Inhaltsarbeit, Rechtstexte und Gestaltung.
@@ -157,7 +167,8 @@ Größen in Personentagen für eine Person mit Claude Code, ohne Inhaltsarbeit, 
 | E-A3 | Mehrzonen-Grundstück beim Upload | In RA1 eine Zone je Grundstück. Zonengrenze einzeichnen erst in AN5 – ohne GPU-Geometrie gibt es keine automatische Verschneidung |
 | E-A4 | Datenhaltung | Eigene Datenbank je Produkt. Ausgewertete Regelwerke erst dann teilen, wenn die Auswertungskosten es rechtfertigen |
 | E-A5 | Rechtlicher Rahmen | Solange nur das eigene Büro nutzt, genügt ein Hinweis „Analyse auf Grundlage der eingereichten Unterlagen, keine Rechtsauskunft; maßgeblich ist das Certificat d'urbanisme“. **Vor AN6 juristische Prüfung** (Haftung gegenüber fremden Büros, AGB, Auftragsverarbeitung, Urheberrecht an hochgeladenen Plänen) |
-| E-A6 | Claude-Budget | Deckel je Organisation und Monat, bevor Dritte hochladen dürfen; die Mechanik (Kostenzählung je Lauf, Monatsbudget) ist vorhanden |
+| E-A6 | Claude-Budget | Deckel je Organisation und Monat, bevor Dritte hochladen dürfen; die Mechanik (Kostenzählung je Lauf, Monatsbudget) ist vorhanden. Scans mit eigenem Limit (E-A7) |
+| E-A7 | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? | **Entschieden am 28.09.2026 (Nutzer): ja**, mit einem Hinweis vor der Verarbeitung, dass sie mehr kostet; im Abomodell ein eigenes Limit. Umsetzung als AN7, nach dem Schlüssel |
 
 ---
 

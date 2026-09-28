@@ -144,3 +144,69 @@ export function useProjectOverrides(projectId: string) {
       ),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Regelformular und Korrekturen im Analyse-Produkt (AN4, docs/PLAN_AN4_KORREKTUR.md)
+// ---------------------------------------------------------------------------
+
+export type RuleKindFormOut = components["schemas"]["RuleKindFormOut"];
+export type ParamFieldOut = components["schemas"]["ParamFieldOut"];
+export type ProjectOverrideOut = components["schemas"]["ProjectOverrideOut"];
+export type RuleSourceIn = components["schemas"]["RuleSourceIn"];
+
+/** Formularbeschreibung der Regelarten; ändert sich nur mit dem Server. */
+export function useRuleKinds() {
+  return useQuery({
+    queryKey: ["admin", "rule-kinds"],
+    queryFn: async () => unwrap(await api.GET("/api/v1/admin/rule-kinds")),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+const ownOverridesKey = (projectId: string) => ["rule-overrides", projectId] as const;
+
+export function useOwnOverrides(projectId: string) {
+  return useQuery({
+    queryKey: ownOverridesKey(projectId),
+    queryFn: async () =>
+      unwrap(await api.GET("/api/v1/projects/{project_id}/rule-overrides", { params: { path: { project_id: projectId } } })),
+  });
+}
+
+/** Regeln, Baurahmen, Analyse und Vergleich hängen an den Korrekturen: nach jeder Änderung neu laden. */
+function useAfterCorrection(projectId: string) {
+  const client = useQueryClient();
+  return (overrides: ProjectOverrideOut[]) => {
+    client.setQueryData(ownOverridesKey(projectId), overrides);
+    for (const key of [staffRulesKey(projectId), ["admin", "envelope", projectId], ["analysis", projectId]]) {
+      void client.invalidateQueries({ queryKey: key });
+    }
+  };
+}
+
+export function usePutOwnOverride(projectId: string) {
+  const refresh = useAfterCorrection(projectId);
+  return useMutation({
+    mutationFn: async (body: ProjectOverrideIn) =>
+      unwrap(
+        await api.PUT("/api/v1/projects/{project_id}/rule-overrides", {
+          params: { path: { project_id: projectId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeleteOwnOverride(projectId: string) {
+  const refresh = useAfterCorrection(projectId);
+  return useMutation({
+    mutationFn: async (overrideId: string) =>
+      unwrap(
+        await api.DELETE("/api/v1/projects/{project_id}/rule-overrides/{override_id}", {
+          params: { path: { project_id: projectId, override_id: overrideId } },
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}

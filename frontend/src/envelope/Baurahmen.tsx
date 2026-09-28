@@ -39,12 +39,24 @@ function Quelle({ limit }: { limit: LimitOut }) {
     return <span className="t-mute">{citation?.origin === "project" ? t("rules.origin.project") : "–"}</span>;
   }
   const label = t("rules.page", { page: citation.page });
-  if (!citation.source_url) return <span className="t-mute">{label}</span>;
+  // Projektkorrektur mit Fundstelle (AN4): Seite und „Korrektur“
+  const korrektur = citation.origin === "project" && <span className="t-mute"> · {t("rules.origin.correction")}</span>;
+  if (!citation.source_url) {
+    return (
+      <span className="t-mute">
+        {label}
+        {korrektur}
+      </span>
+    );
+  }
   return (
-    <a className="link" href={citation.source_url} target="_blank" rel="noreferrer" title={citation.quote ?? undefined}>
-      {label}
-      {!citation.quote_verified && <span className="t-warn"> *</span>}
-    </a>
+    <>
+      <a className="link" href={citation.source_url} target="_blank" rel="noreferrer" title={citation.quote ?? undefined}>
+        {label}
+        {!citation.quote_verified && <span className="t-warn"> *</span>}
+      </a>
+      {korrektur}
+    </>
   );
 }
 

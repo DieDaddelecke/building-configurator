@@ -9,12 +9,16 @@ import {
   useDeleteOverride,
   useProjectOverrides,
   usePutOverride,
+  useRuleKinds,
   useStaffProjectRules,
-  type ProjectOverrideIn,
+  type ProjectRulesOut,
+  type RuleOut,
   type ZoneRulesOut,
 } from "../../api/rules";
 import { useConfirmCustomerEdges, useCorrectEdgeArchitect, useReviewQueue, useStaffSite, type EdgeKind, type SiteOut } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
+import { ruleValue } from "../../rules/format";
+import { RegelFormular } from "../../rules/RegelFormular";
 import { RegelnSimulation } from "../../rules/RegelnSimulation";
 import { GrundstueckPruefen } from "../../site/GrundstueckPruefen";
 
@@ -115,79 +119,41 @@ const OVERRIDE_KINDS = [
   "annex",
 ] as const;
 
-/** Korrektur nur für dieses Projekt (z. B. Regeln eines Lotissement, Plan 3.4); andere Projekte bleiben unberührt. */
-function ProjektKorrektur({ projectId, zone }: { projectId: string; zone: ZoneRulesOut }) {
+/** Korrektur nur für dieses Projekt (z. B. Regeln eines Lotissement, Plan 3.4); andere Projekte bleiben unberührt.
+ *  Felder aus der Beschreibung der Regelarten statt JSON, Fundstelle im règlement des Planstands (AN4, RW15). */
+function ProjektKorrektur({ projectId, zone, rules }: { projectId: string; zone: ZoneRulesOut; rules: ProjectRulesOut }) {
   const { t } = useTranslation();
   const put = usePutOverride(projectId);
-  const [kind, setKind] = useState<ProjectOverrideIn["kind"]>("max_footprint_ratio");
-  const [status, setStatus] = useState<ProjectOverrideIn["status"]>("effective");
-  const [params, setParams] = useState("{}");
-  const [note, setNote] = useState("");
-  const [jsonError, setJsonError] = useState(false);
+  const kinds = useRuleKinds();
+  const [runde, setRunde] = useState(0);
+  const documents = rules.plan ? [{ id: rules.plan.id, title: rules.plan.title }] : [];
   return (
     <details className="karte p-3 text-sm">
       <summary className="cursor-pointer">{t("office.rules.projectOverride", { code: zone.code })}</summary>
-      <form
-        className="grid gap-3 mt-3 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          try {
-            const parsed = JSON.parse(params || "{}") as Record<string, unknown>;
-            setJsonError(false);
-            put.mutate({ zone_code: zone.code, kind, building_kind: "main", status, params: parsed, note });
-          } catch {
-            setJsonError(true);
-          }
-        }}
-      >
-        <label className="flex flex-col gap-1">
-          {t("rules.column.kind")}
-          <select className="field" value={kind} onChange={(e) => setKind(e.target.value as ProjectOverrideIn["kind"])}>
-            {OVERRIDE_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {t(`rules.kind.${k}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1">
-          {t("office.rules.status")}
-          <select className="field" value={status} onChange={(e) => setStatus(e.target.value as ProjectOverrideIn["status"])}>
-            {(["effective", "not_regulated", "unknown"] as const).map((s) => (
-              <option key={s} value={s}>
-                {t(`rules.status.${s}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          {t("office.rules.params")}
-          <input className="field f-mono" value={params} onChange={(e) => setParams(e.target.value)} placeholder='{"ratio": 0.2}' />
-        </label>
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          {t("office.rules.note")}
-          <input className="field" required minLength={3} value={note} onChange={(e) => setNote(e.target.value)} />
-        </label>
-        {jsonError && (
-          <p role="alert" className="t-alert m-0 sm:col-span-2">
-            {t("office.rules.jsonInvalid")}
-          </p>
+      <div className="mt-3">
+        {kinds.data ? (
+          <RegelFormular
+            key={runde}
+            kinds={kinds.data}
+            zoneCode={zone.code}
+            vorlage={{ kind: "max_footprint_ratio", building_kind: "any", status: "effective", params: {} }}
+            kindChoices={[...OVERRIDE_KINDS]}
+            buildingChoice
+            documents={documents}
+            pending={put.isPending}
+            error={put.error}
+            onSubmit={(body) => put.mutate(body, { onSuccess: () => setRunde((n) => n + 1) })}
+          />
+        ) : (
+          <p className="t-mute m-0">{t("loading")}</p>
         )}
-        {put.isError && (
-          <p role="alert" className="t-alert m-0 sm:col-span-2">
-            {put.error instanceof ApiError ? (put.error.problem.detail ?? put.error.problem.title) : t("error.generic")}
-          </p>
-        )}
-        <button type="submit" className="btn btn-primary justify-self-start" disabled={put.isPending}>
-          {t("office.rules.save")}
-        </button>
-      </form>
+      </div>
     </details>
   );
 }
 
 export function ProjektRegeln({ projectId }: { projectId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const rules = useStaffProjectRules(projectId);
   const overrides = useProjectOverrides(projectId);
   const remove = useDeleteOverride(projectId);
@@ -195,13 +161,14 @@ export function ProjektRegeln({ projectId }: { projectId: string }) {
   if (rules.isError) return <Fehler error={rules.error} />;
   return (
     <div className="flex flex-col gap-4 max-w-4xl border-t bd pt-8">
-      <RegelnSimulation rules={rules.data} zoneExtra={(zone) => <ProjektKorrektur projectId={projectId} zone={zone} />} />
+      <RegelnSimulation rules={rules.data} zoneExtra={(zone) => <ProjektKorrektur projectId={projectId} zone={zone} rules={rules.data} />} />
       {(overrides.data ?? []).length > 0 && (
         <ul className="m-0 p-0 list-none text-sm" aria-label={t("office.rules.overrides")}>
           {(overrides.data ?? []).map((o) => (
             <li key={o.id} className="flex justify-between gap-3 py-1 border-t bd">
               <span>
-                {o.zone_code} · {t(`rules.kind.${o.kind}`)} · <span className="f-mono">{JSON.stringify(o.params)}</span> · {o.note}
+                {o.zone_code} · {t(`rules.kind.${o.kind}`)} · {ruleValue({ ...o, reason: null } as unknown as RuleOut, t, i18n.language)}
+                {o.source && <> · {t("rules.page", { page: o.source.page })}</>} · {o.note}
               </span>
               <button type="button" className="btn btn-ghost" onClick={() => remove.mutate(o.id)} disabled={remove.isPending}>
                 {t("office.rules.removeOverride")}

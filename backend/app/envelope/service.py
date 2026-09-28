@@ -73,6 +73,7 @@ def _citation(rule: RuleOut) -> Citation:
         origin=rule.origin,
         confidence=rule.confidence,
         notes=rule.notes,
+        document_id=str(rule.source_document_id) if rule.source_document_id else None,
     )
 
 
@@ -88,13 +89,17 @@ def _rule_input(rule: RuleOut) -> RuleInput:
 
 
 def envelope_input(
-    db: Session, project_id: uuid.UUID, site: site_service.EnvelopeSite | None = None
+    db: Session,
+    project_id: uuid.UUID,
+    site: site_service.EnvelopeSite | None = None,
+    options: rules_service.RulesOptions = rules_service.CURRENT,
 ) -> tuple[EnvelopeInput, rules_service.RulesResult]:
     """Eingaben aus G1 und G2 einsammeln: für Kataster-Grundstücke und – mit hochgeladenem PLU (AN2) –
-    für Grundstücke ohne Kataster. Ohne Regeln siehe `_no_rules_input`; G2 läuft dann nicht (D13)."""
+    für Grundstücke ohne Kataster. Ohne Regeln siehe `_no_rules_input`; G2 läuft dann nicht (D13).
+    `options` wählt einen anderen Stand der Regeln (ohne Korrekturen, frühere Version; AN4)."""
     if site is None:
         site = site_service.envelope_site(db, project_id)
-    rules = rules_service.envelope_rules(db, project_id)
+    rules = rules_service.envelope_rules(db, project_id, options)
     geometries = {zone.code: shapely.from_wkb(zone.wkb) for zone in rules.zones}
     zones = [
         ZoneInput(
@@ -334,13 +339,16 @@ def project_envelope(db: Session, project_id: uuid.UUID) -> EnvelopeOut:
     return build_envelope(db, project_id)[0]
 
 
-def derived(db: Session, project_id: uuid.UUID) -> tuple[EnvelopeInput, Envelope | None]:
+def derived(
+    db: Session, project_id: uuid.UUID, options: rules_service.RulesOptions = rules_service.CURRENT
+) -> tuple[EnvelopeInput, Envelope | None]:
     """Eingaben und Ableitung für Module, die auf dem Baurahmen aufbauen (H2): die reine Fachlogik statt der
-    Ausgabeform. Für Weg E (freies Zeichnen) gibt es keine Ableitung (`None`, D13)."""
+    Ausgabeform. Für Weg E (freies Zeichnen) gibt es keine Ableitung (`None`, D13). Mit `options` für
+    einen anderen Stand der Regeln (Vergleich der Stände, AN4)."""
     site = site_service.envelope_site(db, project_id)
     if _without_rules(db, project_id, site):
         return _no_rules_input(site), None
-    data, _rules = envelope_input(db, project_id, site=site)
+    data, _rules = envelope_input(db, project_id, site=site, options=options)
     return data, derive_envelope(data)
 
 

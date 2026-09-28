@@ -342,7 +342,11 @@ class ProjectRegulation(UuidPk, Created, Base):
 
 
 class ProjectRuleOverride(UuidPk, Created, Base):
-    """Korrektur des Büros nur für ein Projekt (z. B. Lotissement); ändert die Zone für andere nicht."""
+    """Korrektur des Büros nur für ein Projekt (z. B. Lotissement); ändert die Zone für andere nicht.
+
+    Seit AN4 (docs/PLAN_AN4_KORREKTUR.md 3.2) mit Pflichtbegründung (`note`, nur für das Büro) und
+    optionaler Fundstelle: Datei, Seite, Zitat. Die Datei kann ein Zusatzdokument sein – dann ist die
+    Korrektur eine Übernahme aus diesem Dokument (3.4)."""
 
     __tablename__ = "project_rule_override"
 
@@ -353,6 +357,12 @@ class ProjectRuleOverride(UuidPk, Created, Base):
     status: Mapped[str] = mapped_column(String(20))
     params: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
     note: Mapped[str | None] = mapped_column(Text)
+    source_file_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("source_file.id", ondelete="SET NULL")
+    )
+    page: Mapped[int | None] = mapped_column(Integer)
+    quote: Mapped[str | None] = mapped_column(Text)
+    quote_verified: Mapped[bool] = mapped_column(Boolean, server_default=text("false"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_by: Mapped[str | None] = mapped_column(String(200))
 
@@ -362,4 +372,5 @@ class ProjectRuleOverride(UuidPk, Created, Base):
         ),
         CheckConstraint(f"status IN {RULE_STATUSES}", name="status_known"),
         CheckConstraint("building_kind IN ('main','annex','pool','any')", name="building_kind_known"),
+        CheckConstraint("page IS NULL OR page >= 1", name="page_valid"),
     )

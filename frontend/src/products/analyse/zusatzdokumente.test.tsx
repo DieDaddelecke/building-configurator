@@ -6,6 +6,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { SupplementAnalysisOut } from "../../api/analysis";
 import type { ProjectRegulationOut } from "../../api/regulations";
 import i18n from "../../i18n";
+import kinds from "../../rules/__fixtures__/rule-kinds.json";
 import { Zusatzdokumente } from "./Zusatzdokumente";
 
 const state = vi.hoisted(() => ({
@@ -14,6 +15,19 @@ const state = vi.hoisted(() => ({
   upload: vi.fn(),
   chooseLot: vi.fn(),
   remove: vi.fn(),
+  put: vi.fn(),
+}));
+
+vi.mock("../../api/rules", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api/rules")>()),
+  useRuleKinds: () => ({ data: kinds, isPending: false }),
+  usePutOwnOverride: () => ({ mutate: state.put, isPending: false, error: null }),
+  useStaffProjectRules: () => ({
+    data: {
+      plan: { id: "plu", title: "PLUi Erdre et Gesvres" },
+      zones: [{ code: "Uh", rules: [], hints: [] }],
+    },
+  }),
 }));
 
 vi.mock("../../api/regulations", async (importOriginal) => ({
@@ -106,6 +120,7 @@ const comparisons: SupplementAnalysisOut = {
       supplement: limit("max_height", { ridge_m: 8 }, 2),
       plu: limit("max_height", { eave_m: 7, ridge_m: 10 }, 9),
       details: { ridge_m: "stricter" },
+      proposal: { eave_m: 7, ridge_m: 8, reference: "natural_terrain", measured_at: "highest_point", includes_roof_installations: false },
     },
     {
       kind: "max_area",
@@ -114,6 +129,7 @@ const comparisons: SupplementAnalysisOut = {
       supplement: limit("max_area", { sdp_m2: 180, footprint_m2: 120 }, 3),
       plu: null,
       details: {},
+      proposal: { sdp_m2: 180, footprint_m2: 120 },
     },
     {
       kind: "setback_side",
@@ -194,7 +210,44 @@ it("zeigt den Stand und den Vergleich mit dem Bebauungsplan", () => {
   expect(area).toHaveTextContent("nur im Zusatzdokument");
   expect(within(table).getByRole("row", { name: /Seitlicher Abstand/ })).toHaveTextContent("keine eigene Regel – der PLU gilt");
   expect(screen.getByText("Clôtures sur rue en haies vives.")).toBeInTheDocument();
-  expect(screen.getByText(/Nicht in Regeln, Baurahmen und Analyse eingerechnet/)).toBeInTheDocument();
+  expect(screen.getByText(/Nicht von selbst in Regeln, Baurahmen und Analyse eingerechnet/)).toBeInTheDocument();
+  expect(within(height).getByRole("button", { name: "Übernehmen" })).toBeInTheDocument();
+  expect(within(table).getByRole("row", { name: /Seitlicher Abstand/ })).not.toHaveTextContent("Übernehmen");
+});
+
+it("übernimmt das Strengere mit der Fundstelle des Zusatzdokuments (AN4)", async () => {
+  state.regulations = [supplement({ zone_code: "Lot-12", chapter_code: "DOC" })];
+  state.supplements = [comparisons];
+  state.put.mockReset();
+  zeige();
+  const table = screen.getByRole("table", { name: /Vergleich von Règlement du lotissement/ });
+  await userEvent.click(within(within(table).getByRole("row", { name: /Höhe/ })).getByRole("button", { name: "Übernehmen" }));
+  const formular = screen.getByRole("form", { name: "Korrektur: Höhe" });
+  expect(within(formular).getByLabelText("Traufhöhe")).toHaveValue("7");
+  expect(within(formular).getByLabelText("Firsthöhe")).toHaveValue("8");
+  expect(within(formular).getByLabelText("Dokument")).toHaveValue("s1");
+  expect(within(formular).getByLabelText("Seite")).toHaveValue("2");
+  await userEvent.type(within(formular).getByLabelText("Begründung"), "Lotissement autorisé en 2021");
+  await userEvent.click(within(formular).getByRole("button", { name: "Korrektur speichern" }));
+  expect(state.put).toHaveBeenCalledWith(
+    expect.objectContaining({
+      zone_code: "Uh",
+      kind: "max_height",
+      params: { eave_m: 7, ridge_m: 8, reference: "natural_terrain", measured_at: "highest_point", includes_roof_installations: false },
+      source: { document_id: "s1", page: 2, quote: "Zitat" },
+    }),
+    expect.anything(),
+  );
+});
+
+it("zeigt übernommene Werte als übernommen", () => {
+  state.regulations = [supplement({ zone_code: "Lot-12", chapter_code: "DOC" })];
+  const [height] = comparisons.comparisons;
+  state.supplements = [{ ...comparisons, comparisons: [{ ...height!, verdict: "adopted", proposal: null }] }];
+  zeige();
+  const row = screen.getByRole("row", { name: /Höhe/ });
+  expect(row).toHaveTextContent("übernommen");
+  expect(within(row).queryByRole("button", { name: "Übernehmen" })).toBeNull();
 });
 
 it("nimmt höchstens drei Zusatzdokumente an", () => {

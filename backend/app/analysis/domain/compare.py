@@ -4,6 +4,9 @@ Beide gelten nebeneinander; das Strengere bindet – sofern das Zusatzdokument g
 beurteilt (E-AN3-2). Der Vergleich ordnet deshalb nur ein, er verrechnet nichts. Je Parameter eine Richtung:
 Ein Höchstwert ist kleiner strenger, ein Mindestwert größer, eine erlaubte Menge als echte Teilmenge. Ein
 Parameter nur im Zusatzdokument schränkt zusätzlich ein; einer nur im PLU gilt weiter und ist neutral.
+
+Seit AN4 (docs/PLAN_AN4_KORREKTUR.md 3.4) übernimmt der Architekt Werte als Projektkorrektur: Der Vergleich
+schlägt dafür das Strengere je Parameter vor (`merge_stricter`) und meldet eine Übernahme als `adopted`.
 """
 
 from dataclasses import dataclass, field
@@ -11,9 +14,18 @@ from typing import Any, Literal
 
 from app.envelope.domain.inputs import RuleInput
 from app.envelope.domain.setbacks import index_rules, rule_for
+from app.rules.domain.kinds import ParamProblem, validate_params
 
 Verdict = Literal[
-    "stricter", "looser", "equal", "mixed", "different", "only_supplement", "no_own_rule", "unknown"
+    "stricter",
+    "looser",
+    "equal",
+    "mixed",
+    "different",
+    "only_supplement",
+    "no_own_rule",
+    "unknown",
+    "adopted",
 ]
 ParamVerdict = Literal["stricter", "looser", "equal", "different"]
 Direction = Literal["max", "min", "allowed", "forbidden", "permission", "storeys", "ordered"]
@@ -63,6 +75,8 @@ ANALYSIS_KINDS = frozenset(
 """Arten, die in die Kennzahlen der Analyse eingehen: Ist das Zusatzdokument hier strenger, meldet die
 Analyse `supplement_stricter`, weil ihre Werte es nicht enthalten."""
 RESTRICTING: frozenset[str] = frozenset({"stricter", "only_supplement", "mixed"})
+ADOPTABLE: frozenset[str] = frozenset({"stricter", "only_supplement", "mixed", "different"})
+"""Ergebnisse, bei denen eine Übernahme als Projektkorrektur etwas ändert (AN4 3.4)."""
 _TOLERANCE = 0.005
 
 
@@ -74,6 +88,8 @@ class Comparison:
     supplement: RuleInput
     plu: RuleInput | None
     details: dict[str, ParamVerdict] = field(default_factory=dict)
+    proposal: dict[str, Any] | None = None
+    """Parameter für die Übernahme: das Strengere je Parameter (AN4 3.4); nur bei `ADOPTABLE`."""
 
 
 def _levels(value: Any) -> int | None:
@@ -145,21 +161,77 @@ def _combine(details: dict[str, ParamVerdict]) -> Verdict:
     return "equal"
 
 
-def compare_rule(supplement: RuleInput, plu: RuleInput | None) -> Comparison:
+def _stricter_value(name: str, direction: Direction | None, plu: Any, supplement: Any) -> Any:
+    """Der strengere von zwei Werten eines Parameters; ohne Richtung der des Zusatzdokuments."""
+    if direction in ("max", "min") and _is_number(plu) and _is_number(supplement):
+        return min(plu, supplement) if direction == "max" else max(plu, supplement)
+    if direction == "allowed":
+        # Leere Liste heißt „keine Einschränkung“; leere Schnittmenge ist ein Widerspruch (7.1 Nr. 10)
+        if not plu:
+            return supplement
+        if not supplement:
+            return plu
+        both = sorted(set(plu) & set(supplement))
+        return both or supplement
+    if direction == "forbidden":
+        return sorted(set(plu or ()) | set(supplement or ()))
+    if direction == "permission":
+        return bool(plu) and bool(supplement)
+    if direction == "storeys":
+        left, right = _levels(plu), _levels(supplement)
+        return plu if left is not None and right is not None and left < right else supplement
+    if direction == "ordered":
+        ranks = ORDER[name]
+        left_rank, right_rank = ranks.get(str(plu)), ranks.get(str(supplement))
+        if left_rank is not None and right_rank is not None and left_rank > right_rank:
+            return plu
+        return supplement
+    return supplement
+
+
+def merge_stricter(kind: str, plu: RuleInput | None, supplement: RuleInput) -> dict[str, Any]:
+    """Parameter der Übernahme (AN4 3.4): Ausgangspunkt die wirksame PLU-Regel, darüber je Parameter des
+    Zusatzdokuments das Strengere. Parameter nur im PLU bleiben – sonst ließe „First 8 m“ die Traufe des PLU
+    fallen (PLAN_AN4 7.1 Nr. 1). Ergibt das keine gültige Regel, die Parameter des Zusatzdokuments."""
+    if plu is None or plu.status != "effective":
+        return dict(supplement.params)
+    directions = DIRECTIONS.get(kind, {})
+    merged = dict(plu.params)
+    for name, value in supplement.params.items():
+        merged[name] = (
+            _stricter_value(name, directions.get(name), plu.params[name], value)
+            if name in plu.params
+            else value
+        )
+    try:
+        return validate_params(kind, merged)
+    except ParamProblem:
+        return dict(supplement.params)
+
+
+def compare_rule(supplement: RuleInput, plu: RuleInput | None, document_id: str | None = None) -> Comparison:
     base: dict[str, Any] = {
         "kind": supplement.kind,
         "building_kind": supplement.building_kind,
         "supplement": supplement,
     }
+    if (
+        plu is not None
+        and document_id is not None
+        and plu.citation.origin == "project"
+        and plu.citation.document_id == document_id
+    ):
+        # Die wirksame Regel ist eine Übernahme aus diesem Dokument (AN4 3.4)
+        return Comparison(**base, verdict="adopted", plu=plu)
     if supplement.status == "not_regulated":
         # „Non réglementé“ im Zusatzdokument heißt: Es regelt nichts Eigenes, der PLU gilt (7.1 Nr. 5)
         return Comparison(**base, verdict="no_own_rule", plu=plu)
     if supplement.status != "effective":
         return Comparison(**base, verdict="unknown", plu=plu)
     if plu is None or plu.status not in ("effective", "not_regulated"):
-        return Comparison(**base, verdict="only_supplement", plu=plu)
+        return Comparison(**base, verdict="only_supplement", plu=plu, proposal=dict(supplement.params))
     if plu.status == "not_regulated":
-        return Comparison(**base, verdict="stricter", plu=plu)
+        return Comparison(**base, verdict="stricter", plu=plu, proposal=dict(supplement.params))
     directions = DIRECTIONS.get(supplement.kind, {})
     details: dict[str, ParamVerdict] = {}
     for name, value in supplement.params.items():
@@ -169,15 +241,20 @@ def compare_rule(supplement: RuleInput, plu: RuleInput | None) -> Comparison:
             details[name] = "stricter" if direction is not None else "different"
             continue
         details[name] = _param(name, direction, plu.params[name], value)
-    return Comparison(**base, verdict=_combine(details), plu=plu, details=details)
+    verdict = _combine(details)
+    proposal = merge_stricter(supplement.kind, plu, supplement) if verdict in ADOPTABLE else None
+    return Comparison(**base, verdict=verdict, plu=plu, details=details, proposal=proposal)
 
 
-def compare(supplement_rules: list[RuleInput], plu_rules: list[RuleInput]) -> list[Comparison]:
+def compare(
+    supplement_rules: list[RuleInput], plu_rules: list[RuleInput], document_id: str | None = None
+) -> list[Comparison]:
     """Je Regel des Zusatzdokuments (ohne Hinweise) die PLU-Regel derselben Art und desselben Baukörpers,
-    mit Rückfall auf `any` (Spez. 5.2.4)."""
+    mit Rückfall auf `any` (Spez. 5.2.4). `document_id`: Kennung des Zusatzdokuments, um Übernahmen zu
+    erkennen."""
     index = index_rules(plu_rules)
     return [
-        compare_rule(rule, rule_for(index, rule.kind, rule.building_kind))
+        compare_rule(rule, rule_for(index, rule.kind, rule.building_kind), document_id)
         for rule in supplement_rules
         if rule.status != "text_only" and rule.kind != "text_only"
     ]
