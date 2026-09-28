@@ -4,6 +4,35 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 28.09.2026 – Emprise Analyse: AN3 vollständig (Gabarit und Schnitt)
+
+**Auftrag:** „welches ist der nächste Schritt, um Emprise Analyse abzuschließen?“ – Antwort: RA2 (Rest von AN3, AN4, AN5), als Nächstes Gabarit und Schnitt, parallel Schlüssel und echte Unterlagen. Darauf „ja, beginne mit dem Modulplan für Gabarit und Schnitt – beende AN3“, am Ende „committe und pushe alle Änderungen, danach /handoff“.
+
+**Commits:** `ec5a6e1` Emprise Analyse: AN3 vollständig (Gabarit und Schnitt), gepusht; CI lief beim Hand-off noch. Die CI zu `e87bb5e` (Hand-off der OpenRouter-Session) ist grün.
+
+**Neu**
+- Modulplan [docs/PLAN_AN3_GABARIT.md](docs/PLAN_AN3_GABARIT.md) mit Selbstprüfung (13 Befunde vor dem Bau, 4 beim Bau, geprüfte Alternativen, Browserprüfung).
+- Backend: `analysis/domain/gabarit.py` (Stufen in beiden Auslegungen), `analysis/domain/section.py` (Schnitte A–A', B–B'), Tests `tests/unit/test_analysis_gabarit.py`.
+- Frontend: `products/analyse/GabaritSchnitt.tsx` (Lageplan mit Höhenlinien, Stufentabelle, Schnitt) mit `gabarit-schnitt.test.tsx`.
+
+**Geändert**
+- Kern G3 ohne Verhaltensänderung: `setbacks.at_height`, `derive.contour_at_height`, `heights.from_storeys` mit optionaler Geschosshöhe.
+- Nutzfläche je Geschoss aus dem Gabarit (EA15); `NOT_COUNTED` ohne `boundary_height`, `upper_setbacks`; `ENGINE_VERSION an3-1.1.0`; `AnalysisOut.gabarit`, `.sections`, Geschossflächen; `openapi.json`, `schema.d.ts`.
+- Telefonbreite der Projektseite (Fehler seit AN1): `min-w-0` an den Rasterkindern, `relative` am Rahmen von `site/KantenListe.tsx`.
+- Dokumente: ANNAHMEN EA13–EA17 (EA05, EA11 angepasst), PLAN_ANALYSE (Kopf, AN3, RA2), PLAN_AN3_ANALYSE (Verweise, 7.1 Nr. 9 gelöst), BETRIEB 15 (Gabarit, Laufzeit, Störung), README (Stolperstelle Telefonbreite; beim Hand-off: Hinweis zu `uv lock` aus HANDOFF 6 dorthin verschoben, veralteter Verweis auf `integrations/claude.py` berichtigt, Browserprüfung mit vorübergehender Büro-Korrektur), AGENTS (Stand, Dokumententabelle), UMSETZUNGSPLAN D18, Startseitentext de/fr.
+
+**Entschieden**
+- E-AN3G-1 bis E-AN3G-8 (PLAN_AN3_GABARIT 6) nach Empfehlung mit dem Auftrag „beende AN3“: beide Auslegungen, Stufen 3 m plus kennzeichnende Höhen, zwei feste Schnitte, Gelände eben bis AN5, 3D-DXF mit AN5, Nutzfläche aus dem Gabarit, keine Dachneigung, Rechnung im Backend.
+
+**Ohne Dateiänderung**
+- Prüflauf: Backend 606 Tests mit `TEST_S3=1`, Frontend 178, ruff, Format, mypy, Typprüfung, Lint grün (PLAN_AN3_GABARIT 7.4).
+- Browserprüfung mit vorübergehender Büro-Korrektur im Testprojekt „Testparzelle Zone Uh“ (danach gelöscht, im Audit-Log sichtbar); Ergebnis in PLAN_AN3_GABARIT 7.4, Laufzeit (Median 59 ms) in BETRIEB 15.
+- Lokale Images neu gebaut (`docker compose build migrate web`), beide Stacks neu gestartet: Die Container haben jetzt auch das `openai`-Paket (HANDOFF 4.6 Punkt 1, erster Teil erledigt).
+
+**Memory:** `feedback-plan-dann-umsetzen` um den Ablauf dieser Session ergänzt.
+
+---
+
 ## 26.09.2026 – G2: Schnittstelle auf OpenRouter umgestellt
 
 **Auftrag:** Schnittstelle für OpenRouter statt der Claude API einrichten (Nutzerfrage „kannst du eine Schnittstelle für OpenRouter einstellen?“); nach kurzer Klärung (Zweck: vollständiger Ersatz; Drittanbieter für Planunterlagen akzeptiert) umgesetzt. Am Ende „pushe und comitte alle Änderungen, dann /handoff“.
