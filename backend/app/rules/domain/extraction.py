@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from app.rules.domain import lexicon
 from app.rules.domain.kinds import (
     BUILDING_KINDS,
     COLOR_FAMILIES,
@@ -22,7 +23,9 @@ from app.rules.domain.kinds import (
 
 ExtractedStatus = Literal["regulated", "not_regulated", "graphic_reference", "text_only"]
 EXTRACTED_STATUSES: tuple[str, ...] = ("regulated", "not_regulated", "graphic_reference", "text_only")
-DocumentRole = Literal["general", "chapter"]
+DocumentRole = Literal["general", "chapter", "extra"]
+DOCUMENT_ROLES: tuple[str, ...] = ("general", "chapter", "extra")
+"""`extra`: Zusatzseiten der Nachsuche (drittes PDF, docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.6)."""
 
 _NULLABLE_NUMBER = {"type": ["number", "null"]}
 _NULLABLE_STRING = {"type": ["string", "null"]}
@@ -55,7 +58,7 @@ OUTPUT_SCHEMA: dict[str, Any] = {
                             "additionalProperties": False,
                         },
                     },
-                    "document": {"type": "string", "enum": ["general", "chapter"]},
+                    "document": {"type": "string", "enum": list(DOCUMENT_ROLES)},
                     "page": {"type": "integer"},
                     "quote": {"type": "string"},
                     "confidence": {"type": "number"},
@@ -120,13 +123,17 @@ Quote those words with their context.
 text. Quote the reference.
 - `text_only`: a relevant qualitative requirement that the params cannot express. Put a short summary in \
 French in the `summary` param.
+- A value that depends on a condition (plot size, position on the plot, a scale of percentages) is never \
+reduced to one number: give the whole rule as `text_only` and leave the kind out.
 - If a matter is not addressed at all, omit the rule.
 
 quote, document, page
 - `quote`: verbatim text copied from the page, one to three sentences, containing every number you put in \
-params. No paraphrase, no ellipsis, no translation.
+params. If the sentences you need are not adjacent, join their verbatim parts with " … " in their original \
+order; the parts must stand close together on the same page or across one page break, and every number \
+must stand inside a part of at least a few words. No paraphrase, no translation.
 - `document`: `general` for the first PDF (general provisions and definitions), `chapter` for the second \
-(the zone chapter).
+(the zone chapter); in a gap search, `extra` for the third PDF (additional pages).
 - `page`: 1-based position of the page inside that PDF, counting from its first page. Not the printed page \
 number.
 - `confidence`: 0 to 1, your certainty that the value applies to the general case.
@@ -163,11 +170,16 @@ réglementé", "sans objet"). Quote those words with their context.
 than in the text. Quote the reference.
 - `text_only`: a relevant qualitative requirement that the params cannot express (for example easements, \
 use restrictions, architectural prescriptions). Put a short summary in French in the `summary` param.
+- A value that depends on a condition (lot size, position on the lot, a scale of percentages) is never \
+reduced to one number: give the whole rule as `text_only` and leave the kind out.
 - If a matter is not addressed at all, omit the rule.
 
 quote, document, page
 - `quote`: verbatim text copied from the page, one to three sentences, containing every number you put in \
-params. For a table row, quote the row with its lot number. No paraphrase, no ellipsis, no translation.
+params. For a table row, quote the row with its lot number. If the sentences you need are not adjacent, join \
+their verbatim parts with " … " in their original order; the parts must stand close together on the same \
+page or across one page break, and every number must stand inside a part of at least a few words. No \
+paraphrase, no translation.
 - `document`: always `chapter` (there is only one PDF).
 - `page`: 1-based position of the page inside the PDF, counting from its first page. Not the printed page \
 number.
@@ -254,6 +266,142 @@ for that sector and building_kind, for example because it concerns another secto
 or a special case. Return one check per claim with its number."""
 
 
+GAP_VERDICTS: tuple[str, ...] = ("found", "not_expressible", "absent")
+PASSAGE_VERDICTS: tuple[str, ...] = ("assigned", "text_only", "out_of_scope")
+OUT_OF_SCOPE_REASONS: tuple[str, ...] = (
+    "other_use",
+    "public_facility",
+    "existing_building",
+    "multi_dwelling",
+    "networks",
+    "access_procedure",
+    "drawing",
+    "other",
+)
+"""Gründe, aus denen eine Stelle kein neues Einfamilienhaus betrifft (PLAN_G2_VOLLSTAENDIGKEIT 3.6)."""
+
+_RULES_ARRAY = OUTPUT_SCHEMA["properties"]["rules"]
+
+GAP_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "gaps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "gap": {"type": "integer"},
+                    "verdict": {"type": "string", "enum": list(GAP_VERDICTS)},
+                    "rules": _RULES_ARRAY,
+                    "searched": {"type": "string"},
+                },
+                "required": ["gap", "verdict", "rules", "searched"],
+                "additionalProperties": False,
+            },
+        },
+        "passages": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "passage": {"type": "integer"},
+                    "verdict": {"type": "string", "enum": list(PASSAGE_VERDICTS)},
+                    "rules": _RULES_ARRAY,
+                    "reason": {"type": "string", "enum": [*OUT_OF_SCOPE_REASONS, "none"]},
+                    "note": {"type": "string"},
+                },
+                "required": ["passage", "verdict", "rules", "reason", "note"],
+                "additionalProperties": False,
+            },
+        },
+        "remarks": {"type": "string"},
+    },
+    "required": ["gaps", "passages", "remarks"],
+    "additionalProperties": False,
+}
+
+GAP_TASK = """Gap search. Extraction and verification of this zone chapter are done. The server lists below \
+what is still missing or unresolved, and the passages of the chapter that no rule covers yet. A gap is not a \
+claim that a rule exists.
+
+For each numbered gap, search the documents for the matter under all its names: the alternative terms \
+given, the usual article, the headings of modernised PLU sections, the definitions (lexique) and the general \
+provisions. Follow references in the chapter to other parts of the regulation; the third PDF, if present, \
+contains pages from those parts. Pages of other zones never apply. Then give one verdict:
+- `found`: the regulation sets this matter for the sector and building_kind. Give the rule(s) exactly as in \
+extraction (status, params, document, page, quote). If the gap names a previous finding, correct it; quote \
+verbatim and join non-adjacent parts with " … ".
+- `not_expressible`: the matter is regulated, but the params cannot express it (for example a scale that \
+depends on the plot size). Give one `text_only` rule with a short French summary of the whole rule and \
+its quote.
+- `absent`: the documents do not address the matter. In `searched`, name the articles, headings and terms \
+you checked.
+
+For each numbered passage, give one verdict:
+- `assigned`: the passage sets a rule of one of the kinds for a single-family house; give the rule(s) as \
+in extraction.
+- `text_only`: a requirement that matters for a single-family house but that the params cannot express; \
+give one `text_only` rule.
+- `out_of_scope`: the passage does not constrain a new single-family house on an ordinary plot. Reason: \
+`other_use` (commerce, industry, agriculture, offices), `public_facility`, `existing_building`, \
+`multi_dwelling` (programmes of several dwellings), `networks` (water, sewage, energy, telecom, waste), \
+`access_procedure` (access, roads, procedures), `drawing` (labels of a drawing), `other`.
+Use reason `none` unless the verdict is `out_of_scope`.
+
+Return every gap and every passage with its number. Use only what the documents say."""
+
+
+def gap_instruction(
+    payload: dict[str, Any],
+    chapter_code: str,
+    general_pages: list[int],
+    chapter_pages: list[int],
+    extra_pages: list[int],
+) -> str:
+    """Aufgabe der Nachsuche mit Lücken und offenen Stellen (`payload`: `gaps`, `passages`)."""
+    context = (
+        f"Zone chapter: {chapter_code}. The first PDF contains pages {_ranges(general_pages)} of the "
+        f"regulation, the second PDF pages {_ranges(chapter_pages)}"
+    )
+    context += f", the third PDF pages {_ranges(extra_pages)}." if extra_pages else "; there is no third PDF."
+    lines = [
+        GAP_TASK,
+        context,
+        "Sections of modernised PLU: " + "; ".join(lexicon.MODERN_SECTIONS) + ".",
+        "",
+        "Gaps:",
+    ]
+    for gap in payload.get("gaps", []):
+        line = (
+            f"Gap {gap['gap']}: sector {gap['sector']}, kind {gap['kind']}, building_kind "
+            f"{gap['building_kind']}. Alternative terms: {', '.join(gap['terms'])}."
+        )
+        if gap.get("article"):
+            line += f" Usual article in older PLU: {gap['article']}."
+        previous = gap.get("previous")
+        if previous:
+            quote = json.dumps(previous.get("quote"), ensure_ascii=False)
+            values = json.dumps(previous.get("params") or {}, ensure_ascii=False, sort_keys=True)
+            line += f" Previous finding: {previous['reason']}; quote {quote}; values {values}."
+        lines.append(line)
+    if not payload.get("gaps"):
+        lines.append("(none)")
+    lines += ["", "Passages (page = position in the second PDF):"]
+    for passage in payload.get("passages", []):
+        text = json.dumps(passage["text"], ensure_ascii=False)
+        lines.append(f"Passage {passage['passage']} (page {passage['page']}): {text}")
+    if not payload.get("passages"):
+        lines.append("(none)")
+    return "\n".join(lines)
+
+
+TEXT_INPUT_NOTE = """The PDFs are given here as their extracted text layer, each inside a <document> element \
+named like the PDF. A line `=== page n ===` starts page n of that PDF: use n as `page`. Tables and drawings \
+lose their layout in this form; report a value from a table only if row and column are unambiguous."""
+"""Vorspann der Anfrage, wenn das Modell die Textschicht statt der PDFs bekommt (PU12). Gehört über
+`extract.input_hash` zur Eingabe: Eine Änderung führt zu einer neuen Auswertung."""
+
+
 def system_prompt(kind: DocumentKind = "plu") -> str:
     return SUPPLEMENT_SYSTEM_PROMPT if kind == "supplement" else SYSTEM_PROMPT
 
@@ -313,7 +461,18 @@ def prompt_fingerprint(kind: DocumentKind = "plu") -> str:
     """Prüfsumme über Prompts und Ausgabeschemata: Jede Änderung daran führt zu einer neuen Auswertung, auch
     wenn `PROMPT_VERSION` nicht erhöht wurde. Je Dokumentart eigener Prompt, also eigene Prüfsumme."""
     payload = json.dumps(
-        [system_prompt(kind), OUTPUT_SCHEMA, VERIFICATION_TASK, VERIFICATION_SCHEMA],
+        [
+            system_prompt(kind),
+            OUTPUT_SCHEMA,
+            VERIFICATION_TASK,
+            VERIFICATION_SCHEMA,
+            GAP_TASK,
+            GAP_SCHEMA,
+            lexicon.TERMS,
+            lexicon.ARTICLES,
+            lexicon.BUILDING_TERMS,
+            lexicon.MODERN_SECTIONS,
+        ],
         sort_keys=True,
         ensure_ascii=False,
     )
@@ -349,43 +508,105 @@ class ExtractedRule:
     duplicate_params: list[str] = field(default_factory=list)
 
 
+def _parse_rule(item: Any) -> ExtractedRule | None:
+    try:
+        kind = str(item["kind"])
+        building_kind = str(item["building_kind"])
+        status = str(item["status"])
+        document = str(item["document"])
+        if (
+            kind not in RULE_KINDS
+            or building_kind not in BUILDING_KINDS
+            or status not in EXTRACTED_STATUSES
+            or document not in DOCUMENT_ROLES
+        ):
+            return None
+        params, duplicates = _params(item.get("params") or [])
+        return ExtractedRule(
+            sector=str(item["sector"]).strip(),
+            kind=kind,
+            building_kind=building_kind,
+            status=status,
+            params=params,
+            document=document,
+            page=int(item["page"]),
+            quote=str(item["quote"]),
+            confidence=max(0.0, min(1.0, float(item["confidence"]))),
+            notes=str(item.get("notes") or "")[:2000],
+            duplicate_params=duplicates,
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _parse_rules(items: Any) -> list[ExtractedRule]:
+    parsed = [_parse_rule(item) for item in items] if isinstance(items, list) else []
+    return [rule for rule in parsed if rule is not None]
+
+
 def parse_output(data: Any) -> list[ExtractedRule]:
     """Antwort des Modells in Regeln umwandeln. Einträge, die dem Schema nicht entsprechen, fallen weg."""
     if not isinstance(data, dict) or not isinstance(data.get("rules"), list):
         raise ValueError("output_without_rules")
-    rules: list[ExtractedRule] = []
-    for item in data["rules"]:
+    return _parse_rules(data["rules"])
+
+
+@dataclass(frozen=True)
+class GapAnswer:
+    gap: int
+    verdict: str
+    """`found`, `not_expressible` oder `absent`."""
+    rules: list[ExtractedRule]
+    searched: str
+
+
+@dataclass(frozen=True)
+class PassageAnswer:
+    passage: int
+    verdict: str
+    """`assigned`, `text_only` oder `out_of_scope`."""
+    rules: list[ExtractedRule]
+    reason: str
+    note: str
+
+
+@dataclass(frozen=True)
+class GapSearchResult:
+    gaps: dict[int, GapAnswer]
+    passages: dict[int, PassageAnswer]
+
+
+def parse_gaps(data: Any) -> GapSearchResult:
+    """Antwort der Nachsuche je Lücke und je Textstelle. Einträge ohne gültiges Urteil fallen weg (die Lücke
+    bleibt dann, wie sie war)."""
+    if not isinstance(data, dict) or not isinstance(data.get("gaps"), list):
+        raise ValueError("output_without_gaps")
+    gaps: dict[int, GapAnswer] = {}
+    for item in data["gaps"]:
         try:
-            kind = str(item["kind"])
-            building_kind = str(item["building_kind"])
-            status = str(item["status"])
-            document = str(item["document"])
-            if (
-                kind not in RULE_KINDS
-                or building_kind not in BUILDING_KINDS
-                or status not in EXTRACTED_STATUSES
-                or document not in ("general", "chapter")
-            ):
+            verdict = str(item["verdict"])
+            if verdict not in GAP_VERDICTS:
                 continue
-            params, duplicates = _params(item.get("params") or [])
-            rules.append(
-                ExtractedRule(
-                    sector=str(item["sector"]).strip(),
-                    kind=kind,
-                    building_kind=building_kind,
-                    status=status,
-                    params=params,
-                    document=document,
-                    page=int(item["page"]),
-                    quote=str(item["quote"]),
-                    confidence=max(0.0, min(1.0, float(item["confidence"]))),
-                    notes=str(item.get("notes") or "")[:2000],
-                    duplicate_params=duplicates,
-                )
+            number = int(item["gap"])
+            gaps[number] = GapAnswer(
+                number, verdict, _parse_rules(item.get("rules")), str(item.get("searched") or "")
             )
         except (KeyError, TypeError, ValueError):
             continue
-    return rules
+    passages: dict[int, PassageAnswer] = {}
+    for item in data.get("passages") or []:
+        try:
+            verdict = str(item["verdict"])
+            reason = str(item.get("reason") or "none")
+            if verdict not in PASSAGE_VERDICTS or reason not in (*OUT_OF_SCOPE_REASONS, "none"):
+                continue
+            number = int(item["passage"])
+            passages[number] = PassageAnswer(
+                number, verdict, _parse_rules(item.get("rules")), reason, str(item.get("note") or "")[:300]
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return GapSearchResult(gaps, passages)
 
 
 @dataclass(frozen=True)

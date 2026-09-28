@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # Datenbank: die Anwendung arbeitet mit der Rolle `app`, Migrationen mit `migrator` (Plan 6.6)
     database_url: str = "postgresql+psycopg://app:app@localhost:5432/emprise"
     migration_database_url: str | None = None
+    shared_database_url: str | None = None
+    """Gemeinsame Datenbank beider Produkte (KI-Modell, Referenzlisten; PLAN_G2_VOLLSTAENDIGKEIT 3.9). Ohne
+    Angabe liegen die gemeinsamen Tabellen in der Datenbank dieser Instanz (Tests, eine Instanz allein)."""
+    shared_migration_database_url: str | None = None
 
     # Geheimnis für Signaturen (OIDC-Zwischenspeicher, Rate-Limit-Schlüssel)
     secret_key: SecretStr = SecretStr("local-development-only-change-me")
@@ -92,6 +96,11 @@ class Settings(BaseSettings):
     """`pdf`: Seitenauszüge als PDF (Spez. 5.2.3); `text`: ihre Textschicht mit Seitenmarken, für Modelle ohne
     PDF-Eingabe (PU12). Ein im Büro gewähltes Modell bringt seine Eingabe selbst mit."""
     rules_runs: int = Field(default=2, ge=1, le=3)
+    rules_gap_search: bool = True
+    """Nachsuche nach Auswertung und Gegenprüfung: fehlende Angaben und offene Textstellen gezielt nachfragen
+    (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.6)."""
+    rules_gap_extra_pages_max: int = Field(default=15, ge=0, le=40)
+    """Höchstens so viele Zusatzseiten aus anderen Teilen des Dokuments gehen an die Nachsuche."""
     rules_request_timeout_seconds: float = 900.0
     rules_budget_month_usd: float = 150.0
     """Obergrenze der Auswertungskosten je Kalendermonat; darüber startet keine neue Auswertung (Alarm)."""

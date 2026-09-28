@@ -21,6 +21,7 @@ from app.rules.domain.kinds import MANDATORY_KINDS, ParamProblem, params_equal, 
 from app.rules.domain.text import (
     QuoteCheck,
     normalize,
+    quotes_overlap,
     states_not_regulated,
     value_positions,
     values_in_quote,
@@ -39,6 +40,8 @@ UnknownReason = Literal[
     "runs_disagree",
     "ambiguous",
     "missing",
+    "not_found_after_search",
+    "not_expressible",
 ]
 _SECTOR_PREFIX = re.compile(r"^(?:sous-secteur|secteur|zone)s?\s+", re.IGNORECASE)
 _SHORT_CODE_CONTEXT = re.compile(r"(?:zones?|secteurs?)\s*$", re.IGNORECASE)
@@ -74,9 +77,11 @@ class DocumentPages:
 
     general: list[int]
     chapter: list[int]
+    extra: list[int] = field(default_factory=list)
+    """Zusatzseiten der Nachsuche (drittes PDF, PLAN_G2_VOLLSTAENDIGKEIT 3.6)."""
 
     def original_page(self, document: str, position: int) -> int | None:
-        pages = self.general if document == "general" else self.chapter
+        pages = {"general": self.general, "extra": self.extra}.get(document, self.chapter)
         return pages[position - 1] if 1 <= position <= len(pages) else None
 
 
@@ -367,6 +372,104 @@ def _confirms(claim: AssessedRule, answer: VerificationCheck) -> bool:
     except ParamProblem:
         return False
     return params_equal(claim.params, params)
+
+
+def _open_rule(key: Key, reason: str, detail: str | None) -> AssessedRule:
+    return AssessedRule(
+        sector=key[0],
+        kind=key[1],
+        building_kind=key[2],
+        status="unknown",
+        reason=reason,
+        params={},
+        page=None,
+        quote=None,
+        quote_verified=False,
+        similarity=0.0,
+        confidence=0.0,
+        notes="",
+        detail=detail,
+    )
+
+
+def _gap_result(
+    key: Key,
+    existing: AssessedRule | None,
+    found: list[AssessedRule],
+    absent: Mapping[Key, str],
+    not_expressible: Mapping[Key, str | None],
+) -> AssessedRule | None:
+    candidate = collapse(found)[0] if found else None
+    if candidate is not None and (
+        candidate.status in ("effective", "not_regulated") or candidate.reason == "ambiguous"
+    ):
+        return candidate
+    if key in not_expressible:
+        return _open_rule(key, "not_expressible", not_expressible[key])
+    if existing is not None and existing.quote:
+        # Der Befund aus Auswertung und Gegenprüfung bleibt sichtbar, wenn die Nachsuche ihn nicht klärt
+        return existing
+    if candidate is not None:
+        return candidate
+    if key in absent and key[1] in MANDATORY_KINDS and key[2] == "main":
+        return _open_rule(key, "not_found_after_search", absent[key])
+    return existing
+
+
+def fill_gaps(
+    rules: list[AssessedRule],
+    found: list[AssessedRule],
+    gap_keys: set[Key],
+    absent: Mapping[Key, str],
+    not_expressible: Mapping[Key, str | None],
+) -> list[AssessedRule]:
+    """Ergebnis der Nachsuche einarbeiten (PLAN_G2_VOLLSTAENDIGKEIT 3.6).
+
+    Ein bestätigter Fund für eine Lücke ersetzt die offene Regel – `collapse` hielte beide für einen
+    Widerspruch. Funde für Schlüssel, die keine Lücke waren (aus offenen Textstellen), gehen mit den
+    vorhandenen Regeln durch `collapse`: gleiche Werte bleiben eine Regel, andere werden `ambiguous`.
+    Nicht gefundene Pflichtarten werden `not_found_after_search`, nicht abbildbare `not_expressible`."""
+    by_key: dict[Key, list[AssessedRule]] = defaultdict(list)
+    for rule in found:
+        if rule.status != "text_only":
+            by_key[_key(rule)].append(rule)
+    kept: list[AssessedRule] = []
+    seen: set[Key] = set()
+    for rule in rules:
+        if rule.status == "text_only":
+            kept.append(rule)
+            continue
+        key = _key(rule)
+        seen.add(key)
+        result = (
+            _gap_result(key, rule, by_key.get(key, []), absent, not_expressible) if key in gap_keys else rule
+        )
+        kept.append(result or rule)
+    for key in sorted(gap_keys - seen):
+        result = _gap_result(key, None, by_key.get(key, []), absent, not_expressible)
+        if result is not None:
+            kept.append(result)
+    # Nur bestätigte Funde: Ein Fund, der Schranken oder Gegenprüfung nicht besteht, stellt keine geprüfte
+    # Regel in Frage
+    others = [
+        rule
+        for key, group in by_key.items()
+        if key not in gap_keys
+        for rule in group
+        if rule.status in ("effective", "not_regulated")
+    ]
+    # Ein Hinweis zu einer Stelle, die schon ein Hinweis belegt, käme doppelt (Staffel aus Auswertung und
+    # Nachsuche mit anderem Zitatbeginn); `collapse` vergleicht nur den Anfang des Zitats
+    hints: list[AssessedRule] = []
+    for hint in (rule for rule in found if rule.status == "text_only"):
+        known = [
+            r
+            for r in kept + hints
+            if r.status == "text_only" and r.sector == hint.sector and r.page == hint.page
+        ]
+        if not any(quotes_overlap(r.quote, hint.quote) for r in known):
+            hints.append(hint)
+    return collapse(kept + others + hints)
 
 
 def complete(rules: list[AssessedRule], sectors: list[str]) -> list[AssessedRule]:

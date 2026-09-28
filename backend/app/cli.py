@@ -11,16 +11,21 @@ plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importi
 legal-seed                     Vorläufige Einwilligungstexte (A, V) veröffentlichen (Plan A 3.10, V 3.5)
 rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
+reference-check DATEI [--version N|all]  Auswertung an einer Referenzliste messen (G2, ohne Aufruf)
+shared-migrate                 Gemeinsame Datenbank beider Produkte migrieren (im Migrate-Job)
+reference-import DATEI [--replace]  Referenzliste in die gemeinsame Verwaltung übernehmen
 """
 
 import argparse
 import json
 import sys
+import uuid
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import select, update
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.platform import audit
 from app.platform.auth.context import Role
 from app.platform.db import get_sessionmaker, utcnow
@@ -268,6 +273,135 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
         print(f"{chapter_id}: {outcome.status} {detail} ${outcome.cost_usd:.2f} {outcome.counts or ''}")
 
 
+def cmd_shared_migrate(args: argparse.Namespace) -> None:
+    """Gemeinsame Datenbank auf den Stand dieses Images bringen (PLAN_G2_VOLLSTAENDIGKEIT 3.9). Beide Produkte
+    rufen das im Migrate-Job auf. Ist die Datenbank voraus (neueres Image des anderen Produkts), bleibt sie,
+    wie sie ist: Die Migrationen erweitern nur. Danach zieht eine Modellwahl aus `app_setting` einmal um."""
+    from alembic import command
+    from alembic.config import Config
+    from alembic.runtime.migration import MigrationContext
+    from alembic.script import ScriptDirectory
+    from alembic.util import CommandError
+    from sqlalchemy import create_engine
+
+    from app.platform.health import BACKEND_DIR
+    from app.platform.shared import shared_migration_url
+
+    settings = get_settings()
+    config = Config(str(BACKEND_DIR / "alembic_shared.ini"))
+    engine = create_engine(shared_migration_url(settings))
+    with engine.connect() as connection:
+        current = MigrationContext.configure(
+            connection, opts={"version_table": "alembic_version_shared"}
+        ).get_current_revision()
+    engine.dispose()
+    ahead = False
+    if current is not None:
+        try:
+            ScriptDirectory.from_config(config).get_revision(current)
+        except CommandError:
+            ahead = True
+    if ahead:
+        print(f"Gemeinsame Datenbank ist voraus ({current}); keine Migration")
+    else:
+        command.upgrade(config, "head")
+    _move_model_setting(settings)
+
+
+def _move_model_setting(settings: Settings) -> None:
+    """Modellwahl der Instanz (PU11, `app_setting`) in die gemeinsame Datenbank; eine schon vorhandene
+    gemeinsame Wahl hat Vorrang. Danach gilt `app_setting` nicht mehr (VA09)."""
+    from app.platform.models import AppSetting
+    from app.platform.shared import SharedSetting, record, shared_session
+    from app.rules.model_choice import SETTING_KEY
+
+    with get_sessionmaker()() as instance, shared_session() as shared_db:
+        legacy = instance.get(AppSetting, SETTING_KEY)
+        if legacy is None:
+            return
+        if shared_db.get(SharedSetting, SETTING_KEY) is None:
+            shared_db.add(
+                SharedSetting(
+                    key=SETTING_KEY,
+                    value=legacy.value,
+                    updated_by=legacy.updated_by,
+                    updated_by_name=_staff_name(instance, legacy.updated_by),
+                )
+            )
+            record(
+                shared_db,
+                settings,
+                actor_id="system:shared-migrate",
+                actor_name=None,
+                action="rules_model_moved",
+                entity_type="shared_setting",
+                entity_id=SETTING_KEY,
+                after=legacy.value,
+            )
+            shared_db.commit()
+            print(f"Modellwahl übernommen: {legacy.value.get('model')}")
+        else:
+            print("Modellwahl der Instanz verworfen: Die gemeinsame Wahl gilt")
+        instance.delete(legacy)
+        instance.commit()
+
+
+def _staff_name(db: Any, staff_id: str | None) -> str | None:
+    """Anzeigename eines Kontos dieser Instanz; in der gemeinsamen Datenbank gibt es keine Konten."""
+    try:
+        user = db.get(StaffUser, uuid.UUID(staff_id or ""))
+    except ValueError:
+        return None
+    return (user.display_name or user.email) if user is not None else None
+
+
+def cmd_reference_import(args: argparse.Namespace) -> None:
+    """Referenzliste aus einer Datei in die gemeinsame Verwaltung übernehmen (VA10); vorhandene nur mit
+    `--replace`. Ohne Anmeldung: als `system:reference-import`."""
+    import json as json_module
+
+    from app.platform.shared import shared_session
+    from app.rules import reference, reference_store
+
+    path = Path(args.file)
+    if not path.exists():
+        path = reference.SEED_DIR / args.file
+    data = json_module.loads(path.read_text(encoding="utf-8"))
+    with get_sessionmaker()() as db, shared_session() as shared_db:
+        result = reference_store.import_list(
+            db, shared_db, get_settings(), data, args.replace, "system:reference-import", None
+        )
+    title = f"{result.document_title} {result.sector}"
+    print(f"Referenzliste {title}: {result.entries_count} Einträge ({result.status})")
+
+
+def cmd_reference_check(args: argparse.Namespace) -> None:
+    """Auswertung an einer Referenzliste messen (PLAN_G2_VOLLSTAENDIGKEIT 3.10); ohne Aufruf des Modells."""
+    from app.rules import reference
+    from app.rules.domain.reference import measure
+
+    path = Path(args.file)
+    if not path.exists():
+        path = reference.SEED_DIR / args.file
+    ref = reference.load_file(path)
+    print(f"Referenzliste: {ref.title}, Sektor {ref.sector}, {len(ref.entries)} Einträge ({ref.status})")
+    with get_sessionmaker()() as session:
+        versions = reference.versions_for(session, ref.sha256, ref.sector)
+        if not versions:
+            print("Dieses Dokument ist in dieser Instanz nicht ausgewertet.")
+            return
+        if args.version == "all":
+            chosen = versions
+        elif args.version:
+            chosen = [v for v in versions if v.version == int(args.version)]
+        else:
+            chosen = versions[-1:]
+        for version in chosen:
+            open_passages, dismissed = reference.passages(version)
+            measured = measure(ref.entries, reference.found_rules(session, version), open_passages, dismissed)
+            print(reference.report(ref, version, measured))
+
+
 def cmd_envelope_check(args: argparse.Namespace) -> None:
     """Baurahmen für echte Parzellen ableiten, ohne etwas zu speichern (Plan G3 6.2 Punkt 2).
 
@@ -400,6 +534,15 @@ def main() -> None:
         "--force", action="store_true", help="auch bei unveränderter Eingabe neu auswerten"
     )
     p_extract.set_defaults(func=cmd_rules_extract)
+    sub.add_parser("shared-migrate").set_defaults(func=cmd_shared_migrate)
+    p_reference_import = sub.add_parser("reference-import")
+    p_reference_import.add_argument("file", help="Pfad oder Name in app/rules/reference_seed")
+    p_reference_import.add_argument("--replace", action="store_true")
+    p_reference_import.set_defaults(func=cmd_reference_import)
+    p_reference = sub.add_parser("reference-check")
+    p_reference.add_argument("file", help="Pfad oder Name in app/rules/reference_seed")
+    p_reference.add_argument("--version", help="Nummer der Regelwerksversion oder `all`; ohne: die neueste")
+    p_reference.set_defaults(func=cmd_reference_check)
     p_envelope = sub.add_parser("envelope-check")
     p_envelope.add_argument("--commune", help="INSEE-Kennung, sonst alle importierten Gemeinden")
     p_envelope.add_argument("--zone", help="nur Parzellen in dieser Zone (z. B. Uh)")

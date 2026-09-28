@@ -768,6 +768,201 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/reference-lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Reference Lists
+         * @description Alle Listen mit der Messung der aktuellen Auswertung dieser Instanz, wo das Dokument hier vorliegt.
+         */
+        get: operations["list_reference_lists_api_v1_admin_reference_lists_get"];
+        put?: never;
+        /** Create Reference List */
+        post: operations["create_reference_list_api_v1_admin_reference_lists_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reference Candidates
+         * @description Ausgewertete Dokumente dieser Instanz mit ihren Sektoren.
+         */
+        get: operations["reference_candidates_api_v1_admin_reference_lists_candidates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Reference List
+         * @description Datei im Format `emprise-reference/1`; eine vorhandene Liste nur mit `replace=true`.
+         */
+        post: operations["import_reference_list_api_v1_admin_reference_lists_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Reference List */
+        get: operations["get_reference_list_api_v1_admin_reference_lists__list_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Reference List */
+        delete: operations["delete_reference_list_api_v1_admin_reference_lists__list_id__delete"];
+        options?: never;
+        head?: never;
+        /** Patch Reference List */
+        patch: operations["patch_reference_list_api_v1_admin_reference_lists__list_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Reference Entry */
+        post: operations["add_reference_entry_api_v1_admin_reference_lists__list_id__entries_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}/entries/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change Reference Entry */
+        put: operations["change_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__put"];
+        post?: never;
+        /** Delete Reference Entry */
+        delete: operations["delete_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Reference List
+         * @description Liste als Datei (`emprise-reference/1`), wie `app/rules/reference_seed`.
+         */
+        get: operations["export_reference_list_api_v1_admin_reference_lists__list_id__export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}/from-evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reference From Evaluation
+         * @description Einträge durch die aktuelle Auswertung dieser Instanz ersetzen (Entwurf zum Nachprüfen).
+         */
+        post: operations["reference_from_evaluation_api_v1_admin_reference_lists__list_id__from_evaluation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/reference-lists/{list_id}/measurement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Measure Reference List
+         * @description Auswertung dieser Instanz an der Liste messen, ohne Aufruf des Modells; ohne `version` die aktuelle.
+         */
+        get: operations["measure_reference_list_api_v1_admin_reference_lists__list_id__measurement_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rule-kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Rule Kinds
+         * @description Formularbeschreibung der Regelarten aus demselben Schema wie Prüfung und Modellausgabe (AN4, 3.1).
+         */
+        get: operations["get_rule_kinds_api_v1_admin_rule_kinds_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/rule-sets/{rule_set_id}": {
         parameters: {
             query?: never;
@@ -856,6 +1051,53 @@ export interface paths {
         put?: never;
         /** Start Rules Import */
         post: operations["start_rules_import_api_v1_admin_rules_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rules/model": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Rules Model
+         * @description KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,
+         *     VA09).
+         */
+        get: operations["get_rules_model_api_v1_admin_rules_model_get"];
+        /**
+         * Set Rules Model
+         * @description Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf
+         *     (PU11, VA09).
+         */
+        put: operations["set_rules_model_api_v1_admin_rules_model_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/rules/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rules Models
+         * @description Wählbare Modelle aus der Liste von OpenRouter mit erzwungenem Werkzeug (PU11); ohne PDF-Eingabe
+         *     bekommen sie die Textschicht (PU12).
+         */
+        get: operations["list_rules_models_api_v1_admin_rules_models_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1114,6 +1356,28 @@ export interface paths {
          * @description Bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne und Vergleich der Zusatzdokumente.
          */
         get: operations["get_analysis_api_v1_projects__project_id__analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/analysis/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Analysis Comparison
+         * @description Zwei Stände nebeneinander (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5): `automatic` – ohne und mit den
+         *     Korrekturen des Projekts; eine Versions-ID – diese frühere Auswertung und die aktuelle, beide ohne
+         *     Korrekturen. Die Antwort nennt auch alle angebotenen Vergleiche.
+         */
+        get: operations["get_analysis_comparison_api_v1_projects__project_id__analysis_comparison_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1508,6 +1772,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/rule-overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Own Overrides
+         * @description Korrekturen des Projekts mit Begründung, Fundstelle und ob sie wirken.
+         */
+        get: operations["list_own_overrides_api_v1_projects__project_id__rule_overrides_get"];
+        /**
+         * Put Own Override
+         * @description Regel korrigieren oder ergänzen; wirkt sofort in Regeln, Baurahmen und Analyse (kostet nichts).
+         */
+        put: operations["put_own_override_api_v1_projects__project_id__rule_overrides_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/rule-overrides/{override_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Own Override
+         * @description Korrektur zurücknehmen: Es gilt wieder der gelesene Wert.
+         */
+        delete: operations["delete_own_override_api_v1_projects__project_id__rule_overrides__override_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/rules": {
         parameters: {
             query?: never;
@@ -1584,8 +1892,9 @@ export interface paths {
          * @description Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).
          *
          *     Ohne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;
-         *     der zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den
-         *     Maßstab aus dem Text des Plans.
+         *     der zweite Aufruf nennt die gewählte Kontur – oder mehrere (`index` wiederholt), die zu einem
+         *     Grundstück vereinigt werden (UP17). `scale` (1:n) gilt nur für PDF und ersetzt den Maßstab aus dem
+         *     Text des Plans.
          */
         post: operations["upload_site_api_v1_projects__project_id__site_upload_post"];
         delete?: never;
@@ -1736,6 +2045,30 @@ export interface components {
             custom: boolean;
             defaults: components["schemas"]["AnalysisParametersOut"];
             values: components["schemas"]["AnalysisParametersOut"];
+        };
+        /** AnalysisComparisonOut */
+        AnalysisComparisonOut: {
+            /** Base */
+            base: string;
+            /** Bases */
+            bases: components["schemas"]["ComparisonBaseOut"][];
+            /** Figures */
+            figures: components["schemas"]["ComparisonFigureOut"][];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "corrections" | "versions";
+            left: components["schemas"]["ComparisonStateOut"];
+            right: components["schemas"]["ComparisonStateOut"];
+            /** Rules */
+            rules: components["schemas"]["ComparisonRuleOut"][];
+            /**
+             * Simulation
+             * @default true
+             * @constant
+             */
+            simulation: true;
         };
         /** AnalysisFloorAreaOut */
         AnalysisFloorAreaOut: {
@@ -1978,7 +2311,7 @@ export interface components {
             /** File */
             file: string;
             /** Index */
-            index?: number | null;
+            index?: number[] | null;
             /** Scale */
             scale?: number | null;
         };
@@ -2115,6 +2448,67 @@ export interface components {
             name: string;
             /** Release */
             release: string;
+        };
+        /**
+         * ComparisonBaseOut
+         * @description Angebotener Vergleich; `base` ist der Wert für `?base=`.
+         */
+        ComparisonBaseOut: {
+            /** Base */
+            base: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "corrections" | "versions";
+            version?: components["schemas"]["VersionOut"] | null;
+            /** Zone Code */
+            zone_code?: string | null;
+        };
+        /** ComparisonFigureOut */
+        ComparisonFigureOut: {
+            /** Changed */
+            changed: boolean;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "footprint_lenient" | "footprint_strict" | "contour_lenient" | "contour_strict" | "storeys_min" | "storeys_max" | "floor_area_low" | "floor_area_high" | "height_top";
+            /** Left */
+            left?: number | null;
+            /** Right */
+            right?: number | null;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "m2" | "m" | "count";
+        };
+        /** ComparisonRuleOut */
+        ComparisonRuleOut: {
+            /** Building Kind */
+            building_kind: string;
+            /** Changed */
+            changed: boolean;
+            /** Kind */
+            kind: string;
+            left?: components["schemas"]["LimitOut"] | null;
+            right?: components["schemas"]["LimitOut"] | null;
+            /** Zone Code */
+            zone_code: string;
+        };
+        /** ComparisonStateOut */
+        ComparisonStateOut: {
+            /** Corrections */
+            corrections: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "partial" | "in_progress" | "unavailable";
+            version?: components["schemas"]["VersionOut"] | null;
         };
         /** ComplianceOut */
         ComplianceOut: {
@@ -2798,6 +3192,23 @@ export interface components {
             /** Value M2 */
             value_m2: number;
         };
+        /** FoundRuleOut */
+        FoundRuleOut: {
+            /** Building Kind */
+            building_kind: string;
+            /** Kind */
+            kind: string;
+            /** Page */
+            page: number | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason: string | null;
+            /** Status */
+            status: string;
+        };
         /** GabaritContourOut */
         GabaritContourOut: {
             /** Area M2 */
@@ -3178,6 +3589,22 @@ export interface components {
             /** Length M */
             length_m: number;
         };
+        /** MeasuredEntryOut */
+        MeasuredEntryOut: {
+            /** Detail */
+            detail: string;
+            /**
+             * Entry Id
+             * Format: uuid
+             */
+            entry_id: string;
+            found: components["schemas"]["FoundRuleOut"] | null;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "hit" | "wrong_value" | "named_gap" | "dismissed" | "silent_gap";
+        };
         /** MessageIn */
         MessageIn: {
             /** Body */
@@ -3202,6 +3629,21 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /** ModelOptionOut */
+        ModelOptionOut: {
+            /** Context Length */
+            context_length: number | null;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Price Input Per Mtok */
+            price_input_per_mtok: number;
+            /** Price Output Per Mtok */
+            price_output_per_mtok: number;
+            /** Reads Pdf */
+            reads_pdf: boolean;
         };
         /** ModuleIn */
         ModuleIn: {
@@ -3544,6 +3986,31 @@ export interface components {
             /** Version */
             version: number;
         };
+        /**
+         * ParamFieldOut
+         * @description Feld des Regelformulars (AN4, 3.1), abgeleitet aus `rules/domain/kinds.py`.
+         */
+        ParamFieldOut: {
+            /** Default */
+            default?: unknown;
+            /** Max */
+            max?: number | null;
+            /** Min */
+            min?: number | null;
+            /** Name */
+            name: string;
+            /** Options */
+            options: string[];
+            /** Required */
+            required: boolean;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "number" | "flag" | "choice" | "items" | "text";
+            /** Unit */
+            unit?: ("m" | "m2" | "deg" | "share" | "factor" | "per_area" | "count") | null;
+        };
         /** ParcelOut */
         ParcelOut: {
             /** Accuracy Class */
@@ -3620,6 +4087,18 @@ export interface components {
             zone_code: string;
             /** Zone Status */
             zone_status: string;
+        };
+        /**
+         * PassageOut
+         * @description Textstelle mit Vorschriftscharakter (PLAN_G2_VOLLSTAENDIGKEIT 3.3); Seite im Originaldokument.
+         */
+        PassageOut: {
+            /** Page */
+            page: number;
+            /** Reason */
+            reason?: string | null;
+            /** Text */
+            text: string;
         };
         /** PlacementAreaOut */
         PlacementAreaOut: {
@@ -3795,7 +4274,8 @@ export interface components {
         };
         /**
          * ProjectOverrideIn
-         * @description Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement).
+         * @description Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement). Die Begründung ist Pflicht und nur für
+         *     das Büro sichtbar.
          */
         ProjectOverrideIn: {
             /**
@@ -3815,18 +4295,25 @@ export interface components {
             params?: {
                 [key: string]: unknown;
             };
+            source?: components["schemas"]["RuleSourceIn"] | null;
             /**
              * Status
              * @enum {string}
              */
-            status: "effective" | "unknown" | "not_regulated" | "text_only";
+            status: "effective" | "unknown" | "not_regulated";
             /** Zone Code */
             zone_code: string;
         };
         /** ProjectOverrideOut */
         ProjectOverrideOut: {
+            /** Active */
+            active: boolean;
             /** Building Kind */
             building_kind: string;
+            /** Created At */
+            created_at: string | null;
+            /** Created By */
+            created_by: string | null;
             /**
              * Id
              * Format: uuid
@@ -3840,6 +4327,7 @@ export interface components {
             params: {
                 [key: string]: unknown;
             };
+            source: components["schemas"]["RuleSourceOut"] | null;
             /**
              * Status
              * @enum {string}
@@ -3933,6 +4421,222 @@ export interface components {
             max_cents: number;
             /** Min Cents */
             min_cents: number;
+        };
+        /**
+         * ReferenceCandidateOut
+         * @description Ausgewertetes Dokument dieser Instanz, für das eine Liste angelegt werden kann.
+         */
+        ReferenceCandidateOut: {
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Document Title */
+            document_title: string;
+            /** Sectors */
+            sectors: string[];
+        };
+        /** ReferenceEntryIn */
+        ReferenceEntryIn: {
+            /**
+             * Building Kind
+             * @enum {string}
+             */
+            building_kind: "main" | "annex" | "pool" | "any";
+            /**
+             * Expected
+             * @enum {string}
+             */
+            expected: "effective" | "not_regulated" | "text_only" | "graphic_reference" | "not_expressible";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only" | "max_area";
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Page */
+            page?: number | null;
+            /**
+             * Params
+             * @default {}
+             */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Quote */
+            quote: string;
+        };
+        /** ReferenceEntryOut */
+        ReferenceEntryOut: {
+            /**
+             * Building Kind
+             * @enum {string}
+             */
+            building_kind: "main" | "annex" | "pool" | "any";
+            /**
+             * Expected
+             * @enum {string}
+             */
+            expected: "effective" | "not_regulated" | "text_only" | "graphic_reference" | "not_expressible";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only" | "max_area";
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Page */
+            page?: number | null;
+            /**
+             * Params
+             * @default {}
+             */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Position */
+            position: number;
+            /** Quote */
+            quote: string;
+        };
+        /** ReferenceListDetailOut */
+        ReferenceListDetailOut: {
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Document Title */
+            document_title: string;
+            /** Entries */
+            entries: components["schemas"]["ReferenceEntryOut"][];
+            /** Entries Count */
+            entries_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string;
+            /** Sector */
+            sector: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "checked";
+            summary: components["schemas"]["ReferenceSummaryOut"] | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By Name */
+            updated_by_name: string | null;
+        };
+        /** ReferenceListIn */
+        ReferenceListIn: {
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Document Title */
+            document_title: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Sector */
+            sector: string;
+        };
+        /** ReferenceListOut */
+        ReferenceListOut: {
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Document Title */
+            document_title: string;
+            /** Entries Count */
+            entries_count: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string;
+            /** Sector */
+            sector: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "checked";
+            summary: components["schemas"]["ReferenceSummaryOut"] | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By Name */
+            updated_by_name: string | null;
+        };
+        /** ReferenceListPatch */
+        ReferenceListPatch: {
+            /** Document Title */
+            document_title?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Status */
+            status?: ("draft" | "checked") | null;
+        };
+        /** ReferenceMeasurementOut */
+        ReferenceMeasurementOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Coverage */
+            coverage: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Extra */
+            extra: components["schemas"]["FoundRuleOut"][];
+            /** Model */
+            model: string | null;
+            /** Recall */
+            recall: number;
+            /** Results */
+            results: components["schemas"]["MeasuredEntryOut"][];
+            /** Version */
+            version: number;
+            /** Versions */
+            versions: number[];
+        };
+        /**
+         * ReferenceSummaryOut
+         * @description Messung der aktuellen Auswertung dieser Instanz, kurz; leer, wenn das Dokument hier fehlt.
+         */
+        ReferenceSummaryOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Recall */
+            recall: number;
+            /** Version */
+            version: number;
         };
         /** RegulationDocumentOut */
         RegulationDocumentOut: {
@@ -4031,12 +4735,16 @@ export interface components {
             /** Kind */
             kind: string;
             plu?: components["schemas"]["LimitOut"] | null;
+            /** Proposal */
+            proposal?: {
+                [key: string]: unknown;
+            } | null;
             supplement: components["schemas"]["LimitOut"];
             /**
              * Verdict
              * @enum {string}
              */
-            verdict: "stricter" | "looser" | "equal" | "mixed" | "different" | "only_supplement" | "no_own_rule" | "unknown";
+            verdict: "stricter" | "looser" | "equal" | "mixed" | "different" | "only_supplement" | "no_own_rule" | "unknown" | "adopted";
         };
         /** RuleDetailOut */
         RuleDetailOut: {
@@ -4071,8 +4779,12 @@ export interface components {
             quote_verified: boolean;
             /** Reason */
             reason: string | null;
+            /** Search Note */
+            search_note?: string | null;
             /** Similarity */
             similarity: number;
+            /** Source Document Id */
+            source_document_id?: string | null;
             /** Source Url */
             source_url: string | null;
             /**
@@ -4110,6 +4822,20 @@ export interface components {
              */
             status: "effective" | "unknown" | "not_regulated" | "text_only";
         };
+        /** RuleKindFormOut */
+        RuleKindFormOut: {
+            /** Building Specific */
+            building_specific: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "setback_street" | "setback_side" | "setback_rear" | "setback_between_buildings" | "max_footprint_ratio" | "max_height" | "roof" | "facade" | "unsealed_min" | "parking" | "annex" | "planting" | "fence" | "text_only" | "max_area";
+            /** Mandatory */
+            mandatory: boolean;
+            /** Params */
+            params: components["schemas"]["ParamFieldOut"][];
+        };
         /** RuleOut */
         RuleOut: {
             /** Building Kind */
@@ -4137,6 +4863,10 @@ export interface components {
             quote_verified: boolean;
             /** Reason */
             reason: string | null;
+            /** Search Note */
+            search_note?: string | null;
+            /** Source Document Id */
+            source_document_id?: string | null;
             /** Source Url */
             source_url: string | null;
             /**
@@ -4171,6 +4901,39 @@ export interface components {
             /** Rules */
             rules: components["schemas"]["RuleIn"][];
         };
+        /**
+         * RuleSourceIn
+         * @description Fundstelle einer Korrektur (AN4, docs/PLAN_AN4_KORREKTUR.md 3.2): ein Dokument des Projekts, eine
+         *     Seite und optional ein Zitat, das auf der Seite gesucht wird.
+         */
+        RuleSourceIn: {
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Page */
+            page: number;
+            /** Quote */
+            quote?: string | null;
+        };
+        /** RuleSourceOut */
+        RuleSourceOut: {
+            /** Attached */
+            attached: boolean;
+            /** Document Id */
+            document_id: string | null;
+            /** Document Title */
+            document_title: string | null;
+            /** Page */
+            page: number;
+            /** Quote */
+            quote: string | null;
+            /** Quote Verified */
+            quote_verified: boolean;
+            /** Source Url */
+            source_url: string | null;
+        };
         /** RulesImportIn */
         RulesImportIn: {
             /** Communes */
@@ -4180,6 +4943,45 @@ export interface components {
              * @default false
              */
             force: boolean;
+        };
+        /** RulesModelIn */
+        RulesModelIn: {
+            /** Model */
+            model: string;
+        };
+        /**
+         * RulesModelOut
+         * @description KI-Modell der Auswertung für die ganze Instanz (PLAN_AN2_PLU 8, PU11).
+         */
+        RulesModelOut: {
+            /** Budget Month Usd */
+            budget_month_usd: number;
+            /** Configured */
+            configured: boolean;
+            /** Default Model */
+            default_model: string;
+            /**
+             * Input
+             * @enum {string}
+             */
+            input: "pdf" | "text";
+            /** Model */
+            model: string;
+            /** Month Cost Usd */
+            month_cost_usd: number;
+            /** Price Input Per Mtok */
+            price_input_per_mtok: number;
+            /** Price Output Per Mtok */
+            price_output_per_mtok: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "setting" | "default";
+            /** Updated At */
+            updated_at: string | null;
+            /** Updated By Name */
+            updated_by_name?: string | null;
         };
         /** SectionCrossingOut */
         SectionCrossingOut: {
@@ -4933,10 +5735,20 @@ export interface components {
             /** Note */
             note: string | null;
             /**
+             * Open Passages
+             * @default []
+             */
+            open_passages: components["schemas"]["PassageOut"][];
+            /**
              * Origin
              * @enum {string}
              */
             origin: "extraction" | "office";
+            /**
+             * Out Of Scope Passages
+             * @default []
+             */
+            out_of_scope_passages: components["schemas"]["PassageOut"][];
             /**
              * Status
              * @enum {string}
@@ -6374,6 +7186,431 @@ export interface operations {
             };
         };
     };
+    list_reference_lists_api_v1_admin_reference_lists_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListOut"][];
+                };
+            };
+        };
+    };
+    create_reference_list_api_v1_admin_reference_lists_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceListIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reference_candidates_api_v1_admin_reference_lists_candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceCandidateOut"][];
+                };
+            };
+        };
+    };
+    import_reference_list_api_v1_admin_reference_lists_import_post: {
+        parameters: {
+            query?: {
+                replace?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_reference_list_api_v1_admin_reference_lists__list_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_reference_list_api_v1_admin_reference_lists__list_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_reference_list_api_v1_admin_reference_lists__list_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceListPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_reference_entry_api_v1_admin_reference_lists__list_id__entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceEntryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceEntryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_reference_list_api_v1_admin_reference_lists__list_id__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reference_from_evaluation_api_v1_admin_reference_lists__list_id__from_evaluation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceListDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_reference_list_api_v1_admin_reference_lists__list_id__measurement_get: {
+        parameters: {
+            query?: {
+                version?: number | null;
+            };
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceMeasurementOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rule_kinds_api_v1_admin_rule_kinds_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleKindFormOut"][];
+                };
+            };
+        };
+    };
     get_rule_set_api_v1_admin_rule_sets__rule_set_id__get: {
         parameters: {
             query?: never;
@@ -6528,6 +7765,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rules_model_api_v1_admin_rules_model_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulesModelOut"];
+                };
+            };
+        };
+    };
+    set_rules_model_api_v1_admin_rules_model_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulesModelIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulesModelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rules_models_api_v1_admin_rules_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOptionOut"][];
                 };
             };
         };
@@ -6921,6 +8231,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_analysis_comparison_api_v1_projects__project_id__analysis_comparison_get: {
+        parameters: {
+            query?: {
+                base?: string;
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalysisComparisonOut"];
                 };
             };
             /** @description Validation Error */
@@ -7677,6 +9020,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectRegulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_own_overrides_api_v1_projects__project_id__rule_overrides_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_own_override_api_v1_projects__project_id__rule_overrides_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectOverrideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_own_override_api_v1_projects__project_id__rule_overrides__override_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                override_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOverrideOut"][];
                 };
             };
             /** @description Validation Error */

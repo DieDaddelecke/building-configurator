@@ -1,6 +1,7 @@
 """Auswertung eines Zonenkapitels: Aufrufe des Sprachmodells, Schranken, neue Regelwerksversionen (Plan 3.4).
 
-Ablauf: Auswertung (Lauf 1) → Schranken → Gegenprüfung (Lauf 2, docs/ANNAHMEN.md RW19) → Regelwerk je Sektor.
+Ablauf: Auswertung (Lauf 1) → Schranken → Gegenprüfung (Lauf 2, docs/ANNAHMEN.md RW19) → Nachsuche für
+Lücken und offene Textstellen (Lauf 3, docs/PLAN_G2_VOLLSTAENDIGKEIT.md) → Regelwerk je Sektor.
 Datenbanktransaktionen umschließen nie einen Aufruf des Sprachmodells über OpenRouter (Minuten). Jeder
 Aufruf wird sofort mit Kosten gespeichert; eine Wiederholung nutzt bereits erfolgreiche Teile derselben
 Eingabe. Liegen alle Teile vor (z. B. nach einer neuen Version der Schranken), wird ohne Aufruf neu bewertet.
@@ -27,15 +28,18 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
-from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION
+from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION, lexicon
 from app.rules.domain.assess import (
     AssessedRule,
     DocumentPages,
+    Key,
     assess_rule,
     claim_for,
     collapse,
     complete,
     coverage,
+    fill_gaps,
+    rule_key,
     verify,
 )
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES
@@ -43,12 +47,17 @@ from app.rules.domain.extraction import (
     TEXT_INPUT_NOTE,
     DocumentKind,
     ExtractedRule,
+    GapSearchResult,
     VerificationCheck,
     document_kind,
+    parse_gaps,
     parse_output,
     parse_verification,
     prompt_fingerprint,
 )
+from app.rules.domain.kinds import MANDATORY_KINDS
+from app.rules.domain.passages import Passage, chapter_passages, for_search
+from app.rules.domain.passages import coverage as passage_coverage
 from app.rules.models import (
     LandUsePlan,
     RegulationChapter,
@@ -68,7 +77,11 @@ RUNNING_STALE_AFTER = timedelta(minutes=70)
 """Länger als das Zeitlimit des Jobs (60 min) „läuft“ kein Kapitel; danach gilt der Lauf als abgebrochen."""
 CLAIMS_PER_CALL = 30
 """Regeln je Aufruf der Gegenprüfung; kleinere Antworten, weniger Risiko für `max_tokens`."""
-RUN_EXTRACTION, RUN_VERIFICATION = 1, 2
+RUN_EXTRACTION, RUN_VERIFICATION, RUN_GAP_SEARCH = 1, 2, 3
+PASSAGES_FOR_SEARCH = 120
+"""Höchstens so viele offene Textstellen gehen an die Nachsuche (mit Zahl zuerst)."""
+SKIP_GAP = ("graphic_reference",)
+"""Offene Regeln, die die Nachsuche nicht klären kann: Der Wert steht im Plan, nicht im Text."""
 
 
 class RetryableExtractionError(Exception):
@@ -106,6 +119,7 @@ def input_hash(
         "model": settings.rules_model,
         "effort": settings.rules_effort,
         "runs": settings.rules_runs,
+        "gap_search": [settings.rules_gap_search, settings.rules_gap_extra_pages_max],
         "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
     }
     if settings.rules_input == "text":
@@ -166,16 +180,26 @@ class _Calls:
     split: set[tuple[int, str]]
     page_texts: dict[int, str] = field(default_factory=dict)
     """Textschicht je Seite (`source_page`); dieselbe, gegen die die Zitate geprüft werden."""
+    document_texts: dict[int, str] = field(default_factory=dict)
+    """Textschicht aller Seiten des Dokuments (Nachsuche: Zusatzseiten suchen und Zitate darauf prüfen)."""
+    extra_candidates: list[int] = field(default_factory=list)
+    """Seiten außerhalb des Kapitels, der gesendeten allgemeinen Seiten und der Kapitel anderer Zonen."""
     document_kind: DocumentKind = "plu"
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
     in_flight: tuple[int, str] | None = None
+    _data: bytes | None = None
     _pdfs: tuple[bytes, bytes | None] | None = None
+
+    def _source(self) -> bytes:
+        if self._data is None:
+            self._data = storage.get_bytes(self.storage_key)
+        return self._data
 
     def _documents(self) -> tuple[bytes, bytes | None]:
         if self._pdfs is None:
-            data = storage.get_bytes(self.storage_key)
+            data = self._source()
             general = pdf.extract_pages(data, self.general_pages) if self.general_pages else None
             self._pdfs = (pdf.extract_pages(data, self.chapter_pages), general)
         return self._pdfs
@@ -243,7 +267,13 @@ class _Calls:
             self.in_flight = None
 
     def run(
-        self, run_no: int, part: str, sectors: list[str], claims: list[dict[str, Any]] | None = None
+        self,
+        run_no: int,
+        part: str,
+        sectors: list[str],
+        claims: list[dict[str, Any]] | None = None,
+        gaps: dict[str, Any] | None = None,
+        extra_pages: list[int] | None = None,
     ) -> Any:
         """Antwort eines Teils; `None`, wenn der Teil für eine Antwort zu groß ist (`max_tokens`)."""
         key = (run_no, part)
@@ -254,7 +284,18 @@ class _Calls:
         if key in self.split:
             return None
         self._before_call()
-        chapter_pdf, general_pdf = self._documents()
+        chapter_text: str | None = None
+        general_text: str | None = None
+        extra_text: str | None = None
+        extra_pdf: bytes | None = None
+        extra = extra_pages or []
+        if self.settings.rules_input == "text":
+            chapter_text, general_text = self._texts()
+            chapter_pdf, general_pdf = b"", None
+            extra_text = self._pages_text(extra) if extra else None
+        else:
+            chapter_pdf, general_pdf = self._documents()
+            extra_pdf = pdf.extract_pages(self._source(), extra) if extra else None
         request = ExtractionRequest(
             chapter_code=self.chapter_code,
             sectors=sectors,
@@ -264,6 +305,12 @@ class _Calls:
             general_pages=self.general_pages,
             claims=claims,
             document_kind=self.document_kind,
+            chapter_text=chapter_text,
+            general_text=general_text,
+            gaps=gaps,
+            extra_pdf=extra_pdf,
+            extra_pages=extra,
+            extra_text=extra_text,
         )
         self.in_flight = key
         try:
@@ -356,6 +403,199 @@ def _verify(calls: _Calls, claims: dict[int, dict[str, Any]]) -> dict[int, list[
     return checks
 
 
+@dataclass(frozen=True)
+class _Gap:
+    number: int
+    key: Key
+    sector: str
+    kind: str
+    building_kind: str
+    previous: AssessedRule | None
+
+    def request(self) -> dict[str, Any]:
+        item: dict[str, Any] = {
+            "gap": self.number,
+            "sector": self.sector,
+            "kind": self.kind,
+            "building_kind": self.building_kind,
+            "terms": list(lexicon.terms_for(self.kind, self.building_kind)),
+            "article": lexicon.ARTICLES.get(self.kind),
+        }
+        if self.previous is not None and self.previous.quote:
+            # Offene Regeln tragen ihre Werte nur noch unter den Alternativen (Gegenprüfung, `ambiguous`)
+            values: dict[str, Any] = dict(self.previous.params)
+            for alternative in self.previous.alternatives:
+                if not values and alternative.get("params"):
+                    values = dict(alternative["params"])
+            item["previous"] = {
+                "reason": self.previous.reason,
+                "quote": self.previous.quote,
+                "params": values,
+            }
+        return item
+
+
+@dataclass(frozen=True)
+class SearchOutcome:
+    """Abdeckung der Textstellen und Stand der Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.3, 3.7)."""
+
+    total: int = 0
+    assigned: int = 0
+    open: list[Passage] = field(default_factory=list)
+    dismissed: list[tuple[Passage, str]] = field(default_factory=list)
+    searched: bool = False
+
+    def counts(self) -> dict[str, int]:
+        return {
+            "passages_total": self.total,
+            "passages_assigned": self.assigned,
+            "passages_out_of_scope": len(self.dismissed),
+            "passages_open": len(self.open),
+            "gap_search": int(self.searched),
+        }
+
+
+def find_gaps(rules: list[AssessedRule], sectors: list[str], text: str) -> list[_Gap]:
+    """Lücken nach der Gegenprüfung (PLAN_G2_VOLLSTAENDIGKEIT 3.5): Pflichtarten ohne Wert; im Text genannte
+    weitere Arten und Baukörper ohne Regel; offene Regeln mit Zitat (ihr Befund geht mit)."""
+    by_key = {rule_key(r.sector, r.kind, r.building_kind): r for r in rules if r.status != "text_only"}
+    kinds = sorted(lexicon.kinds_mentioned(text) - set(MANDATORY_KINDS))
+    building_kinds = sorted(lexicon.building_kinds_mentioned(text))
+    gaps: list[_Gap] = []
+    for sector in sectors:
+        wanted = [(kind, "main") for kind in MANDATORY_KINDS] + [(kind, "any") for kind in kinds]
+        wanted += [(kind, bk) for bk in building_kinds for kind in ("setback_side", "setback_rear")]
+        wanted += [(r.kind, r.building_kind) for r in rules if r.sector == sector and r.status == "unknown"]
+        seen: set[Key] = set()
+        for kind, building_kind in wanted:
+            key = rule_key(sector, kind, building_kind)
+            if key in seen:
+                continue
+            seen.add(key)
+            rule = by_key.get(key)
+            if rule is not None and (
+                rule.status in ("effective", "not_regulated") or rule.reason in SKIP_GAP
+            ):
+                continue
+            general = by_key.get(rule_key(sector, kind, "main"))
+            if building_kind in ("annex", "pool") and general is not None and general.building_kind == "any":
+                continue  # Eine Regel für alle Baukörper gilt auch hier
+            gaps.append(_Gap(len(gaps) + 1, key, sector, kind, building_kind, rule))
+    return gaps
+
+
+def _search_parts(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    gaps, passages = payload["gaps"], payload["passages"]
+    if len(gaps) + len(passages) <= 1:
+        return []
+    middle_gaps, middle_passages = (len(gaps) + 1) // 2, (len(passages) + 1) // 2
+    return [
+        {"gaps": gaps[:middle_gaps], "passages": passages[:middle_passages]},
+        {"gaps": gaps[middle_gaps:], "passages": passages[middle_passages:]},
+    ]
+
+
+def _gap_search(
+    calls: _Calls,
+    sectors: list[str],
+    first_number: int,
+    rules: list[AssessedRule],
+    page_texts: dict[int, str],
+) -> tuple[list[AssessedRule], SearchOutcome]:
+    """Nachsuche (Lauf 3) nach Auswertung und Gegenprüfung: Lücken und offene Textstellen gezielt fragen,
+    Funde durch Schranken und Gegenprüfung, dann einarbeiten (PLAN_G2_VOLLSTAENDIGKEIT 3.5–3.7)."""
+    passages = chapter_passages(page_texts, calls.chapter_pages)
+    first = passage_coverage(passages, [(r.page, r.quote) for r in rules if r.quote], page_texts)
+    if not calls.settings.rules_gap_search:
+        return rules, SearchOutcome(first.total, first.assigned, first.open)
+    text = "\n".join(page_texts.get(p, "") for p in calls.chapter_pages + calls.general_pages)
+    gaps = find_gaps(rules, sectors, text)
+    asked = for_search(first.open, PASSAGES_FOR_SEARCH)
+    if not gaps and not asked:
+        return rules, SearchOutcome(first.total, first.assigned, first.open)
+    terms = sorted({term for gap in gaps for term in lexicon.terms_for(gap.kind, gap.building_kind)})
+    extra = lexicon.extra_pages(
+        calls.document_texts,
+        calls.extra_candidates,
+        terms,
+        "\n".join(page_texts.get(p, "") for p in calls.chapter_pages),
+        calls.settings.rules_gap_extra_pages_max,
+    )
+    position = {page: i for i, page in enumerate(calls.chapter_pages, start=1)}
+    payload = {
+        "gaps": [gap.request() for gap in gaps],
+        "passages": [
+            {"passage": i, "page": position.get(p.page, p.page), "text": p.short}
+            for i, p in enumerate(asked, 1)
+        ],
+    }
+    answers = GapSearchResult({}, {})
+    queue = [payload]
+    while queue:
+        part = queue.pop(0)
+        digest = hashlib.sha256(
+            json.dumps([part, extra], sort_keys=True, ensure_ascii=False).encode()
+        ).hexdigest()
+        output = calls.run(RUN_GAP_SEARCH, f"gaps:{digest[:16]}", sectors, gaps=part, extra_pages=extra)
+        if output is None:
+            queue[0:0] = _search_parts(part)
+            continue
+        try:
+            parsed = parse_gaps(output)
+        except ValueError:
+            continue
+        answers.gaps.update(parsed.gaps)
+        answers.passages.update(parsed.passages)
+
+    # Funde durch dieselben Schranken und die Gegenprüfung; Nummern hinter denen der Auswertung
+    documents = DocumentPages(general=calls.general_pages, chapter=calls.chapter_pages, extra=extra)
+    texts = page_texts | {p: calls.document_texts.get(p, "") for p in extra}
+    extracted = [r for a in answers.gaps.values() for r in a.rules]
+    extracted += [r for a in answers.passages.values() if a.verdict != "out_of_scope" for r in a.rules]
+    assessed: list[AssessedRule] = []
+    for number, extracted_rule in enumerate(extracted, start=first_number):
+        result = assess_rule(extracted_rule, set(sectors), documents, texts)
+        if result is not None:
+            assessed.append(replace(result, sources=(number,)))
+    found = collapse(assessed)
+    if calls.settings.rules_runs >= 2:
+        claims = {
+            number: claim
+            for number, extracted_rule in enumerate(extracted, start=first_number)
+            if (claim := claim_for(number, extracted_rule, sectors)) is not None
+        }
+        found = verify(found, _verify(calls, claims) if claims else {})
+
+    by_gap = {gap.number: gap for gap in gaps}
+    absent: dict[Key, str] = {}
+    not_expressible: dict[Key, str | None] = {}
+    for answer in answers.gaps.values():
+        gap = by_gap.get(answer.gap)
+        if gap is None:
+            continue
+        if answer.verdict == "absent":
+            absent[gap.key] = (answer.searched or ", ".join(lexicon.terms_for(gap.kind, gap.building_kind)))[
+                :500
+            ]
+        elif answer.verdict == "not_expressible":
+            page = next((r.page for r in answer.rules), None)
+            original = (
+                documents.original_page(answer.rules[0].document, page) if page and answer.rules else None
+            )
+            not_expressible[gap.key] = str(original) if original else None
+    merged = fill_gaps(rules, found, {gap.key for gap in gaps}, absent, not_expressible)
+
+    dismissed = [
+        (passage, verdict.reason)
+        for i, passage in enumerate(asked, 1)
+        if (verdict := answers.passages.get(i)) is not None and verdict.verdict == "out_of_scope"
+    ]
+    final = passage_coverage(passages, [(r.page, r.quote) for r in merged if r.quote], texts)
+    dismissed_ids = {id(passage) for passage, _ in dismissed}
+    still_open = [p for p in final.open if id(p) not in dismissed_ids]
+    return merged, SearchOutcome(final.total, final.assigned, still_open, dismissed, searched=True)
+
+
 def extract_chapter(
     sessions: SessionFactory,
     settings: Settings,
@@ -412,6 +652,24 @@ def extract_chapter(
                 )
             ).scalars()
         }
+        document_texts: dict[int, str] = {}
+        extra_candidates: list[int] = []
+        if settings.rules_gap_search and kind == "plu":
+            # Nachsuche: Zusatzseiten nur außerhalb der Kapitel anderer Zonen (deren Werte gelten hier nicht)
+            document_texts = {
+                p.page: p.text
+                for p in session.execute(
+                    select(SourcePage).where(SourcePage.source_file_id == source.id)
+                ).scalars()
+            }
+            zones = session.execute(
+                select(RegulationChapter.first_page, RegulationChapter.last_page).where(
+                    RegulationChapter.source_file_id == source.id, RegulationChapter.id != chapter.id
+                )
+            ).all()
+            excluded = set(chapter_pages) | set(general_pages)
+            excluded |= {page for first, last in zones for page in range(first, last + 1)}
+            extra_candidates = sorted(set(document_texts) - excluded)
         reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any]]] = {}
         split: set[tuple[int, str]] = set()
         if not force:
@@ -442,6 +700,9 @@ def extract_chapter(
             general_pages=general_pages,
             reusable=reusable,
             split=split,
+            page_texts=page_texts,
+            document_texts=document_texts,
+            extra_candidates=extra_candidates,
             document_kind=kind,
             model=settings.rules_model,
         )
@@ -486,7 +747,11 @@ def _evaluate(
             if (claim := claim_for(number, rule, sectors)) is not None
         }
         rules = verify(rules, _verify(calls, claims) if claims else {})
-    # Zusatzdokumente haben keine Pflichtarten: Was sie nicht regeln, regelt der PLU (AN3, 3.7)
+    # Nachsuche und Abdeckung nur für PLU; Zusatzdokumente haben keine Pflichtarten: Was sie nicht regeln,
+    # regelt der PLU (AN3, 3.7; PLAN_G2_VOLLSTAENDIGKEIT E-VA-1)
+    outcome = SearchOutcome()
+    if calls.document_kind == "plu":
+        rules, outcome = _gap_search(calls, sectors, len(extracted) + 1, rules, page_texts)
     final = (
         complete(rules, sectors)
         if calls.document_kind == "plu"
@@ -517,11 +782,12 @@ def _evaluate(
                 chapter,
                 sector,
                 sector_rules,
-                counts | {"dropped": dropped},
+                counts | {"dropped": dropped} | outcome.counts(),
                 file_id,
                 calls.run_ids,
                 calls.digest,
                 calls.model,
+                outcome,
             )
         changed_meanwhile = current_digest != calls.digest
         chapter.status, chapter.input_hash, chapter.engine_version, chapter.error, chapter.updated_at = (
@@ -579,6 +845,7 @@ def _write_version(
     run_ids: list[uuid.UUID],
     digest: str,
     model: str,
+    outcome: "SearchOutcome | None" = None,
 ) -> None:
     rule_set = session.execute(
         select(RuleSet)
@@ -617,6 +884,12 @@ def _write_version(
         model=model,
         input_hash=digest,
         coverage=counts,
+        open_passages=[{"page": p.page, "text": p.short} for p in outcome.open] if outcome else [],
+        out_of_scope_passages=(
+            [{"page": p.page, "text": p.short, "reason": reason} for p, reason in outcome.dismissed]
+            if outcome
+            else []
+        ),
         created_by=ACTOR,
     )
     session.add(version)

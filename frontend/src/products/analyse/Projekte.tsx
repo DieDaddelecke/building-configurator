@@ -5,6 +5,8 @@ import { useSession } from "../../api/session";
 import { useCreateProject, useOwnProjects } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { formatNumber } from "../../site/geo";
+import { darfVerwalten } from "../../verwaltung/Verwaltung";
+import { ModellWahl } from "../../verwaltung/ModellWahl";
 
 /** Projektliste des Büros (AN1), darunter das KI-Modell der Auswertung (PLAN_AN2_PLU 8). Benennung, Notiz und
  *  Archiv folgen mit AN5. */
@@ -69,6 +71,8 @@ export function Projekte() {
           </table>
         </div>
       )}
+
+      <ModellWahl darfAendern={false} aendernUnter={darfVerwalten(roles) ? "/verwaltung" : undefined} />
     </div>
   );
 }

@@ -22,6 +22,8 @@ import {
 } from "../../api/rules";
 import type { components } from "../../api/schema";
 import { Kopf } from "../../components/Kopf";
+import { Abdeckung } from "../../rules/Abdeckung";
+import { entwurfAus, parameterAus, type Entwurf, type FeldFehler } from "../../rules/felder";
 import { ruleValue } from "../../rules/format";
 import { RegelFelder } from "../../rules/RegelFormular";
 import { sortRules } from "../../rules/RegelnSimulation";
@@ -325,6 +327,7 @@ export function Regelwerk() {
               )}
             </p>
           </Kopf>
+          <Abdeckung version={data.current} documentUrl={data.plan.regulation_url} />
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>

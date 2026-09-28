@@ -22,7 +22,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 |---|---|---|---|---|---|
 | P | 0001 | – | `mail_send`, `retention_cleanup` (täglich), `housekeeping` (stündlich) | SMTP-Anbieter (E2) | `staff-add` (3), SMTP (5) |
 | G1 | 0002, 0006, 0012 | `site_selection` | `cadastre_import` (wöchentlich, auch beim ersten Start), `site_enrich`, `site_housekeeping` (alle 6 h) | `data.geopf.fr`, `cadastre.data.gouv.fr` (leitet auf `*.cloud.ovh.net` weiter), `georisques.gouv.fr`; Browser der Besucher: Kartenkacheln von `data.geopf.fr` | Einzugsgebiet, Erstimport (8) |
-| G2 | 0003, 0004, 0013, 0014 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich), `rules_document_read` (nur Analyse-Produkt, 15) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `api.anthropic.com` | Schlüssel und Budget (9) |
+| G2 | 0003, 0004, 0013, 0014, 0015, 0016, 0017 | `rules_simulation` | `plu_import` (wöchentlich, auch beim ersten Start), `rules_extract`, `rules_housekeeping` (stündlich), `rules_document_read` (nur Analyse-Produkt, 15) | zusätzlich `apicarto.ign.fr`, `www.geoportail-urbanisme.gouv.fr`, `openrouter.ai` (Worker; die API für die Liste der Modelle, PU11) | Schlüssel, Budget und Modell (9) |
 | G3 | 0005 | `envelope_simulation` | `envelope_sheet` | – | WeasyPrint im Image (10) |
 | H1 | 0007 | – (nur Rollen: bearbeiten `architect`, `catalog_admin`; lesen `ops`) | – (Import synchron) | – | `openpyxl`, `ezdxf`, `python-multipart` im Image; Konto mit `catalog_admin` oder `architect` per `staff-add` |
 | A | 0008 | `inquiry` | `mail_send` | – | Büro-Postfach, `legal-seed` (11) |
@@ -118,7 +118,7 @@ Die Tabelle gilt für den Hauskonfigurator. Aus demselben Code läuft mit `EMPRI
 
 **Einrichten und Freischalten**
 
-1. Schlüssel von OpenRouter und Monatsbudget setzen: `EMPRISE_OPENROUTER_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `OPENROUTER_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). Budget entschieden am 25.09.2026: **150 $ je Stack und Monat** auf Unraid, lokal 20 $ (Vorgaben in `.env.example`, `.env.analyse.example` und den Compose-Dateien). Den Schlüssel trägt der Nutzer selbst ein. An die Schnittstelle gehen nur öffentliche Planunterlagen (L8); seit E-D19 läuft der Aufruf über OpenRouter als zusätzlichen Drittanbieter statt direkt über die Claude API.
+1. Schlüssel von OpenRouter und Monatsbudget setzen: `EMPRISE_OPENROUTER_API_KEY`, `EMPRISE_RULES_BUDGET_MONTH_USD` (Unraid: `OPENROUTER_API_KEY`, `RULES_BUDGET_MONTH_USD` in `.env`). Budget entschieden am 25.09.2026: **150 $ je Stack und Monat** auf Unraid, lokal 20 $ (Vorgaben in `.env.example`, `.env.analyse.example` und den Compose-Dateien). Den Schlüssel trägt der Nutzer selbst ein. **Modell wählen:** in Emprise Analyse auf der Startseite („KI-Modell der Auswertung“, Rollen `ops` und `rules_admin`) für alle künftigen Auswertungen dieser Instanz, ohne Neustart; Preise aus der Liste von OpenRouter (PU11, BETRIEB 15). **Vorgabe des Modells**, solange niemand wählt: `EMPRISE_RULES_MODEL` (Unraid `RULES_MODEL`), Name wie auf openrouter.ai/models, Vorgabe `anthropic/claude-opus-5`; beim Wechsel die Preise je Million Token mit anpassen (`EMPRISE_RULES_PRICE_INPUT_PER_MTOK`, `EMPRISE_RULES_PRICE_OUTPUT_PER_MTOK`; Unraid ohne `EMPRISE_`), sonst stimmen Kostenzählung und Budget nicht. Wirksam nach `docker compose up -d api worker`; ausgewertete Kapitel bleiben, bis sie neu ausgewertet werden. **Eingabeform:** Modelle ohne PDF-Eingabe bekommen die Textschicht der Seiten statt der PDF-Auszüge (PU12); für die Vorgabe `EMPRISE_RULES_INPUT` (`pdf` oder `text`, Unraid `RULES_INPUT`). **Nachsuche** (VA03–VA08): Nach Auswertung und Gegenprüfung fragt ein dritter Aufruf gezielt nach fehlenden Angaben und offenen Textstellen; an `EMPRISE_RULES_GAP_SEARCH` (Vorgabe `true`), Zusatzseiten aus anderen Teilen des Dokuments höchstens `EMPRISE_RULES_GAP_EXTRA_PAGES_MAX` (15). Kosten je Kapitel mit Opus 5.5 und PDF gemessen 1,46 $ statt 0,59 $, etwa 3,5 Minuten länger (PLAN_G2_VOLLSTAENDIGKEIT 7.5). **Messen** gegen eine Referenzliste ohne Aufruf: `python -m app.cli reference-check beyenes_uc.json --version all` (Listen in `app/rules/reference_seed`). An die Schnittstelle gehen nur öffentliche Planunterlagen (L8); seit E-D19 läuft der Aufruf über OpenRouter als zusätzlichen Drittanbieter statt direkt über die Claude API.
 2. Planstände importiert der Worker beim ersten Start und danach wöchentlich (`plu_import`); sofort: `python -m app.cli plu-import` (ohne Internet: `--from-dir`). Jedes Zonenkapitel wird danach als Job `rules_extract` ausgewertet.
 3. Flag und ausgehender Zugang: Tabelle in Abschnitt 1.
 
@@ -364,6 +364,12 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - **Ansehen ohne Oberfläche:** `SELECT value, updated_at, updated_by FROM app_setting WHERE key = 'rules_model'`; keine Zeile = Vorgabe aus der Umgebung. **Zurück zur Vorgabe** ohne Oberfläche: `DELETE FROM app_setting WHERE key = 'rules_model'`. Jede Wahl steht im Audit-Log (`rules_model_changed`, altes und neues Modell).
 - Ein Wechsel gilt für die nächste Auswertung eines Kapitels; eine laufende bleibt beim alten Modell. Ausgewertete Kapitel werden nicht von selbst neu ausgewertet; der Lauf nennt das Modell (`rule_extraction_run.model`).
 
+**Nachsuche und Abdeckung (PLAN_G2_VOLLSTAENDIGKEIT, VA03–VA08)**
+
+- Migration **0017**: Spalten `open_passages` und `out_of_scope_passages` an `rule_set_version` (leere Liste). Keine neuen Jobs oder Flags. Ältere Versionen zeigen keine Abdeckung, bis das Kapitel neu ausgewertet wird.
+- **Neu auswerten kostet:** Die Anweisung `g2-prompt-5` und die Nachsuche ändern die Prüfsumme der Eingabe; gespeicherte Antworten passen nicht mehr. Kapitel werden deshalb nicht von selbst neu ausgewertet (die Version der Schranken bleibt `g2-1.2.0`), sondern erst bei „Neu auswerten“, neuem Sektor oder neuem Dokument – jeweils ein bezahlter Lauf.
+- **Ansehen ohne Oberfläche:** `SELECT version, coverage, jsonb_array_length(open_passages) FROM rule_set_version ORDER BY created_at DESC`; die Nachsuche steht als Lauf `run_no = 3`, Teil `gaps:…` in `rule_extraction_run`.
+
 **Störungen beim Hochladen einer Parzelle**
 
 - `422 upload_invalid`: kein lesbares DXF oder GeoJSON, keine geschlossene Polylinie, oder keine Kontur mit plausibler Fläche (20–50 000 m², UP08). Im DXF muss die Parzelle eine **geschlossene** Polylinie sein; einzelne Linien werden nicht verbunden.
@@ -378,3 +384,21 @@ Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dien
 - Das Analyse-Produkt kennt **keine Datenauskunft** (`GET /projects/{id}/export` liegt in Modul A, UP07); die Löschung eines Projekts gibt es. Vor AN6 (fremde Büros) neu bewerten.
 - Im Image liegen beide Oberflächen. Unter `/index.html` zeigt der Analyse-Stack die Seite des Konfigurators; deren Aufrufe laufen dort ins Leere (PS06).
 - Regelwerke werden nicht geteilt: Eine Auswertung, die beide Produkte brauchen, kostet zweimal (PLAN_ANALYSE 3, letzter Punkt).
+
+## 16. Gemeinsame Verwaltung beider Produkte (PLAN_G2_VOLLSTAENDIGKEIT 3.9–3.10)
+
+Konfigurator und Analyse teilen eine Datenbank `emprise_shared`: KI-Modell der Auswertung (`shared_setting`), Referenzlisten (`reference_list`, `reference_entry`) und ihr Audit (`shared_audit`). Oberfläche: `/verwaltung` in beiden Produkten, Rollen `ops` und `rules_admin`; nicht an ein Büro gebunden (VA09, VA10).
+
+- **Lokal:** `emprise_shared` im Datenbankserver des Hauptstacks, angelegt von `db-init-shared` (Hauptstack) bzw. `db-init-analyse` (Analyse-Stack), beide mehrfach ausführbar. Beide Stacks bekommen `EMPRISE_SHARED_DATABASE_URL` und `EMPRISE_SHARED_MIGRATION_DATABASE_URL`.
+- **Unraid:** eigener Stack `emprise-shared` (`deploy/unraid/compose.shared.yaml`, Werte in `.env.shared`) mit eigener Postgres-Instanz, eigener Sicherung und dem Netz `emprise-shared`; nur `migrate`, `api` und `worker` beider Produkte treten bei. Einrichten: `deploy/unraid/README.md` Abschnitt 10. Ohne das Netz bricht `deploy.sh` mit Hinweis ab.
+- **Migrationen:** eigene Umgebung `backend/migrations_shared` mit Versionstabelle `alembic_version_shared`; beide Migrate-Jobs rufen `python -m app.cli shared-migrate` (Sperre `pg_advisory_lock`, nur erweiternde Migrationen; ist die Datenbank voraus, meldet der Job das und läuft weiter). Stand ansehen: `SELECT * FROM alembic_version_shared`.
+- **Ohne eigene Verbindung** (Tests, eine Instanz allein) liegen die gemeinsamen Tabellen in der Datenbank der Instanz. Tests verwenden nie die gemeinsame Datenbank der Stacks (`tests/conftest.py` entfernt deren Adresse).
+- **Referenzliste einspielen:** `python -m app.cli reference-import beyenes_uc.json` (mitgelieferte Listen in `app/rules/reference_seed`; `--replace` ersetzt). Messen ohne Oberfläche: `python -m app.cli reference-check <datei> --version all` gegen die Auswertungen der jeweiligen Instanz.
+- **Sicherung:** lokal mit dem Server; auf Unraid Container `backup` des Stacks `emprise-shared` in `BACKUP_DIR` von `.env.shared`. Wiederherstellung wie bei den Produkten (`deploy/unraid/README.md` Abschnitt 6), Datenbank `emprise_shared` ohne PostGIS.
+
+**Störungen**
+
+- `/verwaltung` meldet „dem Betrieb vorbehalten“: Konto ohne Rolle `ops` oder `rules_admin` (`staff-add`).
+- `404 reference_not_evaluated`: Das Dokument der Liste ist in dieser Instanz nicht ausgewertet (Prüfsumme der Planunterlage und Sektor). Die Liste gilt trotzdem; gemessen wird dort, wo das Dokument ausgewertet ist.
+- `409 reference_list_exists`: Für Dokument und Sektor gibt es schon eine Liste; beim Import „vorhandene Liste ersetzen“ wählen.
+- API startet nicht, Log nennt `emprise_shared`: Stack `emprise-shared` läuft nicht oder `SHARED_APP_DB_PASSWORD` weicht von `APP_DB_PASSWORD` in `.env.shared` ab.

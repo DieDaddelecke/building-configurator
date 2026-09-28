@@ -1,0 +1,239 @@
+{
+  "format": "emprise-reference/1",
+  "document": {
+    "title": "PLU Beyenes",
+    "sha256": "1f39c335942dfb9e38cf4217f01d41eb308e273de7f8733d6c75be59902bfe63"
+  },
+  "zone": "UC",
+  "sector": "UC",
+  "pages": "9–20",
+  "status": "draft",
+  "note": "Entwurf 28.09.2026 aus dem Originaltext (Modification n°1, S. 9–20) und den Modellvergleichen (PLAN_AN2_PLU 9). Umfang: Vorschriften für ein neues Einfamilienhaus, die Lage, Größe, Höhe, Dach, Fassade, Einfriedung, Stellplätze und Freiflächen bestimmen. Nicht enthalten: Netze und Abwasser (Art. 4), Zufahrtstechnik (Art. 3), Gewerbe und Sozialwohnungsquote (Art. 1–2), öffentliche Einrichtungen, Bestand und geschützte Gebäude (Art. 11.7), Fahrradstellplätze ab zwei Wohnungen, Energie und Netze (Art. 15–16).",
+  "entries": [
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 9,
+      "quote": "Toute construction est interdite dans une bande de 6 mètres, le long et de part et d’autre du bord des cours d’eau.",
+      "note": "Bauverbot in 6 m Abstand zu Wasserläufen (Art. UC 1)."
+    },
+    {
+      "kind": "setback_street",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"mode": "min", "min_m": 2.5, "measured_from": "facade"},
+      "page": 12,
+      "quote": "Les constructions nouvelles peuvent être implantées soit à l’alignement soit en retrait. Lorsque la construction est implantée en retrait, la distance de retrait ne doit pas être inférieure à 2,50 mètres par rapport à l'alignement.",
+      "note": "An der Straßengrenze oder mindestens 2,50 m zurück (Art. UC 6.1)."
+    },
+    {
+      "kind": "setback_side",
+      "building_kind": "main",
+      "expected": "effective",
+      "params": {"min_m": 2.5, "height_factor": 0.5, "height_basis": "eave", "allow_on_boundary": true, "measured_from": "facade"},
+      "page": 12,
+      "quote": "Les constructions nouvelles peuvent être implantées soit sur les limites séparatives soit en retrait. En cas de retrait, la distance de retrait doit être au moins égale à la moitié de la hauteur de la façade mesurée à l’égout du toit (L=H/2), sans pouvoir être inférieure à 2,5 mètres.",
+      "note": "Auf der Grenze oder halbe Traufhöhe, mindestens 2,5 m (Art. UC 7.1)."
+    },
+    {
+      "kind": "setback_rear",
+      "building_kind": "main",
+      "expected": "effective",
+      "params": {"min_m": 2.5, "height_factor": 0.5, "height_basis": "eave", "allow_on_boundary": true, "measured_from": "facade"},
+      "page": 12,
+      "quote": "Les constructions nouvelles peuvent être implantées soit sur les limites séparatives soit en retrait. En cas de retrait, la distance de retrait doit être au moins égale à la moitié de la hauteur de la façade mesurée à l’égout du toit (L=H/2), sans pouvoir être inférieure à 2,5 mètres.",
+      "note": "Art. UC 7 gilt für seitliche und hintere Grenzen. Die Höhengrenze von 3 m an der hinteren Grenze (S. 14) steht als eigener Hinweis, weil ein Zitat nicht beide Seiten belegen kann."
+    },
+    {
+      "kind": "setback_side",
+      "building_kind": "annex",
+      "expected": "effective",
+      "params": {"min_m": 1.0, "allow_on_boundary": true, "measured_from": "facade"},
+      "page": 13,
+      "quote": "Les constructions annexes dont la surface est inférieure à 12 m² et la hauteur est inférieure à 2,5 mètres peuvent être implantées soit en limite séparative, soit en retrait de 1 mètre minimum de cette limite.",
+      "note": "Nur Nebengebäude unter 12 m² und unter 2,5 m Höhe; größere wie das Hauptgebäude."
+    },
+    {
+      "kind": "setback_rear",
+      "building_kind": "annex",
+      "expected": "effective",
+      "params": {"min_m": 1.0, "allow_on_boundary": true, "measured_from": "facade"},
+      "page": 13,
+      "quote": "Les constructions annexes dont la surface est inférieure à 12 m² et la hauteur est inférieure à 2,5 mètres peuvent être implantées soit en limite séparative, soit en retrait de 1 mètre minimum de cette limite.",
+      "note": "Wie seitlich; nur kleine Nebengebäude."
+    },
+    {
+      "kind": "setback_side",
+      "building_kind": "pool",
+      "expected": "effective",
+      "params": {"min_m": 2.5, "allow_on_boundary": false, "measured_from": "facade"},
+      "page": 13,
+      "quote": "Les piscines, couvertes ou non, doivent être implantées en retrait des limites séparatives. Le bassin doit être implanté à une distance d’ au moins 2,50 mètres de toute limite séparative.",
+      "note": "Becken mindestens 2,50 m von jeder Grundstücksgrenze."
+    },
+    {
+      "kind": "setback_rear",
+      "building_kind": "pool",
+      "expected": "effective",
+      "params": {"min_m": 2.5, "allow_on_boundary": false, "measured_from": "facade"},
+      "page": 13,
+      "quote": "Les piscines, couvertes ou non, doivent être implantées en retrait des limites séparatives. Le bassin doit être implanté à une distance d’ au moins 2,50 mètres de toute limite séparative.",
+      "note": "Wie seitlich."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 13,
+      "quote": "Les installations de chauffage, climatisation, ventilation, pompe à chaleur et autres équipements dotés de pompe ou de compresseur ne doivent pas être installés à moins de 4 mètres des limites séparatives.",
+      "note": "Wärmepumpen und Klimageräte mindestens 4 m von den Grundstücksgrenzen."
+    },
+    {
+      "kind": "setback_between_buildings",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"min_m": 4.0},
+      "page": 13,
+      "quote": "La distance minimale entre deux constructions non contiguës est de 4 mètres.",
+      "note": "Art. UC 8."
+    },
+    {
+      "kind": "setback_between_buildings",
+      "building_kind": "annex",
+      "expected": "effective",
+      "params": {"min_m": 2.0},
+      "page": 13,
+      "quote": "la distance minimale entre cette construction annexe et la construction principale ou une autre construction annexe est de 2 mètres",
+      "note": "Nur Nebengebäude unter 12 m² und unter 2,5 m Höhe."
+    },
+    {
+      "kind": "max_footprint_ratio",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 14,
+      "quote": "Si la surface du terrain est supérieure à 200 m², l’emprise au sol maximale des constructions est - de 90 % pour les premiers 200 m², - de 50 % pour les 200 m² suivants, - de 20 % pour les m² suivants.",
+      "note": "Gestaffelt nach Grundstücksgröße; ein Einzelwert (0,9) ist falsch. Bis das Schema Staffeln kennt: nicht ermittelt mit Hinweis."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 14,
+      "quote": "Si la surface du terrain est supérieure à 200 m², l’emprise au sol maximale des constructions est - de 90 % pour les premiers 200 m², - de 50 % pour les 200 m² suivants, - de 20 % pour les m² suivants.",
+      "note": "Hinweis mit der ganzen Staffel: bis 200 m² 90 %, darüber 90 % der ersten 200 m², 50 % der nächsten 200 m², 20 % des Rests."
+    },
+    {
+      "kind": "max_height",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"ridge_m": 9.0, "parapet_m": 7.0, "reference": "natural_terrain", "measured_at": "highest_point", "includes_roof_installations": false},
+      "page": 14,
+      "quote": "La hauteur maximale des constructions est de 9 mètres au faîtage et de 7 mètres à l’acrotère en cas de toiture terrasse.",
+      "note": "Vom natürlichen Gelände (am Hang vom tiefsten Punkt) bis zum höchsten Punkt, ohne Schornsteine und technische Aufbauten."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 14,
+      "quote": "Les constructions implantées sur la limite séparative de fond de parcelle ne doivent pas dépasser une hauteur de 3 mètres, sur une bande de 3 mètres le long de cette limite.",
+      "note": "An der hinteren Grenze (gegenüber der Zufahrt) in einem 3-m-Streifen höchstens 3 m hoch."
+    },
+    {
+      "kind": "roof",
+      "building_kind": "main",
+      "expected": "effective",
+      "params": {"allowed_forms": ["flat", "gable"], "pitch_min_deg": 30.0, "pitch_max_deg": 45.0, "flat_roof": "green_only"},
+      "page": 15,
+      "quote": "Les toitures doivent être à deux pans ou en combinaison de toitures à deux pans, dont la pente est comprise entre 30° et 45° par rapport à l’horizontale.",
+      "note": "Flachdach nur begrünt. Materialien (tuiles plates, zinc, cuivre) nicht verglichen: cuivre ist `metal` oder `other`. Gilt nicht für Erweiterungen, Nebengebäude und Veranden."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "main",
+      "expected": "text_only",
+      "params": {},
+      "page": 15,
+      "quote": "Les débords de toit sont interdits.",
+      "note": "Keine Dachüberstände."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "main",
+      "expected": "text_only",
+      "params": {},
+      "page": 15,
+      "quote": "soit adopter un parti pris architectural contemporain de qualité : il peut dans ce cas être dérogé aux articles 11.2 (toitures) et 11.3 (façades), sous réserve que le projet s’intègre dans le bâti avoisinant.",
+      "note": "Zeitgenössische Architektur darf von den Dach- und Fassadenregeln abweichen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "main",
+      "expected": "text_only",
+      "params": {},
+      "page": 15,
+      "quote": "Les ouvertures situées sur un même pan de toit doivent être de forme rectangulaire dont la plus grande dimension doit être inférieure à 1 mètre, implantées verticalement et alignées horizontalement entre elle, sur une seule ligne.",
+      "note": "Dachöffnungen unter 1 m, in einer Reihe; Dachfenster und Solarpaneele bündig."
+    },
+    {
+      "kind": "facade",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"materials_allowed": ["render"], "color_families_allowed": ["light", "natural", "neutral"]},
+      "page": 16,
+      "quote": "Les façades doivent être revêtues d’enduits traditionnels de finition lissé ou gratté fin. … Les couleurs des parties maçonnées des façades (murs, encadrements, soubassements) sont des teintes claires, neutres, des ocres (ocres beiges, brunes, jaunes ou orangées...).",
+      "note": "Weiß verboten. Verboten auch unverputzte Bausteine und Verblendungen (materials_forbidden nicht verglichen)."
+    },
+    {
+      "kind": "fence",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"max_height_m": 2.0},
+      "page": 17,
+      "quote": "La hauteur totale d’une clôture ne doit pas excéder 2 mètres.",
+      "note": "Materialien nicht verglichen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 17,
+      "quote": "Les clôtures sur rue doivent être composées de murs maçonnés d’au plus 1 mètre de hauteur, revêtu d’un enduit de finition lissé ou gratté fin. Ce mur peut être surmonté d’une grille ou d’un barreaudage vertical métallique ou en bois peint, largement ajouré.",
+      "note": "Zur Straße: verputzte Mauer höchstens 1 m, darüber Gitter."
+    },
+    {
+      "kind": "parking",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"spaces_per_m2_sdp": 0.025},
+      "page": 19,
+      "quote": "Pour les constructions à destination d’habitation, il doit être réalisé au minimum une place par tranche de 40 m² de surface de plancher créée avec un maximum de 3 places par logement.",
+      "note": "Höchstens 3 je Wohnung; Stellplatz 5 × 2,50 m (S. 18) nicht verglichen."
+    },
+    {
+      "kind": "planting",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"trees_per_m2": 0.005},
+      "page": 20,
+      "quote": "Les espaces libres doivent comporter au moins un arbre pour 200 m² (arbre existant conservé ou à planter).",
+      "note": "Je Baum mindestens 2,5 m² offener Boden."
+    },
+    {
+      "kind": "unsealed_min",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {"ratio": 0.1},
+      "page": 20,
+      "quote": "13.1 - 10 % au moins de l’unité foncière du projet doit rester libre de toute construction et non imperméabilisée.",
+      "note": "Art. UC 13.1."
+    }
+  ]
+}

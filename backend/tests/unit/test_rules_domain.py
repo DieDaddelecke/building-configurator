@@ -157,6 +157,34 @@ def test_number_after_ellipsis_must_be_found() -> None:
     assert not verify_quote(reordered, STREET_PAGE, 10).verified
 
 
+HEIGHT_PAGE = {
+    14: "La hauteur d’une construction est mesurée à partir du terrain naturel d’origine jusqu’au point le "
+    "plus haut de la construction, faîtage ou acrotère, non compris les cheminées et ouvrages techniques. "
+    "Lorsque le terrain est en pente, la hauteur est mesurée à partir du point le plus bas du terrain "
+    "naturel. La hauteur maximale des constructions est de 9 mètres au faîtage et de 7 mètres à "
+    "l’acrotère en cas de toiture terrasse."
+}
+
+
+def test_sentences_that_are_not_adjacent_need_an_ellipsis() -> None:
+    """Modellvergleich Beyenes UC (PLAN_AN2_PLU 9): Zwei Sätze ohne den dazwischen wurden als ein Zitat
+    geschrieben und nicht gefunden; mit „…“ verbunden sind sie belegt (Anweisung seit g2-prompt-5)."""
+    first = (
+        "La hauteur d'une construction est mesurée à partir du terrain naturel d'origine jusqu'au point le "
+    )
+    first += (
+        "plus haut de la construction, faîtage ou acrotère, non compris les cheminées et ouvrages techniques."
+    )
+    second = (
+        "La hauteur maximale des constructions est de 9 mètres au faîtage et de 7 mètres à l'acrotère en "
+    )
+    second += "cas de toiture terrasse."
+    assert not verify_quote(f"{first} {second}", HEIGHT_PAGE, 14).verified
+    assert verify_quote(f"{first} … {second}", HEIGHT_PAGE, 14).verified
+    assert "join their verbatim parts" in system_prompt() and "no ellipsis" not in system_prompt()
+    assert "never reduced to one number" in system_prompt("supplement")
+
+
 def test_missing_negation_is_rejected() -> None:
     page = {
         10: "Les constructions ne sont pas autorisées en limite séparative. Elles doivent respecter un "

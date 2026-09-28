@@ -4,10 +4,24 @@
 #   ./deploy.sh rollback REL             Hauskonfigurator auf eine frühere Release zurück (releases.log)
 #   ./deploy.sh analyse                  „Emprise Analyse“ ausliefern (AN0; dieselben Images, eigener Stack)
 #   ./deploy.sh analyse rollback REL     Analyse-Stack zurückrollen
+#   ./deploy.sh shared                   gemeinsame Datenbank beider Produkte starten (PLAN_G2_VOLLSTAENDIGKEIT
+#                                        3.9); vor dem ersten Ausliefern eines Produkts, legt das Netz an
 # Beide Produkte kommen aus einem Repository (D16); getrennt sind Datenbank, Speicher, Hostname und
 # das Bild-Kennzeichen (`current` gegenüber `current-analyse`), damit ein Rückrollen nur einen Stack trifft.
 set -eu
 cd "$(dirname "$0")"
+
+if [ "${1:-}" = "shared" ]; then
+  # Keine eigenen Images: Postgres und Sicherung; Migrationen fahren die Produkte (migrate)
+  docker compose -f compose.shared.yaml --env-file .env.shared up -d
+  echo "Gemeinsamer Stack bereit (Netz emprise-shared)"
+  exit 0
+fi
+
+if ! docker network inspect emprise-shared >/dev/null 2>&1; then
+  echo "Netz emprise-shared fehlt: zuerst ./deploy.sh shared (README, Gemeinsame Daten)" >&2
+  exit 1
+fi
 
 stack=konfigurator
 if [ "${1:-}" = "analyse" ]; then

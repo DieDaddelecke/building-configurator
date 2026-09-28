@@ -9,7 +9,7 @@ import openai
 import pytest
 
 from app.config import Settings
-from app.integrations import gpu
+from app.integrations import gpu, openrouter
 from app.integrations.http import ExternalServiceError
 from app.integrations.openrouter import (
     EXTRACTION_TOOL,
@@ -146,6 +146,75 @@ def test_openrouter_request_shape_and_response() -> None:
     assert response.usage["input_tokens"] == 1200
     # 1.200 × 5 $ + 4.000 × 25 $ + 90.000 × 0,5 $ (Zwischenspeicher, gemeldet über OpenRouter) je Million
     assert response.cost_usd == pytest.approx(0.151, abs=0.001)
+
+
+def test_text_input_replaces_the_pdfs_and_explains_the_page_marks() -> None:
+    """PU12: Modelle ohne PDF-Eingabe bekommen die Textschicht, benannt wie die PDFs."""
+    seen: dict[str, Any] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json=_completion(uh_output()))
+
+    request = replace(
+        REQUEST,
+        chapter_pdf=b"",
+        general_pdf=None,
+        chapter_text="=== page 1 ===\nArticle Uh 6",
+        general_text="=== page 1 ===\nDéfinitions",
+    )
+    _extractor(handler).extract(request)
+    content = seen["body"]["messages"][1]["content"]
+    assert [block["type"] for block in content] == ["text", "text", "text"]
+    assert content[0]["text"] == '<document name="general.pdf">\n=== page 1 ===\nDéfinitions\n</document>'
+    assert content[1]["text"].startswith('<document name="chapter-Uh.pdf">\n=== page 1 ===')
+    assert content[2]["text"].startswith(TEXT_INPUT_NOTE) and "Uh" in content[2]["text"]
+
+
+def test_a_model_without_forced_tool_call_gets_the_choice_and_a_hint() -> None:
+    """Opus 5.5 lehnt den erzwungenen Funktionsaufruf ab (bei allen Anbietern); einmal abgelehnt, fragt der
+    Prozess das Modell gleich mit `auto` (PLAN_G2_VOLLSTAENDIGKEIT 3.2)."""
+    openrouter._WITHOUT_FORCED_TOOL.clear()
+    bodies: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        bodies.append(body)
+        if body["tool_choice"] != "auto":
+            message = 'tool_choice: type "tool" and "any" are not supported for this model.'
+            raw = json.dumps(
+                {"type": "error", "error": {"type": "invalid_request_error", "message": message}}
+            )
+            return httpx.Response(
+                400, json={"error": {"message": "Provider returned error", "metadata": {"raw": raw}}}
+            )
+        return httpx.Response(200, json=_completion(uh_output()))
+
+    extractor = _extractor(handler)
+    assert extractor.extract(REQUEST).output["rules"][0]["kind"] == "setback_street"
+    assert [b["tool_choice"] for b in bodies] == [
+        {"type": "function", "function": {"name": EXTRACTION_TOOL}},
+        "auto",
+    ]
+    assert bodies[1]["messages"][0]["content"].endswith(
+        f"Return your result only by calling the tool {EXTRACTION_TOOL}."
+    )
+    extractor.extract(REQUEST)
+    assert [b["tool_choice"] for b in bodies[2:]] == ["auto"]
+    openrouter._WITHOUT_FORCED_TOOL.clear()
+
+
+def test_other_bad_requests_are_not_retried() -> None:
+    openrouter._WITHOUT_FORCED_TOOL.clear()
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(400, json={"error": {"message": "context length exceeded"}})
+
+    with pytest.raises(ExtractionError, match="bad_request"):
+        _extractor(handler).extract(REQUEST)
+    assert len(calls) == 1
 
 
 def test_verification_request_sends_claims_without_values() -> None:

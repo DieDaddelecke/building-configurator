@@ -1,0 +1,54 @@
+# Gemeinsame Daten beider Produkte auf Unraid (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.9): KI-Modell der
+# Auswertung und Referenzlisten. Eigener kleiner Stack mit eigener Datenbank, eigener Sicherung und dem Netz
+# `emprise-shared`, dem nur die Backends beider Produkte beitreten. Die Datenbanken der Produkte bleiben
+# untereinander unerreichbar (Entscheidung des Nutzers 28.09.2026).
+#
+#   ./deploy.sh shared      (vor den Produkten; legt das Netz an; Werte in .env.shared)
+name: emprise-shared
+
+services:
+  shared-db:
+    # Dasselbe Image wie die Produkte, eine Vorlage weniger; PostGIS wird hier nicht angelegt
+    image: postgis/postgis:16-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR_DB_PASSWORD:?}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
+      READONLY_DB_PASSWORD: ${READONLY_DB_PASSWORD:?}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ${APPDATA_DIR:-/mnt/user/appdata/emprise-shared}/postgres:/var/lib/postgresql/data
+      - ./postgres/20-shared.sh:/docker-entrypoint-initdb.d/20-shared.sh:ro
+    networks: [shared]
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d emprise_shared"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  backup:
+    image: postgis/postgis:16-3.5
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: shared-db
+      PGUSER: migrator
+      PGPASSWORD: ${MIGRATOR_DB_PASSWORD:?}
+      PGDATABASE: emprise_shared
+      BACKUP_HOUR: ${BACKUP_HOUR:-3}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ./backup/backup.sh:/backup.sh:ro
+      - ${BACKUP_DIR:-/mnt/user/backups/emprise-shared}:/backups
+    depends_on:
+      shared-db:
+        condition: service_healthy
+    networks: [shared]
+
+networks:
+  # Die Produkte binden es als externes Netz ein (compose.yaml, Netz `shared`)
+  shared:
+    name: emprise-shared

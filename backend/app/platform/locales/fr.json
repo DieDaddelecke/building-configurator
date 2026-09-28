@@ -462,5 +462,10 @@
   "risk.level.high": "important",
   "risk.level.present": "existant",
   "risk.level.unknown": "inconnu",
-  "dossier.site.commune": "commune"
+  "dossier.site.commune": "commune",
+  "problem.models_unavailable": "La liste des modèles d’IA est momentanément indisponible ; le modèle actuel reste en place",
+  "problem.model_not_available": "Ce modèle d’IA n’est pas (ou plus) disponible",
+  "problem.reference_list_exists": "Une liste de référence existe déjà pour ce document et ce secteur",
+  "problem.reference_not_evaluated": "Ce document n’est pas analysé dans cette instance",
+  "problem.reference_invalid": "La liste de référence n’est pas valide"
 }

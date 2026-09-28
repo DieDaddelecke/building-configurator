@@ -34,6 +34,11 @@ def test_models_match_migrations(database: str) -> None:
     command.check(Config(str(BACKEND_DIR / "alembic.ini")))
 
 
+def test_shared_models_match_shared_migrations(database: str) -> None:
+    """Dasselbe für die gemeinsame Datenbank (`migrations_shared`, PLAN_G2_VOLLSTAENDIGKEIT 3.9)."""
+    command.check(Config(str(BACKEND_DIR / "alembic_shared.ini")))
+
+
 def test_problem_details_are_localized(client: Any) -> None:
     response = client.get("/api/v1/does-not-exist", headers={"Accept-Language": "de-DE"})
     assert response.status_code == 404

@@ -25,6 +25,12 @@ if ADMIN_URL:
         username="migrator", password="migrator", database=TEST_DB
     ).render_as_string(hide_password=False)
 os.environ["EMPRISE_ENV"] = "test"
+# Gemeinsame Tabellen liegen in der Testdatenbank, nie in der gemeinsamen Datenbank der lokalen Stacks
+# (backend-dev erbt deren Adresse aus compose.yaml; PLAN_G2_VOLLSTAENDIGKEIT 3.9)
+os.environ.pop("EMPRISE_SHARED_DATABASE_URL", None)
+os.environ.pop("EMPRISE_SHARED_MIGRATION_DATABASE_URL", None)
+# Bestehende Tests zählen Aufrufe; die Nachsuche prüfen eigene Tests (tests/integration/test_rules_gaps.py)
+os.environ.setdefault("EMPRISE_RULES_GAP_SEARCH", "false")
 os.environ.setdefault("EMPRISE_OIDC_ISSUER", "http://oidc.test/emprise")
 os.environ.setdefault("EMPRISE_OIDC_CLIENT_ID", "emprise-test")
 
@@ -94,6 +100,10 @@ CLEAN_TABLES = [
     "periodic_schedule",
     "feature_flag",
     "app_setting",
+    "reference_entry",
+    "reference_list",
+    "shared_setting",
+    "shared_audit",
     "legal_text",
     "rate_limit_counter",
     "audit_log",
@@ -127,12 +137,16 @@ def database() -> Iterator[str]:
 
     config = Config(str(BACKEND_DIR / "alembic.ini"))
     command.upgrade(config, "head")
+    # Gemeinsame Tabellen ohne eigene Verbindung in derselben Datenbank (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
+    command.upgrade(Config(str(BACKEND_DIR / "alembic_shared.ini")), "head")
     try:
         yield TEST_DB
     finally:
         from app.platform.db import get_engine
+        from app.platform.shared import get_shared_engine
 
         get_engine().dispose()
+        get_shared_engine().dispose()
         with admin.connect() as conn:
             conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_DB}" WITH (FORCE)'))
         admin.dispose()

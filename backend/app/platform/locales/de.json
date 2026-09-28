@@ -462,5 +462,10 @@
   "risk.level.high": "hoch",
   "risk.level.present": "vorhanden",
   "risk.level.unknown": "unbekannt",
-  "dossier.site.commune": "Gemeinde"
+  "dossier.site.commune": "Gemeinde",
+  "problem.models_unavailable": "Die Liste der KI-Modelle ist gerade nicht abrufbar; das bisherige Modell bleibt",
+  "problem.model_not_available": "Dieses KI-Modell ist nicht (mehr) wählbar",
+  "problem.reference_list_exists": "Für dieses Dokument und diesen Sektor gibt es schon eine Referenzliste",
+  "problem.reference_not_evaluated": "Dieses Dokument ist in dieser Instanz nicht ausgewertet",
+  "problem.reference_invalid": "Die Referenzliste ist ungültig"
 }

@@ -7,6 +7,9 @@ x-backend-env: &backend-env
   EMPRISE_LOG_LEVEL: INFO
   EMPRISE_DATABASE_URL: postgresql+psycopg://app:app@db:5432/emprise
   EMPRISE_MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:migrator@db:5432/emprise
+  # Gemeinsame Datenbank beider Produkte: KI-Modell, Referenzlisten (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
+  EMPRISE_SHARED_DATABASE_URL: postgresql+psycopg://app:app@db:5432/emprise_shared
+  EMPRISE_SHARED_MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:migrator@db:5432/emprise_shared
   EMPRISE_PUBLIC_BASE_URL: ${EMPRISE_PUBLIC_BASE_URL:-http://localhost:8080}
   # Lokaler OIDC-Testdienst. oidc.localhost zeigt im Browser auf 127.0.0.1 und im Compose-Netz auf den Dienst.
   EMPRISE_OIDC_ISSUER: http://oidc.localhost:8081/emprise
@@ -89,16 +92,35 @@ services:
         aliases:
           - oidc.localhost
 
+  # Legt `emprise_shared` im Datenbankserver an (auch in einem schon angelegten Datenverzeichnis); mehrfach ausführbar
+  db-init-shared:
+    image: postgis/postgis:16-3.5
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        until pg_isready -h db -U postgres; do sleep 2; done;
+        psql -v ON_ERROR_STOP=1 -h db -U postgres -f /init.sql
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./infra/local/postgres-init-shared.sql:/init.sql:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure:5
+
   migrate:
     build:
       context: backend
       target: runtime
     image: emprise-backend:local
-    command: ["sh", "-c", "alembic upgrade head && python -m app.cli storage-init"]
+    command: ["sh", "-c", "alembic upgrade head && python -m app.cli shared-migrate && python -m app.cli storage-init"]
     environment: *backend-env
     depends_on:
       db:
         condition: service_healthy
+      db-init-shared:
+        condition: service_completed_successfully
       storage:
         condition: service_healthy
     restart: on-failure:5

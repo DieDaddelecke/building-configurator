@@ -399,6 +399,79 @@
       "onBoundary": "auf der Grenze zulässig",
       "onBoundaryHeight": "auf der Grenze zulässig bis {{value}} Höhe",
       "otherwise": "{{first}}, sonst {{second}}"
+    },
+    "corrections": {
+      "intro": "Stimmt ein Wert nicht oder fehlt eine Regel, korrigieren Sie sie für dieses Projekt – mit Begründung und, wo möglich, Seite. Die Korrektur wirkt sofort in Baurahmen und Analyse und kostet nichts.",
+      "correct": "Korrigieren",
+      "change": "Ändern",
+      "remove": "Zurücknehmen",
+      "removeConfirm": "Korrektur zurücknehmen? Danach gilt wieder der gelesene Wert.",
+      "add": "Regel ergänzen",
+      "reason": "Begründung: {{note}}",
+      "detached": "Fundstelle in einem Dokument, das nicht mehr am Projekt hängt",
+      "inactive": "Nicht wirksame Korrekturen",
+      "inactiveIntro": "Diese Korrekturen gehören zu einer Zone, die das Projekt nicht mehr hat (Zone oder Bebauungsplan gewechselt).",
+      "confirmNotRegulated": "als nicht geregelt bestätigen"
+    },
+    "compare": {
+      "title": "Stände vergleichen",
+      "intro": "Nebeneinander: ohne und mit Ihren Korrekturen, oder eine frühere und die aktuelle Auswertung des Bebauungsplans (beide ohne Korrekturen).",
+      "nothing": "Noch nichts zu vergleichen: Ein Vergleich ergibt sich, sobald Sie eine Regel korrigieren oder der Bebauungsplan neu ausgewertet wird.",
+      "choose": "Vergleich",
+      "base": {
+        "corrections": "ohne ↔ mit Ihren Korrekturen",
+        "version": "Auswertung v{{version}} vom {{date}} ({{origin}}, Zone {{zone}}) ↔ aktuelle"
+      },
+      "origin": {
+        "extraction": "automatisch",
+        "office": "Büro"
+      },
+      "withoutCorrections": "ohne Korrekturen",
+      "withCorrections": "mit Korrekturen",
+      "versionColumn": "v{{version}} vom {{date}}",
+      "current": "aktuell",
+      "figures": "Kennzahlen beider Stände",
+      "figure": "Kennzahl",
+      "figureKey": {
+        "footprint_lenient": "Bindende Grundfläche (weit)",
+        "footprint_strict": "Bindende Grundfläche (eng)",
+        "contour_lenient": "Bebaubare Fläche (weit)",
+        "contour_strict": "Bebaubare Fläche (eng)",
+        "storeys_min": "Vollgeschosse mindestens",
+        "storeys_max": "Vollgeschosse höchstens",
+        "floor_area_low": "Nutzfläche von",
+        "floor_area_high": "Nutzfläche bis",
+        "height_top": "Höchste Höhe"
+      },
+      "changed": "(geändert)",
+      "rules_one": "Eine geänderte Regel",
+      "rules_other": "{{count}} geänderte Regeln",
+      "noRuleChanges": "Keine Regel unterscheidet sich.",
+      "rulesCaption": "Regeln, die sich zwischen den Ständen unterscheiden"
+    },
+    "model": {
+      "title": "KI-Modell der Auswertung",
+      "prices": "{{input}} Eingabe · {{output}} Ausgabe je Mio. Token",
+      "default": "Vorgabe",
+      "current": "eingestellt",
+      "change": "Ändern",
+      "cost": "Kosten der Auswertung diesen Monat: {{spent}} von {{budget}}",
+      "noKey": "Kein Schlüssel für OpenRouter eingetragen – Reglements werden noch nicht ausgewertet.",
+      "dialogTitle": "KI-Modell wählen",
+      "hint": "Gilt für alle künftigen Auswertungen von Reglements, in allen Projekten, bis Sie es wieder ändern. Bereits ausgewertete Reglements bleiben, bis sie neu ausgewertet werden.",
+      "search": "Modell suchen",
+      "count": "{{count}} geeignete Modelle",
+      "priceHead": "Eingabe / Ausgabe je Mio. Token",
+      "none": "Kein Modell passt zur Suche.",
+      "listError": "Die Liste der Modelle ist gerade nicht abrufbar. Das bisherige Modell bleibt.",
+      "claudeHint": "Die Auswertung ist auf Claude-Modelle von Anthropic abgestimmt; andere Anbieter sind nicht geprüft.",
+      "save": "Übernehmen",
+      "cancel": "Abbrechen",
+      "reset": "Vorgabe wiederherstellen ({{model}})",
+      "asText": "liest Text statt PDF",
+      "textHint": "Dieses Modell liest keine PDFs und bekommt den Text der Seiten. Tabellen verlieren dabei ihre Spalten, Skizzen fehlen.",
+      "changeInAdmin": "In der Verwaltung ändern",
+      "chosenBy": "gewählt von {{name}}"
     }
   },
   "site": {
@@ -654,7 +727,10 @@
       "graphic_reference": "steht im Zonenplan oder einem Anhang",
       "runs_disagree": "nicht ermittelt: Text mehrdeutig",
       "ambiguous": "nicht ermittelt: mehrere Werte",
-      "missing": "nicht ermittelt"
+      "missing": "nicht ermittelt",
+      "correction": "nicht ermittelt (Korrektur)",
+      "not_found_after_search": "nicht ermittelt: nach Nachsuche nicht gefunden",
+      "not_expressible": "nicht abbildbar: siehe Hinweis"
     },
     "kind": {
       "setback_street": "Abstand zur Straße",
@@ -908,7 +984,49 @@
         "not_found": "Die Korrektur gibt es nicht mehr."
       }
     },
-    "uploaded": "{{title}}, hochgeladen"
+    "paramError": {
+      "implausible": "{{name}}: Wert unplausibel",
+      "min_m_required": "Mindestabstand fehlt",
+      "max_m_requires_range": "Ein Höchstabstand braucht die Art „Band“",
+      "range_invalid": "Band: von und bis angeben, von ≤ bis",
+      "min_m_or_height_factor_required": "Mindestabstand oder Faktor der Höhe angeben",
+      "height_basis_required": "Zum Faktor gehört die Bezugshöhe",
+      "height_required": "Mindestens eine Höhe oder Geschosse angeben",
+      "storeys_invalid": "Geschosse in der Form R, R+1, R+1+C angeben",
+      "eave_above_ridge": "Die Traufe liegt über dem First",
+      "roof_empty": "Mindestens eine Angabe zum Dach",
+      "pitch_range_invalid": "Neigung mindestens ≤ höchstens",
+      "facade_empty": "Mindestens eine Angabe zur Fassade",
+      "ratio_required": "Anteil angeben",
+      "parking_empty": "Stellplätze je Wohnung oder je Nutzfläche angeben",
+      "annex_empty": "Grundfläche oder Höhe angeben",
+      "planting_empty": "Bäume oder Grünanteil angeben",
+      "fence_empty": "Höhe oder Materialien angeben",
+      "max_area_empty": "Nutzfläche oder Grundfläche angeben",
+      "vocabulary": "unbekannter Wert",
+      "Field required": "Pflichtangabe fehlt"
+    },
+    "coverage": {
+      "line": "Abdeckung: {{assigned}} von {{total}} Vorschriften zugeordnet, {{open}} offen",
+      "notSearched": "ohne Nachsuche",
+      "openTitle_one": "Eine Vorschrift ohne Regel",
+      "openTitle_other": "{{count}} Vorschriften ohne Regel",
+      "openHint": "Diese Stellen hat die Auswertung keiner Regel zugeordnet. Bitte selbst prüfen und bei Bedarf eine Regel ergänzen.",
+      "outOfScopeTitle_one": "Eine Stelle betrifft kein Einfamilienhaus",
+      "outOfScopeTitle_other": "{{count}} Stellen betreffen kein Einfamilienhaus",
+      "searched": "Geprüft: {{note}}",
+      "hintPage": "Die Vorschrift steht als Hinweis (S. {{page}}); das Regelschema kann sie nicht abbilden.",
+      "reason": {
+        "other_use": "andere Nutzung",
+        "public_facility": "öffentliche Einrichtung",
+        "existing_building": "Bestand",
+        "multi_dwelling": "mehrere Wohnungen",
+        "networks": "Netze",
+        "access_procedure": "Zufahrt, Verfahren",
+        "drawing": "Skizze",
+        "other": "anderes"
+      }
+    }
   },
   "inquiry": {
     "title": "Anfrage an das Büro",
@@ -1812,5 +1930,81 @@
     "email": "E-Mail",
     "send": "Link anfordern",
     "sent": "Wenn zu dieser Adresse ein Vorgang besteht, ist ein Link unterwegs."
+  },
+  "verwaltung": {
+    "title": "Verwaltung",
+    "intro": "Einstellungen und Referenzlisten für Hauskonfigurator und Emprise Analyse gemeinsam – nicht an ein Büro gebunden.",
+    "noAccess": "Die Verwaltung ist dem Betrieb vorbehalten (Rollen ops und rules_admin).",
+    "loginIntro": "Anmelden mit einem Konto des Betriebs.",
+    "nav": {
+      "model": "KI-Modell",
+      "reference": "Referenzlisten"
+    },
+    "reference": {
+      "intro": "Eine Referenzliste nennt alle Vorschriften eines Dokuments für eine Zone. Jede Auswertung wird daran gemessen: richtig, falsch, sichtbar offen oder still fehlend. Gemessen wird die Auswertung dieser Anwendung.",
+      "empty": "Noch keine Referenzliste.",
+      "notHere": "Dieses Dokument ist hier nicht ausgewertet.",
+      "recall": "{{recall}} % richtig (Version {{version}})",
+      "wrong_one": "ein falscher Wert",
+      "wrong_other": "{{count}} falsche Werte",
+      "silent_one": "eine fehlt still",
+      "silent_other": "{{count}} fehlen still",
+      "document": "Dokument",
+      "status": "Stand",
+      "entries": "Einträge",
+      "measurement": "Messung",
+      "updated": "geändert {{date}} von {{who}}",
+      "updatedAt": "geändert {{date}}",
+      "state": {
+        "draft": "Entwurf",
+        "checked": "geprüft"
+      },
+      "new": "Neue Referenzliste",
+      "create": "Anlegen",
+      "noCandidates": "Hier ist noch kein Dokument ausgewertet. Listen lassen sich trotzdem importieren.",
+      "replace": "vorhandene Liste ersetzen",
+      "import": "Referenzliste importieren (JSON)",
+      "fileError": "Die Datei ist kein gültiges JSON.",
+      "back": "Alle Referenzlisten",
+      "toDraft": "Zurück auf Entwurf",
+      "toChecked": "Als geprüft markieren",
+      "fromEvaluation": "Aus der Auswertung übernehmen",
+      "fromEvaluationConfirm": "Alle Einträge durch die aktuelle Auswertung dieser Anwendung ersetzen? Die Liste wird wieder Entwurf.",
+      "export": "Exportieren",
+      "delete": "Liste löschen",
+      "deleteConfirm": "Diese Referenzliste für beide Produkte löschen?",
+      "version": "Version",
+      "counts": "{{hit}} von {{total}} richtig ({{recall}} %) · {{wrong}} falsch · {{named}} sichtbar offen · {{dismissed}} verworfen · {{silent}} still fehlend",
+      "extra_one": "Eine wirksame Regel steht nicht in der Liste.",
+      "extra_other": "{{count}} wirksame Regeln stehen nicht in der Liste.",
+      "expectedLabel": "Erwartet",
+      "quote": "Zitat",
+      "result": "Ergebnis",
+      "actions": "Aktionen",
+      "edit": "Ändern",
+      "deleteEntry": "Löschen",
+      "deleteEntryConfirm": "Diesen Eintrag löschen?",
+      "addEntry": "Eintrag hinzufügen",
+      "editEntry": "Eintrag ändern",
+      "building": "Baukörper",
+      "expected": {
+        "effective": "wirksam mit Wert",
+        "not_regulated": "nicht geregelt",
+        "text_only": "Hinweis",
+        "graphic_reference": "im Zonenplan",
+        "not_expressible": "nicht abbildbar"
+      },
+      "paramsHint": "Verglichen werden nur die Werte, die hier stehen.",
+      "page": "Seite",
+      "note": "Notiz",
+      "save": "Speichern",
+      "outcome": {
+        "hit": "richtig",
+        "wrong_value": "falsch",
+        "named_gap": "sichtbar offen",
+        "dismissed": "als nicht einschlägig verworfen",
+        "silent_gap": "fehlt still"
+      }
+    }
   }
 }

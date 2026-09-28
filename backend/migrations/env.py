@@ -12,10 +12,12 @@ import app.envelope.models
 import app.inquiry.models
 import app.platform.models  # alle Modelle laden, damit Alembic sie vergleicht
 import app.rules.models
+import app.rules.reference_models
 import app.site.models
 import app.submission.models  # noqa: F401
 from app.config import get_settings
 from app.platform.db import Base
+from app.platform.shared import SharedBase
 
 config = context.config
 if config.config_file_name is not None:
@@ -32,9 +34,14 @@ def _url() -> str:
     return settings.migration_database_url or settings.database_url
 
 
+SHARED_TABLES = {*SharedBase.metadata.tables, "alembic_version_shared"}
+"""Gemeinsame Tabellen (`migrations_shared`); ohne eigene Verbindung liegen sie in derselben Datenbank."""
+
+
 def include_object(obj: object, name: str | None, type_: str, reflected: bool, compare_to: object) -> bool:
     # PostGIS legt eigene Tabellen an (spatial_ref_sys); sie gehören nicht zu unseren Migrationen
-    return not (type_ == "table" and reflected and compare_to is None and name == "spatial_ref_sys")
+    ignored = {"spatial_ref_sys", *SHARED_TABLES}
+    return not (type_ == "table" and reflected and compare_to is None and name in ignored)
 
 
 def run_migrations_offline() -> None:

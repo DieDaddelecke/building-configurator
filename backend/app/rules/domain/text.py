@@ -19,6 +19,9 @@ QUOTE_MIN_CHARS = 12
 SEGMENT_MIN_CHARS = 8
 ELLIPSIS_MAX_GAP_CHARS = 600
 """Abschnitte eines Zitats mit Auslassung müssen in dieser Reihenfolge und nah beieinander stehen."""
+QUOTE_OVERLAP_MIN_CHARS = 40
+"""Gemeinsamer Text zweier Zitate (Vergleichsform), ab dem sie dieselbe Stelle belegen; bei kürzeren
+Zitaten genügt die Hälfte des kürzeren (Referenzlisten, doppelte Hinweise; PLAN_G2_VOLLSTAENDIGKEIT)."""
 
 _TRANSLATE = str.maketrans(
     {
@@ -260,3 +263,19 @@ def verify_quote(quote: str, pages: dict[int, str], page: int) -> QuoteCheck:
     if best >= QUOTE_SIMILARITY_MIN:
         return QuoteCheck(True, best_page, round(best, 3))
     return QuoteCheck(False, best_page, round(best, 3), "quote_not_found")
+
+
+def quotes_overlap(a: str | None, b: str | None) -> bool:
+    """Belegen zwei Zitate dieselbe Stelle? Abschnitte um „…“ getrennt, Vergleichsform wie beim Prüfen."""
+    if not a or not b:
+        return False
+    for left in (normalize(part) for part in _ELLIPSIS.split(a)):
+        for right in (normalize(part) for part in _ELLIPSIS.split(b)):
+            if not left or not right:
+                continue
+            match = SequenceMatcher(None, left, right, autojunk=False).find_longest_match(
+                0, len(left), 0, len(right)
+            )
+            if match.size >= min(QUOTE_OVERLAP_MIN_CHARS, max(12, min(len(left), len(right)) // 2)):
+                return True
+    return False

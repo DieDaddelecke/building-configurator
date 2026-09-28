@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Outlet, useSearchParams } from "react-router";
+import { Link, Outlet, useSearchParams } from "react-router";
 
 import { staffLoginUrl, useLogout, useSession } from "../../api/session";
 import { Kopfzeile } from "../../components/Kopfzeile";
+import { darfVerwalten } from "../../verwaltung/Verwaltung";
 import { Schaufenster } from "./Schaufenster";
 
 /** Rahmen des Analyse-Produkts (AN1): Anmeldung als Mitarbeiter, Kopfzeile, Inhalt.
@@ -21,6 +22,11 @@ export function AnalyseLayout() {
       <Kopfzeile untertitel={t("analyse.tagline")}>
         {staff && (
           <div className="flex items-center gap-3">
+            {darfVerwalten(staff.roles) && (
+              <Link className="link text-sm" to="/verwaltung">
+                {t("verwaltung.title")}
+              </Link>
+            )}
             <span className="text-sm t-mute hidden md:inline" data-testid="staff-email">
               {staff.display_name ?? staff.email}
             </span>

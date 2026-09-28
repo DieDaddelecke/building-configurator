@@ -399,6 +399,79 @@
       "onBoundary": "implantation en limite autorisée",
       "onBoundaryHeight": "implantation en limite autorisée jusqu'à {{value}} de hauteur",
       "otherwise": "{{first}}, sinon {{second}}"
+    },
+    "corrections": {
+      "intro": "Si une valeur est fausse ou qu'une règle manque, corrigez-la pour ce projet – avec une justification et, si possible, la page. La correction s'applique aussitôt à l'enveloppe et à l'analyse, sans coût.",
+      "correct": "Corriger",
+      "change": "Modifier",
+      "remove": "Annuler la correction",
+      "removeConfirm": "Annuler la correction ? La valeur lue s'appliquera de nouveau.",
+      "add": "Ajouter une règle",
+      "reason": "Justification : {{note}}",
+      "detached": "référence dans un document qui n'est plus lié au projet",
+      "inactive": "Corrections sans effet",
+      "inactiveIntro": "Ces corrections concernent une zone que le projet n'a plus (zone ou PLU changé).",
+      "confirmNotRegulated": "confirmer « non réglementé »"
+    },
+    "compare": {
+      "title": "Comparer deux états",
+      "intro": "Côte à côte : sans et avec vos corrections, ou une analyse précédente du PLU et l'actuelle (toutes deux sans corrections).",
+      "nothing": "Rien à comparer pour l'instant : une comparaison apparaît dès que vous corrigez une règle ou que le PLU est analysé à nouveau.",
+      "choose": "Comparaison",
+      "base": {
+        "corrections": "sans ↔ avec vos corrections",
+        "version": "Analyse v{{version}} du {{date}} ({{origin}}, zone {{zone}}) ↔ actuelle"
+      },
+      "origin": {
+        "extraction": "automatique",
+        "office": "agence"
+      },
+      "withoutCorrections": "sans corrections",
+      "withCorrections": "avec corrections",
+      "versionColumn": "v{{version}} du {{date}}",
+      "current": "actuelle",
+      "figures": "Chiffres clés des deux états",
+      "figure": "Chiffre clé",
+      "figureKey": {
+        "footprint_lenient": "Emprise déterminante (large)",
+        "footprint_strict": "Emprise déterminante (stricte)",
+        "contour_lenient": "Surface constructible (large)",
+        "contour_strict": "Surface constructible (stricte)",
+        "storeys_min": "Niveaux pleins au moins",
+        "storeys_max": "Niveaux pleins au plus",
+        "floor_area_low": "Surface de plancher de",
+        "floor_area_high": "Surface de plancher à",
+        "height_top": "Hauteur maximale"
+      },
+      "changed": "(modifié)",
+      "rules_one": "Une règle modifiée",
+      "rules_other": "{{count}} règles modifiées",
+      "noRuleChanges": "Aucune règle ne diffère.",
+      "rulesCaption": "Règles qui diffèrent entre les deux états"
+    },
+    "model": {
+      "title": "Modèle d’IA de l’analyse",
+      "prices": "{{input}} en entrée · {{output}} en sortie par million de jetons",
+      "default": "Par défaut",
+      "current": "actuel",
+      "change": "Modifier",
+      "cost": "Coût de l’analyse ce mois-ci : {{spent}} sur {{budget}}",
+      "noKey": "Aucune clé OpenRouter saisie – les règlements ne sont pas encore analysés.",
+      "dialogTitle": "Choisir le modèle d’IA",
+      "hint": "S’applique à toutes les analyses de règlements à venir, dans tous les projets, jusqu’à la prochaine modification. Les règlements déjà analysés restent tels quels jusqu’à une nouvelle analyse.",
+      "search": "Rechercher un modèle",
+      "count": "{{count}} modèles adaptés",
+      "priceHead": "Entrée / sortie par million de jetons",
+      "none": "Aucun modèle ne correspond à la recherche.",
+      "listError": "La liste des modèles est momentanément indisponible. Le modèle actuel reste en place.",
+      "claudeHint": "L’analyse est calibrée pour les modèles Claude d’Anthropic ; les autres fournisseurs ne sont pas testés.",
+      "save": "Appliquer",
+      "cancel": "Annuler",
+      "reset": "Rétablir le modèle par défaut ({{model}})",
+      "asText": "lit le texte au lieu du PDF",
+      "textHint": "Ce modèle ne lit pas les PDF et reçoit le texte des pages. Les tableaux perdent leurs colonnes, les croquis manquent.",
+      "changeInAdmin": "Modifier dans l’administration",
+      "chosenBy": "choisi par {{name}}"
     }
   },
   "site": {
@@ -654,7 +727,10 @@
       "graphic_reference": "figure au règlement graphique ou dans une annexe",
       "runs_disagree": "non déterminé : texte ambigu",
       "ambiguous": "non déterminé : plusieurs valeurs",
-      "missing": "non déterminé"
+      "missing": "non déterminé",
+      "correction": "non déterminé (correction)",
+      "not_found_after_search": "non déterminé : introuvable après recherche complémentaire",
+      "not_expressible": "non représentable : voir la remarque"
     },
     "kind": {
       "setback_street": "Recul par rapport aux voies",
@@ -908,7 +984,49 @@
         "not_found": "Cette correction n'existe plus."
       }
     },
-    "uploaded": "{{title}}, déposé"
+    "paramError": {
+      "implausible": "{{name}} : valeur peu plausible",
+      "min_m_required": "Retrait minimal manquant",
+      "max_m_requires_range": "Un retrait maximal suppose une bande",
+      "range_invalid": "Bande : indiquer de et à, de ≤ à",
+      "min_m_or_height_factor_required": "Indiquer un retrait minimal ou un facteur de hauteur",
+      "height_basis_required": "Le facteur demande une hauteur de référence",
+      "height_required": "Indiquer au moins une hauteur ou des niveaux",
+      "storeys_invalid": "Niveaux sous la forme R, R+1, R+1+C",
+      "eave_above_ridge": "L'égout est plus haut que le faîtage",
+      "roof_empty": "Au moins une indication sur la toiture",
+      "pitch_range_invalid": "Pente minimale ≤ maximale",
+      "facade_empty": "Au moins une indication sur la façade",
+      "ratio_required": "Indiquer une part",
+      "parking_empty": "Places par logement ou par surface",
+      "annex_empty": "Emprise ou hauteur",
+      "planting_empty": "Arbres ou part d'espaces verts",
+      "fence_empty": "Hauteur ou matériaux",
+      "max_area_empty": "Surface de plancher ou emprise",
+      "vocabulary": "valeur inconnue",
+      "Field required": "Indication obligatoire manquante"
+    },
+    "coverage": {
+      "line": "Couverture : {{assigned}} dispositions sur {{total}} rattachées, {{open}} ouvertes",
+      "notSearched": "sans recherche complémentaire",
+      "openTitle_one": "Une disposition sans règle",
+      "openTitle_other": "{{count}} dispositions sans règle",
+      "openHint": "L’analyse n’a rattaché ces passages à aucune règle. À vérifier vous-même et, si besoin, ajouter une règle.",
+      "outOfScopeTitle_one": "Un passage ne concerne pas une maison individuelle",
+      "outOfScopeTitle_other": "{{count}} passages ne concernent pas une maison individuelle",
+      "searched": "Vérifié : {{note}}",
+      "hintPage": "La disposition figure en remarque (p. {{page}}) ; le schéma des règles ne peut pas la représenter.",
+      "reason": {
+        "other_use": "autre destination",
+        "public_facility": "équipement public",
+        "existing_building": "existant",
+        "multi_dwelling": "plusieurs logements",
+        "networks": "réseaux",
+        "access_procedure": "accès, procédure",
+        "drawing": "croquis",
+        "other": "autre"
+      }
+    }
   },
   "inquiry": {
     "title": "Demande à l'agence",
@@ -1812,5 +1930,81 @@
     "email": "E-mail",
     "send": "Demander un lien",
     "sent": "Si une demande existe pour cette adresse, un lien vous a été envoyé."
+  },
+  "verwaltung": {
+    "title": "Administration",
+    "intro": "Réglages et listes de référence communs au configurateur et à Emprise Analyse – sans lien avec un bureau.",
+    "noAccess": "L’administration est réservée à l’exploitation (rôles ops et rules_admin).",
+    "loginIntro": "Se connecter avec un compte de l’exploitation.",
+    "nav": {
+      "model": "Modèle d’IA",
+      "reference": "Listes de référence"
+    },
+    "reference": {
+      "intro": "Une liste de référence énumère toutes les dispositions d’un document pour une zone. Chaque analyse y est comparée : juste, fausse, ouverte et visible ou manquante en silence. La comparaison porte sur l’analyse de cette application.",
+      "empty": "Aucune liste de référence.",
+      "notHere": "Ce document n’est pas analysé ici.",
+      "recall": "{{recall}} % justes (version {{version}})",
+      "wrong_one": "une valeur fausse",
+      "wrong_other": "{{count}} valeurs fausses",
+      "silent_one": "une manque en silence",
+      "silent_other": "{{count}} manquent en silence",
+      "document": "Document",
+      "status": "État",
+      "entries": "Entrées",
+      "measurement": "Mesure",
+      "updated": "modifiée le {{date}} par {{who}}",
+      "updatedAt": "modifiée le {{date}}",
+      "state": {
+        "draft": "brouillon",
+        "checked": "vérifiée"
+      },
+      "new": "Nouvelle liste de référence",
+      "create": "Créer",
+      "noCandidates": "Aucun document n’est encore analysé ici. Les listes peuvent tout de même être importées.",
+      "replace": "remplacer la liste existante",
+      "import": "Importer une liste de référence (JSON)",
+      "fileError": "Le fichier n’est pas un JSON valide.",
+      "back": "Toutes les listes de référence",
+      "toDraft": "Repasser en brouillon",
+      "toChecked": "Marquer comme vérifiée",
+      "fromEvaluation": "Reprendre l’analyse",
+      "fromEvaluationConfirm": "Remplacer toutes les entrées par l’analyse actuelle de cette application ? La liste redevient un brouillon.",
+      "export": "Exporter",
+      "delete": "Supprimer la liste",
+      "deleteConfirm": "Supprimer cette liste de référence pour les deux produits ?",
+      "version": "Version",
+      "counts": "{{hit}} sur {{total}} justes ({{recall}} %) · {{wrong}} fausses · {{named}} ouvertes et visibles · {{dismissed}} écartées · {{silent}} manquantes en silence",
+      "extra_one": "Une règle en vigueur ne figure pas dans la liste.",
+      "extra_other": "{{count}} règles en vigueur ne figurent pas dans la liste.",
+      "expectedLabel": "Attendu",
+      "quote": "Citation",
+      "result": "Résultat",
+      "actions": "Actions",
+      "edit": "Modifier",
+      "deleteEntry": "Supprimer",
+      "deleteEntryConfirm": "Supprimer cette entrée ?",
+      "addEntry": "Ajouter une entrée",
+      "editEntry": "Modifier l’entrée",
+      "building": "Construction",
+      "expected": {
+        "effective": "en vigueur avec valeur",
+        "not_regulated": "non réglementé",
+        "text_only": "remarque",
+        "graphic_reference": "au plan de zonage",
+        "not_expressible": "non représentable"
+      },
+      "paramsHint": "Seules les valeurs saisies ici sont comparées.",
+      "page": "Page",
+      "note": "Note",
+      "save": "Enregistrer",
+      "outcome": {
+        "hit": "juste",
+        "wrong_value": "fausse",
+        "named_gap": "ouverte et visible",
+        "dismissed": "écartée comme non pertinente",
+        "silent_gap": "manque en silence"
+      }
+    }
   }
 }

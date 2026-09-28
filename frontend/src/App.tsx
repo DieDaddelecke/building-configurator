@@ -20,6 +20,7 @@ import { KonfiguratorSeite } from "./pages/konfigurator/KonfiguratorSeite";
 import { Start } from "./pages/Start";
 import { VorgangSeite } from "./pages/vorgang/VorgangSeite";
 import { ZugangSeite } from "./pages/vorgang/ZugangSeite";
+import { VerwaltungRahmen } from "./verwaltung/VerwaltungRahmen";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
 
@@ -30,6 +31,8 @@ export const routes: RouteObject[] = [
   { path: "/vorgang", element: <VorgangSeite /> },
   { path: "/zugang", element: <ZugangSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
+  // Gemeinsame Verwaltung beider Produkte, nicht an das Büro gebunden (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
+  { path: "/verwaltung/*", element: <VerwaltungRahmen /> },
   {
     path: "/buero",
     element: <BueroLayout />,

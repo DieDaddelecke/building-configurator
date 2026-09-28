@@ -5,6 +5,7 @@ import { NichtGefunden } from "../../components/NichtGefunden";
 import { AnalyseLayout } from "./AnalyseLayout";
 import { Projekte } from "./Projekte";
 import { ProjektSeite } from "./ProjektSeite";
+import { VerwaltungSeite } from "./VerwaltungSeite";
 
 /** Eigener Router des Analyse-Produkts (AN0, erweitert in AN1). Er lädt bewusst nichts aus
  *  `src/App.tsx`, damit die Seiten des Hauskonfigurators nicht in dieses Bündel geraten.
@@ -16,6 +17,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Projekte /> },
       { path: "projekt/:projectId", element: <ProjektSeite /> },
+      // Gemeinsame Verwaltung beider Produkte (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
+      { path: "verwaltung/*", element: <VerwaltungSeite /> },
     ],
   },
   { path: "*", element: <NichtGefunden /> },

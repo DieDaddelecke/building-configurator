@@ -1,9 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { NavLink, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 
 import { staffLoginUrl, useLogout, useSession } from "../../api/session";
 import { Kopf } from "../../components/Kopf";
 import { Kopfzeile } from "../../components/Kopfzeile";
+import { darfVerwalten } from "../../verwaltung/Verwaltung";
 
 /** Büro-Rahmen (Plan 3.2): Anmeldung, Navigation, Inhalt. Rechte prüft allein der Server. */
 export function BueroLayout() {
@@ -88,6 +89,14 @@ export function BueroLayout() {
                   {t("office.nav.catalog")}
                 </NavLink>
               </li>
+              {darfVerwalten(staff.roles) && (
+                <li>
+                  {/* Gemeinsame Verwaltung beider Produkte, außerhalb des Büros (PLAN_G2_VOLLSTAENDIGKEIT 3.9) */}
+                  <Link to="/verwaltung" className="block px-3 py-2 border-l-2 border-transparent t-mute">
+                    {t("verwaltung.title")}
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
           <main className="anim-seite">

@@ -32,7 +32,8 @@ from app.platform.auth.context import (
 )
 from app.platform.db import get_db
 from app.platform.problems import Problem
-from app.rules import documents, service
+from app.platform.shared import get_shared_db
+from app.rules import documents, model_choice, service
 from app.rules.schemas import (
     CoverageOut,
     ExtractIn,

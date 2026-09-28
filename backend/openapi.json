@@ -132,6 +132,66 @@
         "title": "AnalysisAssumptionsOut",
         "type": "object"
       },
+      "AnalysisComparisonOut": {
+        "properties": {
+          "base": {
+            "title": "Base",
+            "type": "string"
+          },
+          "bases": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonBaseOut"
+            },
+            "title": "Bases",
+            "type": "array"
+          },
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonFigureOut"
+            },
+            "title": "Figures",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "corrections",
+              "versions"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "left": {
+            "$ref": "#/components/schemas/ComparisonStateOut"
+          },
+          "right": {
+            "$ref": "#/components/schemas/ComparisonStateOut"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonRuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "simulation": {
+            "const": true,
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "base",
+          "left",
+          "right",
+          "bases",
+          "figures",
+          "rules"
+        ],
+        "title": "AnalysisComparisonOut",
+        "type": "object"
+      },
       "AnalysisFloorAreaOut": {
         "properties": {
           "cap_citation": {
@@ -902,8 +962,12 @@
           "index": {
             "anyOf": [
               {
-                "minimum": 0.0,
-                "type": "integer"
+                "items": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                },
+                "maxItems": 20,
+                "type": "array"
               },
               {
                 "type": "null"
@@ -1364,6 +1428,204 @@
           "imported_at"
         ],
         "title": "CommuneOut",
+        "type": "object"
+      },
+      "ComparisonBaseOut": {
+        "description": "Angebotener Vergleich; `base` ist der Wert für `?base=`.",
+        "properties": {
+          "base": {
+            "title": "Base",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "corrections",
+              "versions"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zone_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Code"
+          }
+        },
+        "required": [
+          "base",
+          "kind"
+        ],
+        "title": "ComparisonBaseOut",
+        "type": "object"
+      },
+      "ComparisonFigureOut": {
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "footprint_lenient",
+              "footprint_strict",
+              "contour_lenient",
+              "contour_strict",
+              "storeys_min",
+              "storeys_max",
+              "floor_area_low",
+              "floor_area_high",
+              "height_top"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left"
+          },
+          "right": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Right"
+          },
+          "unit": {
+            "enum": [
+              "m2",
+              "m",
+              "count"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "unit",
+          "changed"
+        ],
+        "title": "ComparisonFigureOut",
+        "type": "object"
+      },
+      "ComparisonRuleOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "left": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LimitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "right": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LimitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zone_code": {
+            "title": "Zone Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zone_code",
+          "kind",
+          "building_kind",
+          "changed"
+        ],
+        "title": "ComparisonRuleOut",
+        "type": "object"
+      },
+      "ComparisonStateOut": {
+        "properties": {
+          "corrections": {
+            "title": "Corrections",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "partial",
+              "in_progress",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "corrections",
+          "status"
+        ],
+        "title": "ComparisonStateOut",
         "type": "object"
       },
       "ComplianceOut": {
@@ -3513,6 +3775,59 @@
         "title": "FootprintTotalOut",
         "type": "object"
       },
+      "FoundRuleOut": {
+        "properties": {
+          "building_kind": {
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "status",
+          "reason",
+          "params",
+          "page"
+        ],
+        "title": "FoundRuleOut",
+        "type": "object"
+      },
       "GabaritContourOut": {
         "properties": {
           "area_m2": {
@@ -4579,6 +4894,48 @@
         "title": "ManualEdgeIn",
         "type": "object"
       },
+      "MeasuredEntryOut": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "entry_id": {
+            "format": "uuid",
+            "title": "Entry Id",
+            "type": "string"
+          },
+          "found": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoundRuleOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "hit",
+              "wrong_value",
+              "named_gap",
+              "dismissed",
+              "silent_gap"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entry_id",
+          "outcome",
+          "detail",
+          "found"
+        ],
+        "title": "MeasuredEntryOut",
+        "type": "object"
+      },
       "MessageIn": {
         "properties": {
           "body": {
@@ -4626,6 +4983,51 @@
           "created_at"
         ],
         "title": "MessageOut",
+        "type": "object"
+      },
+      "ModelOptionOut": {
+        "properties": {
+          "context_length": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Length"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_input_per_mtok": {
+            "title": "Price Input Per Mtok",
+            "type": "number"
+          },
+          "price_output_per_mtok": {
+            "title": "Price Output Per Mtok",
+            "type": "number"
+          },
+          "reads_pdf": {
+            "title": "Reads Pdf",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "price_input_per_mtok",
+          "price_output_per_mtok",
+          "context_length",
+          "reads_pdf"
+        ],
+        "title": "ModelOptionOut",
         "type": "object"
       },
       "ModuleIn": {
@@ -5521,6 +5923,90 @@
         "title": "PackageVersionOut",
         "type": "object"
       },
+      "ParamFieldOut": {
+        "description": "Feld des Regelformulars (AN4, 3.1), abgeleitet aus `rules/domain/kinds.py`.",
+        "properties": {
+          "default": {
+            "title": "Default"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "number",
+              "flag",
+              "choice",
+              "items",
+              "text"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "m",
+                  "m2",
+                  "deg",
+                  "share",
+                  "factor",
+                  "per_area",
+                  "count"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required",
+          "options"
+        ],
+        "title": "ParamFieldOut",
+        "type": "object"
+      },
       "ParcelOut": {
         "properties": {
           "accuracy_class": {
@@ -5752,6 +6238,36 @@
           "heights"
         ],
         "title": "PartOut",
+        "type": "object"
+      },
+      "PassageOut": {
+        "description": "Textstelle mit Vorschriftscharakter (PLAN_G2_VOLLSTAENDIGKEIT 3.3); Seite im Originaldokument.",
+        "properties": {
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "page",
+          "text"
+        ],
+        "title": "PassageOut",
         "type": "object"
       },
       "PlacementAreaOut": {
@@ -6215,7 +6731,7 @@
         "type": "object"
       },
       "ProjectOverrideIn": {
-        "description": "Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement).",
+        "description": "Korrektur nur für ein Projekt (z. B. Regeln eines Lotissement). Die Begründung ist Pflicht und nur für\ndas Büro sichtbar.",
         "properties": {
           "building_kind": {
             "default": "main",
@@ -6260,12 +6776,21 @@
             "title": "Params",
             "type": "object"
           },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleSourceIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "enum": [
               "effective",
               "unknown",
-              "not_regulated",
-              "text_only"
+              "not_regulated"
             ],
             "title": "Status",
             "type": "string"
@@ -6288,9 +6813,36 @@
       },
       "ProjectOverrideOut": {
         "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
           "building_kind": {
             "title": "Building Kind",
             "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
           },
           "id": {
             "format": "uuid",
@@ -6316,6 +6868,16 @@
             "additionalProperties": true,
             "title": "Params",
             "type": "object"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleSourceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
             "enum": [
@@ -6356,6 +6918,10 @@
           "status",
           "params",
           "note",
+          "source",
+          "active",
+          "created_at",
+          "created_by",
           "updated_at",
           "updated_by"
         ],
@@ -6623,6 +7189,557 @@
           "max_cents"
         ],
         "title": "RangeOut",
+        "type": "object"
+      },
+      "ReferenceCandidateOut": {
+        "description": "Ausgewertetes Dokument dieser Instanz, für das eine Liste angelegt werden kann.",
+        "properties": {
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "document_title": {
+            "title": "Document Title",
+            "type": "string"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document_sha256",
+          "document_title",
+          "sectors"
+        ],
+        "title": "ReferenceCandidateOut",
+        "type": "object"
+      },
+      "ReferenceEntryIn": {
+        "properties": {
+          "building_kind": {
+            "enum": [
+              "main",
+              "annex",
+              "pool",
+              "any"
+            ],
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "expected": {
+            "enum": [
+              "effective",
+              "not_regulated",
+              "text_only",
+              "graphic_reference",
+              "not_expressible"
+            ],
+            "title": "Expected",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "setback_street",
+              "setback_side",
+              "setback_rear",
+              "setback_between_buildings",
+              "max_footprint_ratio",
+              "max_height",
+              "roof",
+              "facade",
+              "unsealed_min",
+              "parking",
+              "annex",
+              "planting",
+              "fence",
+              "text_only",
+              "max_area"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Note",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Params",
+            "type": "object"
+          },
+          "quote": {
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "expected",
+          "quote"
+        ],
+        "title": "ReferenceEntryIn",
+        "type": "object"
+      },
+      "ReferenceEntryOut": {
+        "properties": {
+          "building_kind": {
+            "enum": [
+              "main",
+              "annex",
+              "pool",
+              "any"
+            ],
+            "title": "Building Kind",
+            "type": "string"
+          },
+          "expected": {
+            "enum": [
+              "effective",
+              "not_regulated",
+              "text_only",
+              "graphic_reference",
+              "not_expressible"
+            ],
+            "title": "Expected",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "setback_street",
+              "setback_side",
+              "setback_rear",
+              "setback_between_buildings",
+              "max_footprint_ratio",
+              "max_height",
+              "roof",
+              "facade",
+              "unsealed_min",
+              "parking",
+              "annex",
+              "planting",
+              "fence",
+              "text_only",
+              "max_area"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Note",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "params": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Params",
+            "type": "object"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "quote": {
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "building_kind",
+          "expected",
+          "quote",
+          "id",
+          "position"
+        ],
+        "title": "ReferenceEntryOut",
+        "type": "object"
+      },
+      "ReferenceListDetailOut": {
+        "properties": {
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "document_title": {
+            "title": "Document Title",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceEntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "entries_count": {
+            "title": "Entries Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "checked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Name"
+          }
+        },
+        "required": [
+          "id",
+          "document_sha256",
+          "document_title",
+          "sector",
+          "status",
+          "note",
+          "entries_count",
+          "updated_at",
+          "updated_by_name",
+          "summary",
+          "entries"
+        ],
+        "title": "ReferenceListDetailOut",
+        "type": "object"
+      },
+      "ReferenceListIn": {
+        "properties": {
+          "document_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "document_title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Document Title",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Note",
+            "type": "string"
+          },
+          "sector": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Sector",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_sha256",
+          "document_title",
+          "sector"
+        ],
+        "title": "ReferenceListIn",
+        "type": "object"
+      },
+      "ReferenceListOut": {
+        "properties": {
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "document_title": {
+            "title": "Document Title",
+            "type": "string"
+          },
+          "entries_count": {
+            "title": "Entries Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "sector": {
+            "title": "Sector",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "checked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceSummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Name"
+          }
+        },
+        "required": [
+          "id",
+          "document_sha256",
+          "document_title",
+          "sector",
+          "status",
+          "note",
+          "entries_count",
+          "updated_at",
+          "updated_by_name",
+          "summary"
+        ],
+        "title": "ReferenceListOut",
+        "type": "object"
+      },
+      "ReferenceListPatch": {
+        "properties": {
+          "document_title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "draft",
+                  "checked"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "ReferenceListPatch",
+        "type": "object"
+      },
+      "ReferenceMeasurementOut": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "coverage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Coverage",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "extra": {
+            "items": {
+              "$ref": "#/components/schemas/FoundRuleOut"
+            },
+            "title": "Extra",
+            "type": "array"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "recall": {
+            "title": "Recall",
+            "type": "number"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MeasuredEntryOut"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "versions": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "version",
+          "versions",
+          "model",
+          "created_at",
+          "recall",
+          "counts",
+          "coverage",
+          "results",
+          "extra"
+        ],
+        "title": "ReferenceMeasurementOut",
+        "type": "object"
+      },
+      "ReferenceSummaryOut": {
+        "description": "Messung der aktuellen Auswertung dieser Instanz, kurz; leer, wenn das Dokument hier fehlt.",
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "recall": {
+            "title": "Recall",
+            "type": "number"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "recall",
+          "counts"
+        ],
+        "title": "ReferenceSummaryOut",
         "type": "object"
       },
       "RegulationDocumentOut": {
@@ -6897,6 +8014,18 @@
               }
             ]
           },
+          "proposal": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal"
+          },
           "supplement": {
             "$ref": "#/components/schemas/LimitOut"
           },
@@ -6909,7 +8038,8 @@
               "different",
               "only_supplement",
               "no_own_rule",
-              "unknown"
+              "unknown",
+              "adopted"
             ],
             "title": "Verdict",
             "type": "string"
@@ -7020,9 +8150,32 @@
             ],
             "title": "Reason"
           },
+          "search_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Note"
+          },
           "similarity": {
             "title": "Similarity",
             "type": "number"
+          },
+          "source_document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Id"
           },
           "source_url": {
             "anyOf": [
@@ -7159,6 +8312,54 @@
         "title": "RuleIn",
         "type": "object"
       },
+      "RuleKindFormOut": {
+        "properties": {
+          "building_specific": {
+            "title": "Building Specific",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "setback_street",
+              "setback_side",
+              "setback_rear",
+              "setback_between_buildings",
+              "max_footprint_ratio",
+              "max_height",
+              "roof",
+              "facade",
+              "unsealed_min",
+              "parking",
+              "annex",
+              "planting",
+              "fence",
+              "text_only",
+              "max_area"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "params": {
+            "items": {
+              "$ref": "#/components/schemas/ParamFieldOut"
+            },
+            "title": "Params",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "building_specific",
+          "mandatory",
+          "params"
+        ],
+        "title": "RuleKindFormOut",
+        "type": "object"
+      },
       "RuleOut": {
         "properties": {
           "building_kind": {
@@ -7234,6 +8435,29 @@
               }
             ],
             "title": "Reason"
+          },
+          "search_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Note"
+          },
+          "source_document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Id"
           },
           "source_url": {
             "anyOf": [
@@ -7349,6 +8573,111 @@
         "title": "RuleSetVersionIn",
         "type": "object"
       },
+      "RuleSourceIn": {
+        "description": "Fundstelle einer Korrektur (AN4, docs/PLAN_AN4_KORREKTUR.md 3.2): ein Dokument des Projekts, eine\nSeite und optional ein Zitat, das auf der Seite gesucht wird.",
+        "properties": {
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          }
+        },
+        "required": [
+          "document_id",
+          "page"
+        ],
+        "title": "RuleSourceIn",
+        "type": "object"
+      },
+      "RuleSourceOut": {
+        "properties": {
+          "attached": {
+            "title": "Attached",
+            "type": "boolean"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "quote_verified": {
+            "title": "Quote Verified",
+            "type": "boolean"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          }
+        },
+        "required": [
+          "document_id",
+          "document_title",
+          "page",
+          "quote",
+          "quote_verified",
+          "source_url",
+          "attached"
+        ],
+        "title": "RuleSourceOut",
+        "type": "object"
+      },
       "RulesImportIn": {
         "properties": {
           "communes": {
@@ -7373,6 +8702,107 @@
           }
         },
         "title": "RulesImportIn",
+        "type": "object"
+      },
+      "RulesModelIn": {
+        "properties": {
+          "model": {
+            "maxLength": 60,
+            "minLength": 3,
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "RulesModelIn",
+        "type": "object"
+      },
+      "RulesModelOut": {
+        "description": "KI-Modell der Auswertung für die ganze Instanz (PLAN_AN2_PLU 8, PU11).",
+        "properties": {
+          "budget_month_usd": {
+            "title": "Budget Month Usd",
+            "type": "number"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "default_model": {
+            "title": "Default Model",
+            "type": "string"
+          },
+          "input": {
+            "enum": [
+              "pdf",
+              "text"
+            ],
+            "title": "Input",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "month_cost_usd": {
+            "title": "Month Cost Usd",
+            "type": "number"
+          },
+          "price_input_per_mtok": {
+            "title": "Price Input Per Mtok",
+            "type": "number"
+          },
+          "price_output_per_mtok": {
+            "title": "Price Output Per Mtok",
+            "type": "number"
+          },
+          "source": {
+            "enum": [
+              "setting",
+              "default"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "updated_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Name"
+          }
+        },
+        "required": [
+          "model",
+          "source",
+          "default_model",
+          "price_input_per_mtok",
+          "price_output_per_mtok",
+          "updated_at",
+          "input",
+          "configured",
+          "month_cost_usd",
+          "budget_month_usd"
+        ],
+        "title": "RulesModelOut",
         "type": "object"
       },
       "SectionCrossingOut": {
@@ -9664,6 +11094,14 @@
             ],
             "title": "Note"
           },
+          "open_passages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PassageOut"
+            },
+            "title": "Open Passages",
+            "type": "array"
+          },
           "origin": {
             "enum": [
               "extraction",
@@ -9671,6 +11109,14 @@
             ],
             "title": "Origin",
             "type": "string"
+          },
+          "out_of_scope_passages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PassageOut"
+            },
+            "title": "Out Of Scope Passages",
+            "type": "array"
           },
           "status": {
             "enum": [
@@ -11916,6 +13362,625 @@
         ]
       }
     },
+    "/api/v1/admin/reference-lists": {
+      "get": {
+        "description": "Alle Listen mit der Messung der aktuellen Auswertung dieser Instanz, wo das Dokument hier vorliegt.",
+        "operationId": "list_reference_lists_api_v1_admin_reference_lists_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceListOut"
+                  },
+                  "title": "Response List Reference Lists Api V1 Admin Reference Lists Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Reference Lists",
+        "tags": [
+          "reference"
+        ]
+      },
+      "post": {
+        "operationId": "create_reference_list_api_v1_admin_reference_lists_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceListIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Reference List",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/candidates": {
+      "get": {
+        "description": "Ausgewertete Dokumente dieser Instanz mit ihren Sektoren.",
+        "operationId": "reference_candidates_api_v1_admin_reference_lists_candidates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceCandidateOut"
+                  },
+                  "title": "Response Reference Candidates Api V1 Admin Reference Lists Candidates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Reference Candidates",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/import": {
+      "post": {
+        "description": "Datei im Format `emprise-reference/1`; eine vorhandene Liste nur mit `replace=true`.",
+        "operationId": "import_reference_list_api_v1_admin_reference_lists_import_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "replace",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Replace",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Body",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Reference List",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}": {
+      "delete": {
+        "operationId": "delete_reference_list_api_v1_admin_reference_lists__list_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Reference List",
+        "tags": [
+          "reference"
+        ]
+      },
+      "get": {
+        "operationId": "get_reference_list_api_v1_admin_reference_lists__list_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reference List",
+        "tags": [
+          "reference"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_reference_list_api_v1_admin_reference_lists__list_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceListPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Reference List",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}/entries": {
+      "post": {
+        "operationId": "add_reference_entry_api_v1_admin_reference_lists__list_id__entries_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceEntryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Reference Entry",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}/entries/{entry_id}": {
+      "delete": {
+        "operationId": "delete_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Reference Entry",
+        "tags": [
+          "reference"
+        ]
+      },
+      "put": {
+        "operationId": "change_reference_entry_api_v1_admin_reference_lists__list_id__entries__entry_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceEntryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Reference Entry",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}/export": {
+      "get": {
+        "description": "Liste als Datei (`emprise-reference/1`), wie `app/rules/reference_seed`.",
+        "operationId": "export_reference_list_api_v1_admin_reference_lists__list_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Export Reference List Api V1 Admin Reference Lists  List Id  Export Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Reference List",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}/from-evaluation": {
+      "post": {
+        "description": "Einträge durch die aktuelle Auswertung dieser Instanz ersetzen (Entwurf zum Nachprüfen).",
+        "operationId": "reference_from_evaluation_api_v1_admin_reference_lists__list_id__from_evaluation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceListDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reference From Evaluation",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/reference-lists/{list_id}/measurement": {
+      "get": {
+        "description": "Auswertung dieser Instanz an der Liste messen, ohne Aufruf des Modells; ohne `version` die aktuelle.",
+        "operationId": "measure_reference_list_api_v1_admin_reference_lists__list_id__measurement_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "List Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceMeasurementOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Measure Reference List",
+        "tags": [
+          "reference"
+        ]
+      }
+    },
+    "/api/v1/admin/rule-kinds": {
+      "get": {
+        "description": "Formularbeschreibung der Regelarten aus demselben Schema wie Prüfung und Modellausgabe (AN4, 3.1).",
+        "operationId": "get_rule_kinds_api_v1_admin_rule_kinds_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RuleKindFormOut"
+                  },
+                  "title": "Response Get Rule Kinds Api V1 Admin Rule Kinds Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Rule Kinds",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
     "/api/v1/admin/rule-sets/{rule_set_id}": {
       "get": {
         "operationId": "get_rule_set_api_v1_admin_rule_sets__rule_set_id__get",
@@ -12135,6 +14200,94 @@
           }
         },
         "summary": "Start Rules Import",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rules/model": {
+      "get": {
+        "description": "KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,\nVA09).",
+        "operationId": "get_rules_model_api_v1_admin_rules_model_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesModelOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Rules Model",
+        "tags": [
+          "rules"
+        ]
+      },
+      "put": {
+        "description": "Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf\n(PU11, VA09).",
+        "operationId": "set_rules_model_api_v1_admin_rules_model_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulesModelIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesModelOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Rules Model",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/admin/rules/models": {
+      "get": {
+        "description": "Wählbare Modelle aus der Liste von OpenRouter mit erzwungenem Werkzeug (PU11); ohne PDF-Eingabe\nbekommen sie die Textschicht (PU12).",
+        "operationId": "list_rules_models_api_v1_admin_rules_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelOptionOut"
+                  },
+                  "title": "Response List Rules Models Api V1 Admin Rules Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Rules Models",
         "tags": [
           "rules"
         ]
@@ -12691,6 +14844,61 @@
           }
         },
         "summary": "Get Analysis",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/analysis/comparison": {
+      "get": {
+        "description": "Zwei Stände nebeneinander (AN4, docs/PLAN_AN4_KORREKTUR.md 3.5): `automatic` – ohne und mit den\nKorrekturen des Projekts; eine Versions-ID – diese frühere Auswertung und die aktuelle, beide ohne\nKorrekturen. Die Antwort nennt auch alle angebotenen Vergleiche.",
+        "operationId": "get_analysis_comparison_api_v1_projects__project_id__analysis_comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "base",
+            "required": false,
+            "schema": {
+              "default": "automatic",
+              "maxLength": 40,
+              "title": "Base",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisComparisonOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Analysis Comparison",
         "tags": [
           "analysis"
         ]
@@ -13860,6 +16068,168 @@
         ]
       }
     },
+    "/api/v1/projects/{project_id}/rule-overrides": {
+      "get": {
+        "description": "Korrekturen des Projekts mit Begründung, Fundstelle und ob sie wirken.",
+        "operationId": "list_own_overrides_api_v1_projects__project_id__rule_overrides_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response List Own Overrides Api V1 Projects  Project Id  Rule Overrides Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Own Overrides",
+        "tags": [
+          "rules"
+        ]
+      },
+      "put": {
+        "description": "Regel korrigieren oder ergänzen; wirkt sofort in Regeln, Baurahmen und Analyse (kostet nichts).",
+        "operationId": "put_own_override_api_v1_projects__project_id__rule_overrides_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectOverrideIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response Put Own Override Api V1 Projects  Project Id  Rule Overrides Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Own Override",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/rule-overrides/{override_id}": {
+      "delete": {
+        "description": "Korrektur zurücknehmen: Es gilt wieder der gelesene Wert.",
+        "operationId": "delete_own_override_api_v1_projects__project_id__rule_overrides__override_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "override_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Override Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOverrideOut"
+                  },
+                  "title": "Response Delete Own Override Api V1 Projects  Project Id  Rule Overrides  Override Id  Delete",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Own Override",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
     "/api/v1/projects/{project_id}/rules": {
       "get": {
         "description": "Zonen, Regeln mit Zitat und Status, Vorgaben und Hinweise – als Simulation (Plan 3.4, D11).",
@@ -14080,7 +16450,7 @@
     },
     "/api/v1/projects/{project_id}/site/upload": {
       "post": {
-        "description": "Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).\n\nOhne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;\nder zweite Aufruf nennt die gewählte Kontur. `scale` (1:n) gilt nur für PDF und ersetzt den\nMaßstab aus dem Text des Plans.",
+        "description": "Parzelle aus DXF, GeoJSON oder vektoriellem PDF übernehmen (AN1, PLAN_AN1 3.2 und 8).\n\nOhne `index` und mit mehreren Konturen kommen die Kandidaten zurück, ohne etwas zu speichern;\nder zweite Aufruf nennt die gewählte Kontur – oder mehrere (`index` wiederholt), die zu einem\nGrundstück vereinigt werden (UP17). `scale` (1:n) gilt nur für PDF und ersetzt den Maßstab aus dem\nText des Plans.",
         "operationId": "upload_site_api_v1_projects__project_id__site_upload_post",
         "parameters": [
           {

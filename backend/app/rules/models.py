@@ -273,6 +273,12 @@ class RuleSetVersion(UuidPk, Created, Base):
     input_hash: Mapped[str | None] = mapped_column(String(64))
     coverage: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default=text("'{}'::jsonb"))
     note: Mapped[str | None] = mapped_column(Text)
+    open_passages: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, server_default=text("'[]'::jsonb"))
+    """Textstellen mit Vorschriftscharakter ohne Regel (Seite, Text; PLAN_G2_VOLLSTAENDIGKEIT 3.7)."""
+    out_of_scope_passages: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, server_default=text("'[]'::jsonb")
+    )
+    """Von der Nachsuche als „betrifft kein Einfamilienhaus“ eingestufte Stellen (Seite, Text, Grund)."""
 
     __table_args__ = (
         UniqueConstraint("rule_set_id", "version", name="uq_rule_set_version_set_version"),

@@ -24,10 +24,12 @@ import openai
 from app.config import Settings
 from app.platform.logging import get_logger
 from app.rules.domain.extraction import (
+    GAP_SCHEMA,
     OUTPUT_SCHEMA,
     TEXT_INPUT_NOTE,
     VERIFICATION_SCHEMA,
     DocumentKind,
+    gap_instruction,
     system_prompt,
     user_instruction,
     verification_instruction,
@@ -37,6 +39,11 @@ SERVICE = "openrouter"
 MAX_OUTPUT_TOKENS = 64000
 EXTRACTION_TOOL = "submit_extraction"
 VERIFICATION_TOOL = "submit_verification"
+GAP_TOOL = "submit_gap_search"
+TOOL_CALL_HINT = "Return your result only by calling the tool {tool}."
+"""Ende des Systemprompts, wenn das Modell die Funktion selbst wählen muss (`tool_choice: auto`)."""
+_WITHOUT_FORCED_TOOL: set[str] = set()
+"""Modelle, die einen erzwungenen Funktionsaufruf abgelehnt haben (je Prozess gemerkt)."""
 
 log = get_logger("integrations.openrouter")
 
@@ -57,6 +64,13 @@ class ExtractionRequest:
     chapter_text: str | None = None
     """Textschicht statt PDF (PU12): Seiten mit Marken `=== page n ===`; dann bleibt `chapter_pdf` leer."""
     general_text: str | None = None
+    gaps: dict[str, Any] | None = None
+    """Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.6): Lücken und offene Stellen; dann weder Auswertung noch
+    Gegenprüfung."""
+    extra_pdf: bytes | None = None
+    """Zusatzseiten der Nachsuche als drittes PDF (bzw. `extra_text`)."""
+    extra_pages: list[int] = field(default_factory=list)
+    extra_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -149,8 +163,23 @@ def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
     elif not as_text and request.general_pdf is not None:
         content.append(_document(request.general_pdf, "general.pdf"))
     filename = "supplement.pdf" if kind == "supplement" else f"chapter-{request.chapter_code}.pdf"
-    content.append(_document(request.chapter_pdf, filename))
-    if request.claims is None:
+    if request.chapter_text is not None:
+        content.append(_text_document(request.chapter_text, filename))
+    else:
+        content.append(_document(request.chapter_pdf, filename))
+    if as_text and request.extra_text is not None:
+        content.append(_text_document(request.extra_text, "extra.pdf"))
+    elif not as_text and request.extra_pdf is not None:
+        content.append(_document(request.extra_pdf, "extra.pdf"))
+    if request.gaps is not None:
+        instruction = gap_instruction(
+            request.gaps,
+            request.chapter_code,
+            request.general_pages,
+            request.chapter_pages,
+            request.extra_pages,
+        )
+    elif request.claims is None:
         instruction = user_instruction(
             request.sectors, request.chapter_code, request.general_pages, request.chapter_pages, kind
         )
@@ -212,24 +241,45 @@ class OpenRouterExtractor:
                 default_headers={"HTTP-Referer": "https://emprise.local", "X-Title": "Emprise"},
             )
 
+    def _complete(
+        self, request: ExtractionRequest, schema: dict[str, Any], tool_name: str, *, forced: bool
+    ) -> Any:
+        assert self.client is not None
+        system = system_prompt(request.document_kind)
+        if not forced:
+            system = f"{system}\n\n{TOOL_CALL_HINT.format(tool=tool_name)}"
+        return self.client.chat.completions.create(
+            model=self.settings.rules_model,
+            max_tokens=MAX_OUTPUT_TOKENS,
+            messages=[{"role": "system", "content": system}, *build_messages(request)],
+            tools=[_tool(schema, tool_name)],
+            tool_choice={"type": "function", "function": {"name": tool_name}} if forced else "auto",
+            extra_body={"reasoning": {"effort": _effort(self.settings.rules_effort)}},
+        )  # type: ignore[call-overload]
+
     def extract(self, request: ExtractionRequest) -> ExtractionResponse:
         assert self.client is not None
         started = time.perf_counter()
-        claims = request.claims
-        schema = OUTPUT_SCHEMA if claims is None else VERIFICATION_SCHEMA
-        tool_name = EXTRACTION_TOOL if claims is None else VERIFICATION_TOOL
+        if request.gaps is not None:
+            schema, tool_name = GAP_SCHEMA, GAP_TOOL
+        elif request.claims is None:
+            schema, tool_name = OUTPUT_SCHEMA, EXTRACTION_TOOL
+        else:
+            schema, tool_name = VERIFICATION_SCHEMA, VERIFICATION_TOOL
+        model_name = self.settings.rules_model
         try:
-            message = self.client.chat.completions.create(
-                model=self.settings.rules_model,
-                max_tokens=MAX_OUTPUT_TOKENS,
-                messages=[
-                    {"role": "system", "content": system_prompt(request.document_kind)},
-                    *build_messages(request),
-                ],
-                tools=[_tool(schema, tool_name)],
-                tool_choice={"type": "function", "function": {"name": tool_name}},
-                extra_body={"reasoning": {"effort": _effort(self.settings.rules_effort)}},
-            )  # type: ignore[call-overload]
+            try:
+                message = self._complete(
+                    request, schema, tool_name, forced=model_name not in _WITHOUT_FORCED_TOOL
+                )
+            except openai.BadRequestError as exc:
+                if model_name in _WITHOUT_FORCED_TOOL or "tool_choice" not in str(exc):
+                    raise
+                # Das Modell kennt keinen erzwungenen Funktionsaufruf (Opus 5.5); die Modellliste zeigt das
+                # nicht. Die Ablehnung kommt sofort und kostet nichts (PLAN_G2_VOLLSTAENDIGKEIT 3.2)
+                _WITHOUT_FORCED_TOOL.add(model_name)
+                log.info("tool_choice_fallback", service=SERVICE, model=model_name)
+                message = self._complete(request, schema, tool_name, forced=False)
         except (openai.AuthenticationError, openai.PermissionDeniedError) as exc:
             raise ExtractionError("auth", retryable=False) from exc
         except openai.NotFoundError as exc:

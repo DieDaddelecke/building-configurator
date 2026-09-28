@@ -34,12 +34,24 @@ class RuleOut(BaseModel):
     source_document_id: uuid.UUID | None = None
     """Dokument der Fundstelle (Planstand oder Zusatzdokument). Bei einer Projektkorrektur mit Fundstelle in
     einem Zusatzdokument ist sie eine Übernahme daraus (AN4, docs/PLAN_AN4_KORREKTUR.md 3.4)."""
+    search_note: str | None = None
+    """Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.7): bei `not_found_after_search` die geprüften Stellen und
+    Begriffe, bei `not_expressible` die Seite des Hinweises; sonst leer."""
 
 
 class RuleDetailOut(RuleOut):
     detail: str | None
     alternatives: list[dict[str, Any]]
     similarity: float
+
+
+class PassageOut(BaseModel):
+    """Textstelle mit Vorschriftscharakter (PLAN_G2_VOLLSTAENDIGKEIT 3.3); Seite im Originaldokument."""
+
+    page: int
+    text: str
+    reason: str | None = None
+    """Nur bei nicht einschlägigen Stellen: Grund der Nachsuche (`networks`, `other_use` …)."""
 
 
 class VersionOut(BaseModel):
@@ -52,6 +64,12 @@ class VersionOut(BaseModel):
     created_by: str | None
     note: str | None
     coverage: dict[str, int]
+    """Zählung je Status, `mandatory_unknown`; seit der Nachsuche auch `passages_total`,
+    `passages_assigned`, `passages_out_of_scope`, `passages_open`, `gap_search` (1 = gelaufen)."""
+    open_passages: list[PassageOut] = []
+    """Stellen ohne Regel: Der Architekt prüft sie selbst (keine stille Lücke)."""
+    out_of_scope_passages: list[PassageOut] = []
+    """Stellen, die die Nachsuche als „betrifft kein Einfamilienhaus“ eingestuft hat."""
 
 
 class ZoneRulesOut(BaseModel):
@@ -384,3 +402,102 @@ class ZoneChoiceIn(BaseModel):
         ):
             raise ValueError("general_last_page vor general_first_page")
         return self
+
+
+# ---------------------------------------------------------------------------
+# Referenzlisten in der gemeinsamen Verwaltung (PLAN_G2_VOLLSTAENDIGKEIT 3.10, VA03, VA10)
+# ---------------------------------------------------------------------------
+
+ExpectedStatus = Literal["effective", "not_regulated", "text_only", "graphic_reference", "not_expressible"]
+MeasureOutcome = Literal["hit", "wrong_value", "named_gap", "dismissed", "silent_gap"]
+
+
+class ReferenceEntryIn(BaseModel):
+    kind: RuleKind
+    building_kind: BuildingKind
+    expected: ExpectedStatus
+    params: dict[str, Any] = {}
+    """Nur die maßgeblichen Parameter; verglichen wird nur, was hier steht."""
+    page: int | None = Field(default=None, ge=1)
+    quote: str = Field(min_length=3, max_length=4000)
+    note: str = Field(default="", max_length=2000)
+
+
+class ReferenceEntryOut(ReferenceEntryIn):
+    id: uuid.UUID
+    position: int
+
+
+class ReferenceListIn(BaseModel):
+    document_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    document_title: str = Field(min_length=1, max_length=300)
+    sector: str = Field(min_length=1, max_length=20)
+    note: str = Field(default="", max_length=4000)
+
+
+class ReferenceListPatch(BaseModel):
+    document_title: str | None = Field(default=None, min_length=1, max_length=300)
+    status: Literal["draft", "checked"] | None = None
+    note: str | None = Field(default=None, max_length=4000)
+
+
+class ReferenceSummaryOut(BaseModel):
+    """Messung der aktuellen Auswertung dieser Instanz, kurz; leer, wenn das Dokument hier fehlt."""
+
+    version: int
+    recall: float
+    counts: dict[str, int]
+
+
+class ReferenceListOut(BaseModel):
+    id: uuid.UUID
+    document_sha256: str
+    document_title: str
+    sector: str
+    status: Literal["draft", "checked"]
+    note: str
+    entries_count: int
+    updated_at: datetime
+    updated_by_name: str | None
+    summary: ReferenceSummaryOut | None
+
+
+class ReferenceListDetailOut(ReferenceListOut):
+    entries: list[ReferenceEntryOut]
+
+
+class ReferenceCandidateOut(BaseModel):
+    """Ausgewertetes Dokument dieser Instanz, für das eine Liste angelegt werden kann."""
+
+    document_sha256: str
+    document_title: str
+    sectors: list[str]
+
+
+class FoundRuleOut(BaseModel):
+    kind: str
+    building_kind: str
+    status: str
+    reason: str | None
+    params: dict[str, Any]
+    page: int | None
+
+
+class MeasuredEntryOut(BaseModel):
+    entry_id: uuid.UUID
+    outcome: MeasureOutcome
+    detail: str
+    found: FoundRuleOut | None
+
+
+class ReferenceMeasurementOut(BaseModel):
+    version: int
+    versions: list[int]
+    """Alle Versionen dieses Sektors in dieser Instanz, zum Vergleich früherer Auswertungen."""
+    model: str | None
+    created_at: datetime
+    recall: float
+    counts: dict[str, int]
+    coverage: dict[str, int]
+    results: list[MeasuredEntryOut]
+    extra: list[FoundRuleOut]

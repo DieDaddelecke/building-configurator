@@ -221,7 +221,8 @@ class FakeExtractor:
     Gegenprüfung gebildet. So beschreibt `[uh_output(), uh_output(footprint=0.3)]` eine Gegenprüfung, die bei
     der Grundfläche einen anderen Wert liest."""
 
-    responses: list[dict[str, Any] | ExtractionError]
+    responses: list[dict[str, Any] | ExtractionError | Callable[[ExtractionRequest], dict[str, Any]]]
+    """Eine Funktion bekommt die Anfrage (Nachsuche: Antwort je Lücke nach Art)."""
     requests: list[ExtractionRequest] = field(default_factory=list)
 
     def extract(self, request: ExtractionRequest) -> ExtractionResponse:
@@ -229,8 +230,12 @@ class FakeExtractor:
         item = self.responses[min(len(self.requests) - 1, len(self.responses) - 1)]
         if isinstance(item, ExtractionError):
             raise item
+        if callable(item):
+            item = item(request)
         if request.claims is not None and "checks" not in item:
             item = verification_output(item, request.claims)
+        if request.gaps is not None and "gaps" not in item:
+            item = {"gaps": [], "passages": [], "remarks": ""}
         return ExtractionResponse(
             output=item,
             model="anthropic/claude-opus-5",

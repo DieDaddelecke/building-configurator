@@ -28,6 +28,7 @@ CORE_ROUTERS: tuple[str, ...] = (
     "app.site.api",
     "app.rules.api",
     "app.envelope.api",
+    "app.rules.reference_api",
 )
 """Reihenfolge bestimmt die Reihenfolge in `openapi.json`; nur hinten anfügen."""
 

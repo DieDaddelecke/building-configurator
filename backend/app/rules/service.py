@@ -48,6 +48,7 @@ from app.rules.schemas import (
     IgnoredZoneOut,
     OverlayOut,
     ParamFieldOut,
+    PassageOut,
     PlanOut,
     ProjectOverrideIn,
     ProjectOverrideOut,
@@ -120,6 +121,8 @@ def version_out(version: RuleSetVersion) -> VersionOut:
         created_by=version.created_by,
         note=version.note,
         coverage=version.coverage or {},
+        open_passages=[PassageOut(**p) for p in version.open_passages or []],
+        out_of_scope_passages=[PassageOut(**p) for p in version.out_of_scope_passages or []],
     )
 
 
@@ -144,6 +147,7 @@ def _rule_out(rule: Rule, urls: dict[uuid.UUID, str], plan_id: uuid.UUID | None 
         notes=rule.notes,
         origin=rule.origin,
         source_document_id=plan_id if rule.source_file_id is not None else None,
+        search_note=rule.detail if rule.reason in ("not_found_after_search", "not_expressible") else None,
     )
 
 

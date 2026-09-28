@@ -149,3 +149,25 @@ Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in [docs/BETRIEB
 - **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core` im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren: `docker compose exec api python -c "import weasyprint"`. Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (ANNAHMEN A27).
 - **Gegenprobe nach dem Ausliefern:** `docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 50` (0 Fehler erwartet).
 - **Speicher:** Kataster grob 10–20 MB in PostGIS je Gemeinde in der Größe von Treillières (≈ 8.800 Parzellen); das règlement écrit im Objektspeicher (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben wenige MB je Planstand in PostGIS; Steckbriefe unter `envelope-sheets/`, mit dem Projekt gelöscht und in der Sicherung des Buckets enthalten.
+
+## 10. Gemeinsame Daten beider Produkte
+
+KI-Modell der Auswertung und Referenzlisten gelten für Konfigurator und Analyse (PLAN_G2_VOLLSTAENDIGKEIT 3.9). Sie liegen in einem eigenen kleinen Stack `emprise-shared`: eigene Postgres-Instanz, eigene Sicherung, eigenes Netz `emprise-shared`, dem nur `migrate`, `api` und `worker` der Produkte beitreten. Die Datenbanken der Produkte bleiben untereinander unerreichbar.
+
+**Einmal einrichten, vor dem nächsten Ausliefern eines Produkts:**
+
+```bash
+cd /mnt/user/appdata/emprise-src/deploy/unraid
+cp .env.shared.example .env.shared
+for v in POSTGRES_PASSWORD MIGRATOR_DB_PASSWORD APP_DB_PASSWORD READONLY_DB_PASSWORD; do
+  sed -i "s/^$v=$/$v=$(openssl rand -hex 32)/" .env.shared
+done
+chmod 600 .env.shared
+./deploy.sh shared
+```
+
+Dann in `.env` **und** `.env.analyse` eintragen: `SHARED_APP_DB_PASSWORD` = `APP_DB_PASSWORD` aus `.env.shared`, `SHARED_MIGRATOR_DB_PASSWORD` = `MIGRATOR_DB_PASSWORD` aus `.env.shared`. Danach `./deploy.sh` und `./deploy.sh analyse`; der Migrate-Job legt die Tabellen an (`shared-migrate`) und übernimmt eine frühere Modellwahl.
+
+**Sicherung:** Container `backup` im Stack `emprise-shared`, Ablage `BACKUP_DIR` aus `.env.shared`; sofort: `docker compose -f compose.shared.yaml --env-file .env.shared run --rm backup now`. Wiederherstellen wie in Abschnitt 6, mit `shared-db` statt `db` und `emprise_shared` statt `emprise` (ohne `CREATE EXTENSION postgis`).
+
+**Prüfen:** `/verwaltung` in beiden Produkten zeigt dasselbe KI-Modell und dieselben Referenzlisten; eine Wahl in einem Produkt steht sofort im anderen.
