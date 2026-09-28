@@ -1,6 +1,6 @@
 # AN2 – PLU selbst hochladen (Emprise Analyse)
 
-> **Status:** geplant und umgesetzt am 25.09.2026 (Befunde beim Bau in 7.4) · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN2), 8.1 Nr. 1 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN2 (Präfix `PU`)
+> **Status:** geplant und umgesetzt am 25.09.2026 (Befunde beim Bau in 7.4), KI-Modell der Auswertung wählen am 28.09.2026 (Kapitel 8), Text statt PDF für Modelle ohne PDF-Eingabe am 28.09.2026 (Kapitel 9) · **Bezug:** [PLAN_ANALYSE.md](PLAN_ANALYSE.md) 4 (AN2), 8.1 Nr. 1 · **Festlegungen:** `docs/ANNAHMEN.md` Abschnitt AN2 (Präfix `PU`)
 > **Voraussetzung:** AN0 (PS01–PS09), AN1 (UP01–UP16). Fachregeln: `BACKEND_SPEZIFIKATION.md` 5.2, Umsetzung G2 nach ANNAHMEN RW01–RW27.
 
 ---
@@ -249,3 +249,85 @@ Ein PLU je Projekt, eine Zone je Grundstück. Stehen die allgemeinen Bestimmunge
 **Prüflauf:** Backend 657 Tests mit `TEST_S3=1` (vorher 649; neu 4 Einheitstests zu Filter, Zwischenspeicher und Preisen, 4 Integrationstests zu Rechten, Wahl, Vorgabe, Ausfall von OpenRouter und dem Job), ruff, Format und mypy grün; Migration 0016 in beiden lokalen Datenbanken. Frontend 202 Tests (vorher 197; Anzeige, Suche und Wahl, Hinweis bei anderen Anbietern, Escape, Vorgabe ohne Liste, fehlender Schlüssel), Lint, Typprüfung und Build grün. `openapi.json` und `schema.d.ts` neu erzeugt.
 
 **Browserprüfung am 28.09.2026** (Analyse-Stack mit neuen Images, Liste echt von OpenRouter, Schlüssel noch nicht aktiv): Startseite zeigt „KI-Modell der Auswertung“ mit `anthropic/claude-opus-5`, „Vorgabe“, 5 $/25 $ je Mio. Token, Kosten des Monats und den Hinweis auf den fehlenden Schlüssel → „Ändern“ → Dialog mit 98 Modellen → Suche „opus 5“ → Opus 5.5 gewählt → „Übernehmen“ → Abschnitt zeigt `anthropic/claude-opus-5.5` mit 4 $/20 $; in `app_setting` Modell und Preise (Cache lesen 0,20 $, schreiben 5 $), im Audit-Log der Wechsel → „Vorgabe wiederherstellen“ → wieder `anthropic/claude-opus-5`, Eintrag gelöscht.
+
+## 9. Nachtrag 28.09.2026: Text statt PDF für Modelle ohne PDF-Eingabe
+
+**Auftrag des Nutzers:** „Warum wird eine PDF an das Modell übergeben – gibt es eine Möglichkeit, die PDF vorher in Text umzuwandeln?“ Auf den Vorschlag (Text für Modelle ohne PDF-Eingabe, Claude bleibt beim PDF, Vergleich an einem echten Kapitel): „Ja, setze deinen Vorschlag so um.“ Festlegung: ANNAHMEN PU12.
+
+### 9.1 Befund
+
+- Spez. 5.2.3 schickt das Zonenkapitel und die allgemeinen Bestimmungen als ausgeschnittene PDFs. Claude liest daraus Text und Seitenbild – Tabellen, Aufbau, Skizzen. Die Eingabe zählt deshalb doppelt: Kapitel UC von „PLU Beyenes“ (16 Seiten) kostete 46 841 Eingabe-Token, gut 2 900 je Seite.
+- Die Textschicht jeder Seite liegt ohnehin in `source_page` (Kapitelsuche, Zitatprüfung); für UC rund 44 000 Zeichen.
+- Viele günstige Modelle lesen kein PDF, etwa `deepseek/deepseek-v4-flash-0731`; der Dialog (Kapitel 8) bot sie deshalb nicht an. OpenRouter wandelt ein PDF für solche Modelle selbst um – ein erster Lauf so brauchte 21 Minuten und wurde abgebrochen (9.5, beim Bau Nr. 1).
+
+### 9.2 Festlegungen
+
+- **Eingabeform je Modell:** Modelle mit PDF-Eingabe (`file` in der Liste von OpenRouter) bekommen weiter die PDF-Auszüge; alle anderen die **Textschicht aus `source_page`** – dieselbe, gegen die die Zitate geprüft werden. Die Wahl im Dialog speichert die Eingabeform mit (`app_setting.value.input`); für die Vorgabe der Umgebung gilt `EMPRISE_RULES_INPUT` (Standard `pdf`).
+- **Gleiche Dokumente, gleiche Seiten:** Der Text steht je Auszug in einem Element `<document name="general.pdf">` bzw. `chapter-….pdf`; jede Seite beginnt mit `=== page n ===`, gezählt ab 1 wie im PDF-Auszug. Systemprompt, Ausgabeschema und Rückrechnung der Seiten bleiben unverändert; ein kurzer Vorspann (`TEXT_INPUT_NOTE`) erklärt die Marken und warnt vor Tabellen.
+- **Eigener Eingabe-Hash** nur für Text (Marke und Prüfsumme des Vorspanns): Gespeicherte Antworten aus PDF-Läufen werden nicht für Text verwendet und umgekehrt; der Hash der PDF-Läufe bleibt, wie er war.
+- **Dialog:** zeigt auch Modelle ohne PDF-Eingabe, markiert „liest Text statt PDF“; ist eines gewählt, sagt ein Hinweis, dass Tabellen ihre Spalten verlieren und Skizzen fehlen. Der Abschnitt auf der Startseite zeigt die Marke, wenn das eingestellte Modell Text bekommt.
+- **Claude bleibt beim PDF** (Vergleich 9.5).
+
+### 9.3 Arbeitsschritte
+
+1. `config.rules_input`; `ExtractionRequest.chapter_text`/`general_text`; `build_messages` mit Text-Elementen und Vorspann; `extract._Calls._texts` aus `source_page`; Eingabe-Hash.
+2. `model_choice`: Modelle mit Texteingabe und erzwungenem Werkzeug, `reads_pdf`, Eingabeform in der Einstellung; `RulesModelOut.input`, `ModelOptionOut.reads_pdf`.
+3. Dialog und Abschnitt; Texte de/fr.
+4. Tests; Vergleich an Kapitel UC in einer Kopie der Analyse-Datenbank (`emprise_probe`), damit das Ergebnis im Projekt unberührt bleibt.
+
+### 9.4 Grenzen
+
+- Tabellen kommen als Fließtext an, Skizzen gar nicht; Werte aus Tabellen können fehlen oder verrutschen. Mehrspaltiger Satz kann in falscher Reihenfolge ankommen.
+- Seiten ohne Textschicht (Scans) sind in beiden Formen leer (AN7).
+- Die Eingabeform folgt dem Modell; eine Wahl „Claude mit Text“ gibt es in der Oberfläche nicht, nur über `EMPRISE_RULES_INPUT` für die Vorgabe.
+
+### 9.5 Prüfprotokoll
+
+**Vor dem Bau:**
+
+| Nr. | Befund | Folge | Festlegung |
+|---|---|---|---|
+| 1 | Text selbst aus dem PDF ziehen statt `source_page` | Zwei Textfassungen; Zitate würden gegen eine andere geprüft, als das Modell sah | Text aus `source_page` |
+| 2 | Seitenmarken mit den Seitennummern des Originals | Rückrechnung der Seiten (Spez. 5.2.3) müsste sich je Eingabeform unterscheiden | Marken zählen ab 1 wie im PDF-Auszug |
+| 3 | Den Systemprompt für Text umschreiben | Neue Prüfsumme, alle PDF-Kapitel gälten als geändert | Systemprompt unverändert, Vorspann nur in der Anfrage |
+| 4 | Gleicher Eingabe-Hash für Text und PDF | Gespeicherte PDF-Antworten würden für Text wiederverwendet | Eigener Hash nur für Text |
+| 5 | OpenRouter wandelt PDFs für Textmodelle selbst um | Unbekannte Umwandlung, Seitenmarken fehlen, Laufzeit (9.1) | Eigene Textschicht |
+
+**Beim Bau gefunden:**
+
+| Nr. | Befund | Folge | Behoben in |
+|---|---|---|---|
+| 1 | Ein vom Nutzer abgebrochener Befehl (`docker compose run` mit DeepSeek und PDF) lief im Container weiter: 21 Minuten für den ersten Aufruf, 0,013 $, nur in der Kopie | Der Abbruch im Werkzeug beendet den Container nicht | Container von Hand gestoppt, Kapitel in der Kopie zurückgesetzt; Stolperstelle in README |
+| 2 | `app_setting` fehlte in der Liste der Tabellen, die die Tests leeren | Eine Wahl aus einem Test galt im nächsten weiter | `tests/conftest.py` |
+
+**Vergleich** (Kapitel UC von „PLU Beyenes“, 16 Seiten, Kopie der Analyse-Datenbank, je Auswertung und Gegenprüfung):
+
+| | Opus 5, PDF | Opus 5, Text | DeepSeek V4 Flash, Text |
+|---|---|---|---|
+| Regeln mit Wert | 13 | 11 | 6 |
+| nicht ermittelt | 4 | 5 | 13 |
+| Kosten | 0,73 $ | 0,50 $ | 0,014 $ |
+| Dauer | 1 min 44 s | 1 min 45 s | 10 min 29 s |
+| Eingabe-Token (Auswertung) | 46 841 | 22 015 | 14 584 |
+
+- **Opus mit Text** liest alle Werte, die es findet, genau wie mit PDF. Es verliert aber das Dach des Hauptgebäudes (Formen, Neigung 30–45°, Materialien, S. 15) und den hinteren Grenzabstand der Nebengebäude; dafür ein Texthinweis zu Nebengebäuden unter 12 m². Knapp ein Drittel billiger.
+- **DeepSeek mit Text** stimmt bei allen gefundenen Werten mit Opus überein (Zaun 2 m, Stellplätze, Bäume, Abstand zwischen Gebäuden 4 m, Straßenabstand 2,5 m), nennt zusätzlich 2 m zwischen Nebengebäuden und beschreibt die Grundflächenzahl als „progressiv nach Grundstücksgröße“ statt 0,9. Seiten- und Hinterabstände, Höhe, Dach und Grundflächenzahl bleiben „nicht ermittelt“. Rund fünfzigmal billiger, sechsmal langsamer.
+- **Folgerung:** Claude bleibt beim PDF. DeepSeek V4 Flash taugt für diese Auswertung nicht als Ersatz.
+
+**Zweiter Vergleich** (gleiches Kapitel; Kimi, Qwen und DeepSeek mit Text, da keins PDF liest, Opus 5.5 mit PDF; Denkaufwand für den Probelauf unverändert an OpenRouter gegeben):
+
+| | Opus 5.5, PDF (high) | Kimi K3 (high) | Qwen3.8 Max 0902 (xhigh) | DeepSeek V4 Pro 0813 (high) |
+|---|---|---|---|---|
+| Regeln mit Wert | 14, dazu 1 Texthinweis | 12 | – | 8, dazu 2 Texthinweise |
+| nicht ermittelt | 3 | 5 | – | 6 |
+| Kosten | 0,66 $ | 0,33 $ | 0,31 $ für zwei Fehlversuche | 0,16 $ |
+| Dauer | 2 min 0 s | 7 min 46 s | 9 min 19 s und 10 min 44 s, dann Abbruch | 3 min 31 s |
+
+- **Grundflächenzahl (Artikel UC 9, S. 14):** Sie ist gestaffelt: 90 % bis 200 m² Grundstück, darüber 90 % der ersten 200 m², 50 % der nächsten 200 m², 20 % des Rests. Opus (PDF und Text) und Kimi machen daraus pauschal 0,9, und die Fundstelle gilt als bestätigt, weil der Satz wörtlich vorkommt. Opus 5.5 und beide DeepSeek-Modelle geben die Staffel als Texthinweis wieder und lassen die Zahl offen. Das Regelschema kennt nur einen Wert (`MaxFootprintRatio.ratio`); eine Staffel ist nicht abbildbar. Die Auswertung in der Analyse-Instanz trägt deshalb 0,9 als wirksam: bei 600 m² Grundstück 540 m² statt 320 m² Grundfläche. Offener Punkt: Staffel im Schema und in der Berechnung, bis dahin Hinweis in der Anweisung.
+- **Kimi K3** stimmt bei allen Abständen, Zaun, Stellplätzen und Bäumen mit Opus überein und findet zusätzlich die 10 % unversiegelte Fläche (S. 20, bei Opus „nicht ermittelt“). Höhe, Dach und Fassade liest es richtig, zitiert aber zwei nicht zusammenhängende Sätze als ein Zitat; die Prüfung findet das Zitat nicht und setzt die Regeln auf „nicht ermittelt“. DeepSeek V4 Pro verhält sich dabei genauso.
+- **Opus 5.5** lehnt den erzwungenen Funktionsaufruf ab (`tool_choice: type "tool" and "any" are not supported for this model`, bei allen Anbietern); die Modellliste von OpenRouter zeigt das nicht, der Dialog bietet das Modell also an, und jede Auswertung damit scheitert. Im Probelauf mit freiem Funktionsaufruf (`tool_choice: auto`) und der Bitte im Systemprompt, das Werkzeug zu nutzen, lief es sauber: gegenüber Opus 5 zusätzlich Staffel statt 0,9, hinterer Abstand des Hauptgebäudes, 10 % unversiegelt und 2 m zwischen Nebengebäuden; dafür fehlen Zaun (2 m) und der Hinweis auf die 6-m-Bauverbotszone an Wasserläufen, und beim hinteren Abstand fehlt die Höhengrenze von 3 m auf der Grenze.
+- **Qwen3.8 Max** brach zweimal nach 20 000–23 000 Ausgabe-Token mit `finish_reason: error` des Anbieters ab; die Antwort war kein gültiges JSON (`invalid_json`).
+- **Denkaufwand:** OpenRouter nimmt inzwischen `xhigh` und `max` an (je Modell `reasoning.supported_efforts` in der Modellliste); `_effort` in `openrouter.py` macht daraus noch `high`.
+- **Kosten:** Der Stand `total_usage` von OpenRouter hinkt hinterher; drei der Zuwächse entsprechen auf den Cent einem von uns berechneten Aufruf (Kimi Gegenprüfung, beide DeepSeek-Pro-Aufrufe), die Rechnung nach Listenpreis passt also.
+
+**Prüflauf:** Backend 660 Tests mit `TEST_S3=1` (vorher 657; neu je ein Test zum Aufbau der Anfrage mit Text, zur Eingabeform nach der Wahl und zur Auswertung eines Kapitels mit Textschicht und Seitenmarken), ruff, Format und mypy grün. Frontend 203 Tests (vorher 202; Kennzeichen und Hinweis „liest Text statt PDF“), Lint, Typprüfung und Build grün. `openapi.json` und `schema.d.ts` neu erzeugt.

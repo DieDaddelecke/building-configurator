@@ -88,6 +88,9 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     rules_model: str = "anthropic/claude-opus-5"
     rules_effort: Literal["low", "medium", "high", "xhigh", "max"] = "high"
+    rules_input: Literal["pdf", "text"] = "pdf"
+    """`pdf`: Seitenauszüge als PDF (Spez. 5.2.3); `text`: ihre Textschicht mit Seitenmarken, für Modelle ohne
+    PDF-Eingabe (PU12). Ein im Büro gewähltes Modell bringt seine Eingabe selbst mit."""
     rules_runs: int = Field(default=2, ge=1, le=3)
     rules_request_timeout_seconds: float = 900.0
     rules_budget_month_usd: float = 150.0

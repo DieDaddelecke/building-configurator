@@ -17,6 +17,7 @@ from app.integrations.openrouter import (
     ExtractionRequest,
     OpenRouterExtractor,
 )
+from app.rules.domain.extraction import TEXT_INPUT_NOTE
 from app.rules.plan_import import choose_partition
 from tests.rules_support import DOC_ID, fixture_json, text_pdf, uh_output
 

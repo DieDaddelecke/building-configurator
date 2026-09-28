@@ -40,6 +40,7 @@ from app.rules.domain.assess import (
 )
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES
 from app.rules.domain.extraction import (
+    TEXT_INPUT_NOTE,
     DocumentKind,
     ExtractedRule,
     VerificationCheck,
@@ -107,6 +108,9 @@ def input_hash(
         "runs": settings.rules_runs,
         "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
     }
+    if settings.rules_input == "text":
+        # Nur dann: Der Hash der PDF-Auswertungen bleibt, gespeicherte Teilantworten bleiben verwendbar (PU12)
+        payload["input"] = ["text", hashlib.sha256(TEXT_INPUT_NOTE.encode()).hexdigest()[:16]]
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
@@ -160,6 +164,8 @@ class _Calls:
     general_pages: list[int]
     reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any]]]
     split: set[tuple[int, str]]
+    page_texts: dict[int, str] = field(default_factory=dict)
+    """Textschicht je Seite (`source_page`); dieselbe, gegen die die Zitate geprüft werden."""
     document_kind: DocumentKind = "plu"
     cost: float = 0.0
     model: str = ""
@@ -173,6 +179,19 @@ class _Calls:
             general = pdf.extract_pages(data, self.general_pages) if self.general_pages else None
             self._pdfs = (pdf.extract_pages(data, self.chapter_pages), general)
         return self._pdfs
+
+    def _pages_text(self, numbers: list[int]) -> str:
+        """Textschicht statt PDF (PU12). Die Marken zählen wie im PDF-Auszug ab 1, damit die Rückrechnung
+        der Seiten (Spez. 5.2.3) gleich bleibt."""
+        texts = self.document_texts or self.page_texts
+        return "\n\n".join(
+            f"=== page {position} ===\n{texts.get(page, '').strip()}"
+            for position, page in enumerate(numbers, start=1)
+        )
+
+    def _texts(self) -> tuple[str, str | None]:
+        general = self._pages_text(self.general_pages) if self.general_pages else None
+        return self._pages_text(self.chapter_pages), general
 
     def _set_chapter(self, status: str, error: str | None = None) -> None:
         with self.sessions() as session:

@@ -23,7 +23,14 @@ from app.platform.db import get_sessionmaker
 from app.platform.jobs.worker import run_one
 from app.platform.models import FeatureFlag, Job
 from app.rules import documents, extract
-from app.rules.models import LandUsePlan, ProjectRegulation, RegulationChapter, RuleExtractionRun
+from app.rules.models import (
+    LandUsePlan,
+    ProjectRegulation,
+    RegulationChapter,
+    RuleExtractionRun,
+    SourceFile,
+    SourcePage,
+)
 from app.rules.plan_import import DirectoryGpu, import_commune
 from app.site.cadastre_import import import_commune as import_cadastre
 from tests.integration.test_site_upload import LOCAL_RING, dxf_bytes
@@ -346,6 +353,42 @@ def test_sector_added_during_extraction_gets_a_follow_up(
     assert len(follow_up) == 1
     # Die Regeln von Uh sind trotzdem geschrieben
     assert client.get(f"/api/v1/admin/projects/{upload_project}/rules").json()["zones"][0]["rules"]
+
+
+def test_a_model_without_pdf_input_gets_the_text_layer_with_page_marks(
+    client: Any, upload_project: str, db_session: Any, settings: Any
+) -> None:
+    """PU12: dieselbe Auswertung mit der Textschicht; die Marken zählen wie im PDF-Auszug ab 1, die Zitate
+    werden gegen denselben Text geprüft."""
+    state = uploaded(client, upload_project)
+    choose(client, upload_project, state["document"]["id"], zone_code="Uh", chapter_code="Uh")
+    chapter_id = upload_chapter(db_session)
+    fake = FakeExtractor([uh_output()])
+    text_settings = settings.model_copy(update={"rules_input": "text"})
+    assert extract.extract_chapter(sessions, text_settings, chapter_id, fake.factory()).status == "succeeded"
+
+    first = fake.requests[0]
+    assert first.chapter_pdf == b"" and first.general_pdf is None
+    assert first.chapter_text is not None and first.chapter_text.startswith("=== page 1 ===")
+    assert first.chapter_text.count("=== page ") == len(first.chapter_pages)
+    assert (first.general_text is None) == (not first.general_pages)
+    db_session.expire_all()
+    chapter = db_session.get(RegulationChapter, chapter_id)
+    page_text = db_session.execute(
+        select(SourcePage.text).where(
+            SourcePage.source_file_id == chapter.source_file_id, SourcePage.page == first.chapter_pages[0]
+        )
+    ).scalar_one()
+    assert page_text.strip() in first.chapter_text
+    rules = client.get(f"/api/v1/admin/projects/{upload_project}/rules").json()
+    assert rules["status"] == "ok" and rules["zones"][0]["rules"]
+    # Eigene Eingabe, eigener Hash: gespeicherte PDF-Antworten werden nicht für Text verwendet
+    db_session.expire_all()
+    chapter = db_session.get(RegulationChapter, chapter_id)
+    runs = db_session.execute(select(RuleExtractionRun).where(RuleExtractionRun.chapter_id == chapter_id))
+    assert {run.input_hash for run in runs.scalars()} == {chapter.input_hash}
+    source = db_session.get(SourceFile, chapter.source_file_id)
+    assert chapter.input_hash != extract.input_hash(settings, source.sha256, chapter)
 
 
 # ---------------------------------------------------------------------------

@@ -25,6 +25,7 @@ from app.config import Settings
 from app.platform.logging import get_logger
 from app.rules.domain.extraction import (
     OUTPUT_SCHEMA,
+    TEXT_INPUT_NOTE,
     VERIFICATION_SCHEMA,
     DocumentKind,
     system_prompt,
@@ -53,6 +54,9 @@ class ExtractionRequest:
     None: Auswertung."""
     document_kind: DocumentKind = "plu"
     """`supplement`: Zusatzdokument mit eigenem Prompt, Sektoren sind Lots (AN3)."""
+    chapter_text: str | None = None
+    """Textschicht statt PDF (PU12): Seiten mit Marken `=== page n ===`; dann bleibt `chapter_pdf` leer."""
+    general_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -130,10 +134,19 @@ def _document(data: bytes, filename: str) -> dict[str, Any]:
     }
 
 
+def _text_document(text: str, filename: str) -> dict[str, Any]:
+    return {"type": "text", "text": f'<document name="{filename}">\n{text}\n</document>'}
+
+
 def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
+    """PDF-Auszüge oder – für Modelle ohne PDF-Eingabe – ihre Textschicht mit Seitenmarken (PU12). Die
+    Dokumente heißen in beiden Fällen gleich, damit Prompt und Rückrechnung der Seiten dieselben bleiben."""
     content: list[dict[str, Any]] = []
     kind = request.document_kind
-    if request.general_pdf is not None:
+    as_text = request.chapter_text is not None
+    if as_text and request.general_text is not None:
+        content.append(_text_document(request.general_text, "general.pdf"))
+    elif not as_text and request.general_pdf is not None:
         content.append(_document(request.general_pdf, "general.pdf"))
     filename = "supplement.pdf" if kind == "supplement" else f"chapter-{request.chapter_code}.pdf"
     content.append(_document(request.chapter_pdf, filename))
@@ -145,6 +158,8 @@ def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
         instruction = verification_instruction(
             request.claims, request.chapter_code, request.general_pages, request.chapter_pages, kind
         )
+    if as_text:
+        instruction = f"{TEXT_INPUT_NOTE}\n\n{instruction}"
     content.append({"type": "text", "text": instruction})
     return [{"role": "user", "content": content}]
 
