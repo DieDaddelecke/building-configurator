@@ -14,9 +14,6 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    // Zwei Produkte, ein Paket (AN0, docs/PLAN_ANALYSE.md 3): index.html ist der Hauskonfigurator,
-    // analyse.html „Emprise Analyse“. Welche Seite ein Stack ausliefert, entscheidet SPA_INDEX im Caddyfile.
-    rollupOptions: { input: { index: "index.html", analyse: "analyse.html" } },
   },
   test: {
     environment: "jsdom",

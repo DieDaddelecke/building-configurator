@@ -1,0 +1,15 @@
+/* Bereich „Emprise Analyse“ (AN0): dieselbe Gestaltung wie der Konfigurator, eigener Akzent. Nur Tokens
+   werden überschrieben; die Grundgestaltung lädt `src/main.tsx`. Die Datei gehört zum Analyse-Chunk und wirkt
+   nur, wenn die Seite unter /analyse geladen wurde (Wechsel zwischen den Bereichen lädt die Seite neu). */
+
+:root {
+  --accent: #0f6b5c; --accent-tint: #dfeeea; --accent-ink: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent: #7fc9b8; --accent-tint: #12312a; --accent-ink: #06231d;
+  }
+}
+:root[data-theme="dark"] {
+  --accent: #7fc9b8; --accent-tint: #12312a; --accent-ink: #06231d;
+}

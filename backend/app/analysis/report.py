@@ -153,7 +153,7 @@ def _pairs(rows: list[tuple[str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Abstände im Klartext (wie `frontend/src/products/analyse/abstand.ts`, EA10)
+# Abstände im Klartext (wie `frontend/src/analyse/abstand.ts`, EA10)
 # ---------------------------------------------------------------------------
 
 
