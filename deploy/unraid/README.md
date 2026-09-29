@@ -19,13 +19,13 @@ Lokal geprüft am 14.09.2026: Stack startet, Migration mit getrennten Rollen, Se
 
 ## 2. DNS und Reverse Proxy
 
-Einträge im Reverse Proxy, alle mit TLS-Zertifikat (der dritte erst mit dem Analyse-Stack):
+Einträge im Reverse Proxy, alle mit TLS-Zertifikat:
 
 | Hostname | Ziel | Hinweise |
 |---|---|---|
 | `building-configurator.aslani.work` | `http://<Unraid-IP>:8480` | `X-Forwarded-For` und `X-Forwarded-Proto` setzen |
 | `auth.aslani.work` | `http://<Unraid-IP>:9000` | Websockets erlauben |
-| `emprise-analyse.aslani.work` | `http://<Unraid-IP>:8481` | zweiter Stack (`WEB_PORT` in `.env.analyse`, BETRIEB 15); Header wie beim ersten Eintrag |
+| `emprise-analyse.aslani.work` | Weiterleitung (301) auf `https://building-configurator.aslani.work/analyse` | nur falls der Name schon verteilt ist; die Analyse läuft in derselben Anwendung (BETRIEB 15) |
 
 **Cloudflare:** `aslani.work` liegt bei Cloudflare. Ist ein Eintrag „proxied“ (orange Wolke) oder läuft ein Tunnel, sieht Cloudflare den gesamten Verkehr im Klartext, auch Anmeldedaten und später Kundendaten. Das widerspricht Leitplanke L8 und Plan 6.9 (keine US-Anbieter im Datenweg). Für die Beta: Einträge nur als DNS („DNS only“, graue Wolke) und TLS am eigenen Reverse Proxy – **entschieden am 25.09.2026** für alle Einträge von Emprise und Authentik. Bliebe der Cloudflare-Proxy, müsste der Reverse Proxy die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
 
@@ -97,7 +97,7 @@ deploy/unraid/deploy.sh rollback <release>
 
 Migrationen werden dabei nicht zurückgedreht (abwärtskompatibel, docs/BETRIEB.md Abschnitt 2). Alte Images gelegentlich aufräumen: `docker image ls emprise-backend`.
 
-**Zweiter Stack „Emprise Analyse“** (AN0): `deploy.sh analyse` und `deploy.sh analyse rollback <release>` liefern dasselbe Image mit `EMPRISE_PRODUCT=analyse` als eigenen Stack aus – eigene Datenbank, eigener Speicher, eigener Hostname, eigenes `.env.analyse` (Vorlage `.env.analyse.example`), eigenes Bild-Kennzeichen `current-analyse`. Einrichten und Prüfpunkte: [docs/BETRIEB.md](../../docs/BETRIEB.md) Abschnitt 15. Ohne `.env.analyse` bleibt der zweite Stack einfach aus.
+**Emprise Analyse** läuft seit dem 29.09.2026 in derselben Anwendung unter `/analyse` (BETRIEB 15); es gibt keinen zweiten Stack und keine zweite Authentik-Anwendung mehr.
 
 ## 6. Sicherung und Wiederherstellung
 
@@ -166,7 +166,7 @@ chmod 600 .env.shared
 ./deploy.sh shared
 ```
 
-Dann in `.env` **und** `.env.analyse` eintragen: `SHARED_APP_DB_PASSWORD` = `APP_DB_PASSWORD` aus `.env.shared`, `SHARED_MIGRATOR_DB_PASSWORD` = `MIGRATOR_DB_PASSWORD` aus `.env.shared`. Danach `./deploy.sh` und `./deploy.sh analyse`; der Migrate-Job legt die Tabellen an (`shared-migrate`) und übernimmt eine frühere Modellwahl.
+Dann in `.env` eintragen: `SHARED_APP_DB_PASSWORD` = `APP_DB_PASSWORD` aus `.env.shared`, `SHARED_MIGRATOR_DB_PASSWORD` = `MIGRATOR_DB_PASSWORD` aus `.env.shared`. Danach `./deploy.sh`; der Migrate-Job legt die Tabellen an (`shared-migrate`) und übernimmt eine frühere Modellwahl.
 
 **Sicherung:** Container `backup` im Stack `emprise-shared`, Ablage `BACKUP_DIR` aus `.env.shared`; sofort: `docker compose -f compose.shared.yaml --env-file .env.shared run --rm backup now`. Wiederherstellen wie in Abschnitt 6, mit `shared-db` statt `db` und `emprise_shared` statt `emprise` (ohne `CREATE EXTENSION postgis`).
 

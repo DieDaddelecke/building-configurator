@@ -1,13 +1,9 @@
 #!/bin/sh
 # Ausliefern und Rückrollen auf Unraid (docs/BETRIEB.md Abschnitt 2).
-#   ./deploy.sh                          Hauskonfigurator bauen und ausliefern
-#   ./deploy.sh rollback REL             Hauskonfigurator auf eine frühere Release zurück (releases.log)
-#   ./deploy.sh analyse                  „Emprise Analyse“ ausliefern (AN0; dieselben Images, eigener Stack)
-#   ./deploy.sh analyse rollback REL     Analyse-Stack zurückrollen
-#   ./deploy.sh shared                   gemeinsame Datenbank beider Produkte starten (PLAN_G2_VOLLSTAENDIGKEIT
-#                                        3.9); vor dem ersten Ausliefern eines Produkts, legt das Netz an
-# Beide Produkte kommen aus einem Repository (D16); getrennt sind Datenbank, Speicher, Hostname und
-# das Bild-Kennzeichen (`current` gegenüber `current-analyse`), damit ein Rückrollen nur einen Stack trifft.
+#   ./deploy.sh                          Anwendung (Konfigurator, Büro, Analyse) bauen und ausliefern
+#   ./deploy.sh rollback REL             auf eine frühere Release zurück (releases.log)
+#   ./deploy.sh shared                   gemeinsame Datenbank starten (PLAN_G2_VOLLSTAENDIGKEIT 3.9);
+#                                        vor dem ersten Ausliefern, legt das Netz an
 set -eu
 cd "$(dirname "$0")"
 
@@ -23,23 +19,10 @@ if ! docker network inspect emprise-shared >/dev/null 2>&1; then
   exit 1
 fi
 
-stack=konfigurator
-if [ "${1:-}" = "analyse" ]; then
-  stack=analyse
-  shift
-fi
-
-if [ "$stack" = "analyse" ]; then
-  tag=current-analyse
-  compose() {
-    docker compose -f compose.yaml -f compose.analyse.yaml --env-file .env.analyse "$@"
-  }
-else
-  tag=current
-  compose() {
-    docker compose "$@"
-  }
-fi
+tag=current
+compose() {
+  docker compose "$@"
+}
 
 smoke_test() {
   i=0
@@ -59,8 +42,8 @@ activate() {
   compose up -d --remove-orphans --force-recreate migrate api worker web
   compose up -d
   if smoke_test; then
-    echo "$(date -Iseconds) $stack $1" >> releases.log
-    echo "Release $1 bereit ($stack)"
+    echo "$(date -Iseconds) $1" >> releases.log
+    echo "Release $1 bereit"
   else
     echo "Rauchtest fehlgeschlagen: docker compose logs api migrate" >&2
     exit 1
@@ -78,6 +61,6 @@ release=$(git -C ../.. rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M)
 if [ -n "$(git -C ../.. status --porcelain 2>/dev/null)" ]; then
   release="$release-dirty"
 fi
-echo "Baue Release $release ($stack)"
+echo "Baue Release $release"
 EMPRISE_RELEASE="$release" compose build migrate web
 activate "$release"

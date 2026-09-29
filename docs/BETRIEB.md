@@ -30,7 +30,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | H3 | 0010 | `configurator` (dasselbe Flag) | – | – | veröffentlichter Preiskatalog mit Linien, Optionen und Preisen netto (13) |
 | V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (14) |
 
-Die Tabelle gilt für den Hauskonfigurator. Aus demselben Code läuft mit `EMPRISE_PRODUCT=analyse` ein zweites Produkt („Emprise Analyse“) mit eigenem Stack und ohne die Module H1–H3, A und V: Abschnitt 15.
+„Emprise Analyse“ läuft in derselben Anwendung unter `/analyse`: Abschnitt 15.
 
 ## 2. Ausliefern und Rückrollen
 
@@ -286,48 +286,23 @@ Keine neuen externen Dienste. Neu sind die Tabellen `submission` (Fassungen mit 
 - `…_L93.dxf`: Koordinaten in Lambert-93 (EPSG:2154). Nur verwenden, wenn das ArchiCAD-Projekt georeferenziert ist (Vermessungspunkt auf Lambert-93); sonst liegt der Plan Kilometer vom Nullpunkt entfernt.
 - Ebenen: `PARCELLE`, `LIMITE_VOIE`/`_SEPARATIVE`/`_FOND`/`_AUTRE`, `VOISINS_PARCELLES`, `VOISINS_BATI`, `ZONE_CONSTRUCTIBLE_LARGE`/`_STRICTE`, `MAISON_FACADE`, `MAISON_DEBORD`, `TERRASSE`, `CARPORT`, `ACCES`, `ORIGINE`, `TEXTE`. Bei frei gezeichneten Grundstücken (Weg E) gibt es nur die lokale Datei.
 
-## 15. Zweites Produkt: Emprise Analyse (AN0–AN7)
+## 15. Emprise Analyse (AN0–AN7)
 
-Aus demselben Repository entsteht ein zweites Produkt für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP19, PU01–PU12, EA01–EA17, KR01–KR09, AU01–AU12, SC01–SC10 und MA01–MA09). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich; Gabarit in Höhenstufen und zwei Schnitte), **AN4** (Regeln korrigieren und ergänzen mit Begründung und Fundstelle, Werte aus Zusatzdokumenten übernehmen, zwei Stände vergleichen) und **AN5** (Projekte mit Name, Notiz und Archiv; Lage auf der Katasterebene einpassen, danach Gelände und Risiken; Geländeprofil im Schnitt; Bericht-PDF, DXF lokal und in Lambert-93, GeoJSON), **AN7** (gescannte PDFs) und **AN6** (Organisationen mit Mitgliedern, Budget, Scan-Kontingent, Erscheinungsbild und API-Schlüsseln; fremde Büros gesperrt bis E-A5).
+Aus demselben Repository entsteht ein Bereich für Architekturbüros ([PLAN_ANALYSE.md](PLAN_ANALYSE.md), ANNAHMEN PS01–PS09, UP01–UP19, PU01–PU12, EA01–EA17, KR01–KR09, AU01–AU12, SC01–SC10 und MA01–MA09). Umgesetzt sind **AN0** (Produktschnitt), **AN1** (Parzelle als DXF, GeoJSON, vektorielles PDF oder Zeichnung, Kanten von Hand einordnen, Projekte am Architektenkonto), **AN2** (règlement écrit als PDF hochladen, Zone wählen, Regeln und Baurahmen) **AN3** (bindende Grundfläche, Vollgeschosse, Nutzfläche als Spanne mit Annahmen je Projekt; Zusatzdokumente mit Lotwahl und Vergleich; Gabarit in Höhenstufen und zwei Schnitte), **AN4** (Regeln korrigieren und ergänzen mit Begründung und Fundstelle, Werte aus Zusatzdokumenten übernehmen, zwei Stände vergleichen) und **AN5** (Projekte mit Name, Notiz und Archiv; Lage auf der Katasterebene einpassen, danach Gelände und Risiken; Geländeprofil im Schnitt; Bericht-PDF, DXF lokal und in Lambert-93, GeoJSON), **AN7** (gescannte PDFs) und **AN6** (Organisationen mit Mitgliedern, Budget, Scan-Kontingent, Erscheinungsbild und API-Schlüsseln; fremde Büros gesperrt bis E-A5).
 
-| | Hauskonfigurator | Emprise Analyse |
-|---|---|---|
-| `EMPRISE_PRODUCT` | `configurator` (Standard) | `analyse` |
-| Module unter `/api/v1` | Kern + Katalog, Konfiguration, Anfrage, Übergabe (120 Operationen im OpenAPI-Dokument des Stacks, Stand AN7) | Kern (Plattform, G1, G2, G3) + Analyse (88 Operationen) |
-| Periodische Aufgaben | alle sechs | ohne `cadastre_import` und `plu_import` (D17: der Nutzer lädt hoch) |
-| Oberfläche | `index.html` | `analyse.html` über `SPA_INDEX` im Web-Container |
-| Datenbank, Speicher, Sicherung, Hostname, Authentik | eigene | eigene (E-A4) |
-| Images | dieselben, Kennzeichen `current` | dieselben, Kennzeichen `current-analyse` |
+**Eine Anwendung (seit 29.09.2026, REFACTORING_PLAN S1–S3).** Konfigurator, Büro und Analyse laufen in einer Instanz mit einer Datenbank; die Analyse liegt unter `/analyse` (lokal http://localhost:8080/analyse, auf Unraid `https://building-configurator.aslani.work/analyse`). `EMPRISE_PRODUCT`, `SPA_INDEX`, `compose.analyse.yaml` und der Stack `emprise-analyse` entfallen; alle Router, Jobarten und periodischen Aufgaben laufen in der einen Instanz. Die frühere Datenbank `emprise_analyse` bleibt lokal unangetastet liegen (nicht übernommen, Entscheidung 29.09.2026).
 
-**Ausliefern auf Unraid.** `deploy/unraid/.env.analyse.example` nach `.env.analyse` kopieren und ausfüllen (eigene Geheimnisse, eigener Hostname, eigenes `APPDATA_DIR` und `BACKUP_DIR`), in Authentik eine zweite Anwendung anlegen (wie Unraid README 3), im Reverse Proxy den zweiten Hostnamen auf `WEB_PORT` zeigen lassen, dann:
+**Einrichten (AN1)**
 
-```
-./deploy.sh analyse                # bauen und ausliefern
-./deploy.sh analyse rollback REL   # nur diesen Stack zurückrollen
-```
-
-`releases.log` führt beide Stacks mit Namen. Ein Rückrollen des einen lässt den anderen unberührt, weil die Kennzeichen getrennt sind.
-
-**Lokal.** Der Analyse-Stack setzt auf den laufenden Hauptstack auf (gemeinsamer Datenbankserver, Objektspeicher, Mailpit, OIDC-Testdienst; eigene Datenbank `emprise_analyse`, eigener Bucket):
-
-```
-docker compose -f compose.analyse.yaml up -d
-```
-
-Anwendung http://localhost:8180, API http://localhost:8100/api/v1/docs. Die Dienste heißen dort `api-analyse`, `worker-analyse`, `web-analyse` (PS08). Beenden mit `docker compose -f compose.analyse.yaml down`; die Datenbank `emprise_analyse` bleibt bestehen.
-
-**Einrichten nach dem ersten Start (AN1)**
-
-1. Konto freischalten: `python -m app.cli staff-add person@buero.fr architect` – **im Analyse-Stack**, er hat eigene Tabellen (lokal: `docker compose -f compose.analyse.yaml exec api-analyse …`). Ohne `--organisation` kommt das Konto in die Organisation des Betreibers („Eigenes Büro“, beim ersten Konto angelegt, AN6).
-2. Flag setzen: `python -m app.cli flag-set site_selection --role architect`. Ohne das Flag antworten alle Grundstücksendpunkte mit `403 feature_disabled` (UP10).
-3. Kein Katasterimport nötig: Die Parzelle kommt als DXF oder GeoJSON oder wird gezeichnet (D17). `CADASTRE_COMMUNES=[]` ist der Normalfall; mit einer Gemeinde darin läuft der Import von Hand (`cadastre-import`), dann funktioniert auch der Katasterklick.
-4. Für die Auswertung hochgeladener Reglements (AN2): `OPENROUTER_API_KEY` und `RULES_BUDGET_MONTH_USD` in `.env.analyse` (lokal `EMPRISE_OPENROUTER_API_KEY`, Budget-Vorgabe 20 $). Das Budget gilt je Datenbank, also getrennt vom Hauskonfigurator. Ohne Schlüssel steht das gewählte Kapitel auf „nicht eingerichtet“ und startet von selbst, sobald er eingetragen ist (RW22). Die Flags `rules_simulation` und `envelope_simulation` braucht das Analyse-Produkt nicht: Regeln und Baurahmen liest die Oberfläche über die Büro-Endpunkte (PU08). Ausgehender Zugang zusätzlich `openrouter.ai`.
+1. Konto freischalten: `python -m app.cli staff-add person@buero.fr architect` (lokal `docker compose exec api …`). Ohne `--organisation` kommt das Konto in die Organisation des Betreibers („Eigenes Büro“, AN6).
+2. Flag setzen: `python -m app.cli flag-set site_selection --role architect`. Ohne das Flag antworten alle Grundstücksendpunkte mit `403 feature_disabled` (UP10); das Flag gilt für Konfigurator und Analyse.
+3. Für die Parzelle im Analyse-Bereich ist kein Katasterimport nötig: Sie kommt als DXF, GeoJSON oder PDF oder wird gezeichnet (D17). Mit Kataster (Einzugsgebiet `CADASTRE_COMMUNES`) funktioniert zusätzlich der Katasterklick.
+4. Für die Auswertung hochgeladener Reglements (AN2): `OPENROUTER_API_KEY` und `RULES_BUDGET_MONTH_USD` in `.env` (lokal `EMPRISE_OPENROUTER_API_KEY`, Budget-Vorgabe 20 $). Das Budget gilt für die ganze Anwendung. Ohne Schlüssel steht das gewählte Kapitel auf „nicht eingerichtet“ und startet von selbst, sobald er eingetragen ist (RW22). Regeln und Baurahmen liest die Analyse über die Büro-Endpunkte (PU08). Ausgehender Zugang zusätzlich `openrouter.ai`.
 
 **Prüfpunkte**
 
-- Richtiges Profil: `GET /api/v1/openapi.json` des Analyse-Stacks enthält keine Route mit `catalog`, `inquiry`, `submission` oder `configuration`.
-- Richtige Oberfläche: `GET /` liefert `<title>Emprise Analyse</title>`. Kommt „Emprise“, fehlt `SPA_INDEX=analyse.html`.
-- Richtige Zeitpläne: `SELECT name FROM periodic_schedule` zeigt vier Einträge (`housekeeping`, `retention_cleanup`, `rules_housekeeping`, `site_housekeeping`), im Konfigurator sechs.
+- Richtige Oberfläche: `GET /analyse` liefert die Anwendung; der Titel wechselt nach dem Laden auf „Emprise Analyse“.
+- Anmeldung aus der Analyse führt nach `/analyse…` zurück; eine abgelehnte Anmeldung zeigt den Grund auf `/analyse`.
 
 **Hochgeladene Reglements (AN2)**
 
