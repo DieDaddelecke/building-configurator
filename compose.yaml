@@ -12,11 +12,6 @@ x-backend-env: &backend-env
   EMPRISE_OIDC_ISSUER: http://oidc.localhost:8081/emprise
   EMPRISE_OIDC_CLIENT_ID: emprise-local
   EMPRISE_OIDC_CLIENT_SECRET: local-secret
-  EMPRISE_S3_ENDPOINT_URL: http://storage:8333
-  EMPRISE_S3_PUBLIC_ENDPOINT_URL: http://localhost:9000
-  EMPRISE_S3_ACCESS_KEY: emprise
-  EMPRISE_S3_SECRET_KEY: emprise-local-secret
-  EMPRISE_S3_BUCKET: emprise-local
   EMPRISE_SMTP_HOST: mailpit
   EMPRISE_SMTP_PORT: "1025"
   # Regelauswertung (G2) über OpenRouter: Schlüssel aus der Shell oder einer .env neben compose.yaml; ohne Schlüssel keine Auswertung
@@ -44,32 +39,6 @@ services:
       interval: 3s
       timeout: 3s
       retries: 30
-
-  storage:
-    # Früherer Objektspeicher: nur noch Quelle für `storage-copy-from-s3` (REFACTORING_PLAN S6), entfällt danach.
-    # S3-kompatibel wie auf Unraid (ANNAHMEN A16, A22). MinIO ist auf quay.io seit dem 25.09.2026
-    # nicht mehr anonym abrufbar; SeaweedFS spricht denselben S3-Anschluss, hört auf 8333 und ist
-    # auf dem Rechner unter Port 9000 erreichbar. Keine Konsole: Dateien über die API oder die CLI.
-    # `-volume.max=0`: Volume-Plätze nach freiem Platz statt fest 8 – jeder Bucket belegt bis zu 7,
-    # mit dem Bucket des Analyse-Stacks waren sie aufgebraucht („failing to assign a file id“).
-    image: chrislusf/seaweedfs:3.97
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >-
-        printf '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise",
-        "secretKey":"emprise-local-secret"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
-        | tr -d ' \n' > /tmp/s3.json &&
-        exec weed server -dir=/data -volume.max=0 -s3 -s3.config=/tmp/s3.json
-    volumes:
-      - storage-data:/data
-    ports:
-      - "127.0.0.1:9000:8333"
-    healthcheck:
-      # Master, Volume, Filer und S3 starten nacheinander; der S3-Anschluss ist zuletzt da (~15 s)
-      test: ["CMD", "nc", "-z", "127.0.0.1", "8333"]
-      interval: 3s
-      timeout: 3s
-      retries: 20
 
   mailpit:
     image: axllent/mailpit:v1.27
@@ -162,6 +131,5 @@ services:
 
 volumes:
   db-data:
-  storage-data:
   # Dateien der Anwendung (EMPRISE_FILES_DIR, REFACTORING_PLAN S6)
   files-data:

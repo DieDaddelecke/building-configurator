@@ -18,11 +18,6 @@ x-backend: &backend
     EMPRISE_OIDC_ISSUER: ${OIDC_ISSUER:?}
     EMPRISE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-emprise}
     EMPRISE_OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?}
-    EMPRISE_S3_ENDPOINT_URL: http://storage:8333
-    EMPRISE_S3_REGION: us-east-1
-    EMPRISE_S3_BUCKET: emprise
-    EMPRISE_S3_ACCESS_KEY: emprise
-    EMPRISE_S3_SECRET_KEY: ${S3_SECRET_KEY:?}
     EMPRISE_SMTP_HOST: ${SMTP_HOST:-}
     EMPRISE_SMTP_PORT: ${SMTP_PORT:-587}
     EMPRISE_SMTP_USERNAME: ${SMTP_USERNAME:-}
@@ -72,22 +67,6 @@ services:
       timeout: 3s
       retries: 30
 
-  storage:
-    # S3-kompatibel, Versionierung und signierte URLs geprüft (docs/ANNAHMEN.md A21)
-    image: chrislusf/seaweedfs:3.97
-    restart: unless-stopped
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - >-
-        printf '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
-        "$$S3_SECRET_KEY" > /tmp/s3.json &&
-        exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json
-    environment:
-      S3_SECRET_KEY: ${S3_SECRET_KEY:?}
-    volumes:
-      - ${APPDATA_DIR:-/mnt/user/appdata/emprise}/seaweedfs:/data
-    networks: [intern]
-
   migrate:
     <<: *backend
     build:
@@ -100,8 +79,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      storage:
-        condition: service_started
     networks: [intern]
 
   api:
@@ -177,6 +154,6 @@ services:
     networks: [intern]
 
 networks:
-  # Datenbank, Speicher und API ohne Weg nach außen erreichbar; nur web hat einen Port
+  # Datenbank und API ohne Weg nach außen erreichbar; nur web hat einen Port
   intern:
   extern:

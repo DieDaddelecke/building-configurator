@@ -16,7 +16,7 @@
 | Container `worker` (dauerhaft, ohne eingehende Anfragen, mindestens 1 Instanz) | gleiches Image, Befehl `python -m app.cli worker` |
 | Job `migrate` vor jeder Auslieferung | gleiches Image, Befehl `alembic upgrade head`, Datenbankrolle `migrator` |
 | PostgreSQL 16 + PostGIS 3 mit PITR, private Verbindung | Rollen nach `local/postgres-init.sql`; Erweiterung `postgis` durch den Admin anlegen |
-| S3-Bucket, privat, Versionierung an; zweiter Bucket in anderer EU-Region für Sicherungen | |
+| Dauerhaftes Dateivolume, das `api`, `worker` und `migrate` gemeinsam einbinden (seit 29.09.2026 statt S3); tägliche Sicherung in eine andere EU-Region | `EMPRISE_FILES_DIR`, beschreibbar für Nutzer 10001 |
 | Secret Manager | alle `EMPRISE_*`-Geheimnisse (siehe Tabelle 2) |
 | Logs | JSON von stdout; Aufbewahrung 30 Tage |
 
@@ -33,7 +33,7 @@ Vollständige Liste mit Standardwerten: `backend/app/config.py`. Pflicht in `sta
 | `EMPRISE_DATABASE_URL` | `postgresql+psycopg://app:…@db-privat:5432/emprise` | ja |
 | `EMPRISE_MIGRATION_DATABASE_URL` | `postgresql+psycopg://migrator:…@db-privat:5432/emprise` (nur Job `migrate`) | ja |
 | `EMPRISE_OIDC_ISSUER`, `EMPRISE_OIDC_CLIENT_ID`, `EMPRISE_OIDC_CLIENT_SECRET` | nach D4; Rücksprungadresse `https://…/api/v1/auth/staff/callback` | Secret ja |
-| `EMPRISE_S3_ENDPOINT_URL`, `EMPRISE_S3_REGION`, `EMPRISE_S3_BUCKET`, `EMPRISE_S3_ACCESS_KEY`, `EMPRISE_S3_SECRET_KEY` | | Schlüssel ja |
+| `EMPRISE_FILES_DIR` | `/data/files` (Standard; dauerhaftes Volume für API, Worker und `migrate`, seit 29.09.2026 statt S3) | |
 | `EMPRISE_SMTP_HOST`, `EMPRISE_SMTP_PORT`, `EMPRISE_SMTP_USERNAME`, `EMPRISE_SMTP_PASSWORD`, `EMPRISE_SMTP_STARTTLS`, `EMPRISE_MAIL_FROM` | nach E2 | Passwort ja |
 | `EMPRISE_SENTRY_DSN` | EU-Datenhaltung | ja |
 
@@ -46,7 +46,7 @@ Ergebnis je Punkt in diese Tabelle eintragen; Grundlage für D3.
 | 1 | Rechenzentrum Frankreich, AVV | Vertragsunterlagen | |
 | 2 | PostgreSQL 16 mit PostGIS und PITR | Instanz anlegen, `CREATE EXTENSION postgis`, Rollen aus `local/postgres-init.sql`, Job `migrate`, `/api/health/ready` = 200 mit `postgis` | |
 | 3 | Worker dauerhaft ohne Kaltstart | `worker` starten; `POST /api/v1/admin/ops/test-mail` → Job `succeeded` innerhalb von Sekunden; `/api/health/jobs` = 200 nach 30 min Leerlauf | |
-| 4 | S3 mit Versionierung | `GET /api/v1/admin/ops/status` → `storage_ok: true` | |
+| 4 | Gemeinsames Dateivolume | `GET /api/v1/admin/ops/status` → `storage_ok: true`; Datei über die API hochladen, im Worker lesen | |
 | 5 | Private Verbindung API ↔ Datenbank, API nicht öffentlich | Zugriff auf Port 8000 von außen scheitert | |
 | 6 | Secret Manager, Registry, Logs | Geheimnisse nur dort; JSON-Logs sichtbar, ohne IP-Adressen und Mailadressen | |
 | 7 | OpenTofu-Provider | Umgebung `staging` vollständig per `tofu apply` erzeugen und wieder löschen | |

@@ -9,7 +9,7 @@ Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026). Zwei
 
 Nur diese beiden Ports bekommt der Reverse Proxy. Datenbank, Speicher und API haben keine Ports nach außen.
 
-Lokal geprüft am 14.09.2026: Stack startet, Migration mit getrennten Rollen, SeaweedFS mit Versionierung, Sicherung und Wiederherstellung, Anmeldung über Authentik 2026.8.2 mit TOTP. Nicht geprüft: TLS am Reverse Proxy und die Erreichbarkeit von Authentik aus dem Container (Abschnitt 2).
+Lokal geprüft am 14.09.2026: Stack startet, Migration mit getrennten Rollen, Sicherung und Wiederherstellung, Anmeldung über Authentik 2026.8.2 mit TOTP. Nicht geprüft: TLS am Reverse Proxy und die Erreichbarkeit von Authentik aus dem Container (Abschnitt 2).
 
 ## 1. Voraussetzungen
 
@@ -64,7 +64,7 @@ Nicht verwenden: reine Passkey-Anmeldung ohne Passwort. Authentik meldet sie als
 ```bash
 cd /mnt/user/appdata/emprise-src/deploy/unraid
 cp .env.example .env
-for v in SECRET_KEY POSTGRES_PASSWORD MIGRATOR_DB_PASSWORD APP_DB_PASSWORD READONLY_DB_PASSWORD S3_SECRET_KEY; do
+for v in SECRET_KEY POSTGRES_PASSWORD MIGRATOR_DB_PASSWORD APP_DB_PASSWORD READONLY_DB_PASSWORD; do
   sed -i "s/^$v=$/$v=$(openssl rand -hex 32)/" .env
 done
 ```

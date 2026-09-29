@@ -49,14 +49,6 @@ class Settings(BaseSettings):
     # Dateien (Reglements, Steckbriefe, Berichte, Übergaben) im Verzeichnis, das API und Worker einbinden
     files_dir: str = "/data/files"
 
-    # Früherer Objektspeicher (S3-kompatibel): nur noch für `storage-copy-from-s3` (REFACTORING_PLAN S6)
-    s3_endpoint_url: str | None = None
-    s3_public_endpoint_url: str | None = None
-    s3_region: str = "fr-par"
-    s3_bucket: str = "emprise-local"
-    s3_access_key: SecretStr | None = None
-    s3_secret_key: SecretStr | None = None
-
     # Mail (Anbieter offen, E2); lokal Mailpit
     smtp_host: str = "localhost"
     smtp_port: int = 1025

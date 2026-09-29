@@ -50,7 +50,6 @@ Danach als `ops@emprise.local` unter `/buero` anmelden und http://localhost:8080
 | http://localhost:8080/buero | Büro; Anmeldung über den lokalen OIDC-Testdienst (Port 8081) als `ops@emprise.local` |
 | http://localhost:8000/api/v1/docs | API-Beschreibung |
 | http://localhost:8025 | Mailpit (versandte Mails, Bestätigungscodes) |
-| http://localhost:9000 | Objektspeicher (SeaweedFS, S3-Anschluss; Zugang `emprise` / `emprise-local-secret`, keine Konsole) |
 
 „Emprise Analyse“ für Architekten (Parzelle hochladen oder zeichnen, règlement écrit hochladen, Baurahmen, Nutzfläche, Bericht und DXF) ist ein Bereich derselben Anwendung: http://localhost:8080/analyse, Anmeldung wie beim Büro. Das Konto aus `staff-add` oben (Rolle `architect`) und die Flags reichen.
 
@@ -62,10 +61,10 @@ cd frontend && corepack pnpm install && corepack pnpm dev
 
 ## Prüfen
 
-Backend (Lint, Typen, Tests gegen PostGIS und den Objektspeicher; `storage` und `mailpit` müssen laufen, sonst scheitert `test_storage_ops`; rund 3,5 Minuten; in Git-Bash `MSYS_NO_PATHCONV=1` davor):
+Backend (Lint, Typen, Tests gegen PostGIS; Dateien in einem temporären Verzeichnis; rund 12 Minuten; in Git-Bash `MSYS_NO_PATHCONV=1` davor):
 
 ```bash
-docker compose --profile dev run --rm -e TEST_S3=1 backend-dev sh -c "ruff check . && ruff format --check . && mypy app && pytest"
+docker compose --profile dev run --rm backend-dev sh -c "ruff check . && ruff format --check . && mypy app && pytest"
 ```
 
 Frontend:
@@ -108,8 +107,8 @@ Gesammelt aus allen Fassungen von HANDOFF.md; neue dauerhafte Stolperstellen hie
 - `uv lock` im Container immer mit der vorhandenen `uv.lock` als Ausgangspunkt (Datei zuerst in den Container kopieren): Ohne sie löst `uv` **alle** Pakete frisch auf und zieht ungewollt Fremdupgrades mit (26.09.2026 passiert und verworfen); mit ihr ändert sich nur, was die geänderten Abhängigkeiten erzwingen.
 - Unsichtbare Zeichen: `backend/app/rules/domain/text.py` enthält in `_TRANSLATE` geschützte Leerzeichen (U+00A0, U+202F) und einen weichen Trennstrich; beim vollständigen Neuschreiben gingen sie verloren – mit `git diff` prüfen.
 - Analyse und Konfigurator teilen seit dem 29.09.2026 Anwendung, Datenbank und Cookies (ein Host). Die Architekten-Projektliste unter `/analyse` zeigt alle Projekte der Organisation, auch solche, die ein angemeldeter Architekt im Konfigurator angelegt hat. Die frühere lokale Datenbank `emprise_analyse` wird nicht mehr benutzt.
-- Dateien liegen seit dem 29.09.2026 im Volume `files-data` (`/data/files` in `migrate`, `api`, `worker`; REFACTORING_PLAN S6); die Schlüssel sind dieselben wie im früheren Bucket. Übernahme aus dem Bucket: `docker compose exec -T api python -m app.cli storage-copy-from-s3` (lokal am 29.09.2026 gemacht). Tests schreiben in ein eigenes temporäres Verzeichnis.
-- Früherer Objektspeicher: seit dem 25.09.2026 SeaweedFS statt MinIO (A16), Dienst `storage`, S3 im Netz auf `storage:8333`, auf dem Rechner `localhost:9000`, keine Konsole. Er braucht nach dem Start rund 15 Sekunden, bis der S3-Anschluss antwortet (Gesundheitsprüfung im Compose). Jeder Bucket belegt bis zu sieben Volumes; mit dem festen Standard von acht Plätzen scheiterte jeder Upload, sobald auch der Analyse-Stack seinen Bucket nutzte (`failing to assign a file id`, im API-Log nur ein hängender Upload) – deshalb `-volume.max=0` in `compose.yaml`. Der alte Band `minio-data` bleibt liegen: Dossiers aus der Zeit davor sind im neuen Speicher nicht vorhanden und im Büro über „Dossier neu erzeugen“ wiederherstellbar; aufräumen mit `docker volume rm emprise_minio-data`.
+- Dateien liegen seit dem 29.09.2026 im Volume `files-data` (`/data/files` in `migrate`, `api`, `worker`; REFACTORING_PLAN S6); die Schlüssel sind dieselben wie im früheren Bucket (lokal am 29.09.2026 übernommen). Tests schreiben in ein eigenes temporäres Verzeichnis.
+- Frühere Objektspeicher: Die Volumes `emprise_storage-data` (SeaweedFS) und `emprise_minio-data` (MinIO) bleiben liegen, bis ihre Löschung freigegeben ist; Dossiers aus der MinIO-Zeit sind im Büro über „Dossier neu erzeugen“ wiederherstellbar. Beim ersten `docker compose up` nach dem Ausbau meldet Compose den verwaisten Container `emprise-storage-1`: mit `--remove-orphans` entfernen.
 - Parallele Sessions im selben Ordner: Abstimmung per `ListAgents`/`SendMessage`, Dateien vor jeder Änderung neu einlesen. `docker compose up --build` baut den Arbeitsstand samt fremder halbfertiger Dateien; für isolierte Tests ein eigenes Compose-Projekt (`-p <name>` mit Override `ports: !reset []`) oder `git worktree`.
 - CI: Der Security-Job baut Caddy mit `xcaddy`; Netzfehler zu `sum.golang.org` sind kein Codefehler, wiederholen mit `gh run rerun <id> --failed`.
 

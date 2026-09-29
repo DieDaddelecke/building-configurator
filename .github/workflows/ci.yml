@@ -30,20 +30,8 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       TEST_ADMIN_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
-      TEST_S3: "1"
-      EMPRISE_S3_ENDPOINT_URL: http://localhost:9000
-      EMPRISE_S3_ACCESS_KEY: emprise
-      EMPRISE_S3_SECRET_KEY: emprise-ci-secret
-      EMPRISE_S3_BUCKET: emprise-ci
     steps:
       - uses: actions/checkout@v4
-      - name: Objektspeicher starten (SeaweedFS, S3 auf Port 9000)
-        run: |
-          docker run -d --name storage -p 9000:8333 -e S3_CONFIG --entrypoint sh \
-            chrislusf/seaweedfs:3.97 -c \
-            'printf "%s" "$S3_CONFIG" > /tmp/s3.json && exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json'
-        env:
-          S3_CONFIG: '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise","secretKey":"emprise-ci-secret"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
       - name: Texterkennung für gescannte PDFs (AN7)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends tesseract-ocr tesseract-ocr-fra
       - uses: astral-sh/setup-uv@v6
@@ -53,10 +41,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy app
-      - name: Bucket anlegen
-        run: |
-          for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:9000 && break; sleep 1; done
-          EMPRISE_ENV=test uv run python -m app.cli storage-init
+      - name: Dateiverzeichnis anlegen (die Tests nutzen ein eigenes, conftest.py)
+        run: EMPRISE_ENV=test EMPRISE_FILES_DIR=/tmp/emprise-files uv run python -m app.cli storage-init
       - run: uv run pytest
 
   frontend:
