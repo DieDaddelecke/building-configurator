@@ -36,9 +36,9 @@ x-backend: &backend
     EMPRISE_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     EMPRISE_RULES_BUDGET_MONTH_USD: ${RULES_BUDGET_MONTH_USD:-150}
     # Modell (Name wie auf openrouter.ai/models) und seine Preise je Million Token für Kostenzählung und Budget
-    EMPRISE_RULES_MODEL: ${RULES_MODEL:-anthropic/claude-opus-5}
-    EMPRISE_RULES_PRICE_INPUT_PER_MTOK: ${RULES_PRICE_INPUT_PER_MTOK:-5}
-    EMPRISE_RULES_PRICE_OUTPUT_PER_MTOK: ${RULES_PRICE_OUTPUT_PER_MTOK:-25}
+    EMPRISE_RULES_MODEL: ${RULES_MODEL:-anthropic/claude-opus-5.5}
+    EMPRISE_RULES_PRICE_INPUT_PER_MTOK: ${RULES_PRICE_INPUT_PER_MTOK:-4}
+    EMPRISE_RULES_PRICE_OUTPUT_PER_MTOK: ${RULES_PRICE_OUTPUT_PER_MTOK:-20}
     # pdf: Seitenauszüge als PDF; text: ihre Textschicht (für Modelle ohne PDF-Eingabe, PU12)
     EMPRISE_RULES_INPUT: ${RULES_INPUT:-pdf}
     # Client-IP nur aus privaten Netzen übernehmen (Web-Container, Reverse Proxy)

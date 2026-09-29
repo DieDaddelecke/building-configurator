@@ -133,7 +133,7 @@ def test_openrouter_request_shape_and_response() -> None:
 
     response = _extractor(handler).extract(REQUEST)
     body = seen["body"]
-    assert body["model"] == "anthropic/claude-opus-5"
+    assert body["model"] == "anthropic/claude-opus-5.5"
     assert body["tool_choice"] == {"type": "function", "function": {"name": EXTRACTION_TOOL}}
     assert body["tools"][0]["function"]["name"] == EXTRACTION_TOOL
     assert body["reasoning"] == {"effort": "high"}
@@ -144,8 +144,8 @@ def test_openrouter_request_shape_and_response() -> None:
     assert response.output["rules"][0]["kind"] == "setback_street"
     assert response.usage["cache_read_input_tokens"] == 90000 and response.usage["output_tokens"] == 4000
     assert response.usage["input_tokens"] == 1200
-    # 1.200 × 5 $ + 4.000 × 25 $ + 90.000 × 0,5 $ (Zwischenspeicher, gemeldet über OpenRouter) je Million
-    assert response.cost_usd == pytest.approx(0.151, abs=0.001)
+    # 1.200 × 4 $ + 4.000 × 20 $ + 90.000 × 0,4 $ (Zwischenspeicher, gemeldet über OpenRouter) je Million
+    assert response.cost_usd == pytest.approx(0.1208, abs=0.001)
 
 
 def test_text_input_replaces_the_pdfs_and_explains_the_page_marks() -> None:

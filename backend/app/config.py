@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     gpu_files_base_url: str = "https://data.geopf.fr/annexes/gpu/documents"
     openrouter_api_key: SecretStr | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    rules_model: str = "anthropic/claude-opus-5"
+    rules_model: str = "anthropic/claude-opus-5.5"
     rules_effort: Literal["low", "medium", "high", "xhigh", "max"] = "high"
     rules_input: Literal["pdf", "text"] = "pdf"
     """`pdf`: Seitenauszüge als PDF (Spez. 5.2.3); `text`: ihre Textschicht mit Seitenmarken, für Modelle ohne
@@ -104,8 +104,8 @@ class Settings(BaseSettings):
     rules_request_timeout_seconds: float = 900.0
     rules_budget_month_usd: float = 150.0
     """Obergrenze der Auswertungskosten je Kalendermonat; darüber startet keine neue Auswertung (Alarm)."""
-    rules_price_input_per_mtok: float = 5.0
-    rules_price_output_per_mtok: float = 25.0
+    rules_price_input_per_mtok: float = 4.0
+    rules_price_output_per_mtok: float = 20.0
     rules_price_cache_read_per_mtok: float | None = None
     """Ohne Angabe 10 % des Eingabepreises; gesetzt, wenn das Modell im Büro gewählt wurde (PU11)."""
     rules_price_cache_write_per_mtok: float | None = None

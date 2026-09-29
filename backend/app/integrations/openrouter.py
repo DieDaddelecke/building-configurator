@@ -1,7 +1,7 @@
 """OpenRouter: Regeln aus Seitenauszügen des règlement écrit (Spez. 5.2.3 Schritt 3, 9; Plan 3.4).
 
 Anbindung über die OpenAI-kompatible Chat-Completions-API von OpenRouter (`openai`-SDK mit eigener
-`base_url`). Modell frei wählbar über die Konfiguration (Standard `anthropic/claude-opus-5`), strukturierte
+`base_url`). Modell frei wählbar über die Konfiguration (Standard `anthropic/claude-opus-5.5`), strukturierte
 Ausgabe über einen erzwungenen Funktionsaufruf (breiter unterstützt als natives `response_format` über
 verschiedene Anbieter hinweg), Denkaufwand über den herstellerübergreifenden `reasoning`-Parameter.
 Gesendet werden nur öffentliche Planunterlagen, keine Kundendaten (L8).

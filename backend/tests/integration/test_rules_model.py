@@ -56,22 +56,24 @@ def test_operator_chooses_a_model_for_all_future_evaluations(
     assert [m["id"] for m in listed] == ids
     assert [m["reads_pdf"] for m in listed] == [True, True, False]
 
-    chosen = client.put("/api/v1/admin/rules/model", json={"model": "anthropic/claude-opus-5.5"})
+    # Ein anderes Modell als die Vorgabe (Opus 5.5, RW28); die Vorgabe selbst zu wählen hebt die Wahl auf
+    chosen = client.put("/api/v1/admin/rules/model", json={"model": "anthropic/claude-sonnet-5"})
     assert chosen.status_code == 200, chosen.json()
     body = chosen.json()
-    assert (body["model"], body["source"]) == ("anthropic/claude-opus-5.5", "setting")
-    assert (body["price_input_per_mtok"], body["price_output_per_mtok"]) == (4.0, 20.0)
+    assert (body["model"], body["source"]) == ("anthropic/claude-sonnet-5", "setting")
+    assert (body["price_input_per_mtok"], body["price_output_per_mtok"]) == (2.0, 10.0)
     assert body["updated_at"] is not None and body["input"] == "pdf"
     # Die Abdeckung (Seite „Regelwerke“) nennt ebenfalls das gewählte Modell
-    assert client.get("/api/v1/admin/rules/coverage").json()["model"] == "anthropic/claude-opus-5.5"
+    assert client.get("/api/v1/admin/rules/coverage").json()["model"] == "anthropic/claude-sonnet-5"
 
     effective = model_choice.effective_settings(db_session, get_settings())
-    assert effective.rules_model == "anthropic/claude-opus-5.5"
-    assert effective.rules_price_cache_read_per_mtok == 0.4
+    assert effective.rules_model == "anthropic/claude-sonnet-5"
+    # Ohne Cache-Preis in der Liste leitet die Kostenrechnung ihn ab (test_rules_model_choice)
+    assert effective.rules_price_cache_read_per_mtok is None
     audit = db_session.execute(
         select(SharedAudit).where(SharedAudit.action == "rules_model_changed")
     ).scalar_one()
-    assert (audit.before, audit.after) == ({"model": DEFAULT}, {"model": "anthropic/claude-opus-5.5"})
+    assert (audit.before, audit.after) == ({"model": DEFAULT}, {"model": "anthropic/claude-sonnet-5"})
     assert audit.product == "configurator" and audit.actor_id.startswith("configurator:")
     setting = db_session.get(SharedSetting, model_choice.SETTING_KEY)
     assert setting.updated_by_name and body["updated_by_name"] == setting.updated_by_name

@@ -174,7 +174,7 @@ Ein PLU je Projekt, eine Zone je Grundstück. Stehen die allgemeinen Bestimmunge
 
 ### 8.1 Befund
 
-- Modell und Preise kommen bisher nur aus der Umgebung (`EMPRISE_RULES_MODEL`, `EMPRISE_RULES_PRICE_*`, seit 28.09.2026 über die `.env` einstellbar); eine Änderung wirkt erst nach dem Neuerstellen der Container. Vorgabe `anthropic/claude-opus-5`.
+- Modell und Preise kommen bisher nur aus der Umgebung (`EMPRISE_RULES_MODEL`, `EMPRISE_RULES_PRICE_*`, seit 28.09.2026 über die `.env` einstellbar); eine Änderung wirkt erst nach dem Neuerstellen der Container. Vorgabe `anthropic/claude-opus-5` (seit 28.09.2026 abends `anthropic/claude-opus-5.5`, RW28).
 - Das Modell steckt in jedem Aufruf, im Eingabe-Hash (Wiederverwendung gespeicherter Teilantworten), in der Kostenrechnung (Monatsbudget) und in jedem Lauf (`rule_extraction_run.model`). Die Preise müssen zum Modell passen, sonst stimmt das Budget nicht.
 - OpenRouter veröffentlicht die Modellliste ohne Schlüssel (`GET /api/v1/models`): Kennung, Name, Preise je Token (Eingabe, Ausgabe, Cache), Eingabearten, unterstützte Parameter. Am 28.09.2026 unter anderem `anthropic/claude-opus-5` (5 $/25 $ je Mio. Token), `anthropic/claude-opus-5.5` (4 $/20 $), `anthropic/claude-sonnet-5` (2 $/10 $), dazu Varianten `:batch` und gleitende Namen wie `~anthropic/claude-opus-latest`.
 
