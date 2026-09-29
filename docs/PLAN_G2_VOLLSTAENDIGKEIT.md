@@ -127,6 +127,7 @@ Nach jedem Schritt: Prüfbefehle aus dem README, Dokumente (ANNAHMEN `VA`, BETRI
 | E-VA-2 | Alternativbezeichnungen in der Verwaltung pflegen? | Später: zunächst im Code, versioniert über die Prüfsumme; Pflege in der Verwaltung, wenn Referenzlisten Lücken durch unbekannte Begriffe zeigen |
 | E-VA-3 | Zweite Nachsuche, wenn die erste neue Lücken erzeugt? | Nein: höchstens eine je Auswertung (Kosten, Dauer); verbleibende Lücken sind benannt |
 | E-VA-4 | Staffel der Grundflächenzahl | eigener Plan (Schema und Berechnung); bis dahin Hinweis und `not_expressible` |
+| E-VA-5 | Auslegung mehrdeutiger und bedingter Vorschriften (Nutzer 29.09.2026: „an der Interpretierbarkeit von Regeln arbeiten“) | Später, gemeinsam mit dem Nutzer: offene Punkte aus Probeläufen und Referenzlisten durchgehen, der Nutzer legt die Auslegung fest. Ergebnis je Punkt als Festlegung in ANNAHMEN (RW) und, je nach Fall, in Anweisung, Schema, Gegenprüfung und Referenzliste. Bis dahin keine eigene Auslegung: Mehrdeutiges bleibt sichtbar offen. Erste Punkte aus 7.7 (Beyenes UC): Abstände kleiner Nebengebäude unter einer Größenbedingung und „limite séparative“ seitlich wie hinten (S. 13, Art. UC 7 und 8); Fassadenfarben mit Ocker-Tönen und „Weiß verboten“ (S. 16); Stellplätze mit Obergrenze je Wohnung und Ausnahme für Sozialwohnungen (S. 19); ob begrünte Dächer zur unversiegelten Fläche zählen (S. 20); Ausnahme für zeitgenössische Architektur von Dach- und Fassadenregeln (S. 15, Art. UC 11.1) |
 
 ## 7. Prüfprotokoll
 

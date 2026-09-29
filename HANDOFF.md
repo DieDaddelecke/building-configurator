@@ -64,6 +64,7 @@
 3. **Sperre oder Bestätigung** vor bezahlten Neuauswertungen durch `rules_housekeeping` bei neuer `ENGINE_VERSION` (BETRIEB 15, „Neu auswerten kostet“).
 4. Denkaufwand `xhigh`/`max` an OpenRouter durchreichen. Später E-VA-1 (Nachsuche für Zusatzdokumente) und E-VA-2 (Begriffe in der Verwaltung pflegen).
 5. `emprise_probe` löschen, wenn keine Modelltests mehr anstehen (`DROP DATABASE emprise_probe`).
+6. Später, gemeinsam mit dem Nutzer: **Auslegung von Regeln** – offene Punkte besprechen, der Nutzer erklärt die Auslegung (E-VA-5, erste Punkte dort).
 
 ### 4.3 G2 und G3 mit Schlüssel
 
