@@ -4,6 +4,77 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 29.09.2026 – Emprise Analyse: AN5, AN7, AN6; Opus 5.5 als Vorgabe; Modellvergleich G2
+
+**Auftrag:** Startprompt des Hand-offs vom 28.09. Die Antworten des Nutzers:
+- Referenzliste Beyenes UC „noch nicht geprüft“, also keine Neuauswertung.
+- Opus 5.5 wird Vorgabe.
+- AN5 kommt als Nächstes.
+
+Danach „weiter mit AN6 und AN7“, dann „comitte und pushe alle änderungen“. Es folgten Probeläufe G2 mit Kimi K3 („mit zweitem durchlauf“), GPT-6 Sol im Tarif Flex, GLM-5.3 Flash und GLM-5.3. Dazu Fragen, was „offen“ bedeutet, welche Punkte je Modell offen sind und welche Stellen im PLU dazugehören. Die Auslegung von Regeln soll festgehalten werden. Am Ende „comitte und pushe alle änderungen, dann /handoff“.
+
+**Commits** (gepusht auf `main`):
+
+| Commit | Inhalt |
+|---|---|
+| `789743a` | Hand-off vom 28.09. |
+| `c74f1dc` | Opus 5.5 als Vorgabemodell, 4 $/20 $ je Million Token (RW28) |
+| `24d3627` | AN5, AN7 und AN6 in einem Commit (Abschnitte derselben Dateien, nicht sauber trennbar). **CI rot:** ruff S608 in Migration 0020, gitleaks meldet einen Testwert in `organisation.test.tsx` |
+| `28f9c7c` | Probelauf Kimi K3, GPT-6 Sol und GLM-5.3 (PLAN_G2 7.7) |
+| `6eb1cd2` | Auslegung von Regeln als offene Festlegung (E-VA-5) |
+
+Nicht committet: Behebung der beiden CI-Fehler (`# noqa: S608` in 0020, Testwert `emp_beispiel`, `.gitleaksignore` mit dem Fund aus `24d3627`), eine README-Stolperstelle, die Hand-off-Dokumente.
+
+**Neu**
+- Pläne mit Selbstprüfung: [PLAN_AN5_AUSGABE](docs/PLAN_AN5_AUSGABE.md), [PLAN_AN7_SCAN](docs/PLAN_AN7_SCAN.md), [PLAN_AN6_MANDANTEN](docs/PLAN_AN6_MANDANTEN.md). Dazu die API-Anleitung [docs/API_ANALYSE.md](docs/API_ANALYSE.md).
+- **AN5** (Migration 0018, AU01–AU12):
+  - Projekte mit Name, Notiz und Archiv.
+  - Lage auf der Katasterebene einpassen: starr in Lambert-93, mit Gitterkonvergenz.
+  - Gelände als Raster mit Profil.
+  - Bericht-PDF als Job `analysis_report`.
+  - DXF lokal und in Lambert-93 mit 3D-Gabarit, dazu GeoJSON.
+- **AN7** (Migration 0019, SC01–SC10):
+  - Texterkennung gescannter PDFs lokal mit Tesseract, als Job `rules_document_ocr`; der Hinweis nennt die Dauer.
+  - Zitatprüfung auf Scan-Seiten.
+  - Parzelle als Vorlage nachzeichnen, mit Maßstab aus dem Plan.
+- **AN6** (Migration 0020, MA01–MA09):
+  - Organisationen mit Mitgliedern und Rollen, Trennung der Projekte und Dokumente.
+  - Budget und Scan-Kontingent je Organisation.
+  - Erscheinungsbild in Bericht und DXF.
+  - API-Schlüssel mit Rate-Limit.
+  - Fremde Büros gesperrt (`EMPRISE_EXTERNAL_ORGANISATIONS`).
+  - Der Bestand geht an „Eigenes Büro“, samt aller früheren Läufe.
+- PLAN_G2_VOLLSTAENDIGKEIT 7.7 (Modellvergleich) und E-VA-5 in 6.
+
+**Geändert**
+- BETRIEB: Migrationen 0018–0020, Jobs, Flags, Rückrollen.
+- README: Stolperstellen zu PDFs ansehen, Tesseract, `run_one` mit PLU, Prüfsumme des Berichts, `/admin`-Routen mit Organisation, `EmailStr`, verborgener Tab; neu gitleaks und ruff vor dem Commit.
+- PLAN_ANALYSE: AN5–AN7 umgesetzt, E-A7 angepasst (Dauer statt Kosten).
+- AGENTS: Stand und Tabelle.
+- Unraid: `compose.yaml` und `.env.analyse.example` mit den Variablen für Organisationen.
+- Dockerfile und CI mit Tesseract; `pyproject` mit `pypdfium2` und `pillow`.
+
+**Entschieden**
+- Opus 5.5 als Vorgabe der Umgebung (RW28).
+- E-AN5-1 bis E-AN5-10 nach Empfehlung, mit dem Auftrag AN5.
+- E-AN7-1 lokale Texterkennung und E-AN7-2 Parzelle nachzeichnen (Nutzer); die übrigen E-AN7 nach Empfehlung.
+- AN6 als Plan und technische Basis (Nutzer); E-AN6-1 bis E-AN6-10 nach Empfehlung.
+- **E-VA-5 (Nutzer):** Die Auslegung mehrdeutiger und bedingter Vorschriften wird später gemeinsam festgelegt, der Nutzer erklärt sie; bis dahin bleiben solche Vorschriften sichtbar offen.
+
+**Ohne Dateiänderung**
+- **Modellvergleich** in `emprise_probe` (Versionen 9–16): Ergebnis in PLAN_G2 7.7. Kein Modell erreicht Opus 5.5 (21 richtig, 0 falsch). Am nächsten kommt GPT-6 Sol mit Flex (19 richtig, 0 falsch, 0,22 $ statt 1,46 $).
+- **„Offen“ erklärt** (Ergebnis `named_gap` in `rules/domain/reference.py`), dazu die offenen Punkte von Opus, Kimi und GPT mit den Stellen im PLU. Das ist die Grundlage der ersten Punkte in E-VA-5.
+- **OpenRouter:** Die Anzeige stand zuletzt bei 4,38 $ von 10 $ und hinkt nach. Nach eigener Rechnung kosteten die Vergleiche des Tages 1,71 $. Die Kopie `emprise_probe` hat im September 6,20 $ verbraucht.
+- **Lokale Abnahme** von AN5, AN7 und AN6: in den Plänen, jeweils Abschnitt Abnahme. Offen bleibt AN7 Nr. 4, eine bezahlte Auswertung des Scan-Kapitels.
+- **Lokale Testdaten der Analyse:**
+  - Organisation „Atelier Sud“ mit zwei Mitgliedern, einem Projekt aus der API und zwei API-Schlüsseln, einer davon widerrufen.
+  - Die Sperre für fremde Büros war nur für die Abnahme aufgehoben und ist wieder aktiv.
+
+**Memory**
+- geändert: `project-vollstaendige-regelauswertung` (Auslegung legt der Nutzer fest, E-VA-5), `feedback-kosten-und-abgelehnte-aufrufe` (Go bei Modellvergleichen, gescheiterter Lauf)
+
+---
+
 ## 28.09.2026 – AN4, Parzellen-Upload (UP17–UP19), KI-Modell (PU11, PU12) und vollständige Regelauswertung
 
 **Auftrag:** „Stelle AN4 fertig“; danach Zurufe aus der Praxis:
