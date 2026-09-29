@@ -1,6 +1,6 @@
 # Emprise Analyse – eigenständige Web-App aus G1–G3
 
-> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026, AN2 am 25.09.2026, AN3 (RA1-Teil und Zusatzdokumente) am 26.09.2026, AN3 vollständig (Gabarit und Schnitt) und AN4 am 28.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09, UP01–UP19, PU01–PU12, EA01–EA17 und KR01–KR09, Pläne [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md), [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md), [PLAN_AN3_ANALYSE.md](PLAN_AN3_ANALYSE.md), [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md) und [PLAN_AN4_KORREKTUR.md](PLAN_AN4_KORREKTUR.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); AN5, AN6 und AN7 (gescannte PDFs, entschieden am 28.09.2026) offen · **Arbeitstitel:** „Emprise Analyse“
+> **Status:** geplant am 20.09.2026 · **AN0 und AN1 umgesetzt am 20./21.09.2026, AN2 am 25.09.2026, AN3 (RA1-Teil und Zusatzdokumente) am 26.09.2026, AN3 vollständig (Gabarit und Schnitt) und AN4 am 28.09.2026, AN5, AN7 und AN6 (technische Basis) am 29.09.2026** (Festlegungen `docs/ANNAHMEN.md` PS01–PS09, UP01–UP19, PU01–PU12, EA01–EA17, KR01–KR09, AU01–AU12, SC01–SC10 und MA01–MA09, Pläne [PLAN_AN1_PARZELLE.md](PLAN_AN1_PARZELLE.md), [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md), [PLAN_AN3_ANALYSE.md](PLAN_AN3_ANALYSE.md), [PLAN_AN3_GABARIT.md](PLAN_AN3_GABARIT.md), [PLAN_AN4_KORREKTUR.md](PLAN_AN4_KORREKTUR.md), [PLAN_AN5_AUSGABE.md](PLAN_AN5_AUSGABE.md), [PLAN_AN7_SCAN.md](PLAN_AN7_SCAN.md) und [PLAN_AN6_MANDANTEN.md](PLAN_AN6_MANDANTEN.md), Betrieb [BETRIEB.md](BETRIEB.md) 15); offen aus AN6: Freigabe für fremde Büros (E-A5), Bezahlung, Rechtstexte · **Arbeitstitel:** „Emprise Analyse“
 > **Bezug:** `UMSETZUNGSPLAN.md` 2.1, 3.2–3.5 (Zuschnitt von P, G1, G2, G3), `docs/PLAN_G3_BAURAHMEN.md` (Ableitung), `docs/ANNAHMEN.md` G01–G30, RW01–RW27, BR01–BR15 (Stand von G1–G3), `BACKEND_SPEZIFIKATION.md` 5.1–5.3, 5.9 (Fachregeln)
 > **Verhältnis zum Umsetzungsplan:** Dieses Dokument beschreibt ein **zweites Produkt** neben dem Hauskonfigurator, nicht ein weiteres Modul von R1/R2. Es ändert nichts an G1–G3, A, H1–H3 oder V; wo es den Kern berührt, steht das in Kapitel 4 (AN0, AN1, AN2).
 
@@ -93,7 +93,7 @@ Jedes Modul ist ein senkrechter Schnitt (Tabellen, Fachlogik, API, Oberfläche, 
 - **Eingriff in `rules/service.py`:** `resolve_rules` startet heute zwingend bei Gemeinde-INSEE → `rules_commune` → `land_use_plan` → Zonen per `ST_Intersection`. Für hochgeladene Dokumente braucht es einen zweiten Einstieg: Projekt → gewähltes Dokument und Kapitel → Regeln, Teilfläche = ganzes Grundstück. Die gemeinsame Ausgabe (`RulesResult`) bleibt gleich, damit `envelope_rules` und alle Anzeigen unverändert funktionieren (BR15). **Das ist der größte verdeckte Aufwand des Vorhabens.**
 - Auswertung über den vorhandenen Job `rules_extract` – unverändert inklusive Schranken, Zitatprüfung, zweitem Lauf und Kostenzählung. Ausgewertet wird nur das gewählte Zonenkapitel und die allgemeinen Bestimmungen, nicht das ganze Dokument.
 - **Zusatzdokumente:** règlement de lotissement und cahier des charges als zweites Dokument derselben Art, dessen Regeln die PLU-Regeln überlagern. Heute nur ein Hinweistext, für Architekten aber ein echter Bedarf.
-- Kein extrahierbarer Text (Scan) → klare Meldung; OCR bleibt Ausbaustufe (RW03; seit 28.09.2026 Modul AN7).
+- Kein extrahierbarer Text (Scan) → Hinweis und Texterkennung nach Bestätigung (AN7, SC01–SC03).
 
 *Ergebnis:* umgesetzt wie beschrieben, Einzelheiten in [PLAN_AN2_PLU.md](PLAN_AN2_PLU.md) und ANNAHMEN PU01–PU10; seit 28.09.2026 wählt der Betrieb das KI-Modell der Auswertung auf der Startseite (PLAN_AN2_PLU 8, PU11). Abweichungen: Das hochgeladene Reglement ist ein `land_use_plan` mit `origin = 'upload'` statt einer `source_file` mit Herkunft (die Kette Kapitel → Lauf → Regelwerk hängt am Planstand); dasselbe PDF ist dasselbe Dokument für alle Projekte des Büros (PU01); gelesen wird im Job `rules_document_read`, nicht im Request (PU03). **Die Zusatzdokumente waren nach AN4 verschoben** (PU09; am 25.09.2026 in AN3 vorgezogen): Sie gelten neben dem PLU, das Strengere bindet – das gehört zum Regelformular, mit dem der Architekt Werte mit Zitat übernimmt. Die Gegenprobe aus Kapitel 7 Punkt 5 ist als Test umgesetzt: AD 65 über GPU und über Upload ergibt dieselben Regeln und Konturflächen.
 
@@ -132,17 +132,22 @@ Die Ableitung bleibt in `envelope/domain` rein und deterministisch; das Neue kom
 - **Projektliste** mit Benennung, Notiz und Archiv am Architektenkonto.
 - **Georeferenzierung** eines gezeichneten oder hochgeladenen Grundstücks (Punkt aus der Adresssuche und Drehwinkel). Erst damit sind Gelände, Risiken und die Lambert-93-DXF möglich.
 
-### AN6 – Abo, Mandanten, Branding, API (später, eigener Auslöser)
+*Ergebnis (29.09.2026):* umgesetzt nach [PLAN_AN5_AUSGABE.md](PLAN_AN5_AUSGABE.md) (ANNAHMEN AU01–AU12): Projekte mit Name, Notiz und Archiv (Migration 0018); Lage durch Verschieben und Drehen auf der Katasterebene, starr in Lambert-93 mit Gitterkonvergenz, danach Gelände (Raster bis 200 Punkte) und Risiken – auch für Uploads mit Koordinaten; Geländeprofil in beiden Schnitten; DXF mit Konturen, Bauband, Vorgaben, Schnittlinien und Gabarit als Höhenlinien und geschlossene Körper, lokal und in Lambert-93 (Z in m NGF); GeoJSON; Bericht-PDF de/fr als Job mit Ablage je Stand. Abweichungen: Lage per Katasterebene statt „Adresspunkt und Drehwinkel“ (E-AN5-1, der Adresspunkt liegt oft 5–20 m daneben); der Bericht ist ein eigener Renderer (`analysis/report.py`) und nutzt vom Steckbrief nur Farben und die Regelwerte (`app/rules/format.py`); der Steckbrief verschwindet aus der Analyse (E-AN5-9); die Zonengrenze einzeichnen (E-A3) ist nicht Teil von AN5 (E-AN5-8).
 
+### AN6 – Abo, Mandanten, Branding, API · **technische Basis umgesetzt am 29.09.2026** nach [PLAN_AN6_MANDANTEN.md](PLAN_AN6_MANDANTEN.md) (ANNAHMEN MA01–MA09)
+
+Umgesetzt: Organisationen mit Mitgliedern und Rollen, Trennung der Projekte und Dokumente je Organisation, Monatsbudget der Auswertung und Scan-Kontingent je Organisation, Erscheinungsbild in Bericht und DXF, API-Schlüssel ([API_ANALYSE.md](API_ANALYSE.md)). Offen: Bezahlung, AGB und Auftragsverarbeitung, Selbstregistrierung, Datenauskunft und Löschen einer Organisation; fremde Büros bleiben gesperrt (`EMPRISE_EXTERNAL_ORGANISATIONS`), bis E-A5 geklärt ist.
+
+Ursprünglicher Umfang: 
 Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding (Logo, Farben, Schriftfeld in PDF und DXF); API mit Token je Organisation; Kontingente und Weiterberechnung der Claude-Kosten (Zählung je Lauf existiert); AGB, Haftungsausschluss, Auftragsverarbeitung; gescannte PDFs mit eigenem Kontingent (E-A7). **Jetzt schon offengehalten, ohne Mehrkosten:** die nullable Spalte `organisation_id` aus AN1, Ausgaben ausschließlich über `app/plan/` und die API, Farben nur als Tokens.
 
-### AN7 – Gescannte PDFs (6–8 T, braucht den Schlüssel) · **entschieden am 28.09.2026 (Nutzer)**, noch ohne Modulplan
+### AN7 – Gescannte PDFs · **entschieden am 28.09.2026 (Nutzer), umgesetzt am 29.09.2026** nach [PLAN_AN7_SCAN.md](PLAN_AN7_SCAN.md) (ANNAHMEN SC01–SC10)
 
-- Scans werden gelesen statt abgelehnt: die Parzelle (heute `422 upload_pdf_no_vector`, UP16), das règlement und die Zusatzdokumente (heute zählen Seiten ohne Textschicht als leer, `document_no_text`; RW03, PU03).
-- Gelesen wird mit Bilderkennung über die Schnittstelle (OpenRouter); eine lokale OCR-Bibliothek prüft der Modulplan als Alternative.
-- **Hinweis vor der Verarbeitung:** Die Oberfläche sagt, dass ein Scan mehr kostet als ein PDF mit Textschicht, und verarbeitet erst nach Bestätigung.
-- Die Kosten zählen wie jeder Lauf ins Monatsbudget; **im Abo (AN6) ein eigenes Limit für Scans**.
-- Für den Modulplan offen: Zitatprüfung (L3) gegen den erkannten Text statt gegen die Textschicht und Kennzeichnung erkannter Werte; bei der Parzelle Maßstab und Verzerrung des Scans (eher die Maße lesen und als Zeichnung vorschlagen als den Umriss aus dem Bild übernehmen).
+- Reglement und Zusatzdokumente als Scan: Hinweis mit Seitenzahl, Dauer und Grenzen, nach Bestätigung **lokale Texterkennung** (Tesseract im Worker, Entscheidung des Nutzers 29.09.2026) in Teilen zu 20 Seiten; danach Kapitel, Zonenwahl und Auswertung wie mit Textschicht. Einzelne leere Seiten lassen sich nachträglich erkennen.
+- Die Erkennung kostet kein Geld, sondern Rechenzeit (3,0 s je Seite); der Hinweis nennt deshalb Dauer statt Mehrkosten (E-A7 angepasst). Das Scan-Limit im Abo wird zur Grenze erkannter Seiten je Organisation und Monat (E-AN7-7, AN6).
+- Zitatprüfung gegen den erkannten Text mit der vorhandenen Zahlenprüfung; Werte aus erkannten Seiten tragen „aus Scan“, nicht bestätigte den Grund „im Scan nicht sicher lesbar“.
+- Parzelle als Scan oder Bild: **als Vorlage nachzeichnen** (Maßstab aus dem Plan oder über zwei Punkte, Ecken klicken, Maße korrigieren); der Scan wird nicht gespeichert.
+- Beim Bau gefunden und für alle Dokumente behoben: Das Inhaltsverzeichnis von Beyenes lässt Zone UE aus; die Kapitelsuche nimmt jetzt die Seitenüberschriften, wenn sie mehr Kapitel finden (SC07).
 
 ---
 
@@ -151,8 +156,8 @@ Tabelle `organisation`; Projekte, Dokumente und Rechte je Organisation; Branding
 | Release | Module | Nutzen | Größe |
 |---|---|---|---|
 | **RA1** | AN0, AN1, AN2, AN3 (bindende Grundfläche, Geschosse, Nutzfläche; Zusatzdokumente im Vergleich) | Grundstück zeichnen oder hochladen, PLU hochladen, Baurahmen mit Höhen, Abständen, Flächen und Nutzfläche – im eigenen Büro produktiv nutzbar | 28–36 T (6–7 PW) |
-| **RA2** | AN3 vollständig (Gabarit, Schnitt – umgesetzt 28.09.2026), AN4 (umgesetzt 28.09.2026), AN5, AN7 (sobald der Schlüssel da ist) | Entwurfsbegleitung: Hüllkörper, Schnitt, eigene Korrekturen, Bericht und CAD-Ausgabe; gescannte Unterlagen | 30–38 T (6–8 PW) |
-| **RA3** | AN6 | Abo für fremde Büros | nach Auslöser |
+| **RA2** | AN3 vollständig (Gabarit, Schnitt – umgesetzt 28.09.2026), AN4 (umgesetzt 28.09.2026), AN5 (umgesetzt 29.09.2026), AN7 (umgesetzt 29.09.2026) | Entwurfsbegleitung: Hüllkörper, Schnitt, eigene Korrekturen, Bericht und CAD-Ausgabe; gescannte Unterlagen | 30–38 T (6–8 PW) |
+| **RA3** | AN6 (technische Basis umgesetzt 29.09.2026) | Abo für fremde Büros | Freigabe nach E-A5, Bezahlung und Rechtstexte offen |
 
 Größen in Personentagen für eine Person mit Claude Code, ohne Inhaltsarbeit, Rechtstexte und Gestaltung.
 
@@ -164,11 +169,11 @@ Größen in Personentagen für eine Person mit Claude Code, ohne Inhaltsarbeit, 
 |---|---|---|
 | E-A1 | Produktname und Marke | Arbeitstitel „Emprise Analyse“ verwenden, endgültigen Namen vor der ersten Nutzung außerhalb des Büros festlegen |
 | E-A2 | Dateiformate der Parzelle in RA1 | DXF, GeoJSON und freies Zeichnen. **Kein DWG** (proprietär, bräuchte einen zusätzlichen Konverter). **Entschieden 21.09.2026 (Nutzer): auch PDF** – vektorielle Pläne mit Maßstab aus dem Text oder von Hand, umgesetzt in AN1 (PLAN_AN1 8, UP13–UP16); Scans bleiben offen |
-| E-A3 | Mehrzonen-Grundstück beim Upload | In RA1 eine Zone je Grundstück. Zonengrenze einzeichnen erst in AN5 – ohne GPU-Geometrie gibt es keine automatische Verschneidung |
+| E-A3 | Mehrzonen-Grundstück beim Upload | In RA1 eine Zone je Grundstück. Zonengrenze einzeichnen – ohne GPU-Geometrie gibt es keine automatische Verschneidung. **Nicht in AN5** (PLAN_AN5_AUSGABE E-AN5-8, 29.09.2026): Es braucht Teilflächen je Zone im zweiten Einstieg von `resolve_rules` und eine Zonenwahl je Teilfläche – ein eigenes Modul nach Auslöser |
 | E-A4 | Datenhaltung | Eigene Datenbank je Produkt. Ausgewertete Regelwerke erst dann teilen, wenn die Auswertungskosten es rechtfertigen |
 | E-A5 | Rechtlicher Rahmen | Solange nur das eigene Büro nutzt, genügt ein Hinweis „Analyse auf Grundlage der eingereichten Unterlagen, keine Rechtsauskunft; maßgeblich ist das Certificat d'urbanisme“. **Vor AN6 juristische Prüfung** (Haftung gegenüber fremden Büros, AGB, Auftragsverarbeitung, Urheberrecht an hochgeladenen Plänen) |
 | E-A6 | Claude-Budget | Deckel je Organisation und Monat, bevor Dritte hochladen dürfen; die Mechanik (Kostenzählung je Lauf, Monatsbudget) ist vorhanden. Scans mit eigenem Limit (E-A7) |
-| E-A7 | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? | **Entschieden am 28.09.2026 (Nutzer): ja**, mit einem Hinweis vor der Verarbeitung, dass sie mehr kostet; im Abomodell ein eigenes Limit. Umsetzung als AN7, nach dem Schlüssel |
+| E-A7 | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? | **Entschieden am 28.09.2026 (Nutzer): ja**, mit einem Hinweis vor der Verarbeitung, dass sie mehr kostet; im Abomodell ein eigenes Limit. **Umgesetzt als AN7 (29.09.2026)** mit lokaler Texterkennung: Der Hinweis nennt Dauer und Grenzen statt Kosten, das Limit zählt erkannte Seiten (E-AN7-7) |
 
 ---
 

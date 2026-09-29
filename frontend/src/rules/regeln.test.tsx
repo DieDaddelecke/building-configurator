@@ -34,6 +34,7 @@ function rule(partial: Partial<RuleOut>): RuleOut {
     confidence: 1,
     notes: null,
     origin: "extraction",
+    from_scan: false,
     ...partial,
   };
 }
@@ -110,5 +111,25 @@ describe("Regeln als Simulation", () => {
     expect(screen.getByText("veraltet (voriger Planstand)")).toBeInTheDocument();
     expect(screen.getByText(/Regeln des vorigen Planstands/)).toBeInTheDocument();
     expect(screen.getByText(/Ein Teil des Grundstücks \(30 %\)/)).toBeInTheDocument();
+  });
+
+  it("kennzeichnet Zitate aus der Texterkennung (AN7)", () => {
+    const [first] = rules.zones;
+    if (!first) throw new Error("Fixture ohne Zone");
+    const scanned = rule({
+      kind: "max_height",
+      params: { ridge_m: 9 },
+      page: 12,
+      quote: "9 mètres au faîtage",
+      quote_verified: true,
+      source_url: "/api/v1/regulation-files/f1#page=12",
+      from_scan: true,
+    });
+    const unconfirmed = rule({ kind: "setback_side", status: "unknown", reason: "scan_unconfirmed" });
+    renderRegeln({ ...rules, zones: [{ ...first, rules: [scanned, unconfirmed], hints: [] }] });
+    expect(screen.getByTitle("Zitat aus der Texterkennung – Lesefehler möglich, im Dokument prüfen")).toHaveTextContent(
+      "aus Scan",
+    );
+    expect(screen.getByText("nicht ermittelt: im Scan nicht sicher lesbar, im Dokument prüfen")).toBeInTheDocument();
   });
 });

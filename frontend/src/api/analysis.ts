@@ -3,6 +3,7 @@
  *  Zusatzdokumente mit dem PLU. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 import { api, unwrap } from "./client";
 import type { components } from "./schema";
@@ -28,6 +29,19 @@ export function useAnalysis(projectId: string) {
     queryFn: async () =>
       unwrap(await api.GET("/api/v1/projects/{project_id}/analysis", { params: { path: { project_id: projectId } } })),
   });
+}
+
+/** Das Gelände kommt nach dem Einpassen im Hintergrund (`site_enrich`); sobald es da ist, holt die Seite die
+ *  Analyse neu, denn Gabarit, Schnitt und Bericht rechnen damit. */
+export function useRefreshAnalysisOnTerrain(projectId: string, terrainStatus: string) {
+  const client = useQueryClient();
+  const before = useRef(terrainStatus);
+  useEffect(() => {
+    if (before.current === "pending" && terrainStatus !== "pending") {
+      void client.invalidateQueries({ queryKey: analysisKey(projectId) });
+    }
+    before.current = terrainStatus;
+  }, [client, projectId, terrainStatus]);
 }
 
 /** Annahmen ändern; die Antwort ist die neu gerechnete Analyse. */
@@ -75,4 +89,38 @@ export function useAnalysisComparison(projectId: string, base: string | null) {
         }),
       ),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Ausgabe (AN5, docs/PLAN_AN5_AUSGABE.md 3.4–3.6)
+// ---------------------------------------------------------------------------
+
+export type ReportOut = components["schemas"]["ReportOut"];
+export type ReportLocale = components["schemas"]["ReportIn"]["locale"];
+export type DxfVariant = "local" | "L93";
+
+/** Bericht anfordern. `ready`: Er liegt für diesen Stand und diese Sprache vor; `pending`: Der Worker setzt ihn,
+ *  die Seite fragt erneut. */
+export function useRequestReport(projectId: string) {
+  return useMutation({
+    mutationFn: async (locale: ReportLocale) =>
+      unwrap(
+        await api.POST("/api/v1/projects/{project_id}/analysis/report", {
+          params: { path: { project_id: projectId } },
+          body: { locale },
+        }),
+      ),
+  });
+}
+
+export function reportUrl(projectId: string, locale: ReportLocale): string {
+  return `/api/v1/projects/${projectId}/analysis/report?locale=${locale}`;
+}
+
+export function dxfUrl(projectId: string, variant: DxfVariant): string {
+  return `/api/v1/projects/${projectId}/analysis/export/dxf?variant=${variant}`;
+}
+
+export function geojsonUrl(projectId: string): string {
+  return `/api/v1/projects/${projectId}/analysis/export/geojson`;
 }

@@ -34,7 +34,7 @@
         "text": "Höhen, Abstände und Flächen mit Bericht und Ausgabe ins CAD."
       }
     },
-    "soon": "Parzelle, Bebauungsplan und Zusatzdokumente kommen herein; Baurahmen, bindende Grundfläche, Geschosse, Nutzfläche, Gabarit und Schnitt stehen. Bericht und CAD-Ausgabe folgen.",
+    "soon": "Parzelle, Bebauungsplan und Zusatzdokumente kommen herein; Baurahmen, bindende Grundfläche, Geschosse, Nutzfläche, Gabarit und Schnitt stehen, mit Bericht als PDF und Ausgabe als DXF und GeoJSON. Gescannte Unterlagen folgen.",
     "login": {
       "intro": "Der Zugang gilt für Mitarbeitende des Büros; die Anmeldung läuft über den Identitätsdienst.",
       "denied": {
@@ -48,11 +48,12 @@
     "origin": {
       "parcel": "Kataster",
       "manual_sketch": "gezeichnet",
-      "upload": "aus Datei"
+      "upload": "aus Datei",
+      "traced": "nachgezeichnet nach Scan"
     },
     "projects": {
       "title": "Projekte",
-      "intro": "Je Projekt eine Parzelle mit ihren Vorgaben. Benennung, Notizen und Archiv kommen später.",
+      "intro": "Je Projekt eine Parzelle mit ihren Vorgaben. Name und Notiz setzen Sie im Projekt; archivierte Projekte stehen unter „Archiv“.",
       "new": "Neues Projekt",
       "empty": "Noch kein Projekt angelegt.",
       "untitled": "Ohne Bezeichnung",
@@ -60,7 +61,13 @@
       "origin": "Herkunft",
       "area": "Fläche",
       "updated": "Zuletzt geändert",
-      "noSite": "keine Parzelle"
+      "noSite": "keine Parzelle",
+      "filter": "Projekte zeigen",
+      "active": "Aktiv",
+      "archived": "Archiv",
+      "search": "Suchen (Name, Adresse, Notiz)",
+      "emptyArchive": "Kein Projekt im Archiv.",
+      "noMatch": "Kein Projekt passt zur Suche."
     },
     "site": {
       "intro": "Parzelle einbringen, Kanten einordnen, Bebauungsplan hochladen – daraus entstehen Regeln und Baurahmen.",
@@ -85,13 +92,16 @@
       "scale": "Maßstab",
       "scaleFile": "aus dem Plan",
       "scaleInput": "angegeben",
+      "scaleCalibrated": "kalibriert über {{length}} m",
       "outline": "Umriss",
       "pieces": "aus {{count}} Flächen der Datei zusammengesetzt",
-      "shortPieces": "Stücke unter {{length}} m zu einer Kante zusammengefasst"
+      "shortPieces": "Stücke unter {{length}} m zu einer Kante zusammengefasst",
+      "positionMap": "von Hand auf dem Kataster eingepasst ({{date}})",
+      "positionFile": "aus der Datei (Lambert-93)"
     },
     "upload": {
       "title": "Parzelle aus einer Datei",
-      "formats": "DXF mit geschlossener Polylinie, GeoJSON (Lambert-93 oder WGS84) oder PDF mit Vektorzeichnung – etwa der Katasterauszug von cadastre.gouv.fr oder der Plan des Geometers; höchstens 20 MB. Gescannte PDFs lassen sich noch nicht lesen. Die Datei selbst wird nicht gespeichert, nur Name, Prüfsumme, Ebene und Maßstab.",
+      "formats": "DXF mit geschlossener Polylinie, GeoJSON (Lambert-93 oder WGS84), PDF – auch gescannt – oder ein Bild (JPEG, PNG), etwa der Katasterauszug von cadastre.gouv.fr oder der Plan des Geometers; höchstens 20 MB. Scans und Bilder werden als Vorlage nachgezeichnet. Die Datei selbst wird nicht gespeichert, nur Name, Prüfsumme, Ebene und Maßstab.",
       "label": "Bezeichnung des Grundstücks",
       "labelHint": "z. B. Adresse oder Parzellennummer",
       "file": "Datei",
@@ -103,7 +113,7 @@
         "upload_outline_not_found": "Diese Kontur steht nicht mehr zur Wahl.",
         "upload_too_large": "Die Datei ist zu groß (höchstens 20 MB).",
         "site_origin_mismatch": "Dieses Projekt hat schon ein Grundstück aus dem Kataster.",
-        "upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan. Gescannte Pläne lassen sich noch nicht lesen – bitte das PDF aus dem CAD oder von cadastre.gouv.fr nehmen.",
+        "upload_pdf_no_vector": "Das PDF enthält keine Linien, vermutlich ein Scan. Sie können es als Vorlage nachzeichnen: Maßstab festlegen, Ecken anklicken, Kanten bemaßen.",
         "upload_scale_missing": "Im Plan steht kein Maßstab. Bitte oben den Maßstab angeben und erneut übernehmen.",
         "upload_scale_ambiguous": "Im Plan stehen mehrere Maßstäbe. Welcher gilt für die Zeichnung?",
         "site_not_contiguous": "Die gewählten Flächen hängen nicht zusammen – bitte nur aneinandergrenzende Flächen wählen.",
@@ -124,6 +134,43 @@
       "selectionHint": "Flächen innerhalb einer gewählten – etwa Gebäude – gehören ohne Klick dazu. Die genaue Fläche steht nach der Übernahme fest.",
       "maxSelected": "Höchstens {{count}} Flächen lassen sich zusammenlegen."
     },
+    "trace": {
+      "title": "Scan nachzeichnen",
+      "intro": "{{file}} dient als Vorlage: Maßstab festlegen, dann die Ecken der Parzelle anklicken. Norden gilt als oben; die Lage auf der Karte folgt später. Der Scan wird nicht gespeichert.",
+      "start": "Als Vorlage nachzeichnen",
+      "page": "Seite",
+      "preparing": "Der Plan wird aufbereitet – Seite als Bild, Maßstab im Text suchen; einige Sekunden …",
+      "error": {
+        "scan_unsupported": "Nachzeichnen lassen sich PDF, JPEG und PNG.",
+        "pdf_unreadable": "Das PDF lässt sich nicht lesen.",
+        "scan_unreadable": "Das Bild lässt sich nicht lesen.",
+        "scan_too_large": "Das Bild ist zu groß (höchstens 40 Megapixel).",
+        "page_out_of_range": "Diese Seite gibt es in der Datei nicht."
+      },
+      "scaleTitle": "Maßstab der Vorlage",
+      "fromPlan": "Maßstab aus dem Plan",
+      "noPaper": "Das Bild nennt keine verlässliche Auflösung (unter 150 dpi). Bitte über zwei Punkte kalibrieren.",
+      "scale": "Maßstab",
+      "scaleFound": "Im Plan gefunden: 1:{{scale}}, Blatt {{width}} × {{height}} mm.",
+      "scaleChoose": "Im Plan stehen mehrere Maßstäbe. Welcher gilt für die Zeichnung?",
+      "scaleEnter": "Im Plan wurde kein Maßstab gefunden. Bitte angeben oder über zwei Punkte kalibrieren.",
+      "calibrate": "Über zwei Punkte kalibrieren",
+      "calibrateWhy": "Der sichere Weg: misst auch vergrößerte oder verkleinerte Kopien richtig. Zwei Punkte einer Strecke mit bekannter Länge anklicken, etwa einer bemaßten Grenze.",
+      "calibrateFirst": "Ersten Punkt der Bezugsstrecke anklicken.",
+      "calibrateSecond": "Zweiten Punkt der Bezugsstrecke anklicken.",
+      "calibrateLength": "Länge der Bezugsstrecke eintragen.",
+      "length": "Länge",
+      "calibrateAgain": "Punkte neu setzen",
+      "corners": "Ecken der Parzelle im Uhrzeigersinn anklicken; die letzte Kante schließt sich von selbst.",
+      "canvas": "Vorlage zum Nachzeichnen",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "cornerCount_one": "1 Ecke",
+      "cornerCount_other": "{{count}} Ecken",
+      "scaleCheck": "zur Kontrolle: Blattbreite in der Natur {{width}} m",
+      "next": "Weiter zum Bemaßen",
+      "editHint": "Längen nach den Maßen im Plan korrigieren; die Richtungen stammen aus der Vorlage."
+    },
     "disclaimer": "Analyse auf Grundlage der eingereichten Unterlagen. Keine Rechtsauskunft; maßgeblich bleibt das Certificat d’urbanisme.",
     "plu": {
       "title": "Bebauungsplan",
@@ -132,7 +179,7 @@
       "docTitle": "Bezeichnung",
       "docTitleHint": "z. B. PLUi Erdre et Gesvres, Stand 2026",
       "duType": "Art",
-      "formats": "Höchstens 100 MB. Gescannte Reglements ohne Textschicht lassen sich noch nicht lesen. Dasselbe PDF in mehreren Projekten wird nur einmal ausgewertet.",
+      "formats": "Höchstens 100 MB. Gescannte Reglements werden per Texterkennung gelesen; das dauert einige Minuten. Dasselbe PDF in mehreren Projekten wird nur einmal gelesen und ausgewertet.",
       "submit": "Hochladen",
       "reading": "Das Reglement wird gelesen – Text und Kapitel …",
       "pages": "{{count}} Seiten",
@@ -172,7 +219,10 @@
         "chapter_too_long": "Kapitel und allgemeine Bestimmungen sind zusammen zu lang. Bitte den Seitenbereich eingrenzen.",
         "max_tokens": "Die Antwort war zu lang für eine Auswertung.",
         "refusal": "Das Modell hat die Auswertung abgelehnt.",
-        "other": "Grund: {{reason}}"
+        "other": "Grund: {{reason}}",
+        "ocr_no_text": "Auch nach der Texterkennung ist mehr als die Hälfte der Seiten ohne Text – vermutlich Pläne oder ein sehr schlechter Scan. Bitte eine bessere Fassung hochladen, etwa aus dem Géoportail de l'Urbanisme oder von der Gemeinde.",
+        "ocr_unavailable": "Die Texterkennung ist auf dem Server nicht eingerichtet. Bitte den Betrieb verständigen.",
+        "organisation_budget_exceeded": "Das Monatsbudget Ihrer Organisation ist erreicht. Die Auswertung startet von selbst im neuen Monat oder wenn der Betrieb das Budget erhöht."
       },
       "error": {
         "not_a_pdf": "Die Datei ist kein PDF.",
@@ -181,14 +231,41 @@
         "pdf_too_many_pages": "Das PDF hat zu viele Seiten.",
         "pdf_too_large": "Das PDF ist zu groß (höchstens 100 MB).",
         "upload_too_large": "Das PDF ist zu groß (höchstens 100 MB).",
-        "document_no_text": "Das PDF enthält kaum Text, vermutlich ein Scan. Gescannte Reglements lassen sich noch nicht lesen – bitte das PDF aus dem Géoportail de l'Urbanisme oder von der Gemeinde nehmen.",
+        "document_no_text": "Das PDF enthält kaum Text. Bitte erneut hochladen: Gescannte Reglements werden jetzt per Texterkennung gelesen.",
         "document_not_ready": "Das Reglement wird noch gelesen.",
         "document_failed": "Das Reglement ließ sich nicht lesen.",
         "chapter_not_found": "Dieses Kapitel gibt es im Reglement nicht.",
         "chapter_too_long": "Kapitel und allgemeine Bestimmungen umfassen zusammen mehr als 150 Seiten. Bitte den Seitenbereich eingrenzen.",
         "page_out_of_range": "Die Seitenangabe liegt außerhalb des Dokuments.",
-        "interrupted": "Das Lesen wurde unterbrochen. Bitte das PDF erneut hochladen."
+        "interrupted": "Das Lesen wurde unterbrochen. Bitte das PDF erneut hochladen.",
+        "document_scan": "Das Reglement ist ein Scan. Bitte zuerst den Text erkennen lassen.",
+        "ocr_not_needed": "Das Dokument hat keine Seiten ohne Text.",
+        "organisation_budget_exceeded": "Das Monatsbudget Ihrer Organisation ist erreicht; eine neue Auswertung ist erst im nächsten Monat oder mit höherem Budget möglich.",
+        "ocr_quota_exceeded": "Das Scan-Kontingent Ihrer Organisation reicht diesen Monat nicht: {{pages}} Seiten wären zu erkennen, frei sind noch {{remaining}} von {{limit}}."
       }
+    },
+    "scan": {
+      "notice": "Dieses PDF ist ein Scan ({{empty}} von {{pages}} Seiten ohne Text). Emprise kann den Text erkennen; das dauert {{duration}}.",
+      "limits": "Erkannter Text kann Lesefehler enthalten; Tabellen und Handschrift werden schlecht gelesen. Werte aus erkannten Seiten sind als „aus Scan“ gekennzeichnet; lässt sich ein Zitat im Scan nicht bestätigen, bleibt der Wert „nicht ermittelt“.",
+      "duration_one": "etwa eine Minute",
+      "duration_other": "etwa {{count}} Minuten",
+      "start": "Text erkennen",
+      "retry": "Erneut versuchen",
+      "startPages_one": "Text dieser Seite erkennen ({{duration}})",
+      "startPages_other": "Text dieser {{count}} Seiten erkennen ({{duration}})",
+      "progress": "Texterkennung: Seite {{done}} von {{total}}",
+      "progressLabel": "Fortschritt der Texterkennung",
+      "remaining": "noch {{duration}}",
+      "others": "Andere Aufgaben laufen dazwischen weiter; die Seite kann geschlossen werden.",
+      "done_one": "1 Seite per Texterkennung gelesen",
+      "done_other": "{{count}} Seiten per Texterkennung gelesen",
+      "uncertain_one": "davon 1 unsicher (S. {{pages}})",
+      "uncertain_other": "davon {{count}} unsicher (S. {{pages}})",
+      "stillEmpty_one": "1 auch danach ohne Text (S. {{pages}})",
+      "stillEmpty_other": "{{count}} auch danach ohne Text (S. {{pages}})",
+      "withEmpty": "{{summary}}; {{empty}}",
+      "failed": "Die Texterkennung ist gescheitert.",
+      "interrupted": "Die Texterkennung wurde unterbrochen; bereits erkannte Seiten bleiben erhalten."
     },
     "envelope": "Baurahmen",
     "supplement": {
@@ -374,12 +451,12 @@
       "notes": {
         "reading": "Eine Stufe gilt bis zu ihrer Oberkante: Baukörperteile, die so hoch reichen, liegen in ihrer Kontur.",
         "terrain": "Gelände nicht bekannt – eben dargestellt; Höhen über der Bezugshöhe der Regel.",
-        "terrainFlat": "Gelände nahezu eben (Neigung {{slope}} %) – eben dargestellt.",
-        "terrainSteep": "Geländeneigung {{slope}} % – im Schnitt eben dargestellt; Höhen durch Architekt prüfen.",
+        "terrainSteep": "Geländeneigung {{slope}} % – Höhenbezug nach PLU prüfen (Messpunkt der Höhe). Die Stufen stehen über der mittleren Geländehöhe ({{reference}} m NGF = ±0,00); das Profil zeigt, wo das Gelände darüber oder darunter liegt.",
         "roof": "Über der Traufe senkrecht bis zum First; Dachneigung und Firstrichtung sind nicht dargestellt.",
         "storeys": "Der Plan nennt nur Geschosse: mit {{height}} m Geschosshöhe umgerechnet (obere Annahme).",
         "heightUnknown": "Zone {{zone}} ohne ermittelte Höchsthöhe – nicht im Gabarit.",
-        "incomplete": "* Engste Auslegung unvollständig: nicht jeder Abstand ermittelt."
+        "incomplete": "* Engste Auslegung unvollständig: nicht jeder Abstand ermittelt.",
+        "terrainProfile": "Gelände mit {{slope}} % Neigung im Schnitt als Profil; die Stufen stehen über der mittleren Geländehöhe ({{reference}} m NGF = ±0,00)."
       }
     },
     "distance": {
@@ -472,6 +549,163 @@
       "textHint": "Dieses Modell liest keine PDFs und bekommt den Text der Seiten. Tabellen verlieren dabei ihre Spalten, Skizzen fehlen.",
       "changeInAdmin": "In der Verwaltung ändern",
       "chosenBy": "gewählt von {{name}}"
+    },
+    "project": {
+      "name": "Name",
+      "note": "Notiz",
+      "noteHint": "Nur für das Büro und im Bericht; Name und Notiz gehen an keinen externen Dienst.",
+      "edit": "Name und Notiz",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "archive": "Archivieren",
+      "restore": "Zurückholen",
+      "archivedSince": "Archiviert seit {{date}} – bleibt bearbeitbar."
+    },
+    "position": {
+      "set": "Lage festlegen",
+      "correct": "Lage korrigieren",
+      "intro": "Adresse suchen, dann den Umriss auf die Parzelle der Katasterebene schieben und drehen. Maße und Fläche bleiben unverändert.",
+      "why": "Mit Lage gibt es Gelände, Risiken, DXF in Lambert-93 und GeoJSON.",
+      "mapLabel": "Karte zum Einpassen mit Katasterebene und Umriss des Grundstücks",
+      "toCentre": "Umriss in die Kartenmitte holen",
+      "rotation": "Drehung",
+      "rotationSteps": "Fein drehen",
+      "rotateBy": "um {{degrees}}° drehen",
+      "rotationHint": "Im Uhrzeigersinn gegenüber der jetzigen Darstellung.",
+      "moveHint": "Umriss mit der Maus ziehen oder auf der Karte mit den Pfeiltasten schieben: 0,1 m, mit Umschalttaste 1 m.",
+      "searchFirst": "Zuerst eine Adresse wählen; der Umriss erscheint dann dort.",
+      "moved": "Um {{metres}} m gegenüber der bisherigen Lage verschoben.",
+      "accuracy": "So genau wie der Kataster (in Frankreich teils einige Meter). Bericht und DXF nennen die Lage „von Hand eingepasst“.",
+      "save": "Lage übernehmen",
+      "cancel": "Abbrechen"
+    },
+    "output": {
+      "title": "Bericht und Ausgabe",
+      "report": {
+        "title": "Bericht",
+        "intro": "PDF mit Kennzahlen, Lageplan, Gabarit und Schnitten, Regeln mit Fundstellen, Korrekturen und offenen Punkten.",
+        "language": "Sprache des Berichts",
+        "locale": {
+          "fr": "Französisch",
+          "de": "Deutsch"
+        },
+        "request": "Bericht erstellen",
+        "pending": "Bericht wird erstellt …",
+        "slow": "Das dauert länger als üblich. Bitte gleich noch einmal versuchen.",
+        "download": "Bericht herunterladen"
+      },
+      "files": {
+        "title": "Dateien für CAD und GIS",
+        "intro": "Parzelle, bebaubare Flächen, Vorgaben, Gabarit als Höhenlinien und Körper, Schnittlinien – je Inhalt eine Ebene.",
+        "dxfLocal": "DXF lokal",
+        "dxfLocalHint": "Lokale Meter ab der Ecke unten links; der Ursprung in Lambert-93 steht in der Datei.",
+        "dxfLocalFree": "Lokale Meter wie in der Datei oder Zeichnung.",
+        "dxfL93": "DXF Lambert-93",
+        "dxfL93Hint": "Koordinaten in Lambert-93, Höhen in m NGF, sobald das Gelände bekannt ist.",
+        "geojson": "GeoJSON",
+        "geojsonHint": "WGS84 für GIS und Karten.",
+        "needsPosition": "Erst mit Lage – im Abschnitt Grundstück festlegen."
+      },
+      "disclaimer": "Analyse auf Grundlage der eingebrachten Unterlagen. Keine Rechtsauskunft; verbindlich ist allein der Certificat d’urbanisme."
+    },
+    "organisation": {
+      "eyebrow": "Organisation",
+      "introAdmin": "Mitglieder, Erscheinungsbild von Bericht und DXF, Verbrauch und API-Schlüssel Ihrer Organisation. Alle Mitglieder sehen dieselben Projekte.",
+      "introMember": "Verbrauch Ihrer Organisation in diesem und den letzten Monaten. Mitglieder, Erscheinungsbild und API-Schlüssel verwaltet die Rolle „Verwaltung“.",
+      "none": "Ihr Konto gehört zu keiner Organisation. Bitte den Betrieb verständigen.",
+      "cancel": "Abbrechen",
+      "role": {
+        "member": "Mitglied",
+        "admin": "Verwaltung"
+      },
+      "usage": {
+        "title": "Verbrauch",
+        "cost": "Auswertung durch das KI-Modell",
+        "ocr": "Texterkennung",
+        "ofLimit": "{{value}} von {{limit}}",
+        "noLimit": "Ohne eigene Grenze; es gilt das Budget der Instanz.",
+        "pages_one": "{{count}} Seite",
+        "pages_other": "{{count}} Seiten",
+        "pagesOfLimit_one": "{{count}} von {{limit}} Seiten",
+        "pagesOfLimit_other": "{{count}} von {{limit}} Seiten",
+        "hint": "Kalendermonat in UTC. Ist die Grenze erreicht, wartet eine Auswertung bis zum neuen Monat oder bis der Betrieb die Grenze erhöht; eine Texterkennung wird abgelehnt.",
+        "history": "Verbrauch der letzten Monate",
+        "month": "Monat"
+      },
+      "members": {
+        "title": "Mitglieder",
+        "inactive": "gesperrt",
+        "notYet": "noch nicht angemeldet",
+        "lastLogin": "zuletzt angemeldet am {{date}}",
+        "roleFor": "Rolle von {{email}}",
+        "remove": "Entfernen",
+        "confirmRemove": "Wirklich entfernen",
+        "add": "Mitglied hinzufügen",
+        "email": "E-Mail-Adresse",
+        "role": "Rolle",
+        "submit": "Hinzufügen",
+        "hint": "Anmelden kann sich das Mitglied, sobald der Betrieb das Konto beim Anmeldedienst eingerichtet hat (mit zweitem Faktor). Entfernen sperrt das Konto; die Projekte bleiben bei der Organisation."
+      },
+      "branding": {
+        "title": "Erscheinungsbild",
+        "intro": "Name, Anschrift und Logo erscheinen im Kopf des Berichts, Name und Anschrift im Schriftfeld des DXF. Jede Änderung erzeugt beim nächsten Abruf einen neuen Bericht.",
+        "displayName": "Anzeigename",
+        "registration": "Kennung",
+        "registrationHint": "Etwa „N° d'inscription à l'Ordre des architectes“ oder SIRET",
+        "address": "Anschrift",
+        "addressHint_one": "Höchstens {{count}} Zeile",
+        "addressHint_other": "Höchstens {{count}} Zeilen",
+        "phone": "Telefon",
+        "email": "E-Mail",
+        "website": "Website",
+        "accent": "Akzentfarbe",
+        "accentPicker": "Akzentfarbe wählen",
+        "accentHint": "Für Überschriften und Linien im Bericht; leer lassen für Schwarz.",
+        "accentTooLight": "Zu hell: Auf Weiß braucht die Farbe einen Kontrast von mindestens {{min}} : 1.",
+        "save": "Speichern",
+        "saved": "Gespeichert.",
+        "logo": "Logo",
+        "logoHint": "PNG oder JPEG, höchstens 1 MB und 2 000 Pixel; wird auf 800 Pixel verkleinert. Kein SVG.",
+        "removeLogo": "Logo entfernen",
+        "preview": "Vorschau: Kopf der ersten Berichtsseite",
+        "previewEyebrow": "Emprise Analyse",
+        "previewTitle": "Analyse de la parcelle"
+      },
+      "keys": {
+        "title": "API-Schlüssel",
+        "intro": "Für eigene Programme und CAD-Anbindungen: Aufruf mit dem Kopf „Authorization: Bearer <Schlüssel>“, nur für die Projektendpunkte (/api/v1/projects…). Ein Schlüssel handelt wie ein Architekt Ihrer Organisation; Kosten zählen zu ihrem Budget.",
+        "empty": "Noch kein Schlüssel angelegt.",
+        "scope": {
+          "read": "nur lesen",
+          "write": "lesen und schreiben"
+        },
+        "meta": "angelegt {{created}} · zuletzt genutzt {{used}} · läuft ab {{expires}}",
+        "revokedOn": "widerrufen am {{date}}",
+        "revoke": "Widerrufen",
+        "confirmRevoke": "Wirklich widerrufen",
+        "new": "Neuer Schlüssel",
+        "name": "Name (wofür)",
+        "days": "Gültig (Tage)",
+        "writeScope": "Auch schreiben (Projekte anlegen, hochladen, auswerten)",
+        "create": "Schlüssel anlegen",
+        "createdTitle": "Schlüssel „{{name}}“ angelegt",
+        "createdHint": "Der Schlüssel wird nur jetzt angezeigt; gespeichert wird nur eine Prüfsumme. Geht er verloren, widerrufen Sie ihn und legen einen neuen an.",
+        "copy": "Kopieren",
+        "copied": "Kopiert",
+        "done": "Fertig"
+      },
+      "error": {
+        "invalid_color": "Die Farbe muss als Hex-Wert angegeben werden, etwa #2b45b0.",
+        "color_contrast_too_low": "Die Farbe ist zu hell für Text auf Weiß.",
+        "logo_format": "Das Logo muss ein PNG oder JPEG sein.",
+        "logo_too_large": "Das Logo ist zu groß (höchstens 1 MB und 2 000 Pixel).",
+        "member_exists": "Diese Person ist schon Mitglied.",
+        "member_of_other_organisation": "Diese Adresse gehört zu einer anderen Organisation.",
+        "operator_roles_outside_operator": "Dieses Konto hat Rollen des Betriebs und kann keiner anderen Organisation angehören.",
+        "last_admin": "Die Organisation braucht mindestens ein Mitglied mit der Rolle „Verwaltung“.",
+        "cannot_remove_self": "Sie können sich nicht selbst entfernen.",
+        "api_key_limit": "Höchstens 10 aktive Schlüssel je Organisation. Bitte zuerst einen widerrufen."
+      }
     }
   },
   "site": {
@@ -636,7 +870,9 @@
       "title": "Gelände",
       "unavailable": "Nicht abgefragt: Der Höhendienst war nicht erreichbar.",
       "flat": "Weitgehend eben ({{slope}} % Neigung), Höhe etwa {{altitude}} m NGF.",
-      "sloped": "Hanglage mit {{slope}} % Neigung (Höhe etwa {{altitude}} m NGF). Höhen prüft das Architekturbüro."
+      "sloped": "Hanglage mit {{slope}} % Neigung (Höhe etwa {{altitude}} m NGF). Höhen prüft das Architekturbüro.",
+      "values_one": "Mittlere Höhe {{altitude}} m NGF, Neigung {{slope}} %, aus {{count}} Höhenpunkt (IGN RGE ALTI).",
+      "values_other": "Mittlere Höhe {{altitude}} m NGF, Neigung {{slope}} %, aus {{count}} Höhenpunkten (IGN RGE ALTI)."
     },
     "risks": {
       "title": "Standortrisiken",
@@ -695,6 +931,8 @@
     "share": "{{share}} % des Grundstücks",
     "caption": "Regeln der Zone {{code}}",
     "page": "S. {{page}}",
+    "fromScan": "aus Scan",
+    "fromScanTitle": "Zitat aus der Texterkennung – Lesefehler möglich, im Dokument prüfen",
     "pages": "S. {{first}}–{{last}}",
     "inProgress": "Die Regeln dieser Zone werden gerade ausgewertet. Das dauert einige Minuten.",
     "column": {
@@ -730,7 +968,8 @@
       "missing": "nicht ermittelt",
       "correction": "nicht ermittelt (Korrektur)",
       "not_found_after_search": "nicht ermittelt: nach Nachsuche nicht gefunden",
-      "not_expressible": "nicht abbildbar: siehe Hinweis"
+      "not_expressible": "nicht abbildbar: siehe Hinweis",
+      "scan_unconfirmed": "nicht ermittelt: im Scan nicht sicher lesbar, im Dokument prüfen"
     },
     "kind": {
       "setback_street": "Abstand zur Straße",

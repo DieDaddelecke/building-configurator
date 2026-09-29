@@ -32,6 +32,7 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
+from app.rules.budget import check_organisation_budget
 from app.rules.domain.chapters import (
     CHAPTER_MAX_PAGES,
     Chapter,
@@ -40,7 +41,7 @@ from app.rules.domain.chapters import (
     detect_structure,
 )
 from app.rules.domain.extraction import DocumentKind, document_kind
-from app.rules.extract import input_hash
+from app.rules.extract import input_hash, ocr_stamp
 from app.rules.models import (
     LandUsePlan,
     OverlayConstraint,
@@ -342,11 +343,13 @@ def enqueue_extraction(
     import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
 
     # Schlüssel über die Eingabe: geänderte Seiten oder Sektoren ergeben einen neuen Job, gleiche keinen
+    stamp = ocr_stamp(session.get(SourceFile, chapter.source_file_id)) if chapter.source_file_id else None
+    digest = input_hash(settings, source_sha256, chapter, kind, stamp)
     enqueue(
         session,
         "rules_extract",
         {"chapter_id": str(chapter.id)},
-        idempotency_key=f"rules_extract:{chapter.id}:{input_hash(settings, source_sha256, chapter, kind)}",
+        idempotency_key=f"rules_extract:{chapter.id}:{digest}",
         created_by=created_by,
     )
 
@@ -594,12 +597,15 @@ def ensure_chapter(
     actor: str,
     reason: str,
     notes: list[str] | None = None,
+    billing_organisation_id: uuid.UUID | None = None,
 ) -> RegulationChapter:
     """Kapitel anlegen oder an die Eingabe angleichen (RW20).
 
     Unveränderte Kapitel behalten Status und Läufe. Geänderte werden `pending` und neu eingeplant; die
     Wiederverwendung gespeicherter Aufrufe hängt an der Eingabe, nicht an der Kapitelzeile. Zu lange
     Kapitel werden nicht ausgewertet (`chapter_too_long`, RW23). Gemeinsam für GPU-Import und Upload (AN2).
+    Plant ein Upload eine Auswertung ein, zahlt sie `billing_organisation_id`; ist deren Budget verbraucht,
+    lehnt die Wahl mit `409 organisation_budget_exceeded` ab (AN6, docs/PLAN_AN6_MANDANTEN.md 3.3, 3.4).
     """
     fields = {
         "source_file_id": source_file.id,
@@ -625,6 +631,9 @@ def ensure_chapter(
         chapter.status, chapter.error, chapter.updated_at = "failed", "chapter_too_long", utcnow()
         return chapter
     if values.sectors and (changed or chapter.status == "pending"):
+        if billing_organisation_id is not None:
+            check_organisation_budget(session, settings, billing_organisation_id)
+            chapter.billing_organisation_id = billing_organisation_id
         if chapter.status != "extracting":
             chapter.status, chapter.error, chapter.updated_at = "pending", None, utcnow()
         enqueue_extraction(

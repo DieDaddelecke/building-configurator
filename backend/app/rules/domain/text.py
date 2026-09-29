@@ -132,14 +132,20 @@ def partial_similarity(needle: str, haystack: str) -> float:
     return partial_match(needle, haystack)[0]
 
 
+_UNIT_EXPONENT = re.compile(r"(?<=m)[23](?![0-9])")
+"""Hochzahl von m² und m³ in der Vergleichsform (NFKC macht aus „m²“ „m2“). Sie ist kein Wert; die
+Texterkennung liest sie oft als „m?“ oder „m°“, dann fehlte dem Scan eine Zahl, die das Zitat hat (AN7,
+PLAN_AN7_SCAN 7.5)."""
+
+
 def _numbers_match(quote_segment: str, window: str) -> bool:
     """Jede Zahl des Zitats steht auch im gefundenen Ausschnitt (mit etwas Rand für verschobene Grenzen).
 
     Ohne diese Prüfung gälte „recul de 6 mètres“ bei einem Text mit „3 mètres“ als belegt: Ein einzelnes
-    Zeichen senkt die Ähnlichkeit kaum unter die Schwelle.
+    Zeichen senkt die Ähnlichkeit kaum unter die Schwelle. Hochzahlen von Einheiten zählen nicht.
     """
-    available = numbers(window)
-    for value in numbers(quote_segment):
+    available = numbers(_UNIT_EXPONENT.sub("", window))
+    for value in numbers(_UNIT_EXPONENT.sub("", quote_segment)):
         match = next((i for i, n in enumerate(available) if abs(n - value) <= NUMBER_TOLERANCE), None)
         if match is None:
             return False

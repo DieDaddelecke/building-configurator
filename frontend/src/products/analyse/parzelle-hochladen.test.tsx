@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { ApiError } from "../../api/client";
-import type { UploadCandidateOut, UploadResultOut } from "../../api/site";
+import type { ScanPreviewOut, UploadCandidateOut, UploadResultOut } from "../../api/site";
 import i18n from "../../i18n";
 import { ParzelleHochladen } from "./ParzelleHochladen";
 
@@ -13,11 +13,15 @@ const state = vi.hoisted(() => ({
   mutate: vi.fn(),
   error: null as unknown,
   next: null as UploadResultOut | null,
+  preview: null as ScanPreviewOut | null,
+  formSite: vi.fn(),
 }));
 
 vi.mock("../../api/site", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../api/site")>()),
   useUploadParcel: () => ({ mutate: state.mutate, reset: vi.fn(), isPending: false, error: state.error }),
+  useScanPreview: () => ({ data: state.preview, isPending: false, isError: false, error: null }),
+  useFormManualSite: () => ({ mutate: state.formSite, isPending: false, error: null }),
 }));
 
 const kandidat = (
@@ -58,6 +62,19 @@ beforeEach(async () => {
     if (state.next) callbacks?.onSuccess?.(state.next);
   });
   state.next = auswahl;
+  state.formSite.mockReset();
+  // Katasterauszug A5 quer mit 200 dpi, Maßstab 1:500 (wie `test_site_upload.scanned_plan` im Backend)
+  state.preview = {
+    page: 1,
+    page_count: 1,
+    image: "data:image/jpeg;base64,AAAA",
+    width_px: 1654,
+    height_px: 1166,
+    paper_mm: [210, 148],
+    scales: [500],
+    scale: 500,
+    metres_per_px: 0.063482,
+  };
 });
 
 it("zeigt für PDF das Maßstabsfeld, für DXF nicht", async () => {
@@ -136,4 +153,91 @@ it("bietet bei zwei Maßstäben beide zur Wahl an", async () => {
   expect(screen.getByRole("alert")).toHaveTextContent("mehrere Maßstäbe");
   await userEvent.click(screen.getByRole("button", { name: "1:2000" }));
   expect(state.mutate).toHaveBeenLastCalledWith(expect.objectContaining({ scale: 2000 }), expect.anything());
+});
+
+// AN7: Scan als Vorlage nachzeichnen (docs/PLAN_AN7_SCAN.md 3.5)
+
+const MM = 200 / 25.4;
+/** Rechteck 60 × 40 mm auf dem Blatt = 30 × 20 m bei 1:500. */
+const RECHTECK: [number, number][] = [
+  [40, 60],
+  [100, 60],
+  [100, 100],
+  [40, 100],
+];
+
+function klicke(punkte: [number, number][]) {
+  const svg = screen.getByRole("img", { name: "Vorlage zum Nachzeichnen" });
+  // jsdom kennt kein Layout: Das Bild liegt in Originalgröße oben links
+  svg.getBoundingClientRect = () => ({ left: 0, top: 0, width: 1654, height: 1166, right: 1654, bottom: 1166, x: 0, y: 0, toJSON: () => ({}) });
+  for (const [x, y] of punkte) fireEvent.click(svg, { clientX: x * MM, clientY: y * MM });
+}
+
+async function bildHochladen() {
+  await userEvent.type(screen.getByLabelText("Bezeichnung des Grundstücks"), "Parzelle 65");
+  await userEvent.upload(screen.getByLabelText("Datei"), new File(["png"], "extrait.png", { type: "image/png" }));
+}
+
+it("führt ein Bild direkt zum Nachzeichnen und übernimmt den Maßstab aus dem Plan", async () => {
+  const fertig = vi.fn();
+  render(<ParzelleHochladen projectId="p1" onFormed={fertig} onCancel={vi.fn()} />);
+  await bildHochladen();
+  expect(screen.queryByRole("button", { name: "Übernehmen" })).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Als Vorlage nachzeichnen" }));
+
+  expect(screen.getByText("Im Plan gefunden: 1:500, Blatt 210 × 148 mm.")).toBeInTheDocument();
+  const weiter = screen.getByRole("button", { name: "Weiter zum Bemaßen" });
+  expect(weiter).toBeDisabled();
+  klicke(RECHTECK);
+  expect(screen.getByText(/4 Ecken/)).toHaveTextContent("Blattbreite in der Natur 105 m");
+  await userEvent.click(weiter);
+
+  // Kanten wie beim freien Zeichnen: 30 m nach Osten, 20 m nach Süden, 30 m nach Westen; Fläche ± 2 % (Abnahme 5)
+  expect(screen.getByLabelText("Kante 1")).toHaveValue(30);
+  expect(screen.getByLabelText("Kante 2")).toHaveValue(20);
+  expect(screen.getByText(/Fläche: etwa 600 m²/)).toBeInTheDocument();
+  expect(screen.getByLabelText("Adresse des Grundstücks")).toHaveValue("Parzelle 65");
+  await userEvent.click(screen.getByRole("button", { name: "Dieses Grundstück übernehmen" }));
+  expect(state.formSite).toHaveBeenCalledWith(
+    expect.objectContaining({
+      projectId: "p1",
+      addressLabel: "Parzelle 65",
+      trace: { file_name: "extrait.png", page: 1, scale_method: "plan", scale: 500 },
+    }),
+    { onSuccess: fertig },
+  );
+});
+
+it("kalibriert über zwei Punkte, wenn das Bild keine verlässliche Auflösung hat", async () => {
+  state.preview = { ...state.preview!, paper_mm: null, metres_per_px: null };
+  render(<ParzelleHochladen projectId="p1" onFormed={vi.fn()} onCancel={vi.fn()} />);
+  await bildHochladen();
+  await userEvent.click(screen.getByRole("button", { name: "Als Vorlage nachzeichnen" }));
+
+  expect(screen.getByRole("radio", { name: /Maßstab aus dem Plan/ })).toBeDisabled();
+  expect(screen.getByRole("status")).toHaveTextContent("Ersten Punkt der Bezugsstrecke anklicken.");
+  // Bezugsstrecke: die obere Grenze, 30 m
+  klicke(RECHTECK.slice(0, 2));
+  await userEvent.type(screen.getByLabelText("Länge"), "30");
+  klicke(RECHTECK);
+  await userEvent.click(screen.getByRole("button", { name: "Weiter zum Bemaßen" }));
+  expect(screen.getByLabelText("Kante 2")).toHaveValue(20);
+  await userEvent.click(screen.getByRole("button", { name: "Dieses Grundstück übernehmen" }));
+  expect(state.formSite).toHaveBeenCalledWith(
+    expect.objectContaining({
+      trace: { file_name: "extrait.png", page: 1, scale_method: "calibrated", reference_m: 30 },
+    }),
+    expect.anything(),
+  );
+});
+
+it("bietet bei einem gescannten PDF das Nachzeichnen an", async () => {
+  state.error = new ApiError({ status: 422, code: "upload_pdf_no_vector", title: "" } as never);
+  render(<ParzelleHochladen projectId="p1" onFormed={vi.fn()} onCancel={vi.fn()} />);
+  await waehleDatei("scan.pdf");
+  expect(screen.getByRole("alert")).toHaveTextContent("vermutlich ein Scan");
+  await userEvent.click(screen.getByRole("button", { name: "Als Vorlage nachzeichnen" }));
+  expect(screen.getByRole("heading", { name: "Scan nachzeichnen" })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Abbrechen" }));
+  expect(screen.getByRole("heading", { name: "Parzelle aus einer Datei" })).toBeInTheDocument();
 });

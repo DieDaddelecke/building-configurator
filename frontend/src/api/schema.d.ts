@@ -1295,6 +1295,156 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/organisation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Organisation */
+        get: operations["get_organisation_api_v1_organisation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Organisation
+         * @description Anzeigename und Schriftfeld für Bericht und DXF (3.5). Jede Änderung zählt `branding_revision` hoch:
+         *     Der nächste Bericht entsteht neu.
+         */
+        patch: operations["update_organisation_api_v1_organisation_patch"];
+        trace?: never;
+    };
+    "/api/v1/organisation/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Api Keys */
+        get: operations["list_api_keys_api_v1_organisation_api_keys_get"];
+        put?: never;
+        /**
+         * Create Api Key
+         * @description Neuer Schlüssel; er erscheint nur in dieser Antwort. `write` schließt `read` ein.
+         */
+        post: operations["create_api_key_api_v1_organisation_api_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organisation/api-keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke Api Key */
+        delete: operations["revoke_api_key_api_v1_organisation_api_keys__key_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organisation/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Organisation Logo
+         * @description Logo für die Vorschau des Berichtskopfs.
+         */
+        get: operations["get_organisation_logo_api_v1_organisation_logo_get"];
+        /**
+         * Put Organisation Logo
+         * @description Logo als PNG oder JPEG, höchstens 1 MB und 2000 Pixel; wird verkleinert und als PNG neu geschrieben
+         *     (3.5, E-AN6-6: kein SVG).
+         */
+        put: operations["put_organisation_logo_api_v1_organisation_logo_put"];
+        post?: never;
+        /** Delete Organisation Logo */
+        delete: operations["delete_organisation_logo_api_v1_organisation_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organisation/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Members */
+        get: operations["list_members_api_v1_organisation_members_get"];
+        put?: never;
+        /**
+         * Add Member
+         * @description Konto mit Rolle `architect` anlegen oder ein Konto ohne Organisation aufnehmen (E-AN6-9). Anmelden
+         *     kann es sich, sobald der Betreiber es beim Identitätsdienst eingerichtet hat; die erste Anmeldung bindet
+         *     es über die bestätigte Adresse.
+         */
+        post: operations["add_member_api_v1_organisation_members_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organisation/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove Member
+         * @description Mitgliedschaft beenden und das Konto sperren; die Projekte bleiben bei der Organisation (3.1).
+         */
+        delete: operations["remove_member_api_v1_organisation_members__user_id__delete"];
+        options?: never;
+        head?: never;
+        /** Change Member Role */
+        patch: operations["change_member_role_api_v1_organisation_members__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/organisation/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Usage
+         * @description Kosten der Auswertung und erkannte Seiten der letzten sechs Monate mit den Grenzen der Organisation.
+         */
+        get: operations["get_usage_api_v1_organisation_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects": {
         parameters: {
             query?: never;
@@ -1304,15 +1454,16 @@ export interface paths {
         };
         /**
          * List Own Projects
-         * @description Projekte mit Eigentümer, neueste zuerst (AN1). Alle Architekten des Büros sehen dieselben
-         *     Projekte; nach Person und Organisation trennt erst AN6 (D15, E-AN1-4).
+         * @description Projekte der eigenen Organisation, neueste zuerst (AN1, AN6); `archived=true` zeigt das Archiv (AN5).
+         *     Alle Mitglieder einer Organisation sehen dieselben Projekte (E-AN1-4).
          */
         get: operations["list_own_projects_api_v1_projects_get"];
         put?: never;
         /**
          * Create Project
-         * @description Neues Projekt. Ein angemeldeter Architekt wird Eigentümer und bekommt **kein** Cookie – sonst
-         *     verdrängte jedes neue Projekt das vorige (AN1, UP05).
+         * @description Neues Projekt. Ein Architekt oder API-Schlüssel legt es in seiner Organisation an; der Architekt wird
+         *     Eigentümer. Beide bekommen **kein** Cookie – sonst verdrängte jedes neue Projekt das vorige (AN1, UP05,
+         *     AN6). Im Analyse-Produkt ist das die einzige Art (3.2).
          */
         post: operations["create_project_api_v1_projects_post"];
         delete?: never;
@@ -1341,7 +1492,12 @@ export interface paths {
         delete: operations["delete_project_api_v1_projects__project_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Own Project
+         * @description Name, Notiz und Archiv ändern (AN5, E-AN5-7: archivieren blendet nur aus). Das Audit nennt den Namen
+         *     und ob sich die Notiz geändert hat, nicht ihren Inhalt.
+         */
+        patch: operations["update_own_project_api_v1_projects__project_id__patch"];
         trace?: never;
     };
     "/api/v1/projects/{project_id}/analysis": {
@@ -1386,6 +1542,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/analysis/export/dxf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Dxf
+         * @description Lageplan mit Baurahmen, Bauband, Vorgaben, Schnitten und Gabarit (Höhenlinien und Körper) als DXF.
+         *     `L93` nur mit Lage (409 `export_not_georeferenced`); Z dann in m NGF, wenn das Gelände bekannt ist.
+         */
+        get: operations["export_dxf_api_v1_projects__project_id__analysis_export_dxf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/analysis/export/geojson": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Geojson
+         * @description Dieselben Ebenen als FeatureCollection in WGS84 (RFC 7946); nur mit Lage (E-AN5-6).
+         */
+        get: operations["export_geojson_api_v1_projects__project_id__analysis_export_geojson_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/analysis/parameters": {
         parameters: {
             query?: never;
@@ -1405,6 +1602,30 @@ export interface paths {
          * @description Zurück auf die Vorgaben.
          */
         delete: operations["reset_analysis_parameters_api_v1_projects__project_id__analysis_parameters_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/analysis/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Report
+         * @description Fertiger Bericht zum aktuellen Stand; sonst 409 `report_not_ready` mit der Prüfsumme.
+         */
+        get: operations["download_report_api_v1_projects__project_id__analysis_report_get"];
+        put?: never;
+        /**
+         * Create Report
+         * @description Bericht anfordern. Liegt er für diesen Stand und diese Sprache vor, kommt er sofort (`ready`).
+         */
+        post: operations["create_report_api_v1_projects__project_id__analysis_report_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1506,6 +1727,26 @@ export interface paths {
          * @description Schnellstellungen `street_near`, `set_back`, `garden_max` (Spez. 5.3.5).
          */
         post: operations["post_placement_presets_api_v1_projects__project_id__configuration_placement_presets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Own Project
+         * @description Name, ganze Notiz und Archiv eines Projekts der Organisation (AN5).
+         */
+        get: operations["get_own_project_api_v1_projects__project_id__details_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1751,6 +1992,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/regulations/{document_id}/ocr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Regulation Ocr
+         * @description Texterkennung der Seiten ohne Textschicht bestätigen (AN7, docs/PLAN_AN7_SCAN.md 3.2). Kostet nichts,
+         *     dauert je Seite einige Sekunden; läuft sie schon oder ist alles erkannt, ändert sich nichts.
+         */
+        post: operations["request_regulation_ocr_api_v1_projects__project_id__regulations__document_id__ocr_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/regulations/{document_id}/zone": {
         parameters: {
             query?: never;
@@ -1878,6 +2140,50 @@ export interface paths {
         patch: operations["patch_edge_customer_api_v1_projects__project_id__site_edges__seq__patch"];
         trace?: never;
     };
+    "/api/v1/projects/{project_id}/site/position": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Site Position
+         * @description Gezeichnetes oder hochgeladenes Grundstück auf der Karte verorten oder die Lage korrigieren (AN5,
+         *     docs/PLAN_AN5_AUSGABE.md 3.2). Nur der Architekt und nur eigene Projekte: Ein Kunde des Konfigurators
+         *     kann seine Zeichnung damit nicht verorten (G27). Danach werden Gelände und Risiken abgefragt.
+         */
+        put: operations["put_site_position_api_v1_projects__project_id__site_position_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/site/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Site Preview
+         * @description Gescannten Plan (PDF, JPEG, PNG) als Vorlage zum Nachzeichnen aufbereiten (AN7, PLAN_AN7_SCAN 3.5):
+         *     Seite als Bild, erkannter Maßstab, Meter je Pixel.
+         *     Speichert nichts; dauert wegen der Texterkennung 2–5 s.
+         */
+        post: operations["scan_site_preview_api_v1_projects__project_id__site_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{project_id}/site/upload": {
         parameters: {
             query?: never;
@@ -1955,7 +2261,8 @@ export interface paths {
         /**
          * Regulation File
          * @description Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für
-         *     das Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.
+         *     Mitarbeitende; eine fremde Organisation nur Dateien, die ein eigenes Projekt nutzt (AN6). Die Datei ist
+         *     beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.
          */
         get: operations["regulation_file_api_v1_regulation_files__file_id__get"];
         put?: never;
@@ -2200,6 +2507,76 @@ export interface components {
             /** Top Certain */
             top_certain: boolean;
         };
+        /** ApiKeyCreatedOut */
+        ApiKeyCreatedOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: ("read" | "write")[];
+            /** Token */
+            token: string;
+        };
+        /** ApiKeyIn */
+        ApiKeyIn: {
+            /**
+             * Days
+             * @default 365
+             */
+            days: number;
+            /** Name */
+            name: string;
+            /** Scopes */
+            scopes: ("read" | "write")[];
+        };
+        /** ApiKeyOut */
+        ApiKeyOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Scopes */
+            scopes: ("read" | "write")[];
+        };
         /** ArchitectEdgeIn */
         ArchitectEdgeIn: {
             /** Kind */
@@ -2207,11 +2584,13 @@ export interface components {
         };
         /**
          * ArchitectProjectOut
-         * @description Projekt am Konto des Architekten (AN1). Benennung, Notiz und Archiv folgen mit AN5.
+         * @description Projekt am Konto des Architekten (AN1), mit Name, Notiz und Archiv (AN5, PLAN_AN5_AUSGABE 3.1).
          */
         ArchitectProjectOut: {
             /** Address Label */
             address_label: string | null;
+            /** Archived At */
+            archived_at?: string | null;
             /** Area M2 */
             area_m2: number | null;
             /**
@@ -2229,6 +2608,10 @@ export interface components {
              * Format: date-time
              */
             last_activity_at: string;
+            /** Name */
+            name?: string | null;
+            /** Note */
+            note?: string | null;
             /** Site Origin */
             site_origin: string | null;
             /** Status */
@@ -2285,6 +2668,21 @@ export interface components {
             dxf: string;
             /** Xlsx */
             xlsx: string;
+        };
+        /** Body_put_organisation_logo_api_v1_organisation_logo_put */
+        Body_put_organisation_logo_api_v1_organisation_logo_put: {
+            /** File */
+            file: string;
+        };
+        /** Body_scan_site_preview_api_v1_projects__project_id__site_scan_post */
+        Body_scan_site_preview_api_v1_projects__project_id__site_scan_post: {
+            /** File */
+            file: string;
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
         };
         /** Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post */
         Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
@@ -2397,6 +2795,11 @@ export interface components {
         CitationOut: {
             /** Confidence */
             confidence: number;
+            /**
+             * From Scan
+             * @default false
+             */
+            from_scan: boolean;
             /** Notes */
             notes?: string | null;
             /**
@@ -3262,6 +3665,8 @@ export interface components {
             reason?: string | null;
             /** Reasons */
             reasons: string[];
+            /** Reference Altitude Ngf */
+            reference_altitude_ngf?: number | null;
             /**
              * Status
              * @enum {string}
@@ -3605,6 +4010,51 @@ export interface components {
              */
             outcome: "hit" | "wrong_value" | "named_gap" | "dismissed" | "silent_gap";
         };
+        /** MemberIn */
+        MemberIn: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /**
+             * Role
+             * @default member
+             * @enum {string}
+             */
+            role: "admin" | "member";
+        };
+        /** MemberOut */
+        MemberOut: {
+            /** Active */
+            active: boolean;
+            /** Display Name */
+            display_name: string | null;
+            /** Email */
+            email: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Login At */
+            last_login_at: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "member";
+            /** Signed In */
+            signed_in: boolean;
+        };
+        /** MemberRoleIn */
+        MemberRoleIn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "member";
+        };
         /** MessageIn */
         MessageIn: {
             /** Body */
@@ -3729,6 +4179,15 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** MonthUsageOut */
+        MonthUsageOut: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Month */
+            month: string;
+            /** Ocr Pages */
+            ocr_pages: number;
+        };
         /** MyInquiryOut */
         MyInquiryOut: {
             /** Can Withdraw */
@@ -3770,6 +4229,29 @@ export interface components {
              * @enum {string}
              */
             status: "current" | "superseded";
+        };
+        /**
+         * OcrOut
+         * @description Texterkennung der Seiten ohne Textschicht (AN7, docs/PLAN_AN7_SCAN.md 3.2).
+         */
+        OcrOut: {
+            /** Error */
+            error: string | null;
+            /** Estimated Seconds */
+            estimated_seconds: number;
+            /** Pages Done */
+            pages_done: number;
+            /** Pages Total */
+            pages_total: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "none" | "offered" | "running" | "done" | "failed";
+            /** Still Empty Pages */
+            still_empty_pages: number[];
+            /** Uncertain Pages */
+            uncertain_pages: number[];
         };
         /** OpsStatus */
         OpsStatus: {
@@ -3841,6 +4323,79 @@ export interface components {
             type_slug: string | null;
             /** Vat Rate */
             vat_rate: number;
+        };
+        /**
+         * OrganisationIn
+         * @description Nur die genannten Felder ändern sich; ein leerer Text löscht die Angabe.
+         */
+        OrganisationIn: {
+            /** Accent Color */
+            accent_color?: string | null;
+            /** Address Lines */
+            address_lines?: string[] | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Registration */
+            registration?: string | null;
+            /** Website */
+            website?: string | null;
+        };
+        /**
+         * OrganisationInfo
+         * @description Organisation des Kontos und Rolle darin (AN6, docs/PLAN_AN6_MANDANTEN.md 3.7).
+         */
+        OrganisationInfo: {
+            /** Display Name */
+            display_name: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "operator" | "customer";
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "member";
+        };
+        /** OrganisationOut */
+        OrganisationOut: {
+            /** Accent Color */
+            accent_color: string | null;
+            /** Address Lines */
+            address_lines: string[];
+            /** Branding Revision */
+            branding_revision: number;
+            /** Display Name */
+            display_name: string;
+            /** Email */
+            email: string | null;
+            /** Has Logo */
+            has_logo: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "operator" | "customer";
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string | null;
+            /** Registration */
+            registration: string | null;
+            /** Website */
+            website: string | null;
         };
         /** OrientationOut */
         OrientationOut: {
@@ -4190,6 +4745,24 @@ export interface components {
             /** Title */
             title: string;
         };
+        /**
+         * PositionIn
+         * @description Lage setzen oder korrigieren: Drehpunkt an `lon`/`lat`, zusätzlich um `rotation_deg` im Uhrzeigersinn
+         *     gegenüber der jetzigen Darstellung gedreht.
+         */
+        PositionIn: {
+            /** Expected Revision */
+            expected_revision?: number | null;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /**
+             * Rotation Deg
+             * @default 0
+             */
+            rotation_deg: number;
+        };
         /** PresetsOut */
         PresetsOut: {
             /** Presets */
@@ -4389,6 +4962,18 @@ export interface components {
             warnings: string[];
             /** Zones */
             zones: components["schemas"]["ZoneRulesOut"][];
+        };
+        /**
+         * ProjectUpdateIn
+         * @description Nur die genannten Felder ändern sich; ein leerer Name oder eine leere Notiz löscht sie.
+         */
+        ProjectUpdateIn: {
+            /** Archived */
+            archived?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Note */
+            note?: string | null;
         };
         /** ProvenanceOut */
         ProvenanceOut: {
@@ -4662,15 +5247,50 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            ocr?: components["schemas"]["OcrOut"] | null;
             /** Page Count */
             page_count: number | null;
+            /** Sha256 */
+            sha256?: string | null;
             /**
              * Status
              * @enum {string}
              */
-            status: "importing" | "active" | "failed";
+            status: "importing" | "active" | "failed" | "scan";
             /** Title */
             title: string;
+        };
+        /** ReportIn */
+        ReportIn: {
+            /**
+             * Locale
+             * @default fr
+             * @enum {string}
+             */
+            locale: "fr" | "de";
+        };
+        /**
+         * ReportOut
+         * @description Bericht als PDF: fertig (`ready`) oder in Arbeit (`job_id`). `input_hash` ist die Prüfsumme des
+         *     Berichts – über alles, was er zeigt –, nicht die der Analyse.
+         */
+        ReportOut: {
+            /** Created At */
+            created_at?: string | null;
+            /** Input Hash */
+            input_hash: string;
+            /** Job Id */
+            job_id?: string | null;
+            /**
+             * Locale
+             * @enum {string}
+             */
+            locale: "fr" | "de";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "pending";
         };
         /** RiskOut */
         RiskOut: {
@@ -4758,6 +5378,11 @@ export interface components {
             confidence: number;
             /** Detail */
             detail: string | null;
+            /**
+             * From Scan
+             * @default false
+             */
+            from_scan: boolean;
             /** Kind */
             kind: string;
             /** Notes */
@@ -4842,6 +5467,11 @@ export interface components {
             building_kind: string;
             /** Confidence */
             confidence: number;
+            /**
+             * From Scan
+             * @default false
+             */
+            from_scan: boolean;
             /** Kind */
             kind: string;
             /** Notes */
@@ -4983,6 +5613,31 @@ export interface components {
             /** Updated By Name */
             updated_by_name?: string | null;
         };
+        /**
+         * ScanPreviewOut
+         * @description Seite eines gescannten Plans als Vorlage zum Nachzeichnen (AN7, docs/PLAN_AN7_SCAN.md 3.5). Nichts wird
+         *     gespeichert; das Grundstück entsteht danach wie in Weg E aus bemaßten Kanten (`PUT /site` mit `trace`).
+         */
+        ScanPreviewOut: {
+            /** Height Px */
+            height_px: number;
+            /** Image */
+            image: string;
+            /** Metres Per Px */
+            metres_per_px: number | null;
+            /** Page */
+            page: number;
+            /** Page Count */
+            page_count: number;
+            /** Paper Mm */
+            paper_mm: number[] | null;
+            /** Scale */
+            scale: number | null;
+            /** Scales */
+            scales: number[];
+            /** Width Px */
+            width_px: number;
+        };
         /** SectionCrossingOut */
         SectionCrossingOut: {
             /** Edge Seq */
@@ -5052,6 +5707,8 @@ export interface components {
             prospects: components["schemas"]["SectionProspectOut"][];
             /** Start Local */
             start_local: number[];
+            /** Terrain */
+            terrain: number[][];
         };
         /** SectionProspectOut */
         SectionProspectOut: {
@@ -5150,6 +5807,7 @@ export interface components {
             edges?: components["schemas"]["ManualEdgeIn"][] | null;
             /** Parcel Idus */
             parcel_idus?: string[] | null;
+            trace?: components["schemas"]["TraceIn"] | null;
         };
         /** SiteOut */
         SiteOut: {
@@ -5188,6 +5846,7 @@ export interface components {
             outline_local: number[][][];
             /** Parcels */
             parcels: components["schemas"]["ParcelOut"][];
+            placement?: components["schemas"]["SitePlacementOut"] | null;
             /**
              * Project Id
              * Format: uuid
@@ -5210,6 +5869,19 @@ export interface components {
             updated_at: string;
             /** Warnings */
             warnings: string[];
+        };
+        /**
+         * SitePlacementOut
+         * @description Was die Karte zum Einpassen braucht (AN5, docs/PLAN_AN5_AUSGABE.md 3.2): Drehpunkt und wie die lokalen
+         *     Achsen auf einer Karte mit geografisch Nord oben erscheinen.
+         */
+        SitePlacementOut: {
+            /** Map Rotation Deg */
+            map_rotation_deg: number;
+            /** Pivot Local */
+            pivot_local: number[];
+            /** Pivot Wgs84 */
+            pivot_wgs84?: number[] | null;
         };
         /** SiteReviewItem */
         SiteReviewItem: {
@@ -5254,6 +5926,7 @@ export interface components {
             email: string;
             /** Id */
             id: string;
+            organisation?: components["schemas"]["OrganisationInfo"] | null;
             /** Roles */
             roles: string[];
         };
@@ -5426,6 +6099,29 @@ export interface components {
              * @enum {string}
              */
             status: "pending" | "ok" | "unavailable";
+        };
+        /**
+         * TraceIn
+         * @description Herkunft einer nach einem Scan nachgezeichneten Parzelle (AN7, docs/PLAN_AN7_SCAN.md 3.5). Der Scan
+         *     selbst wird nicht gespeichert (3.6).
+         */
+        TraceIn: {
+            /** File Name */
+            file_name: string;
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /** Reference M */
+            reference_m?: number | null;
+            /** Scale */
+            scale?: number | null;
+            /**
+             * Scale Method
+             * @enum {string}
+             */
+            scale_method: "plan" | "calibrated";
         };
         /** TypeBasePriceOut */
         TypeBasePriceOut: {
@@ -5698,6 +6394,15 @@ export interface components {
             /** Scale Source */
             scale_source: ("file" | "input") | null;
             site: components["schemas"]["SiteOut"] | null;
+        };
+        /** UsageOut */
+        UsageOut: {
+            /** Budget Month Usd */
+            budget_month_usd: number | null;
+            /** Months */
+            months: components["schemas"]["MonthUsageOut"][];
+            /** Ocr Pages Month */
+            ocr_pages_month: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -8113,7 +8818,7 @@ export interface operations {
             };
         };
     };
-    list_own_projects_api_v1_projects_get: {
+    get_organisation_api_v1_organisation_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -8128,7 +8833,365 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["OrganisationOut"];
+                };
+            };
+        };
+    };
+    update_organisation_api_v1_organisation_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganisationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganisationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_api_keys_api_v1_organisation_api_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyOut"][];
+                };
+            };
+        };
+    };
+    create_api_key_api_v1_organisation_api_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreatedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_api_key_api_v1_organisation_api_keys__key_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_organisation_logo_api_v1_organisation_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": unknown;
+                };
+            };
+        };
+    };
+    put_organisation_logo_api_v1_organisation_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_put_organisation_logo_api_v1_organisation_logo_put"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganisationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_organisation_logo_api_v1_organisation_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganisationOut"];
+                };
+            };
+        };
+    };
+    list_members_api_v1_organisation_members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+        };
+    };
+    add_member_api_v1_organisation_members_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_member_api_v1_organisation_members__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_member_role_api_v1_organisation_members__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberRoleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_usage_api_v1_organisation_usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageOut"];
+                };
+            };
+        };
+    };
+    list_own_projects_api_v1_projects_get: {
+        parameters: {
+            query?: {
+                archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ArchitectProjectOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -8213,6 +9276,41 @@ export interface operations {
             };
         };
     };
+    update_own_project_api_v1_projects__project_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArchitectProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_analysis_api_v1_projects__project_id__analysis_get: {
         parameters: {
             query?: never;
@@ -8264,6 +9362,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalysisComparisonOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_dxf_api_v1_projects__project_id__analysis_export_dxf_get: {
+        parameters: {
+            query?: {
+                variant?: "local" | "L93";
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_geojson_api_v1_projects__project_id__analysis_export_geojson_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -8330,6 +9492,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnalysisOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_report_api_v1_projects__project_id__analysis_report_get: {
+        parameters: {
+            query?: {
+                locale?: "fr" | "de";
+            };
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_report_api_v1_projects__project_id__analysis_report_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
                 };
             };
             /** @description Validation Error */
@@ -8526,6 +9756,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PresetsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_own_project_api_v1_projects__project_id__details_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArchitectProjectOut"];
                 };
             };
             /** @description Validation Error */
@@ -8997,6 +10258,38 @@ export interface operations {
             };
         };
     };
+    request_regulation_ocr_api_v1_projects__project_id__regulations__document_id__ocr_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRegulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     choose_regulation_zone_api_v1_projects__project_id__regulations__document_id__zone_put: {
         parameters: {
             query?: never;
@@ -9253,6 +10546,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_site_position_api_v1_projects__project_id__site_position_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PositionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scan_site_preview_api_v1_projects__project_id__site_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_scan_site_preview_api_v1_projects__project_id__site_scan_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScanPreviewOut"];
                 };
             };
             /** @description Validation Error */

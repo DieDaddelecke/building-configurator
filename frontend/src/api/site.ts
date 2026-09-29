@@ -16,6 +16,8 @@ export type CommuneOut = components["schemas"]["CommuneOut"];
 export type SiteReviewItem = components["schemas"]["SiteReviewItem"];
 export type CustomerEdgeKind = "street" | "neighbour" | null;
 export type ManualEdgeIn = components["schemas"]["ManualEdgeIn"];
+export type TraceIn = components["schemas"]["TraceIn"];
+export type ScanPreviewOut = components["schemas"]["ScanPreviewOut"];
 
 export const SITE_FLAG = "site_selection";
 
@@ -134,11 +136,22 @@ export function useFormSite() {
 export function useFormManualSite() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, edges, addressLabel }: { projectId: string; edges: ManualEdgeIn[]; addressLabel: string }) =>
+    mutationFn: async ({
+      projectId,
+      edges,
+      addressLabel,
+      trace,
+    }: {
+      projectId: string;
+      edges: ManualEdgeIn[];
+      addressLabel: string;
+      /** Nach einem Scan nachgezeichnet (AN7): Datei, Seite, Maßstabsweg; landet in `source_info.trace`. */
+      trace?: TraceIn;
+    }) =>
       unwrap(
         await api.PUT("/api/v1/projects/{project_id}/site", {
           params: { path: { project_id: projectId } },
-          body: { edges, address_label: addressLabel },
+          body: trace ? { edges, address_label: addressLabel, trace } : { edges, address_label: addressLabel },
         }),
       ),
     onSuccess: (site) => {
@@ -226,13 +239,43 @@ export type ArchitectProjectOut = components["schemas"]["ArchitectProjectOut"];
 export type UploadResultOut = components["schemas"]["UploadResultOut"];
 export type UploadCandidateOut = components["schemas"]["UploadCandidateOut"];
 
-export const ownProjectsKey = ["projects", "own"] as const;
+export type ProjectUpdateIn = components["schemas"]["ProjectUpdateIn"];
+export type PositionIn = components["schemas"]["PositionIn"];
+export type SitePlacementOut = components["schemas"]["SitePlacementOut"];
 
-/** Projekte mit Eigentümer; alle Architekten des Büros sehen dieselben (E-AN1-4). */
-export function useOwnProjects() {
+export const ownProjectsKey = ["projects", "own"] as const;
+const projectDetailsKey = (projectId: string) => ["projects", "details", projectId] as const;
+
+/** Projekte mit Eigentümer; alle Architekten des Büros sehen dieselben (E-AN1-4). `archived` zeigt das Archiv
+ *  (AN5, PLAN_AN5_AUSGABE 3.1). */
+export function useOwnProjects(archived = false) {
   return useQuery({
-    queryKey: ownProjectsKey,
-    queryFn: async () => unwrap(await api.GET("/api/v1/projects")),
+    queryKey: [...ownProjectsKey, archived],
+    queryFn: async () => unwrap(await api.GET("/api/v1/projects", { params: { query: { archived } } })),
+  });
+}
+
+/** Name, ganze Notiz und Archiv eines Projekts (AN5). */
+export function useProjectDetails(projectId: string) {
+  return useQuery({
+    queryKey: projectDetailsKey(projectId),
+    queryFn: async () =>
+      unwrap(await api.GET("/api/v1/projects/{project_id}/details", { params: { path: { project_id: projectId } } })),
+  });
+}
+
+/** Name, Notiz oder Archiv ändern; nur die genannten Felder ändern sich. */
+export function useUpdateProject(projectId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: ProjectUpdateIn) =>
+      unwrap(
+        await api.PATCH("/api/v1/projects/{project_id}", { params: { path: { project_id: projectId } }, body }),
+      ),
+    onSuccess: (project) => {
+      client.setQueryData(projectDetailsKey(projectId), project);
+      void client.invalidateQueries({ queryKey: ownProjectsKey });
+    },
   });
 }
 
@@ -295,6 +338,52 @@ export function useUploadParcel(projectId: string) {
         void client.invalidateQueries({ queryKey: ownProjectsKey });
       }
     },
+  });
+}
+
+/** Seite eines gescannten Plans (PDF, JPEG, PNG) als Vorlage zum Nachzeichnen (AN7, docs/PLAN_AN7_SCAN.md 3.5):
+ *  Bild, erkannter Maßstab, Meter je Pixel. Der Server speichert nichts; die Texterkennung dauert 2–5 s. Als Abfrage
+ *  je Datei und Seite, damit ein Seitenwechsel zurück nicht neu erkennt. */
+export function useScanPreview(projectId: string, file: File, page: number) {
+  return useQuery({
+    queryKey: ["site-scan", projectId, file.name, file.size, file.lastModified, page],
+    queryFn: async () => {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("page", String(page));
+      return unwrap(
+        await api.POST("/api/v1/projects/{project_id}/site/scan", {
+          params: { path: { project_id: projectId } },
+          // Der Serialisierer ersetzt den Rumpf; der Platzhalter erfüllt nur die Typen des Schemas
+          body: { file: "", page },
+          bodySerializer: () => form,
+        }),
+      );
+    },
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+/** Grundstück ohne Kataster auf der Karte verorten oder die Lage korrigieren (AN5, PLAN_AN5_AUSGABE 3.2). Danach
+ *  ändern sich Baurahmen und Analyse; Gelände und Risiken kommen im Hintergrund. */
+export function usePositionSite(site: SiteOut) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Omit<PositionIn, "expected_revision">) =>
+      unwrap(
+        await api.PUT("/api/v1/projects/{project_id}/site/position", {
+          params: { path: { project_id: site.project_id } },
+          body: { ...body, expected_revision: site.revision },
+        }),
+      ),
+    onSuccess: (updated) => {
+      client.setQueryData(siteKey(updated.project_id), updated);
+      for (const key of [["admin", "envelope", updated.project_id], ["analysis", updated.project_id]]) {
+        void client.invalidateQueries({ queryKey: key });
+      }
+    },
+    onError: () => client.invalidateQueries({ queryKey: siteKey(site.project_id) }),
   });
 }
 

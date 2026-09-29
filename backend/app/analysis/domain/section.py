@@ -2,17 +2,19 @@
 
 A–A läuft von der Hauptstraße nach hinten, B–B rechtwinklig dazu, von der Straße aus gesehen von links nach
 rechts; beide durch die bebaubare Fläche. Lage `s` in Metern ab der ersten Grenze, Höhe über der Bezugshöhe
-der Regeln (Gelände eben, E-AN3G-4). Geometrie in Lambert-93 wie der Baurahmen; der Dienst rechnet in lokale
+der Regeln; seit AN5 mit Geländeprofil, wenn Gelände vorliegt (die Stufen bleiben über der mittleren Höhe,
+E-AN5-4). Geometrie in Lambert-93 wie der Baurahmen; der Dienst rechnet in lokale
 Meter um.
 """
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
 
 from app.analysis.domain.gabarit import Gabarit
+from app.analysis.domain.terrain_profile import profile
 from app.envelope.domain import tolerances as tol
 from app.envelope.domain.derive import READINGS, EdgeResult, Envelope, PartResult
 from app.envelope.domain.heights import Heights
@@ -80,6 +82,8 @@ class Section:
     levels: list[SectionLevel]
     height_lines: list[HeightLine]
     prospects: list[Prospect] = field(default_factory=list)
+    terrain: list[tuple[float, float]] = field(default_factory=list)
+    """(s, Höhe über der Bezugshöhe): Geländeprofil aus den Stichproben (AN5); leer ohne Gelände (eben)."""
 
 
 # ---------------------------------------------------------------------------
@@ -339,4 +343,16 @@ def sections(data: EnvelopeInput, envelope: Envelope, gabarit: Gabarit) -> list[
     along, across = _directions(data)
     centre = _centre(data, envelope)
     result = [_section(key, data, envelope, gabarit, centre, d) for key, d in (("A", along), ("B", across))]
-    return [section for section in result if section is not None]
+    terrain = data.site.terrain
+    return [
+        replace(
+            section,
+            terrain=profile(
+                terrain.samples, section.start, section.end, section.parcel, terrain.reference_altitude_ngf
+            ),
+        )
+        if terrain.status == "ok" and terrain.reference_altitude_ngf is not None
+        else section
+        for section in result
+        if section is not None
+    ]

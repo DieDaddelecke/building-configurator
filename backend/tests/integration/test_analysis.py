@@ -17,6 +17,7 @@ from app.rules.models import LandUsePlan, RegulationChapter, Rule, RuleSet, Rule
 from tests.integration import test_rules_upload as an2
 from tests.integration.test_rules_upload import (
     choose,
+    customer_project,
     evaluate,
     extract_jobs,
     new_project,
@@ -387,8 +388,8 @@ def test_parameters_are_validated(client: Any, upload_project: str, span: dict[s
     assert response.status_code == 422
 
 
-def test_customers_have_no_analysis(client: Any, flags: None, login_as: Any) -> None:
-    customer = new_project(client)
+def test_customers_have_no_analysis(client: Any, flags: None, login_as: Any, db_session: Any) -> None:
+    customer = customer_project(client, db_session)
     assert client.get(f"/api/v1/projects/{customer}/analysis").status_code == 404
     login_as("architect")
     assert client.get(f"/api/v1/projects/{customer}/analysis").status_code == 404

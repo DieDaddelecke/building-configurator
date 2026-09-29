@@ -23,6 +23,14 @@ const SECTIONS: [string[], string][] = [
   [["configurator", "design", "area"], "area."],
   [["site", "risks", "kind"], "risk.kind."],
   [["site", "risks", "level"], "risk.level."],
+  [["rules", "value"], "rule_value."],
+  [["rules", "basis"], "rule_basis."],
+  [["rules", "roofForm"], "rule_roof_form."],
+  [["rules", "flatRoof"], "rule_flat_roof."],
+  [["rules", "material"], "rule_material."],
+  [["rules", "color"], "rule_color."],
+  [["rules", "status"], "rule_status."],
+  [["rules", "reason"], "rule_reason."],
 ];
 
 function expected(source: unknown): Record<string, string> {

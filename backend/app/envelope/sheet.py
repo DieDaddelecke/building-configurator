@@ -10,6 +10,7 @@ from typing import Any
 
 from app.envelope.schemas import ContourOut, EnvelopeOut, LimitOut, PartOut
 from app.platform.i18n import Locale, translate
+from app.rules.format import rule_value
 
 PLAN_SIZE_MM = (170.0, 120.0)
 PLAN_MARGIN_M = 3.0
@@ -172,21 +173,7 @@ def _limit_value(limit: LimitOut, locale: Locale) -> str:
         return translate("envelope.value.not_determined", locale)
     if limit.value is not None:
         return f"{_number(limit.value, 0)} m²"
-    parts = [
-        f"{translate('envelope.param.' + name, locale)} {_param_value(value, locale)}"
-        for name, value in sorted(limit.params.items())
-    ]
-    return " · ".join(parts)
-
-
-def _param_value(value: object, locale: Locale) -> str:
-    if isinstance(value, bool):
-        return translate("envelope.value." + ("yes" if value else "no"), locale)
-    if isinstance(value, int | float):
-        return _number(float(value), 2)
-    if isinstance(value, list | tuple):
-        return ", ".join(str(v) for v in value)
-    return str(value)
+    return rule_value(limit.kind, limit.status, None, limit.params, locale)
 
 
 def _source(citation: Any, locale: Locale) -> str:

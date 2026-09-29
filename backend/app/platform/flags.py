@@ -27,6 +27,9 @@ def flag_enabled(flag: FeatureFlag, auth: RequestAuth) -> bool:
         return True
     if auth.staff is not None and auth.staff.roles & set(flag.enabled_roles):
         return True
+    if auth.api is not None and Role.architect in flag.enabled_roles:
+        # Ein API-Schlüssel handelt für die Architekten seiner Organisation (AN6, PLAN_AN6_MANDANTEN 3.6)
+        return True
     return auth.project_id is not None and auth.project_id in (flag.enabled_project_ids or [])
 
 

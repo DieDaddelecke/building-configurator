@@ -27,6 +27,8 @@ dependencies = [
   "python-multipart>=0.0.18",
   "email-validator>=2.2",
   "pdfminer-six>=20250506",
+  "pypdfium2>=4.30",
+  "pillow>=10.4",
 ]
 
 [dependency-groups]

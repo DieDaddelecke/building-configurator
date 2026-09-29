@@ -32,6 +32,7 @@ from app.rules.domain.extraction import (
 )
 from app.rules.domain.kinds import MANDATORY_KINDS, ParamProblem, params_equal, validate_params
 from app.rules.domain.text import normalize, states_not_regulated, values_in_quote, verify_quote
+from app.rules.extract import scan_reasons
 from tests.rules_support import fixture_json, rule, uh_output, verification_output
 
 FIXTURE = fixture_json("reglement-pages.json")
@@ -127,6 +128,46 @@ def test_quote_with_wrong_number_is_rejected() -> None:
         99,
     )
     assert not check.verified
+
+
+def test_unit_exponent_is_not_a_value() -> None:
+    """Die Texterkennung liest „m²“ oft als „m?“ oder „m°“ (Beyenes, Scan S. 13, 19, 20); die Hochzahl ist
+    kein Wert und darf das Zitat nicht zu Fall bringen. Ein falscher Wert fällt weiter durch."""
+    quote = "au minimum une place par tranche de 40 m² de surface de plancher créée"
+    text = "Il doit être réalisé au minimum une place par tranche de {} de surface de plancher créée."
+    for read_as in ("40 m?", "40 m°", "40 m2", "40 m²"):
+        assert verify_quote(quote, {19: text.format(read_as)}, 19).verified, read_as
+    assert not verify_quote(quote, {19: text.format("60 m?")}, 19).verified
+
+
+def test_unconfirmed_quote_in_a_scanned_chapter_gets_the_scan_reason() -> None:
+    """Auch ohne Fundstelle (Seite None, weil keine Seite eine Ähnlichkeit erreichte), wenn das Kapitel ganz
+    im Scan liegt; in einem Kapitel mit Textschicht bleibt der Grund (AN7, PLAN_AN7_SCAN 7.5)."""
+    base = AssessedRule(
+        sector="UC",
+        kind="parking",
+        building_kind="main",
+        status="unknown",
+        reason="quote_unverified",
+        params={},
+        page=None,
+        quote="une place par tranche de 40 m²",
+        quote_verified=False,
+        similarity=0.0,
+        confidence=0.9,
+        notes="",
+    )
+    on_page = replace(base, page=19)
+    assert [r.reason for r in scan_reasons([base, on_page], frozenset(range(9, 21)), list(range(9, 21)))] == [
+        "scan_unconfirmed",
+        "scan_unconfirmed",
+    ]
+    partly = frozenset({19})
+    assert [r.reason for r in scan_reasons([base, on_page], partly, list(range(9, 21)))] == [
+        "quote_unverified",
+        "scan_unconfirmed",
+    ]
+    assert scan_reasons([base], frozenset(), list(range(9, 21)))[0].reason == "quote_unverified"
 
 
 def test_quote_on_neighbour_page_corrects_page_and_short_quote_proves_nothing() -> None:
@@ -255,6 +296,36 @@ def test_articles_in_table_of_contents_do_not_end_the_chapter() -> None:
     pages[7] = "CHAPITRE 2 : LA ZONE Ub\nDispositions"
     structure = detect_structure(pages)
     assert [(c.code, c.first_page, c.last_page) for c in structure.chapters] == [("Ua", 3, 6), ("Ub", 7, 8)]
+
+
+def test_headings_win_when_the_toc_misses_a_chapter() -> None:
+    # Wie Beyenes: Das Verzeichnis nennt Zone UE nicht, ihre Seiten lägen still im Kapitel UR (AN7, 7.5)
+    toc = "\n".join(
+        [
+            "SOMMAIRE",
+            "DISPOSITIONS GENERALES ............................ 2",
+            "DISPOSITIONS APPLICABLES À LA ZONE UC ............. 3",
+            "DISPOSITIONS APPLICABLES À LA ZONE UR ............. 5",
+            "DISPOSITIONS APPLICABLES À LA ZONE N .............. 9",
+        ]
+    )
+    pages = dict.fromkeys(range(1, 11), "texte")
+    pages[1] = toc
+    pages[2] = "DISPOSITIONS GENERALES\nArticle 1"
+    for page, code in ((3, "UC"), (5, "UR"), (7, "UE"), (9, "N")):
+        pages[page] = f"ZONE {code}\nDISPOSITIONS APPLICABLES À LA ZONE {code}\nLa zone {code} recouvre"
+    structure = detect_structure(pages)
+    assert structure.method == "headings"
+    assert [(c.code, c.first_page, c.last_page) for c in structure.chapters] == [
+        ("UC", 3, 4),
+        ("UR", 5, 6),
+        ("UE", 7, 8),
+        ("N", 9, 10),
+    ]
+    # Titel und allgemeine Seiten bleiben aus dem Verzeichnis, wo es sie hat
+    assert structure.chapters[0].title == "DISPOSITIONS APPLICABLES À LA ZONE UC"
+    assert structure.chapters[2].title == "ZONE UE"
+    assert structure.general_pages == [2]
 
 
 def test_chapters_from_headings_when_toc_pages_are_missing() -> None:

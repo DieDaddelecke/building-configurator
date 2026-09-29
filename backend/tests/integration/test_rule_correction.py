@@ -22,7 +22,7 @@ from tests.integration.test_analysis import (
     upload_lot_document,
     with_plu,
 )
-from tests.integration.test_rules_upload import new_project
+from tests.integration.test_rules_upload import customer_project
 from tests.rules_support import FakeExtractor
 
 memory_storage = an2.memory_storage
@@ -202,7 +202,7 @@ def test_corrections_are_checked(client: Any, upload_project: str, db_session: A
 
 
 def test_corrections_need_an_owned_project(client: Any, db_session: Any, flags: None, login_as: Any) -> None:
-    customer = new_project(client)
+    customer = customer_project(client, db_session)
     assert client.get(url(customer)).status_code == 404
     login_as("architect")
     assert client.get(url(customer)).status_code == 404

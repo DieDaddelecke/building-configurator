@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, type RouteObject } from "react-rou
 
 import { NichtGefunden } from "../../components/NichtGefunden";
 import { AnalyseLayout } from "./AnalyseLayout";
+import { OrganisationSeite } from "./OrganisationSeite";
 import { Projekte } from "./Projekte";
 import { ProjektSeite } from "./ProjektSeite";
 import { VerwaltungSeite } from "./VerwaltungSeite";
@@ -17,6 +18,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Projekte /> },
       { path: "projekt/:projectId", element: <ProjektSeite /> },
+      // Mitglieder, Erscheinungsbild, Verbrauch und API-Schlüssel (AN6)
+      { path: "organisation", element: <OrganisationSeite /> },
       // Gemeinsame Verwaltung beider Produkte (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
       { path: "verwaltung/*", element: <VerwaltungSeite /> },
     ],

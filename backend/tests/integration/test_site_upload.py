@@ -12,11 +12,14 @@ from typing import Any
 
 import ezdxf
 import pytest
+from PIL import Image, ImageDraw
 from sqlalchemy import select, text
 
+from app.platform import scan
 from app.platform.jobs import enqueue
 from app.platform.jobs.worker import run_one
 from app.platform.models import FeatureFlag, Project
+from tests.scan_support import image_bytes, text_image
 from tests.site_pdf_support import extract_pdf, filled, line, plan_pdf
 
 # Rechteck 20 × 30 m, lokal gezeichnet (ohne geografischen Bezug)
@@ -328,6 +331,108 @@ def test_scanned_pdf_is_rejected_clearly(client: Any, project: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Gescannten Plan nachzeichnen (AN7, docs/PLAN_AN7_SCAN.md 3.5)
+# ---------------------------------------------------------------------------
+
+
+def scanned_plan(dpi: int = 200) -> Any:
+    """Auszug im Maßstab 1:500 auf A5 quer: Rechteck 60 × 40 mm auf dem Papier = 30 × 20 m in der Natur."""
+    image = text_image(["Échelle d'édition : 1/500", "Commune de Treillières"], dpi=dpi, height_mm=148)
+    draw = ImageDraw.Draw(image)
+    mm = dpi / 25.4
+    draw.rectangle((40 * mm, 60 * mm, 100 * mm, 100 * mm), outline=0, width=max(1, round(0.4 * mm)))
+    return image
+
+
+def scan_preview(client: Any, project: str, name: str, data: bytes, **form: Any) -> Any:
+    return client.post(
+        f"/api/v1/projects/{project}/site/scan",
+        files={"file": (name, data, "application/octet-stream")},
+        data=form,
+    )
+
+
+def test_scanned_plan_becomes_a_template_with_its_scale(client: Any, project: str) -> None:
+    response = scan_preview(client, project, "auszug.png", image_bytes(scanned_plan(), dpi=200))
+    assert response.status_code == 200, response.json()
+    body = response.json()
+    assert body["image"].startswith("data:image/jpeg;base64,")
+    assert (body["page"], body["page_count"], body["scales"], body["scale"]) == (1, 1, [500], 500)
+    assert body["paper_mm"] == pytest.approx([210, 148], abs=0.5)
+    # Das Rechteck ist auf dem Bild 60 mm breit: in der Natur 30 m
+    width_px = 60 / 25.4 * 200 * body["width_px"] / round(210 / 25.4 * 200)
+    assert body["metres_per_px"] * width_px == pytest.approx(30, rel=0.01)
+
+    # Als Scan-PDF: das Papiermaß kommt aus dem PDF, gerendert wird mit 300 dpi; die Blattbreite in der Natur
+    # (210 mm × 500 = 105 m) bleibt gleich
+    pdf = io.BytesIO()
+    scanned_plan().save(pdf, "PDF", resolution=200)
+    as_pdf = scan_preview(client, project, "auszug.pdf", pdf.getvalue()).json()
+    assert as_pdf["scale"] == 500 and as_pdf["paper_mm"] == pytest.approx([210, 148], abs=0.5)
+    assert as_pdf["metres_per_px"] * as_pdf["width_px"] == pytest.approx(105, rel=0.01)
+    assert body["metres_per_px"] * body["width_px"] == pytest.approx(105, rel=0.01)
+    # Nichts ist gespeichert
+    assert client.get(f"/api/v1/projects/{project}/site").status_code == 404
+
+
+def test_scan_preview_works_without_text_recognition(
+    client: Any, project: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Fehlt Tesseract, gibt es keinen Maßstab aus dem Plan; Kalibrieren über zwei Punkte geht trotzdem."""
+
+    def unavailable(_page: Any) -> Any:
+        raise scan.ScanProblem("ocr_unavailable")
+
+    monkeypatch.setattr(scan, "recognize", unavailable)
+    response = scan_preview(client, project, "auszug.png", image_bytes(scanned_plan(), dpi=200))
+    assert response.status_code == 200, response.json()
+    body = response.json()
+    assert (body["scales"], body["scale"], body["metres_per_px"]) == ([], None, None)
+    assert body["paper_mm"] == pytest.approx([210, 148], abs=0.5)
+
+
+def test_photo_without_resolution_needs_calibration(client: Any, project: str) -> None:
+    body = scan_preview(client, project, "foto.jpg", image_bytes(scanned_plan(), "JPEG", dpi=72)).json()
+    assert body["scale"] == 500 and body["paper_mm"] is None and body["metres_per_px"] is None
+
+
+@pytest.mark.parametrize(
+    ("name", "data", "form", "code"),
+    [
+        ("plan.gif", b"GIF89a....", {}, "scan_unsupported"),
+        ("plan.pdf", b"%PDF-1.7 kaputt", {}, "pdf_unreadable"),
+        ("plan.png", image_bytes(Image.new("L", (400, 300), 255)), {"page": "2"}, "page_out_of_range"),
+    ],
+)
+def test_scan_preview_rejects_what_it_cannot_show(
+    client: Any, project: str, name: str, data: bytes, form: dict[str, str], code: str
+) -> None:
+    response = scan_preview(client, project, name, data, **form)
+    assert response.status_code == 422 and response.json()["code"] == code
+
+
+def test_traced_site_keeps_its_origin(client: Any, project: str) -> None:
+    edges = [
+        {"length_m": 30, "angle_deg": 90},
+        {"length_m": 20, "angle_deg": 180},
+        {"length_m": 30, "angle_deg": 270},
+    ]
+    trace = {"file_name": "auszug.pdf", "page": 1, "scale_method": "calibrated", "reference_m": 30}
+    response = client.put(
+        f"/api/v1/projects/{project}/site",
+        json={"edges": edges, "address_label": "Nachgezeichnet", "trace": trace},
+    )
+    assert response.status_code == 200, response.json()
+    body = response.json()
+    assert body["origin"] == "manual_sketch" and body["area_m2"] == pytest.approx(600)
+    assert body["source_info"] == {"trace": trace}
+    refused = client.put(
+        f"/api/v1/projects/{project}/site", json={"parcel_idus": ["44209000AD0065"], "trace": trace}
+    )
+    assert refused.status_code == 422
+
+
+# ---------------------------------------------------------------------------
 # Kanten von Hand einordnen
 # ---------------------------------------------------------------------------
 
@@ -369,7 +474,7 @@ def test_architect_project_has_an_owner_and_no_cookie(
     project_id = uuid.UUID(created.json()["id"])
     assert "emprise_project" not in created.cookies
     project = db_session.get(Project, project_id)
-    assert project.owner_staff_user_id is not None and project.organisation_id is None
+    assert project.owner_staff_user_id is not None and project.organisation_id is not None
 
     # Zugriff über die Mitarbeitersitzung, nicht über das Cookie
     site = upload(client, str(project_id), "plan.dxf", dxf_bytes((LOCAL_RING, "PARCELLE"))).json()["site"]

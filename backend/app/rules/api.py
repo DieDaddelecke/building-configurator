@@ -22,6 +22,7 @@ from app.config import get_settings
 from app.integrations.http import ExternalServiceError, shared_client
 from app.platform import flags, rate_limit
 from app.platform.auth.context import (
+    Principal,
     RequestAuth,
     Role,
     StaffPrincipal,
@@ -33,7 +34,7 @@ from app.platform.auth.context import (
 from app.platform.db import get_db
 from app.platform.problems import Problem
 from app.platform.shared import get_shared_db
-from app.rules import documents, model_choice, service
+from app.rules import documents, model_choice, ocr, service
 from app.rules.schemas import (
     CoverageOut,
     ExtractIn,
@@ -79,6 +80,9 @@ def get_project_rules(
 Reader = Depends(require_roles(Role.architect, Role.rules_admin, Role.ops))
 Editor = Depends(require_roles(Role.architect, Role.rules_admin))
 Operator = Depends(require_roles(Role.ops, Role.rules_admin))
+AnyOrganisation = Depends(require_roles(Role.architect, Role.rules_admin, Role.ops, organisations=True))
+"""Für Architekten aller Organisationen (AN6, PLAN_AN6_MANDANTEN 3.2); die übrigen `/admin`-Routen ohne
+Projekt sind nur für die Organisation `operator`, die mit Projekt nur für die Organisation des Projekts."""
 
 
 @router.get("/admin/rules/coverage", response_model=CoverageOut)
@@ -213,7 +217,7 @@ def delete_project_override(
 
 
 @router.get("/admin/rule-kinds", response_model=list[RuleKindFormOut])
-def get_rule_kinds(staff: StaffPrincipal = Reader) -> list[RuleKindFormOut]:
+def get_rule_kinds(staff: StaffPrincipal = AnyOrganisation) -> list[RuleKindFormOut]:
     """Formularbeschreibung der Regelarten aus demselben Schema wie Prüfung und Modellausgabe (AN4, 3.1)."""
     return service.rule_kind_forms()
 
@@ -227,7 +231,7 @@ def get_rule_kinds(staff: StaffPrincipal = Reader) -> list[RuleKindFormOut]:
 @router.get("/projects/{project_id}/rule-overrides", response_model=list[ProjectOverrideOut])
 def list_own_overrides(
     project_id: uuid.UUID,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> list[ProjectOverrideOut]:
     """Korrekturen des Projekts mit Begründung, Fundstelle und ob sie wirken."""
@@ -238,7 +242,7 @@ def list_own_overrides(
 def put_own_override(
     project_id: uuid.UUID,
     body: ProjectOverrideIn,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> list[ProjectOverrideOut]:
     """Regel korrigieren oder ergänzen; wirkt sofort in Regeln, Baurahmen und Analyse (kostet nichts)."""
@@ -249,7 +253,7 @@ def put_own_override(
 def delete_own_override(
     project_id: uuid.UUID,
     override_id: uuid.UUID,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> list[ProjectOverrideOut]:
     """Korrektur zurücknehmen: Es gilt wieder der gelesene Wert."""
@@ -279,7 +283,7 @@ async def _read_limited(file: UploadFile, limit: int) -> bytes:
 @router.get("/projects/{project_id}/regulations", response_model=list[ProjectRegulationOut])
 def list_project_regulations(
     project_id: uuid.UUID,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> list[ProjectRegulationOut]:
     """Hochgeladene Dokumente des Projekts mit Lesestand, erkannten Kapiteln und Stand der Auswertung."""
@@ -293,7 +297,7 @@ async def upload_project_regulation(
     file: UploadFile = File(...),
     title: str | None = Form(default=None, max_length=300),
     du_type: UploadDuType = Form(default="PLU"),
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> ProjectRegulationOut:
     """règlement écrit als PDF hochladen (3.2). Ersetzt ein vorhandenes PLU des Projekts. Gelesen wird im
@@ -323,7 +327,7 @@ def choose_regulation_zone(
     project_id: uuid.UUID,
     document_id: uuid.UUID,
     body: ZoneChoiceIn,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> ProjectRegulationOut:
     """Zone und Kapitel wählen (3.3). **Kostet**: plant die Auswertung des Kapitels ein, wenn sich seine
@@ -338,7 +342,7 @@ def choose_regulation_lot(
     project_id: uuid.UUID,
     document_id: uuid.UUID,
     body: LotChoiceIn,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> ProjectRegulationOut:
     """Lot eines Zusatzdokuments wählen (AN3, docs/PLAN_AN3_ANALYSE.md 3.7). **Kostet** wie die Zonenwahl:
@@ -347,11 +351,29 @@ def choose_regulation_lot(
     return documents.choose_lot(db, get_settings(), project_id, document_id, body, staff.actor_id)
 
 
+@router.post(
+    "/projects/{project_id}/regulations/{document_id}/ocr",
+    response_model=ProjectRegulationOut,
+    status_code=202,
+)
+def request_regulation_ocr(
+    request: Request,
+    project_id: uuid.UUID,
+    document_id: uuid.UUID,
+    staff: Principal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> ProjectRegulationOut:
+    """Texterkennung der Seiten ohne Textschicht bestätigen (AN7, docs/PLAN_AN7_SCAN.md 3.2). Kostet nichts,
+    dauert je Seite einige Sekunden; läuft sie schon oder ist alles erkannt, ändert sich nichts."""
+    rate_limit.check(request, "regulation_write", get_settings().site_write_limit_per_hour, 3600)
+    return ocr.request(db, project_id, document_id, staff.actor_id)
+
+
 @router.delete("/projects/{project_id}/regulations/{document_id}", status_code=204)
 def remove_project_regulation(
     project_id: uuid.UUID,
     document_id: uuid.UUID,
-    staff: StaffPrincipal = Depends(require_owned_project),
+    staff: Principal = Depends(require_owned_project),
     db: Session = Depends(get_db),
 ) -> Response:
     """Dokument vom Projekt lösen; das Dokument bleibt für andere Projekte bestehen (E-AN2-4)."""
@@ -365,11 +387,14 @@ def remove_project_regulation(
     responses={200: {"content": {"application/pdf": {}}}},
 )
 def regulation_file(
-    file_id: uuid.UUID, staff: StaffPrincipal = Reader, db: Session = Depends(get_db)
+    file_id: uuid.UUID, staff: StaffPrincipal = AnyOrganisation, db: Session = Depends(get_db)
 ) -> Response:
     """Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für
-    das Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung."""
-    content, filename = documents.file_content(db, file_id)
+    Mitarbeitende; eine fremde Organisation nur Dateien, die ein eigenes Projekt nutzt (AN6). Die Datei ist
+    beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung."""
+    content, filename = documents.file_content(
+        db, file_id, None if staff.is_operator else staff.organisation_id
+    )
     ascii_name = filename.encode("ascii", "replace").decode().replace('"', "").replace("?", "_")
     disposition = f"inline; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename)}"
     return Response(

@@ -5,6 +5,7 @@ import { ApiError, type Problem } from "../../api/client";
 import { useUploadParcel, type UploadResultOut } from "../../api/site";
 import { formatNumber } from "../../site/geo";
 import { auswahlFlaeche, bezeichnung, KonturWahl } from "./KonturWahl";
+import { ScanNachzeichnen } from "./ScanNachzeichnen";
 
 interface ParzelleHochladenProps {
   projectId: string;
@@ -13,11 +14,14 @@ interface ParzelleHochladenProps {
 }
 
 const istPdf = (file: File | null) => Boolean(file?.name.toLowerCase().endsWith(".pdf"));
+/** Bilder gehen direkt zum Nachzeichnen; der Upload der Parzelle selbst liest nur DXF, GeoJSON und PDF (AN7). */
+const istBild = (file: File | null) => /.(jpe?g|png)$/i.test(file?.name ?? "");
 
 /**
  * Parzelle aus DXF, GeoJSON oder vektoriellem PDF (AN1, PLAN_AN1 3.2, 8 und 9). Mehrere Konturen: erst im Plan
  * wählen, dann übernehmen; zerschneidet eine fremde Linie die Parzelle, werden ihre Teile zusammen gewählt
  * (UP17). Bei PDF braucht es einen Maßstab; steht er im Plan, wird er übernommen, sonst hier angegeben (UP14).
+ * Ein gescanntes PDF oder ein Bild wird als Vorlage nachgezeichnet (AN7, docs/PLAN_AN7_SCAN.md 3.5).
  */
 export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHochladenProps) {
   const { t, i18n } = useTranslation();
@@ -29,6 +33,7 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
   const [massstab, setMassstab] = useState("");
   const [auswahl, setAuswahl] = useState<UploadResultOut | null>(null);
   const [gewaehlt, setGewaehlt] = useState<number[]>([]);
+  const [nachzeichnen, setNachzeichnen] = useState(false);
   const upload = useUploadParcel(projectId);
 
   const scale = istPdf(file) && /^\d+$/.test(massstab.trim()) ? Number(massstab.trim()) : undefined;
@@ -63,6 +68,18 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
     setGewaehlt((liste) => (liste.includes(index) ? liste.filter((i) => i !== index) : [...liste, index]));
   const einzeln = gewaehlt.length === 1 ? (auswahl?.candidates.find((c) => c.index === gewaehlt[0]) ?? null) : null;
 
+  if (nachzeichnen && file) {
+    return (
+      <ScanNachzeichnen
+        projectId={projectId}
+        file={file}
+        addressLabel={label.trim()}
+        onFormed={onFormed}
+        onCancel={() => setNachzeichnen(false)}
+      />
+    );
+  }
+
   return (
     <section className="karte p-5 flex flex-col gap-4" aria-labelledby="upload-titel">
       <h3 id="upload-titel" className="f-display text-xl">{t("analyse.upload.title")}</h3>
@@ -86,7 +103,7 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
           id={fileId}
           className="field"
           type="file"
-          accept=".dxf,.geojson,.json,.pdf"
+          accept=".dxf,.geojson,.json,.pdf,.jpg,.jpeg,.png"
           onChange={(event) => neueDatei(event.target.files?.[0] ?? null)}
         />
       </div>
@@ -132,6 +149,11 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
           {fehler.detail && fehler.code !== "upload_scale_ambiguous" && (
             <span className="block text-sm t-mute">{fehler.detail}</span>
           )}
+          {fehler.code === "upload_pdf_no_vector" && (
+            <button type="button" className="btn btn-primary mt-2" onClick={() => setNachzeichnen(true)}>
+              {t("analyse.trace.start")}
+            </button>
+          )}
         </div>
       )}
 
@@ -170,7 +192,12 @@ export function ParzelleHochladen({ projectId, onFormed, onCancel }: ParzelleHoc
       )}
 
       <div className="flex gap-3">
-        {!auswahl && (
+        {!auswahl && istBild(file) && (
+          <button type="button" className="btn btn-primary" disabled={!label.trim()} onClick={() => setNachzeichnen(true)}>
+            {t("analyse.trace.start")}
+          </button>
+        )}
+        {!auswahl && !istBild(file) && (
           <button
             type="button"
             className="btn btn-primary"

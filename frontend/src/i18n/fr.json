@@ -34,7 +34,7 @@
         "text": "Hauteurs, reculs et surfaces, avec rapport et export CAO."
       }
     },
-    "soon": "La parcelle, le règlement et les documents complémentaires entrent ; cadre constructible, emprise déterminante, niveaux, surface de plancher, gabarit et coupe sont calculés. Rapport et export CAO suivent.",
+    "soon": "La parcelle, le règlement et les documents complémentaires entrent ; cadre constructible, emprise déterminante, niveaux, surface de plancher, gabarit et coupe sont calculés, avec rapport PDF et export DXF et GeoJSON. Les documents scannés suivent.",
     "login": {
       "intro": "L'accès est réservé au cabinet ; l'authentification passe par le fournisseur d'identité.",
       "denied": {
@@ -48,11 +48,12 @@
     "origin": {
       "parcel": "cadastre",
       "manual_sketch": "dessinée",
-      "upload": "fichier"
+      "upload": "fichier",
+      "traced": "redessinée d’après un scan"
     },
     "projects": {
       "title": "Projets",
-      "intro": "Un projet, une parcelle et ses règles. Nommage, notes et archivage viendront plus tard.",
+      "intro": "Une parcelle et ses règles par projet. Nom et note se saisissent dans le projet ; les projets archivés sont sous « Archives ».",
       "new": "Nouveau projet",
       "empty": "Aucun projet pour l'instant.",
       "untitled": "Sans libellé",
@@ -60,7 +61,13 @@
       "origin": "Origine",
       "area": "Surface",
       "updated": "Dernière modification",
-      "noSite": "pas de parcelle"
+      "noSite": "pas de parcelle",
+      "filter": "Afficher les projets",
+      "active": "Actifs",
+      "archived": "Archives",
+      "search": "Rechercher (nom, adresse, note)",
+      "emptyArchive": "Aucun projet archivé.",
+      "noMatch": "Aucun projet ne correspond à la recherche."
     },
     "site": {
       "intro": "Apporter la parcelle, qualifier ses limites, déposer le règlement – on en tire les règles et le cadre constructible.",
@@ -85,13 +92,16 @@
       "scale": "Échelle",
       "scaleFile": "lue dans le plan",
       "scaleInput": "indiquée",
+      "scaleCalibrated": "calibrée sur {{length}} m",
       "outline": "Contour",
       "pieces": "réuni à partir de {{count}} surfaces du fichier",
-      "shortPieces": "tronçons de moins de {{length}} m regroupés dans une limite"
+      "shortPieces": "tronçons de moins de {{length}} m regroupés dans une limite",
+      "positionMap": "ajustée à la main sur le cadastre ({{date}})",
+      "positionFile": "d’après le fichier (Lambert-93)"
     },
     "upload": {
       "title": "Parcelle depuis un fichier",
-      "formats": "DXF avec polyligne fermée, GeoJSON (Lambert-93 ou WGS84) ou PDF vectoriel – par exemple l’extrait de cadastre.gouv.fr ou le plan du géomètre ; 20 Mo au plus. Les PDF scannés ne sont pas encore lus. Le fichier n’est pas conservé, seulement son nom, son empreinte, son calque et son échelle.",
+      "formats": "DXF avec polyligne fermée, GeoJSON (Lambert-93 ou WGS84), PDF – même scanné – ou image (JPEG, PNG), par exemple l’extrait de cadastre.gouv.fr ou le plan du géomètre ; 20 Mo au plus. Les scans et images sont redessinés comme modèle. Le fichier n’est pas conservé, seulement son nom, son empreinte, son calque et son échelle.",
       "label": "Libellé du terrain",
       "labelHint": "adresse ou référence cadastrale",
       "file": "Fichier",
@@ -103,7 +113,7 @@
         "upload_outline_not_found": "Ce contour n'est plus proposé.",
         "upload_too_large": "Le fichier est trop volumineux (20 Mo au plus).",
         "site_origin_mismatch": "Ce projet a déjà un terrain issu du cadastre.",
-        "upload_pdf_no_vector": "Le PDF ne contient aucun trait, probablement un scan. Les plans scannés ne sont pas encore lus – utilisez le PDF issu de la CAO ou de cadastre.gouv.fr.",
+        "upload_pdf_no_vector": "Le PDF ne contient aucun trait, sans doute un scan. Vous pouvez le redessiner comme modèle : fixer l’échelle, cliquer les sommets, coter les limites.",
         "upload_scale_missing": "Aucune échelle sur le plan. Indiquez l’échelle ci-dessus puis importez à nouveau.",
         "upload_scale_ambiguous": "Le plan indique plusieurs échelles. Laquelle vaut pour le dessin ?",
         "site_not_contiguous": "Les surfaces choisies ne se touchent pas – choisissez uniquement des surfaces contiguës.",
@@ -124,6 +134,43 @@
       "selectionHint": "Les surfaces situées à l’intérieur d’une surface choisie – par exemple les bâtiments – en font partie sans clic. La surface exacte est fixée après la reprise.",
       "maxSelected": "Au plus {{count}} surfaces peuvent être réunies."
     },
+    "trace": {
+      "title": "Redessiner un scan",
+      "intro": "{{file}} sert de modèle : fixez l’échelle, puis cliquez les sommets de la parcelle. Le nord est en haut ; la position sur la carte se règle ensuite. Le scan n’est pas conservé.",
+      "start": "Redessiner comme modèle",
+      "page": "Page",
+      "preparing": "Préparation du plan – page en image, recherche de l’échelle dans le texte ; quelques secondes …",
+      "error": {
+        "scan_unsupported": "Seuls les PDF, JPEG et PNG peuvent être redessinés.",
+        "pdf_unreadable": "Le PDF est illisible.",
+        "scan_unreadable": "L’image est illisible.",
+        "scan_too_large": "L’image est trop grande (40 mégapixels au plus).",
+        "page_out_of_range": "Cette page n’existe pas dans le fichier."
+      },
+      "scaleTitle": "Échelle du modèle",
+      "fromPlan": "Échelle indiquée sur le plan",
+      "noPaper": "L’image n’indique pas de résolution fiable (moins de 150 dpi). Veuillez calibrer sur deux points.",
+      "scale": "Échelle",
+      "scaleFound": "Trouvée sur le plan : 1:{{scale}}, feuille {{width}} × {{height}} mm.",
+      "scaleChoose": "Le plan indique plusieurs échelles. Laquelle s’applique au dessin ?",
+      "scaleEnter": "Aucune échelle trouvée sur le plan. Indiquez-la ou calibrez sur deux points.",
+      "calibrate": "Calibrer sur deux points",
+      "calibrateWhy": "La méthode sûre : elle mesure juste même une copie agrandie ou réduite. Cliquez deux points d’un segment de longueur connue, par exemple une limite cotée.",
+      "calibrateFirst": "Cliquez le premier point du segment de référence.",
+      "calibrateSecond": "Cliquez le second point du segment de référence.",
+      "calibrateLength": "Indiquez la longueur du segment de référence.",
+      "length": "Longueur",
+      "calibrateAgain": "Replacer les points",
+      "corners": "Cliquez les sommets de la parcelle dans le sens horaire ; la dernière limite se ferme d’elle-même.",
+      "canvas": "Modèle à redessiner",
+      "zoomIn": "Agrandir",
+      "zoomOut": "Réduire",
+      "cornerCount_one": "{{count}} sommet",
+      "cornerCount_other": "{{count}} sommets",
+      "scaleCheck": "contrôle : largeur de la feuille sur le terrain {{width}} m",
+      "next": "Continuer vers les cotes",
+      "editHint": "Corrigez les longueurs d’après les cotes du plan ; les directions viennent du modèle."
+    },
     "disclaimer": "Analyse fondée sur les documents fournis. Sans valeur juridique ; seul le certificat d’urbanisme fait foi.",
     "plu": {
       "title": "Règlement d'urbanisme",
@@ -132,7 +179,7 @@
       "docTitle": "Intitulé",
       "docTitleHint": "p. ex. PLUi Erdre et Gesvres, version 2026",
       "duType": "Type",
-      "formats": "100 Mo au plus. Les règlements scannés sans couche texte ne peuvent pas encore être lus. Le même PDF utilisé dans plusieurs projets n'est analysé qu'une fois.",
+      "formats": "100 Mo au plus. Les règlements scannés sont lus par reconnaissance de texte ; cela prend quelques minutes. Le même PDF utilisé dans plusieurs projets n'est lu et analysé qu'une fois.",
       "submit": "Déposer",
       "reading": "Lecture du règlement – texte et chapitres …",
       "pages": "{{count}} pages",
@@ -172,7 +219,10 @@
         "chapter_too_long": "Le chapitre et les dispositions générales sont trop longs ensemble. Veuillez restreindre les pages.",
         "max_tokens": "La réponse était trop longue pour une analyse.",
         "refusal": "Le modèle a refusé l'analyse.",
-        "other": "Motif : {{reason}}"
+        "other": "Motif : {{reason}}",
+        "ocr_no_text": "Même après la reconnaissance de texte, plus de la moitié des pages restent sans texte – sans doute des plans ou un scan de très mauvaise qualité. Veuillez déposer une meilleure version, par exemple celle du Géoportail de l'Urbanisme ou de la commune.",
+        "ocr_unavailable": "La reconnaissance de texte n'est pas installée sur le serveur. Veuillez prévenir l'exploitation.",
+        "organisation_budget_exceeded": "Le budget mensuel de votre organisation est atteint. L'analyse reprendra d'elle-même le mois prochain ou lorsque l'exploitant augmentera le budget."
       },
       "error": {
         "not_a_pdf": "Le fichier n'est pas un PDF.",
@@ -181,14 +231,41 @@
         "pdf_too_many_pages": "Le PDF comporte trop de pages.",
         "pdf_too_large": "Le PDF est trop volumineux (100 Mo au plus).",
         "upload_too_large": "Le PDF est trop volumineux (100 Mo au plus).",
-        "document_no_text": "Le PDF ne contient presque pas de texte, sans doute un scan. Les règlements scannés ne peuvent pas encore être lus – prenez le PDF du Géoportail de l'Urbanisme ou de la commune.",
+        "document_no_text": "Le PDF ne contient presque pas de texte. Veuillez le déposer à nouveau : les règlements scannés sont désormais lus par reconnaissance de texte.",
         "document_not_ready": "Le règlement est encore en cours de lecture.",
         "document_failed": "Le règlement n'a pas pu être lu.",
         "chapter_not_found": "Ce chapitre n'existe pas dans le règlement.",
         "chapter_too_long": "Le chapitre et les dispositions générales dépassent ensemble 150 pages. Veuillez restreindre les pages.",
         "page_out_of_range": "Les pages indiquées sont hors du document.",
-        "interrupted": "La lecture a été interrompue. Veuillez déposer le PDF à nouveau."
+        "interrupted": "La lecture a été interrompue. Veuillez déposer le PDF à nouveau.",
+        "document_scan": "Le règlement est un scan. Lancez d'abord la reconnaissance du texte.",
+        "ocr_not_needed": "Le document n'a aucune page sans texte.",
+        "organisation_budget_exceeded": "Le budget mensuel de votre organisation est atteint ; une nouvelle analyse sera possible le mois prochain ou avec un budget plus élevé.",
+        "ocr_quota_exceeded": "Le quota de reconnaissance de texte de votre organisation ne suffit pas ce mois-ci : {{pages}} pages à reconnaître, il en reste {{remaining}} sur {{limit}}."
       }
+    },
+    "scan": {
+      "notice": "Ce PDF est un scan ({{empty}} pages sur {{pages}} sans texte). Emprise peut en reconnaître le texte ; cela prend {{duration}}.",
+      "limits": "Le texte reconnu peut contenir des erreurs de lecture ; les tableaux et l'écriture manuscrite sont mal lus. Les valeurs issues de pages reconnues sont marquées « scan » ; si une citation ne peut pas être confirmée dans le scan, la valeur reste « non déterminée ».",
+      "duration_one": "environ une minute",
+      "duration_other": "environ {{count}} minutes",
+      "start": "Reconnaître le texte",
+      "retry": "Réessayer",
+      "startPages_one": "Reconnaître le texte de cette page ({{duration}})",
+      "startPages_other": "Reconnaître le texte de ces {{count}} pages ({{duration}})",
+      "progress": "Reconnaissance du texte : page {{done}} sur {{total}}",
+      "progressLabel": "Avancement de la reconnaissance du texte",
+      "remaining": "encore {{duration}}",
+      "others": "Les autres tâches continuent en parallèle ; vous pouvez fermer la page.",
+      "done_one": "1 page lue par reconnaissance de texte",
+      "done_other": "{{count}} pages lues par reconnaissance de texte",
+      "uncertain_one": "dont 1 incertaine (p. {{pages}})",
+      "uncertain_other": "dont {{count}} incertaines (p. {{pages}})",
+      "stillEmpty_one": "1 toujours sans texte (p. {{pages}})",
+      "stillEmpty_other": "{{count}} toujours sans texte (p. {{pages}})",
+      "withEmpty": "{{summary}} ; {{empty}}",
+      "failed": "La reconnaissance du texte a échoué.",
+      "interrupted": "La reconnaissance du texte a été interrompue ; les pages déjà reconnues sont conservées."
     },
     "envelope": "Cadre constructible",
     "supplement": {
@@ -374,12 +451,12 @@
       "notes": {
         "reading": "Une tranche vaut jusqu'à son niveau supérieur : les parties de bâtiment qui l'atteignent se situent dans son contour.",
         "terrain": "Terrain inconnu – représenté plat ; hauteurs au-dessus du niveau de référence de la règle.",
-        "terrainFlat": "Terrain quasi plat (pente {{slope}} %) – représenté plat.",
-        "terrainSteep": "Pente du terrain {{slope}} % – coupe représentée à plat ; hauteurs à vérifier par l'architecte.",
+        "terrainSteep": "Pente du terrain {{slope}} % – vérifier le point de mesure de la hauteur selon le PLU. Les tranches partent de l’altitude moyenne du terrain ({{reference}} m NGF = ±0,00) ; le profil montre où le terrain se situe au-dessus ou en dessous.",
         "roof": "Au-dessus de l'égout, vertical jusqu'au faîtage ; pente et sens du faîtage non représentés.",
         "storeys": "Le plan ne fixe que des niveaux : convertis avec {{height}} m de hauteur d'étage (hypothèse haute).",
         "heightUnknown": "Zone {{zone}} sans hauteur maximale déterminée – hors gabarit.",
-        "incomplete": "* Lecture stricte incomplète : tous les reculs ne sont pas déterminés."
+        "incomplete": "* Lecture stricte incomplète : tous les reculs ne sont pas déterminés.",
+        "terrainProfile": "Terrain de {{slope}} % de pente, en profil dans la coupe ; les tranches partent de l’altitude moyenne du terrain ({{reference}} m NGF = ±0,00)."
       }
     },
     "distance": {
@@ -472,6 +549,163 @@
       "textHint": "Ce modèle ne lit pas les PDF et reçoit le texte des pages. Les tableaux perdent leurs colonnes, les croquis manquent.",
       "changeInAdmin": "Modifier dans l’administration",
       "chosenBy": "choisi par {{name}}"
+    },
+    "project": {
+      "name": "Nom",
+      "note": "Note",
+      "noteHint": "Pour le cabinet et le rapport uniquement ; nom et note ne sont transmis à aucun service externe.",
+      "edit": "Nom et note",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "archive": "Archiver",
+      "restore": "Restaurer",
+      "archivedSince": "Archivé depuis le {{date}} – reste modifiable."
+    },
+    "position": {
+      "set": "Positionner le terrain",
+      "correct": "Corriger la position",
+      "intro": "Rechercher l’adresse, puis déplacer et tourner le contour sur la parcelle du cadastre. Dimensions et surface restent inchangées.",
+      "why": "Une fois positionné : relief, risques, DXF en Lambert-93 et GeoJSON.",
+      "mapLabel": "Carte de positionnement avec le cadastre et le contour du terrain",
+      "toCentre": "Ramener le contour au centre de la carte",
+      "rotation": "Rotation",
+      "rotationSteps": "Rotation fine",
+      "rotateBy": "tourner de {{degrees}}°",
+      "rotationHint": "Dans le sens horaire par rapport à l’affichage actuel.",
+      "moveHint": "Faire glisser le contour à la souris ou, sur la carte, avec les flèches : 0,1 m, avec Maj 1 m.",
+      "searchFirst": "Choisir d’abord une adresse ; le contour y apparaît.",
+      "moved": "Déplacé de {{metres}} m par rapport à la position précédente.",
+      "accuracy": "Aussi précis que le cadastre (parfois quelques mètres en France). Le rapport et le DXF indiquent « ajusté à la main ».",
+      "save": "Valider la position",
+      "cancel": "Annuler"
+    },
+    "output": {
+      "title": "Rapport et fichiers",
+      "report": {
+        "title": "Rapport",
+        "intro": "PDF avec chiffres clés, plan de situation, gabarit et coupes, règles avec leurs sources, corrections et points ouverts.",
+        "language": "Langue du rapport",
+        "locale": {
+          "fr": "Français",
+          "de": "Allemand"
+        },
+        "request": "Établir le rapport",
+        "pending": "Rapport en cours …",
+        "slow": "Cela prend plus de temps que d’habitude. Veuillez réessayer dans un instant.",
+        "download": "Télécharger le rapport"
+      },
+      "files": {
+        "title": "Fichiers pour la CAO et le SIG",
+        "intro": "Parcelle, zones constructibles, contraintes, gabarit en courbes et en volumes, lignes de coupe – un calque par contenu.",
+        "dxfLocal": "DXF local",
+        "dxfLocalHint": "Mètres locaux depuis le coin inférieur gauche ; l’origine en Lambert-93 figure dans le fichier.",
+        "dxfLocalFree": "Mètres locaux comme dans le fichier ou le dessin.",
+        "dxfL93": "DXF Lambert-93",
+        "dxfL93Hint": "Coordonnées en Lambert-93, altitudes en m NGF dès que le relief est connu.",
+        "geojson": "GeoJSON",
+        "geojsonHint": "WGS84 pour SIG et cartes.",
+        "needsPosition": "Seulement une fois le terrain positionné (section Terrain)."
+      },
+      "disclaimer": "Analyse sur la base des documents fournis. Pas un avis juridique ; seul le certificat d’urbanisme fait foi."
+    },
+    "organisation": {
+      "eyebrow": "Organisation",
+      "introAdmin": "Membres, présentation du rapport et du DXF, consommation et clés d'API de votre organisation. Tous les membres voient les mêmes projets.",
+      "introMember": "Consommation de votre organisation ce mois-ci et les mois précédents. Les membres, la présentation et les clés d'API sont gérés par le rôle « Administration ».",
+      "none": "Votre compte n'appartient à aucune organisation. Merci de prévenir l'exploitant.",
+      "cancel": "Annuler",
+      "role": {
+        "member": "Membre",
+        "admin": "Administration"
+      },
+      "usage": {
+        "title": "Consommation",
+        "cost": "Analyse par le modèle d'IA",
+        "ocr": "Reconnaissance de texte",
+        "ofLimit": "{{value}} sur {{limit}}",
+        "noLimit": "Pas de limite propre ; le budget de l'instance s'applique.",
+        "pages_one": "{{count}} page",
+        "pages_other": "{{count}} pages",
+        "pagesOfLimit_one": "{{count}} page sur {{limit}}",
+        "pagesOfLimit_other": "{{count}} pages sur {{limit}}",
+        "hint": "Mois calendaire en UTC. Une fois la limite atteinte, une analyse attend le mois suivant ou une hausse de la limite par l'exploitant ; une reconnaissance de texte est refusée.",
+        "history": "Consommation des derniers mois",
+        "month": "Mois"
+      },
+      "members": {
+        "title": "Membres",
+        "inactive": "bloqué",
+        "notYet": "pas encore connecté",
+        "lastLogin": "dernière connexion le {{date}}",
+        "roleFor": "Rôle de {{email}}",
+        "remove": "Retirer",
+        "confirmRemove": "Confirmer le retrait",
+        "add": "Ajouter un membre",
+        "email": "Adresse e-mail",
+        "role": "Rôle",
+        "submit": "Ajouter",
+        "hint": "Le membre peut se connecter dès que l'exploitant a créé son compte auprès du service de connexion (avec second facteur). Retirer un membre bloque son compte ; les projets restent à l'organisation."
+      },
+      "branding": {
+        "title": "Présentation",
+        "intro": "Le nom, l'adresse et le logo figurent dans l'en-tête du rapport, le nom et l'adresse dans le cartouche du DXF. Toute modification produit un nouveau rapport à la prochaine demande.",
+        "displayName": "Nom affiché",
+        "registration": "Identifiant",
+        "registrationHint": "Par exemple « N° d'inscription à l'Ordre des architectes » ou SIRET",
+        "address": "Adresse",
+        "addressHint_one": "{{count}} ligne au plus",
+        "addressHint_other": "{{count}} lignes au plus",
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "website": "Site web",
+        "accent": "Couleur d'accent",
+        "accentPicker": "Choisir la couleur d'accent",
+        "accentHint": "Pour les titres et les filets du rapport ; laisser vide pour le noir.",
+        "accentTooLight": "Trop claire : sur fond blanc, la couleur doit atteindre un contraste d'au moins {{min}} : 1.",
+        "save": "Enregistrer",
+        "saved": "Enregistré.",
+        "logo": "Logo",
+        "logoHint": "PNG ou JPEG, 1 Mo et 2 000 pixels au plus ; réduit à 800 pixels. Pas de SVG.",
+        "removeLogo": "Supprimer le logo",
+        "preview": "Aperçu : en-tête de la première page du rapport",
+        "previewEyebrow": "Emprise Analyse",
+        "previewTitle": "Analyse de la parcelle"
+      },
+      "keys": {
+        "title": "Clés d'API",
+        "intro": "Pour vos propres programmes et liaisons CAO : appel avec l'en-tête « Authorization: Bearer <clé> », uniquement pour les points d'accès des projets (/api/v1/projects…). Une clé agit comme un architecte de votre organisation ; les coûts comptent dans son budget.",
+        "empty": "Aucune clé pour l'instant.",
+        "scope": {
+          "read": "lecture seule",
+          "write": "lecture et écriture"
+        },
+        "meta": "créée le {{created}} · dernière utilisation {{used}} · expire le {{expires}}",
+        "revokedOn": "révoquée le {{date}}",
+        "revoke": "Révoquer",
+        "confirmRevoke": "Confirmer la révocation",
+        "new": "Nouvelle clé",
+        "name": "Nom (usage)",
+        "days": "Validité (jours)",
+        "writeScope": "Aussi en écriture (créer des projets, téléverser, analyser)",
+        "create": "Créer la clé",
+        "createdTitle": "Clé « {{name}} » créée",
+        "createdHint": "La clé n'est affichée que maintenant ; seule une empreinte est conservée. En cas de perte, révoquez-la et créez-en une nouvelle.",
+        "copy": "Copier",
+        "copied": "Copié",
+        "done": "Terminé"
+      },
+      "error": {
+        "invalid_color": "La couleur doit être indiquée en hexadécimal, par exemple #2b45b0.",
+        "color_contrast_too_low": "La couleur est trop claire pour du texte sur fond blanc.",
+        "logo_format": "Le logo doit être un PNG ou un JPEG.",
+        "logo_too_large": "Le logo est trop grand (1 Mo et 2 000 pixels au plus).",
+        "member_exists": "Cette personne est déjà membre.",
+        "member_of_other_organisation": "Cette adresse appartient à une autre organisation.",
+        "operator_roles_outside_operator": "Ce compte a des rôles d'exploitation et ne peut appartenir à une autre organisation.",
+        "last_admin": "L'organisation doit garder au moins un membre avec le rôle « Administration ».",
+        "cannot_remove_self": "Vous ne pouvez pas vous retirer vous-même.",
+        "api_key_limit": "10 clés actives au plus par organisation. Merci d'en révoquer une d'abord."
+      }
     }
   },
   "site": {
@@ -636,7 +870,9 @@
       "title": "Terrain naturel",
       "unavailable": "Non interrogé : le service altimétrique n'était pas joignable.",
       "flat": "Terrain quasiment plat (pente de {{slope}} %), altitude d'environ {{altitude}} m NGF.",
-      "sloped": "Terrain en pente de {{slope}} % (altitude d'environ {{altitude}} m NGF). Les hauteurs seront vérifiées par le cabinet d'architecture."
+      "sloped": "Terrain en pente de {{slope}} % (altitude d'environ {{altitude}} m NGF). Les hauteurs seront vérifiées par le cabinet d'architecture.",
+      "values_one": "Altitude moyenne {{altitude}} m NGF, pente {{slope}} %, d’après {{count}} point (IGN RGE ALTI).",
+      "values_other": "Altitude moyenne {{altitude}} m NGF, pente {{slope}} %, d’après {{count}} points (IGN RGE ALTI)."
     },
     "risks": {
       "title": "Risques",
@@ -695,6 +931,8 @@
     "share": "{{share}} % du terrain",
     "caption": "Règles de la zone {{code}}",
     "page": "p. {{page}}",
+    "fromScan": "scan",
+    "fromScanTitle": "Citation issue de la reconnaissance de texte – erreurs de lecture possibles, à vérifier dans le document",
     "pages": "p. {{first}}–{{last}}",
     "inProgress": "Les règles de cette zone sont en cours d'analyse. Cela prend quelques minutes.",
     "column": {
@@ -730,7 +968,8 @@
       "missing": "non déterminé",
       "correction": "non déterminé (correction)",
       "not_found_after_search": "non déterminé : introuvable après recherche complémentaire",
-      "not_expressible": "non représentable : voir la remarque"
+      "not_expressible": "non représentable : voir la remarque",
+      "scan_unconfirmed": "non déterminé : illisible dans le scan, à vérifier dans le document"
     },
     "kind": {
       "setback_street": "Recul par rapport aux voies",

@@ -3,6 +3,7 @@
 Geometrie wird in PostGIS gesucht und transformiert, in Shapely (Lambert-93) berechnet.
 """
 
+import base64
 import hashlib
 import json
 import math
@@ -18,12 +19,13 @@ from shapely.geometry.base import BaseGeometry
 from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
 
-from app.platform import audit
+from app.platform import audit, scan
 from app.platform import projects as platform_projects
 from app.platform.jobs import enqueue
+from app.platform.logging import get_logger
 from app.platform.models import Project
 from app.platform.problems import Problem
-from app.site.domain import ENGINE_VERSION
+from app.site.domain import ENGINE_VERSION, pdfplan, position
 from app.site.domain import tolerances as tol
 from app.site.domain.edges import (
     Classification,
@@ -60,9 +62,12 @@ from app.site.schemas import (
     LookupOut,
     ParcelOut,
     ParcelSummary,
+    PositionIn,
     RiskOut,
     RisksOut,
+    ScanPreviewOut,
     SiteOut,
+    SitePlacementOut,
     SiteReviewItem,
     TerrainOut,
     UploadCandidateOut,
@@ -84,6 +89,8 @@ REVIEW_WARNINGS = [
     "no_neighbour_data",
     "neighbour_data_incomplete",
 ]
+
+log = get_logger("site")
 
 
 # ---------------------------------------------------------------------------
@@ -482,9 +489,9 @@ def _store_sketch_site(
     site.outline_hash = outline_hash
     site.neighbour_coverage = "none"
     site.road_data = False
-    # Nie `pending`: ohne geprüfte Lage wird kein site_enrich-Job eingeplant (Gelände und Risiken: AN5)
-    site.terrain_status = "unavailable"
-    site.risks_status = "unavailable"
+    # Gelände und Risiken nur mit echter Lage (AN5, docs/PLAN_AN5_AUSGABE.md 3.2): ohne Lage nie `pending`,
+    # weil dann kein site_enrich-Job eingeplant wird
+    site.terrain_status = site.risks_status = "pending" if georeferenced else "unavailable"
     site.engine_version = ENGINE_VERSION
     site.updated_by = actor
     site.updated_at = _db_now(db)
@@ -514,14 +521,33 @@ def _store_sketch_site(
                 created_by=actor,
             )
         )
+    if georeferenced:
+        _enqueue_enrichment(db, site, project_id, actor)
     db.commit()
     return load_site(db, project_id)
 
 
+def _enqueue_enrichment(db: Session, site: Site, project_id: uuid.UUID, actor: str) -> None:
+    enqueue(
+        db,
+        "site_enrich",
+        {"site_id": str(site.id), "outline_hash": site.outline_hash},
+        idempotency_key=f"site_enrich:{site.id}:{site.revision}",
+        project_id=project_id,
+        created_by=actor,
+    )
+
+
 def form_manual_site(
-    db: Session, project_id: uuid.UUID, edges: Sequence[ManualEdgeInput], address_label: str, actor: str
+    db: Session,
+    project_id: uuid.UUID,
+    edges: Sequence[ManualEdgeInput],
+    address_label: str,
+    actor: str,
+    trace: dict[str, Any] | None = None,
 ) -> SiteOut:
-    """Grundstück aus freier Zeichnung und Bemaßung bilden, ohne Kataster (Weg E, Plan 3.3)."""
+    """Grundstück aus freier Zeichnung und Bemaßung bilden, ohne Kataster (Weg E, Plan 3.3). `trace`: nach
+    einem Scan nachgezeichnet, mit Datei, Seite und Maßstabsweg (AN7, PLAN_AN7_SCAN 3.5)."""
     try:
         outline = build_manual_polygon(edges)
     except ManualPolygonInvalid as exc:
@@ -535,8 +561,50 @@ def form_manual_site(
         origin="manual_sketch",
         address_label=address_label,
         georeferenced=False,
-        source_info={},
+        source_info={"trace": trace} if trace else {},
         actor=actor,
+    )
+
+
+SCAN_RENDER_PX = 4000
+"""Lange Seite beim Rendern für die Maßstabssuche: A3 bei etwa 240 dpi (PLAN_AN7_SCAN 3.5)."""
+SCAN_PREVIEW_PX = 2500
+"""Lange Seite des Bilds zum Nachzeichnen: bei A3 etwa 150 dpi, genug für die Ecken, 0,3–0,8 MB."""
+
+
+def scan_preview(data: bytes, page: int) -> ScanPreviewOut:
+    """Seite eines gescannten Plans als Vorlage zum Nachzeichnen (AN7, PLAN_AN7_SCAN 3.5). Der Maßstab kommt
+    aus dem erkannten Text wie bei einem vektoriellen PDF (`scales_in_text`);
+    Meter je Pixel nur mit Papiermaß.
+    Nichts wird gespeichert: Pläne des Geometers können Namen der Eigentümer enthalten (3.6)."""
+    try:
+        count = scan.page_count(data)
+        if page > count:
+            raise Problem(422, "page_out_of_range", page_count=count)
+        rendered = scan.render(data, page, max_side_px=SCAN_RENDER_PX)
+    except scan.ScanProblem as exc:
+        raise Problem(422, str(exc)) from None
+    try:
+        text_found = scan.recognize(rendered).text
+    except scan.ScanProblem as exc:
+        # Ohne Texterkennung kein Maßstab aus dem Plan; Kalibrieren über zwei Punkte geht trotzdem
+        log.warning("site_scan_ocr_failed", error=str(exc))
+        text_found = ""
+    found, edition = pdfplan.scales_in_text(text_found)
+    scale = edition if edition is not None else (found[0] if len(found) == 1 else None)
+    jpeg, (width, height) = scan.to_jpeg(rendered, max_side_px=SCAN_PREVIEW_PX)
+    paper = rendered.paper_mm
+    metres = paper[0] / 1000 * scale / width if paper is not None and scale is not None else None
+    return ScanPreviewOut(
+        page=page,
+        page_count=count,
+        image="data:image/jpeg;base64," + base64.b64encode(jpeg).decode("ascii"),
+        width_px=width,
+        height_px=height,
+        paper_mm=list(paper) if paper is not None else None,
+        scales=sorted(found),
+        scale=scale,
+        metres_per_px=round(metres, 6) if metres is not None else None,
     )
 
 
@@ -634,6 +702,9 @@ def form_uploaded_site(
         source_info |= {"index": None, "indices": wanted}
     if parcel_file.format == "pdf":
         source_info |= {**scale_info, "page": parcel_file.page}
+    if chosen.georeferenced:
+        # Lage aus der Datei, bis der Architekt sie korrigiert (AN5, 3.2)
+        source_info["position"] = {"method": "file"}
     site = _store_sketch_site(
         db,
         project_id,
@@ -648,6 +719,118 @@ def form_uploaded_site(
         short_piece_m=source_info["short_piece_m"],
     )
     return UploadResultOut(site=site, candidates=[], format=parcel_file.format, **scale_info)
+
+
+# ---------------------------------------------------------------------------
+# Lage setzen (AN5, docs/PLAN_AN5_AUSGABE.md 3.2)
+# ---------------------------------------------------------------------------
+
+
+def _l93_and_convergence(db: Session, lon: float, lat: float) -> tuple[tuple[float, float], float]:
+    """Punkt in Lambert-93 und Gitterkonvergenz γ dort: Gitterazimut der Strecke 100 m nach Norden."""
+    row = db.execute(
+        text(
+            "WITH p AS (SELECT ST_SetSRID(ST_MakePoint(:lon, :lat), 4326) AS g), "
+            "t AS (SELECT ST_Transform(g, 2154) AS a, "
+            "ST_Transform(ST_Project(g::geography, 100, 0)::geometry, 2154) AS b FROM p) "
+            "SELECT ST_X(a) AS ax, ST_Y(a) AS ay, ST_X(b) AS bx, ST_Y(b) AS by FROM t"
+        ),
+        {"lon": lon, "lat": lat},
+    ).one()
+    start = (float(row.ax), float(row.ay))
+    return start, position.signed(position.azimuth(start, (float(row.bx), float(row.by))))
+
+
+def _wgs84_of(db: Session, point: tuple[float, float]) -> tuple[float, float]:
+    row = db.execute(
+        text(
+            "SELECT ST_X(g) AS lon, ST_Y(g) AS lat FROM "
+            "(SELECT ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 2154), 4326) AS g) AS s"
+        ),
+        {"x": point[0], "y": point[1]},
+    ).one()
+    return float(row.lon), float(row.lat)
+
+
+def _placement(db: Session, site: Site) -> SitePlacementOut:
+    """Drehpunkt und Darstellung auf der Karte: ohne Lage Blattoben = Norden, mit Lage folgen die lokalen
+    Achsen Gitternord, die Karte dreht sie um −γ."""
+    centre = position.pivot(cast(Polygon, to_shape(site.geometry)))
+    local = list(to_local(centre, (site.local_origin_e, site.local_origin_n)))
+    if not site.georeferenced:
+        return SitePlacementOut(pivot_local=local, map_rotation_deg=0.0)
+    lon, lat = _wgs84_of(db, centre)
+    _, gamma = _l93_and_convergence(db, lon, lat)
+    return SitePlacementOut(
+        pivot_local=local, pivot_wgs84=[round(lon, 7), round(lat, 7)], map_rotation_deg=round(-gamma, 4)
+    )
+
+
+def position_site(db: Session, project_id: uuid.UUID, body: PositionIn, actor: str) -> SiteOut:
+    """Grundstück ohne Kataster verorten oder die Lage korrigieren: starr drehen und verschieben, Maße,
+    Fläche und Einordnung der Kanten bleiben. Danach Gelände und Risiken abfragen (3.2, 3.3)."""
+    site = _locked_site(db, project_id, body.expected_revision)
+    if site.origin not in SKETCH_ORIGINS:
+        raise Problem(409, "site_position_parcel")
+    polygon = cast(Polygon, to_shape(site.geometry))
+    centre = position.pivot(polygon)
+    map_rotation = 0.0
+    if site.georeferenced:
+        _, gamma_old = _l93_and_convergence(db, *_wgs84_of(db, centre))
+        map_rotation = -gamma_old
+    target, gamma = _l93_and_convergence(db, body.lon, body.lat)
+    theta = position.rotation(map_rotation, body.rotation_deg, gamma)
+
+    moved = cast(Polygon, position.turn(polygon, centre, target, theta))
+    edges = list(
+        db.execute(select(SiteEdge).where(SiteEdge.site_id == site.id).order_by(SiteEdge.seq)).scalars()
+    )
+    for edge in edges:
+        edge.geometry = from_shape(position.turn(to_shape(edge.geometry), centre, target, theta), srid=L93)
+        edge.normal_azimuth_deg = cast(float, position.turn_azimuth(edge.normal_azimuth_deg, theta))
+    site.street_azimuth_deg = position.turn_azimuth(site.street_azimuth_deg, theta)
+    site.garden_azimuth_deg = position.turn_azimuth(site.garden_azimuth_deg, theta)
+
+    previous = dict((site.source_info or {}).get("position") or {})
+    was_georeferenced = site.georeferenced
+    turned = float(previous.get("rotation_deg") or 0.0) + body.rotation_deg
+    min_x, min_y, _, _ = moved.bounds
+    site.geometry = from_shape(moved, srid=L93)
+    site.local_origin_e, site.local_origin_n = float(math.floor(min_x)), float(math.floor(min_y))
+    site.georeferenced = True
+    site.outline_hash = _outline_hash(moved)
+    site.revision += 1
+    site.source_info = {
+        **(site.source_info or {}),
+        "position": {
+            "method": "map",
+            "lon": round(body.lon, 7),
+            "lat": round(body.lat, 7),
+            "rotation_deg": round(position.signed(turned), 2),
+            "convergence_deg": round(gamma, 4),
+            "at": _db_now(db).isoformat(),
+            "by": actor,
+        },
+    }
+    for model in (Terrain, SiteRisk):
+        db.execute(delete(model).where(model.site_id == site.id))
+    site.terrain_status = site.risks_status = "pending"
+    site.updated_by = actor
+    site.updated_at = _db_now(db)
+    audit.record(
+        db,
+        actor_type="staff",
+        actor_id=actor,
+        action="site.position",
+        entity_type="site",
+        entity_id=str(site.id),
+        before={"georeferenced": was_georeferenced, "position": previous or None},
+        after={"position": site.source_info["position"]},
+    )
+    db.flush()
+    _enqueue_enrichment(db, site, project_id, actor)
+    db.commit()
+    return load_site(db, project_id)
 
 
 # ---------------------------------------------------------------------------
@@ -968,6 +1151,7 @@ class EnvelopeSite:
     terrain_method: str | None
     commune_insees: list[str]
     parcel_idus: list[str]
+    terrain_samples: tuple[tuple[float, float, float], ...] = ()
 
 
 def envelope_site(db: Session, project_id: uuid.UUID) -> EnvelopeSite:
@@ -1025,6 +1209,9 @@ def envelope_site(db: Session, project_id: uuid.UUID) -> EnvelopeSite:
         terrain_method=terrain.method if terrain else None,
         commune_insees=communes,
         parcel_idus=list(site.parcel_idus),
+        terrain_samples=(
+            tuple((float(s[0]), float(s[1]), float(s[2])) for s in terrain.samples) if terrain else ()
+        ),
     )
 
 
@@ -1045,15 +1232,20 @@ def site_footprint(db: Session, project_id: uuid.UUID) -> SiteFootprint | None:
 
 
 def _sketch_site_out(db: Session, site: Site) -> SiteOut:
-    """Grundstück ohne Kataster (Weg E und Upload): keine Parzellen, kein Gelände, keine Risiken, keine
-    Umgebung – aber Kanten, damit ein Abstand überhaupt gerechnet werden kann (UP02).
+    """Grundstück ohne Kataster (Weg E und Upload): keine Parzellen und keine Umgebung – aber Kanten, damit
+    ein Abstand überhaupt gerechnet werden kann (UP02). Gelände und Risiken erst mit Lage (AN5).
 
     `outline_geojson` bleibt leer, solange die Geometrie keine echte Lage hat (G26); bei einem Upload
-    mit erkanntem Koordinatensystem wird sie wie beim Kataster-Grundstück berechnet (UP04)."""
+    mit erkanntem Koordinatensystem oder nach dem Einpassen wird sie wie beim Kataster-Grundstück
+    berechnet (UP04, AN5)."""
     origin = (site.local_origin_e, site.local_origin_n)
     polygon = to_shape(site.geometry)
     edges = list(
         db.execute(select(SiteEdge).where(SiteEdge.site_id == site.id).order_by(SiteEdge.seq)).scalars()
+    )
+    terrain = db.execute(select(Terrain).where(Terrain.site_id == site.id)).scalar_one_or_none()
+    risks = list(
+        db.execute(select(SiteRisk).where(SiteRisk.site_id == site.id).order_by(SiteRisk.kind)).scalars()
     )
     outline_geojson: dict[str, Any] = {"type": "Polygon", "coordinates": []}
     if site.georeferenced:
@@ -1084,10 +1276,32 @@ def _sketch_site_out(db: Session, site: Site) -> SiteOut:
         garden_azimuth_deg=site.garden_azimuth_deg,
         binding=not any(e.classification_source == "customer" for e in edges),
         warnings=list(site.warnings),
-        notices=[f"notice.{site.origin}"],
-        terrain=TerrainOut(status="unavailable"),
-        risks=RisksOut(status="unavailable", items=[]),
+        notices=[f"notice.{site.origin}", *(["notice.risks_public_data"] if risks else [])],
+        terrain=_terrain_out(site, terrain),
+        risks=_risks_out(site, risks),
         context=ContextOut(parcels=[], buildings=[]),
+        placement=_placement(db, site),
+    )
+
+
+def _terrain_out(site: Site, terrain: Terrain | None) -> TerrainOut:
+    return TerrainOut(
+        status=cast(Any, site.terrain_status),
+        method=terrain.method if terrain else None,
+        reference_altitude_ngf=terrain.reference_altitude_ngf if terrain else None,
+        slope_percent=terrain.slope_percent if terrain else None,
+        flat=terrain.slope_percent <= tol.FLAT_SLOPE_MAX_PERCENT if terrain else None,
+        samples=len(terrain.samples) if terrain else 0,
+    )
+
+
+def _risks_out(site: Site, risks: list[SiteRisk]) -> RisksOut:
+    return RisksOut(
+        status=cast(Any, site.risks_status),
+        items=[
+            RiskOut(kind=r.kind, level=cast(Any, r.level), scope=cast(Any, r.scope), label=r.label)
+            for r in risks
+        ],
     )
 
 
@@ -1192,21 +1406,8 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
         binding=not any(e.classification_source == "customer" for e in edges),
         warnings=list(site.warnings),
         notices=notices,
-        terrain=TerrainOut(
-            status=cast(Any, site.terrain_status),
-            method=terrain.method if terrain else None,
-            reference_altitude_ngf=terrain.reference_altitude_ngf if terrain else None,
-            slope_percent=terrain.slope_percent if terrain else None,
-            flat=terrain.slope_percent <= tol.FLAT_SLOPE_MAX_PERCENT if terrain else None,
-            samples=len(terrain.samples) if terrain else 0,
-        ),
-        risks=RisksOut(
-            status=cast(Any, site.risks_status),
-            items=[
-                RiskOut(kind=r.kind, level=cast(Any, r.level), scope=cast(Any, r.scope), label=r.label)
-                for r in risks
-            ],
-        ),
+        terrain=_terrain_out(site, terrain),
+        risks=_risks_out(site, risks),
         context=ContextOut(
             parcels=[
                 ring for r in context_parcels for ring in _rings(shapely.from_wkb(bytes(r.wkb)), origin)

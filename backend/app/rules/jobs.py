@@ -6,6 +6,7 @@
 `rules_housekeeping`: stündlich; nimmt liegengebliebene und aus behebbarem Grund gescheiterte Kapitel wieder
 auf, damit die Simulation ohne Eingriff des Büros vollständig wird (D11).
 `rules_document_read`: ein hochgeladenes règlement écrit lesen (AN2); einmal je Dokument.
+`rules_document_ocr`: Seiten ohne Textschicht per Texterkennung lesen (AN7), in Teilen, nach Bestätigung.
 """
 
 import time
@@ -21,12 +22,13 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.integrations.http import ExternalServiceError, new_client
 from app.integrations.openrouter import OpenRouterExtractor, RuleExtractor
+from app.platform import scan
 from app.platform.db import get_sessionmaker
 from app.platform.jobs import JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
 from app.platform.shared import shared_session
-from app.rules import documents, extract, model_choice, plan_import, service
+from app.rules import documents, extract, model_choice, ocr, plan_import, service
 from app.rules.extract import RetryableExtractionError
 
 log = get_logger("rules_jobs")
@@ -141,6 +143,24 @@ def rules_document_read(ctx: JobContext, payload: dict[str, Any]) -> dict[str, A
         if ctx.attempt >= get_job_spec("rules_document_read").max_attempts:
             with ctx.session() as session:
                 documents.mark_read_failed(session, document_id, f"interrupted:{type(exc).__name__}")
+        raise
+
+
+@job("rules_document_ocr", max_attempts=3, timeout_seconds=900)
+def rules_document_ocr(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
+    """Nächster Teil der Texterkennung (AN7, docs/PLAN_AN7_SCAN.md 3.2). Kostet nichts; jede Seite ist sofort
+    gespeichert, ein Abbruch verliert höchstens eine."""
+    source_id = uuid.UUID(payload["source_id"])
+    try:
+        with ctx.session() as session:
+            return ocr.run_batch(session, source_id)
+    except Exception as exc:
+        if ctx.attempt >= get_job_spec("rules_document_ocr").max_attempts:
+            with ctx.session() as session:
+                # Fehlercode der Erkennung behalten (`ocr_unavailable`: Tesseract fehlt), sonst die Art
+                # des Abbruchs
+                error = str(exc) if isinstance(exc, scan.ScanProblem) else f"interrupted:{type(exc).__name__}"
+                ocr.mark_failed(session, source_id, error)
         raise
 
 

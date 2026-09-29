@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.envelope import service
 from app.envelope.schemas import EnvelopeOut, SheetOut
-from app.platform import flags, rate_limit
+from app.platform import flags, projects, rate_limit
 from app.platform.auth.context import (
     RequestAuth,
     Role,
@@ -105,3 +105,6 @@ def download_sheet_staff(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{name}"'},
     )
+
+
+projects.register_storage_keys(service.sheet_storage_keys)

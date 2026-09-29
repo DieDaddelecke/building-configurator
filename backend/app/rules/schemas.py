@@ -37,6 +37,8 @@ class RuleOut(BaseModel):
     search_note: str | None = None
     """Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.7): bei `not_found_after_search` die geprüften Stellen und
     Begriffe, bei `not_expressible` die Seite des Hinweises; sonst leer."""
+    from_scan: bool = False
+    """Zitat auf einer Seite, deren Text per Texterkennung gelesen wurde (AN7, PLAN_AN7_SCAN 3.3)."""
 
 
 class RuleDetailOut(RuleOut):
@@ -329,17 +331,40 @@ class DocumentChapterOut(BaseModel):
     cost_usd: float
 
 
+class OcrOut(BaseModel):
+    """Texterkennung der Seiten ohne Textschicht (AN7, docs/PLAN_AN7_SCAN.md 3.2)."""
+
+    state: Literal["none", "offered", "running", "done", "failed"]
+    """`offered`: Scan erkannt, der Hinweis wartet auf Bestätigung; `none` bei einzelnen leeren Seiten, die
+    noch niemand erkennen ließ."""
+    pages_total: int
+    """Seiten ohne Textschicht."""
+    pages_done: int
+    uncertain_pages: list[int]
+    """Erkannt, aber mit geringer Sicherheit (mittlere Wortsicherheit unter 70)."""
+    still_empty_pages: list[int]
+    """Auch nach der Erkennung ohne Text (Pläne, Abbildungen, leere Seiten)."""
+    estimated_seconds: int
+    """Geschätzte Dauer für die noch offenen Seiten."""
+    error: str | None
+
+
 class RegulationDocumentOut(BaseModel):
     id: uuid.UUID
     title: str
     du_type: str
-    status: Literal["importing", "active", "failed"]
-    """`importing`: der Job liest noch Text und Kapitel; `failed` mit Grund in `error`."""
+    status: Literal["importing", "active", "failed", "scan"]
+    """`importing`: der Job liest noch Text und Kapitel; `failed` mit Grund in `error`; `scan`: gescanntes
+    PDF, nutzbar erst nach der Texterkennung (`ocr`, AN7)."""
     error: str | None
     file_name: str | None
     file_url: str | None
+    sha256: str | None = None
+    """Prüfsumme der Datei; der Bericht nennt sie gekürzt (AN5 3.6)."""
     page_count: int | None
     empty_pages: list[int]
+    """Seiten ohne Textschicht im PDF, auch nach einer Texterkennung (deren Stand steht in `ocr`)."""
+    ocr: OcrOut | None = None
     created_at: datetime
     chapters: list[DocumentChapterOut]
 

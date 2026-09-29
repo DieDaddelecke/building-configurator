@@ -44,6 +44,8 @@ jobs:
             'printf "%s" "$S3_CONFIG" > /tmp/s3.json && exec weed server -dir=/data -s3 -s3.config=/tmp/s3.json'
         env:
           S3_CONFIG: '{"identities":[{"name":"emprise","credentials":[{"accessKey":"emprise","secretKey":"emprise-ci-secret"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
+      - name: Texterkennung für gescannte PDFs (AN7)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends tesseract-ocr tesseract-ocr-fra
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"

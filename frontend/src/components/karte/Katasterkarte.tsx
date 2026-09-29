@@ -25,18 +25,14 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { fetchParcels, type ParcelCollection } from "../../api/site";
+import { ATTRIBUTION, TILES, type Basemap } from "./kacheln";
 
 setWorkerUrl(workerUrl);
 
 const MIN_PARCEL_ZOOM = 16.5;
-const WMTS = "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM";
-const TILES = {
-  plan: `${WMTS}&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&FORMAT=image/png&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`,
-  photo: `${WMTS}&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`,
-};
 const EMPTY: ParcelCollection = { type: "FeatureCollection", truncated: false, features: [] };
 
-export type Basemap = keyof typeof TILES;
+export type { Basemap };
 
 export interface KartenFokus {
   lon: number;
@@ -64,7 +60,7 @@ function style(basemap: Basemap): StyleSpecification {
         tiles: [TILES[basemap]],
         tileSize: 256,
         maxzoom: basemap === "plan" ? 18 : 20,
-        attribution: "© IGN – Géoplateforme · Cadastre : DGFiP / Etalab",
+        attribution: ATTRIBUTION,
       },
     },
     layers: [{ id: "base", type: "raster", source: "base" }],

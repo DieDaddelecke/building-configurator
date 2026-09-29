@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     project_retention_days: int = 90
     project_create_limit_per_hour: int = 30
 
+    # Organisationen (AN6, docs/PLAN_AN6_MANDANTEN.md 3.1, 3.4, 3.6)
+    external_organisations: bool = False
+    """Erst nach der juristischen Prüfung (E-A5) einschalten: vorher lehnt `org-create` fremde Büros ab."""
+    org_budget_month_usd: float = 20.0
+    """Vorgabe für das Monatsbudget der Auswertung einer fremden Organisation."""
+    org_ocr_pages_month: int = 2000
+    """Vorgabe für erkannte Seiten je Monat einer fremden Organisation (E-AN7-7)."""
+    api_key_limit_per_minute: int = 60
+
     # Objektspeicher (S3-kompatibel)
     s3_endpoint_url: str | None = None
     s3_public_endpoint_url: str | None = None
@@ -113,6 +122,9 @@ class Settings(BaseSettings):
     rules_limit_per_minute: int = 60
     regulation_upload_max_bytes: int = 100 * 1024 * 1024
     """Größtes hochgeladenes règlement écrit in „Emprise Analyse“ (AN2); gleich `pdf.MAX_PDF_BYTES`."""
+    ocr_seconds_per_page: float = 3.0
+    """Geschätzte Dauer der Texterkennung je Seite für den Hinweis vor der Erkennung (AN7, PLAN_AN7_SCAN 3.2);
+    lokal gemessen 2–2,5 s, auf dem Server nachstellen."""
 
     # Baurahmen (G3)
     envelope_limit_per_minute: int = 60

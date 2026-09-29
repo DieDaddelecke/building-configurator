@@ -93,8 +93,12 @@ CLEAN_TABLES = [
     "ref_road",
     "ref_commune",
     "ref_import",
+    "usage_record",
+    "api_key",
+    "organisation_member",
     "staff_session",
     "staff_user",
+    "organisation",
     "job",
     "project",
     "periodic_schedule",
@@ -196,16 +200,26 @@ def db_session(clean_db: None) -> Iterator[Any]:
 
 @pytest.fixture
 def login_as(client: Any, db_session: Any) -> Callable[..., Any]:
-    """Legt eine freigeschaltete Person mit Sitzung an und setzt das Sitzungscookie im Testclient."""
+    """Legt eine freigeschaltete Person mit Sitzung an und setzt das Sitzungscookie im Testclient.
+
+    Ohne `organisation` gehört sie zur Organisation des Betreibers (angelegt beim ersten Konto), sonst zur
+    übergebenen; `organisation=False` legt ein Konto ohne Organisation an (AN6)."""
     from app.config import get_settings
     from app.platform.auth.staff import start_session
     from app.platform.auth.tokens import STAFF_COOKIE
-    from app.platform.models import StaffUser
+    from app.platform.models import OrganisationMember, StaffUser
+    from app.platform.organisations import operator_organisation
 
-    def _login(*roles: str, email: str | None = None) -> Any:
+    def _login(
+        *roles: str, email: str | None = None, organisation: Any = None, org_role: str = "admin"
+    ) -> Any:
         user = StaffUser(email=email or f"{uuid.uuid4().hex[:8]}@buero.test", roles=list(roles))
         db_session.add(user)
         db_session.flush()
+        if organisation is not False:
+            org = organisation or operator_organisation(db_session, create=True, actor="test")
+            db_session.add(OrganisationMember(staff_user_id=user.id, organisation_id=org.id, role=org_role))
+            db_session.flush()
         token = start_session(db_session, user, ["pwd", "mfa"], get_settings())
         db_session.commit()
         client.cookies.set(STAFF_COOKIE, token)

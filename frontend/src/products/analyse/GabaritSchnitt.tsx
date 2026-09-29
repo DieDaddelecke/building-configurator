@@ -1,7 +1,8 @@
 /**
  * Gabarit und Schnitt (AN3, docs/PLAN_AN3_GABARIT.md 3.6): Lageplan mit den Konturen der Höhenstufen und den
  * Schnittlinien, Tabelle der Stufen, Schnitt A–A' oder B–B' mit Grenzen, Stufen, Abstandslinien und Trauf- und
- * Firsthöhe. Eine Stufe gilt bis zu ihrer Oberkante; das Gelände ist eben dargestellt (E-AN3G-4).
+ * Firsthöhe. Eine Stufe gilt bis zu ihrer Oberkante. Mit bekanntem Gelände zeigt der Schnitt das Profil über der
+ * Bezugshöhe (AN5, docs/PLAN_AN5_AUSGABE.md 3.3), sonst ist das Gelände eben dargestellt (E-AN3G-4).
  */
 
 import type { TFunction } from "i18next";
@@ -18,6 +19,9 @@ type Reading = "lenient" | "strict";
 type Key = SectionOut["key"];
 
 const rings = (value: unknown) => (value ?? []) as unknown as LocalPoint[][];
+
+/** Ab dieser Neigung ist der Messpunkt der Höhe nach PLU zu prüfen (wie im Bericht, `report.STEEP_PERCENT`). */
+const STEIL_PROZENT = 5;
 
 /** Deckkraft einer Stufe: höhere Stufen kräftiger, damit die Höhenlinien lesbar gestaffelt sind. */
 function staerke(index: number, count: number): number {
@@ -200,12 +204,16 @@ function Schnitt({ section, gabarit, highlighted }: { section: SectionOut; gabar
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
   const top = gabarit.top_m ?? Math.max(0, ...section.levels.map((level) => level.to_m));
+  const profil = section.terrain;
+  const hoch = Math.max(0, ...profil.map(([, dz = 0]) => dz));
+  const tief = Math.min(0, ...profil.map(([, dz = 0]) => dz));
   const size = Math.max(section.length_m, top, 10);
   const schrift = size / 42;
   const links = -Math.max(3, size * 0.1);
   const rechts = section.length_m + Math.max(3, size * 0.14);
-  const oben = top + schrift * 3;
-  const unten = schrift * 3.2;
+  const oben = Math.max(top, hoch) + schrift * 3;
+  const unten = -tief + schrift * 3.2;
+  const beschriftung = -tief + schrift * 2.2;
   const pfad = (points: number[][]) => points.map(([s = 0, z = 0], i) => `${i ? "L" : "M"}${s.toFixed(3)} ${(-z).toFixed(3)}`).join("");
   const koten = Array.from(new Set(section.levels.map((level) => level.to_m))).sort((a, b) => a - b);
 
@@ -219,10 +227,33 @@ function Schnitt({ section, gabarit, highlighted }: { section: SectionOut; gabar
       <defs>
         <Schraffur id={`boden-${section.key}`} farbe="var(--faint)" abstand={schrift * 0.7} breite={schrift * 0.06} />
       </defs>
-      {section.parcel.map(([a = 0, b = 0], i) => (
-        <rect key={`boden${i}`} x={a} y={0} width={b - a} height={schrift * 0.8} style={{ fill: `url(#boden-${section.key})` }} />
-      ))}
-      <line x1={links} y1={0} x2={rechts} y2={0} style={strich("var(--ink)", schrift * 0.08)} />
+      {profil.length > 1 ? (
+        <g data-testid={`schnitt-gelaende-${section.key}`}>
+          <path
+            d={`${pfad(profil)}L${(profil.at(-1)?.[0] ?? 0).toFixed(3)} ${(-tief + schrift * 0.8).toFixed(3)}L${(profil[0]?.[0] ?? 0).toFixed(3)} ${(-tief + schrift * 0.8).toFixed(3)}Z`}
+            style={{ fill: `url(#boden-${section.key})`, stroke: "none" }}
+          />
+          <path
+            d={pfad(profil)}
+            style={strich("var(--ink)", schrift * 0.08, { fill: "none", strokeDasharray: `${schrift * 0.5} ${schrift * 0.25}` })}
+          />
+          {/* ±0,00 = mittlere Geländehöhe der Stichproben (E-AN5-4) */}
+          <line
+            x1={links}
+            y1={0}
+            x2={rechts}
+            y2={0}
+            style={strich("var(--mute)", schrift * 0.04, { strokeDasharray: `${schrift * 0.2} ${schrift * 0.3}` })}
+          />
+        </g>
+      ) : (
+        <>
+          {section.parcel.map(([a = 0, b = 0], i) => (
+            <rect key={`boden${i}`} x={a} y={0} width={b - a} height={schrift * 0.8} style={{ fill: `url(#boden-${section.key})` }} />
+          ))}
+          <line x1={links} y1={0} x2={rechts} y2={0} style={strich("var(--ink)", schrift * 0.08)} />
+        </>
+      )}
       {(["lenient", "strict"] as const).map((reading) =>
         section.levels.flatMap((level, index) =>
           (level.intervals[reading] ?? []).map(([a = 0, b = 0], j) => (
@@ -271,14 +302,14 @@ function Schnitt({ section, gabarit, highlighted }: { section: SectionOut; gabar
         <g key={`c${i}`} data-testid={`schnitt-grenze-${crossing.edge_seq ?? "x"}`}>
           <line
             x1={crossing.s}
-            y1={schrift * 0.8}
+            y1={beschriftung - schrift * 1.4}
             x2={crossing.s}
             y2={-(top + schrift)}
             style={strich("var(--ink)", schrift * 0.06, { strokeDasharray: `${schrift * 0.25} ${schrift * 0.25}` })}
           />
           <text
             x={crossing.s}
-            y={schrift * 2.2}
+            y={beschriftung}
             textAnchor={crossing.inward > 0 ? "start" : "end"}
             style={txt("var(--ink)", schrift * 0.9)}
           >
@@ -308,12 +339,15 @@ function Hinweise({ gabarit }: { gabarit: GabaritOut }) {
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
   const slope = gabarit.terrain_slope_percent;
+  const reference = gabarit.reference_altitude_ngf;
+  const werte = { slope: formatNumber(slope ?? 0, lng, 1), reference: meter(reference ?? 0, lng) };
+  // Profil über der mittleren Geländehöhe; ab 5 % entscheidet das PLU, wo die Höhe gemessen wird (E-AN5-4)
   const gelaende =
-    gabarit.terrain_status !== "ok" || slope == null
+    gabarit.terrain_status !== "ok" || slope == null || reference == null
       ? t("analyse.gabarit.notes.terrain")
-      : slope > 5
-        ? t("analyse.gabarit.notes.terrainSteep", { slope: formatNumber(slope, lng, 1) })
-        : t("analyse.gabarit.notes.terrainFlat", { slope: formatNumber(slope, lng, 1) });
+      : slope > STEIL_PROZENT
+        ? t("analyse.gabarit.notes.terrainSteep", werte)
+        : t("analyse.gabarit.notes.terrainProfile", werte);
   return (
     <ul className="m-0 pl-5 text-sm t-mute flex flex-col gap-1">
       <li>{t("analyse.gabarit.notes.reading")}</li>

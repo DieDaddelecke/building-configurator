@@ -9,6 +9,7 @@ import type { components } from "./schema";
 export type ProjectRegulationOut = components["schemas"]["ProjectRegulationOut"];
 export type RegulationDocumentOut = components["schemas"]["RegulationDocumentOut"];
 export type DocumentChapterOut = components["schemas"]["DocumentChapterOut"];
+export type OcrOut = components["schemas"]["OcrOut"];
 export type ZoneChoiceIn = components["schemas"]["ZoneChoiceIn"];
 export type LotChoiceIn = components["schemas"]["LotChoiceIn"];
 export type PluDuType = "PLU" | "PLUi" | "PSMV";
@@ -35,13 +36,15 @@ export function chosenChapter(regulation: ProjectRegulationOut): DocumentChapter
   return regulation.document.chapters.find((chapter) => chapter.code === regulation.chapter_code);
 }
 
-/** Fragt nach, solange das Dokument gelesen oder das gewählte Kapitel ausgewertet wird (höchstens rund 20 Minuten). */
+/** Fragt nach, solange das Dokument gelesen oder das gewählte Kapitel ausgewertet wird (höchstens rund 20 Minuten),
+ *  bei einer Texterkennung höchstens eine Stunde (AN7: etwa 3 s je Seite, ein Scan mit 1 000 Seiten dauert lange). */
 function refetchWhileWorking(data: ProjectRegulationOut[] | undefined, updates: number): number | false {
+  const recognizing = data?.some((regulation) => regulation.document.ocr?.state === "running");
   const working = data?.some((regulation) => {
     const status = chosenChapter(regulation)?.status;
     return regulation.document.status === "importing" || status === "pending" || status === "extracting";
   });
-  return working && updates < 240 ? 5_000 : false;
+  return (recognizing && updates < 720) || (working && updates < 240) ? 5_000 : false;
 }
 
 export function useProjectRegulations(projectId: string) {
@@ -70,7 +73,10 @@ function useRefreshDerived(projectId: string) {
 export function useRefreshWhenStateChanges(projectId: string, regulations: ProjectRegulationOut[] | undefined) {
   const client = useQueryClient();
   const state = (regulations ?? [])
-    .map((regulation) => `${regulation.document.id}:${regulation.document.status}:${chosenChapter(regulation)?.status ?? ""}`)
+    .map(
+      (regulation) =>
+        `${regulation.document.id}:${regulation.document.status}:${regulation.document.ocr?.state ?? ""}:${chosenChapter(regulation)?.status ?? ""}`,
+    )
     .join("|");
   const previous = useRef(state);
   useEffect(() => {
@@ -128,6 +134,21 @@ export function useChooseLot(projectId: string, documentId: string) {
         await api.PUT("/api/v1/projects/{project_id}/regulations/{document_id}/lot", {
           params: { path: { project_id: projectId, document_id: documentId } },
           body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Text der Seiten ohne Textschicht erkennen lassen (AN7, docs/PLAN_AN7_SCAN.md 3.2): nach dem Hinweis bei einem
+ *  Scan oder für einzelne leere Seiten. Kostet nichts, dauert etwa 3 s je Seite; läuft im Hintergrund in Teilen. */
+export function useRequestOcr(projectId: string, documentId: string) {
+  const refresh = useRefreshDerived(projectId);
+  return useMutation({
+    mutationFn: async () =>
+      unwrap(
+        await api.POST("/api/v1/projects/{project_id}/regulations/{document_id}/ocr", {
+          params: { path: { project_id: projectId, document_id: documentId } },
         }),
       ),
     onSuccess: refresh,

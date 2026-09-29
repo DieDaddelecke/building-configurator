@@ -19,6 +19,8 @@ interface BaurahmenProps {
   envelope: EnvelopeOut;
   projectId: string;
   rolle?: "customer" | "architect";
+  /** Steckbrief als PDF anbieten; die Analyse hat stattdessen ihren Bericht (AN5, PLAN_AN5_AUSGABE 3.7). */
+  steckbrief?: boolean;
 }
 
 /** Rückfalltexte, solange die Rechtstexte nach L7 nicht veröffentlicht sind (G16). */
@@ -209,7 +211,7 @@ function Steckbrief({
   );
 }
 
-export function Baurahmen({ envelope, projectId, rolle = "customer" }: BaurahmenProps) {
+export function Baurahmen({ envelope, projectId, rolle = "customer", steckbrief = true }: BaurahmenProps) {
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
   const [highlighted, setHighlighted] = useState<number | null>(null);
@@ -280,7 +282,7 @@ export function Baurahmen({ envelope, projectId, rolle = "customer" }: Baurahmen
             </ul>
           </section>
         )}
-        <Steckbrief projectId={projectId} envelope={envelope} rolle={rolle} />
+        {steckbrief && <Steckbrief projectId={projectId} envelope={envelope} rolle={rolle} />}
         <section aria-labelledby="baurahmen-hinweise" className="flex flex-col gap-2 text-sm">
           <h3 id="baurahmen-hinweise" className="eyebrow m-0">{t("site.notices.title")}</h3>
           {envelope.notices.map((key) => {

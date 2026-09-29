@@ -653,6 +653,194 @@
         "title": "AnalysisStoreysOut",
         "type": "object"
       },
+      "ApiKeyCreatedOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "read",
+                "write"
+              ],
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "scopes",
+          "created_at",
+          "expires_at",
+          "last_used_at",
+          "revoked_at",
+          "token"
+        ],
+        "title": "ApiKeyCreatedOut",
+        "type": "object"
+      },
+      "ApiKeyIn": {
+        "properties": {
+          "days": {
+            "default": 365,
+            "maximum": 730.0,
+            "minimum": 1.0,
+            "title": "Days",
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "read",
+                "write"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "title": "ApiKeyIn",
+        "type": "object"
+      },
+      "ApiKeyOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prefix": {
+            "title": "Prefix",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "read",
+                "write"
+              ],
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "scopes",
+          "created_at",
+          "expires_at",
+          "last_used_at",
+          "revoked_at"
+        ],
+        "title": "ApiKeyOut",
+        "type": "object"
+      },
       "ArchitectEdgeIn": {
         "properties": {
           "kind": {
@@ -680,7 +868,7 @@
         "type": "object"
       },
       "ArchitectProjectOut": {
-        "description": "Projekt am Konto des Architekten (AN1). Benennung, Notiz und Archiv folgen mit AN5.",
+        "description": "Projekt am Konto des Architekten (AN1), mit Name, Notiz und Archiv (AN5, PLAN_AN5_AUSGABE 3.1).",
         "properties": {
           "address_label": {
             "anyOf": [
@@ -692,6 +880,18 @@
               }
             ],
             "title": "Address Label"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
           },
           "area_m2": {
             "anyOf": [
@@ -718,6 +918,28 @@
             "format": "date-time",
             "title": "Last Activity At",
             "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           },
           "site_origin": {
             "anyOf": [
@@ -892,6 +1114,41 @@
           "dxf"
         ],
         "title": "Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post",
+        "type": "object"
+      },
+      "Body_put_organisation_logo_api_v1_organisation_logo_put": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_put_organisation_logo_api_v1_organisation_logo_put",
+        "type": "object"
+      },
+      "Body_scan_site_preview_api_v1_projects__project_id__site_scan_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_scan_site_preview_api_v1_projects__project_id__site_scan_post",
         "type": "object"
       },
       "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post": {
@@ -1241,6 +1498,11 @@
           "confidence": {
             "title": "Confidence",
             "type": "number"
+          },
+          "from_scan": {
+            "default": false,
+            "title": "From Scan",
+            "type": "boolean"
           },
           "notes": {
             "anyOf": [
@@ -3992,6 +4254,17 @@
             "title": "Reasons",
             "type": "array"
           },
+          "reference_altitude_ngf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Altitude Ngf"
+          },
           "status": {
             "enum": [
               "ok",
@@ -4936,6 +5209,109 @@
         "title": "MeasuredEntryOut",
         "type": "object"
       },
+      "MemberIn": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "role": {
+            "default": "member",
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "MemberIn",
+        "type": "object"
+      },
+      "MemberOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "signed_in": {
+            "title": "Signed In",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "role",
+          "active",
+          "last_login_at",
+          "signed_in"
+        ],
+        "title": "MemberOut",
+        "type": "object"
+      },
+      "MemberRoleIn": {
+        "properties": {
+          "role": {
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "MemberRoleIn",
+        "type": "object"
+      },
       "MessageIn": {
         "properties": {
           "body": {
@@ -5199,6 +5575,29 @@
         "title": "ModuleVersionOut",
         "type": "object"
       },
+      "MonthUsageOut": {
+        "properties": {
+          "cost_usd": {
+            "title": "Cost Usd",
+            "type": "number"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "ocr_pages": {
+            "title": "Ocr Pages",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "cost_usd",
+          "ocr_pages"
+        ],
+        "title": "MonthUsageOut",
+        "type": "object"
+      },
       "MyInquiryOut": {
         "properties": {
           "can_withdraw": {
@@ -5313,6 +5712,70 @@
           "files"
         ],
         "title": "MySubmissionOut",
+        "type": "object"
+      },
+      "OcrOut": {
+        "description": "Texterkennung der Seiten ohne Textschicht (AN7, docs/PLAN_AN7_SCAN.md 3.2).",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "estimated_seconds": {
+            "title": "Estimated Seconds",
+            "type": "integer"
+          },
+          "pages_done": {
+            "title": "Pages Done",
+            "type": "integer"
+          },
+          "pages_total": {
+            "title": "Pages Total",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "none",
+              "offered",
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "still_empty_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Still Empty Pages",
+            "type": "array"
+          },
+          "uncertain_pages": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Uncertain Pages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "state",
+          "pages_total",
+          "pages_done",
+          "uncertain_pages",
+          "still_empty_pages",
+          "estimated_seconds",
+          "error"
+        ],
+        "title": "OcrOut",
         "type": "object"
       },
       "OpsStatus": {
@@ -5513,6 +5976,249 @@
           "options"
         ],
         "title": "OptionsOut",
+        "type": "object"
+      },
+      "OrganisationIn": {
+        "description": "Nur die genannten Felder ändern sich; ein leerer Text löscht die Angabe.",
+        "properties": {
+          "accent_color": {
+            "anyOf": [
+              {
+                "maxLength": 7,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          },
+          "address_lines": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 4,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Lines"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 320,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "title": "OrganisationIn",
+        "type": "object"
+      },
+      "OrganisationInfo": {
+        "description": "Organisation des Kontos und Rolle darin (AN6, docs/PLAN_AN6_MANDANTEN.md 3.7).",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "operator",
+              "customer"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "member"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "kind",
+          "role"
+        ],
+        "title": "OrganisationInfo",
+        "type": "object"
+      },
+      "OrganisationOut": {
+        "properties": {
+          "accent_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          },
+          "address_lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Address Lines",
+            "type": "array"
+          },
+          "branding_revision": {
+            "title": "Branding Revision",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "has_logo": {
+            "title": "Has Logo",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "operator",
+              "customer"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "kind",
+          "address_lines",
+          "phone",
+          "email",
+          "website",
+          "registration",
+          "accent_color",
+          "has_logo",
+          "branding_revision"
+        ],
+        "title": "OrganisationOut",
         "type": "object"
       },
       "OrientationOut": {
@@ -6523,6 +7229,47 @@
         "title": "PlanOut",
         "type": "object"
       },
+      "PositionIn": {
+        "description": "Lage setzen oder korrigieren: Drehpunkt an `lon`/`lat`, zusätzlich um `rotation_deg` im Uhrzeigersinn\ngegenüber der jetzigen Darstellung gedreht.",
+        "properties": {
+          "expected_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          },
+          "lat": {
+            "maximum": 52.0,
+            "minimum": 41.0,
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "maximum": 10.0,
+            "minimum": -6.0,
+            "title": "Lon",
+            "type": "number"
+          },
+          "rotation_deg": {
+            "default": 0.0,
+            "maximum": 360.0,
+            "minimum": -360.0,
+            "title": "Rotation Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lon",
+          "lat"
+        ],
+        "title": "PositionIn",
+        "type": "object"
+      },
       "PresetsOut": {
         "properties": {
           "presets": {
@@ -7076,6 +7823,48 @@
           "notices"
         ],
         "title": "ProjectRulesOut",
+        "type": "object"
+      },
+      "ProjectUpdateIn": {
+        "description": "Nur die genannten Felder ändern sich; ein leerer Name oder eine leere Notiz löscht sie.",
+        "properties": {
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "ProjectUpdateIn",
         "type": "object"
       },
       "ProvenanceOut": {
@@ -7805,6 +8594,16 @@
             "title": "Id",
             "type": "string"
           },
+          "ocr": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OcrOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "page_count": {
             "anyOf": [
               {
@@ -7816,11 +8615,23 @@
             ],
             "title": "Page Count"
           },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
           "status": {
             "enum": [
               "importing",
               "active",
-              "failed"
+              "failed",
+              "scan"
             ],
             "title": "Status",
             "type": "string"
@@ -7844,6 +8655,77 @@
           "chapters"
         ],
         "title": "RegulationDocumentOut",
+        "type": "object"
+      },
+      "ReportIn": {
+        "properties": {
+          "locale": {
+            "default": "fr",
+            "enum": [
+              "fr",
+              "de"
+            ],
+            "title": "Locale",
+            "type": "string"
+          }
+        },
+        "title": "ReportIn",
+        "type": "object"
+      },
+      "ReportOut": {
+        "description": "Bericht als PDF: fertig (`ready`) oder in Arbeit (`job_id`). `input_hash` ist die Prüfsumme des\nBerichts – über alles, was er zeigt –, nicht die der Analyse.",
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "de"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "pending"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "input_hash",
+          "locale"
+        ],
+        "title": "ReportOut",
         "type": "object"
       },
       "RiskOut": {
@@ -8083,6 +8965,11 @@
               }
             ],
             "title": "Detail"
+          },
+          "from_scan": {
+            "default": false,
+            "title": "From Scan",
+            "type": "boolean"
           },
           "kind": {
             "title": "Kind",
@@ -8369,6 +9256,11 @@
           "confidence": {
             "title": "Confidence",
             "type": "number"
+          },
+          "from_scan": {
+            "default": false,
+            "title": "From Scan",
+            "type": "boolean"
           },
           "kind": {
             "title": "Kind",
@@ -8805,6 +9697,87 @@
         "title": "RulesModelOut",
         "type": "object"
       },
+      "ScanPreviewOut": {
+        "description": "Seite eines gescannten Plans als Vorlage zum Nachzeichnen (AN7, docs/PLAN_AN7_SCAN.md 3.5). Nichts wird\ngespeichert; das Grundstück entsteht danach wie in Weg E aus bemaßten Kanten (`PUT /site` mit `trace`).",
+        "properties": {
+          "height_px": {
+            "title": "Height Px",
+            "type": "integer"
+          },
+          "image": {
+            "title": "Image",
+            "type": "string"
+          },
+          "metres_per_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metres Per Px"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_count": {
+            "title": "Page Count",
+            "type": "integer"
+          },
+          "paper_mm": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paper Mm"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          },
+          "scales": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Scales",
+            "type": "array"
+          },
+          "width_px": {
+            "title": "Width Px",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "page_count",
+          "image",
+          "width_px",
+          "height_px",
+          "paper_mm",
+          "scales",
+          "scale",
+          "metres_per_px"
+        ],
+        "title": "ScanPreviewOut",
+        "type": "object"
+      },
       "SectionCrossingOut": {
         "properties": {
           "edge_seq": {
@@ -9003,6 +9976,16 @@
             },
             "title": "Start Local",
             "type": "array"
+          },
+          "terrain": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Terrain",
+            "type": "array"
           }
         },
         "required": [
@@ -9014,7 +9997,8 @@
           "crossings",
           "levels",
           "height_lines",
-          "prospects"
+          "prospects",
+          "terrain"
         ],
         "title": "SectionOut",
         "type": "object"
@@ -9368,6 +10352,16 @@
               }
             ],
             "title": "Parcel Idus"
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TraceIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "title": "SiteIn",
@@ -9489,6 +10483,16 @@
             "title": "Parcels",
             "type": "array"
           },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SitePlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "project_id": {
             "format": "uuid",
             "title": "Project Id",
@@ -9560,6 +10564,42 @@
           "context"
         ],
         "title": "SiteOut",
+        "type": "object"
+      },
+      "SitePlacementOut": {
+        "description": "Was die Karte zum Einpassen braucht (AN5, docs/PLAN_AN5_AUSGABE.md 3.2): Drehpunkt und wie die lokalen\nAchsen auf einer Karte mit geografisch Nord oben erscheinen.",
+        "properties": {
+          "map_rotation_deg": {
+            "title": "Map Rotation Deg",
+            "type": "number"
+          },
+          "pivot_local": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pivot Local",
+            "type": "array"
+          },
+          "pivot_wgs84": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pivot Wgs84"
+          }
+        },
+        "required": [
+          "pivot_local",
+          "map_rotation_deg"
+        ],
+        "title": "SitePlacementOut",
         "type": "object"
       },
       "SiteReviewItem": {
@@ -9664,6 +10704,16 @@
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "organisation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrganisationInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "roles": {
             "items": {
@@ -10199,6 +11249,64 @@
           "status"
         ],
         "title": "TerrainOut",
+        "type": "object"
+      },
+      "TraceIn": {
+        "description": "Herkunft einer nach einem Scan nachgezeichneten Parzelle (AN7, docs/PLAN_AN7_SCAN.md 3.5). Der Scan\nselbst wird nicht gespeichert (3.6).",
+        "properties": {
+          "file_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "File Name",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "reference_m": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference M"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 50.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale"
+          },
+          "scale_method": {
+            "enum": [
+              "plan",
+              "calibrated"
+            ],
+            "title": "Scale Method",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_name",
+          "scale_method"
+        ],
+        "title": "TraceIn",
         "type": "object"
       },
       "TypeBasePriceOut": {
@@ -11002,6 +12110,46 @@
         "title": "UploadResultOut",
         "type": "object"
       },
+      "UsageOut": {
+        "properties": {
+          "budget_month_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Month Usd"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthUsageOut"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "ocr_pages_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Pages Month"
+          }
+        },
+        "required": [
+          "budget_month_usd",
+          "ocr_pages_month",
+          "months"
+        ],
+        "title": "UsageOut",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -11331,6 +12479,13 @@
         ],
         "title": "ZoneRulesOut",
         "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "description": "API-Schlüssel der Organisation (emp_…), nur für /api/v1/projects",
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -14681,10 +15836,455 @@
         ]
       }
     },
+    "/api/v1/organisation": {
+      "get": {
+        "operationId": "get_organisation_api_v1_organisation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Organisation",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "patch": {
+        "description": "Anzeigename und Schriftfeld für Bericht und DXF (3.5). Jede Änderung zählt `branding_revision` hoch:\nDer nächste Bericht entsteht neu.",
+        "operationId": "update_organisation_api_v1_organisation_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganisationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Organisation",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/api-keys": {
+      "get": {
+        "operationId": "list_api_keys_api_v1_organisation_api_keys_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyOut"
+                  },
+                  "title": "Response List Api Keys Api V1 Organisation Api Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Api Keys",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "post": {
+        "description": "Neuer Schlüssel; er erscheint nur in dieser Antwort. `write` schließt `read` ein.",
+        "operationId": "create_api_key_api_v1_organisation_api_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreatedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Api Key",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/api-keys/{key_id}": {
+      "delete": {
+        "operationId": "revoke_api_key_api_v1_organisation_api_keys__key_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Api Key",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/logo": {
+      "delete": {
+        "operationId": "delete_organisation_logo_api_v1_organisation_logo_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete Organisation Logo",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "get": {
+        "description": "Logo für die Vorschau des Berichtskopfs.",
+        "operationId": "get_organisation_logo_api_v1_organisation_logo_get",
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Organisation Logo",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "put": {
+        "description": "Logo als PNG oder JPEG, höchstens 1 MB und 2000 Pixel; wird verkleinert und als PNG neu geschrieben\n(3.5, E-AN6-6: kein SVG).",
+        "operationId": "put_organisation_logo_api_v1_organisation_logo_put",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_put_organisation_logo_api_v1_organisation_logo_put"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganisationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Organisation Logo",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/members": {
+      "get": {
+        "operationId": "list_members_api_v1_organisation_members_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response List Members Api V1 Organisation Members Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Members",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "post": {
+        "description": "Konto mit Rolle `architect` anlegen oder ein Konto ohne Organisation aufnehmen (E-AN6-9). Anmelden\nkann es sich, sobald der Betreiber es beim Identitätsdienst eingerichtet hat; die erste Anmeldung bindet\nes über die bestätigte Adresse.",
+        "operationId": "add_member_api_v1_organisation_members_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response Add Member Api V1 Organisation Members Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Member",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/members/{user_id}": {
+      "delete": {
+        "description": "Mitgliedschaft beenden und das Konto sperren; die Projekte bleiben bei der Organisation (3.1).",
+        "operationId": "remove_member_api_v1_organisation_members__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response Remove Member Api V1 Organisation Members  User Id  Delete",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Member",
+        "tags": [
+          "organisation"
+        ]
+      },
+      "patch": {
+        "operationId": "change_member_role_api_v1_organisation_members__user_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRoleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response Change Member Role Api V1 Organisation Members  User Id  Patch",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Member Role",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
+    "/api/v1/organisation/usage": {
+      "get": {
+        "description": "Kosten der Auswertung und erkannte Seiten der letzten sechs Monate mit den Grenzen der Organisation.",
+        "operationId": "get_usage_api_v1_organisation_usage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Usage",
+        "tags": [
+          "organisation"
+        ]
+      }
+    },
     "/api/v1/projects": {
       "get": {
-        "description": "Projekte mit Eigentümer, neueste zuerst (AN1). Alle Architekten des Büros sehen dieselben\nProjekte; nach Person und Organisation trennt erst AN6 (D15, E-AN1-4).",
+        "description": "Projekte der eigenen Organisation, neueste zuerst (AN1, AN6); `archived=true` zeigt das Archiv (AN5).\nAlle Mitglieder einer Organisation sehen dieselben Projekte (E-AN1-4).",
         "operationId": "list_own_projects_api_v1_projects_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -14699,15 +16299,31 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "List Own Projects",
         "tags": [
           "projects"
         ]
       },
       "post": {
-        "description": "Neues Projekt. Ein angemeldeter Architekt wird Eigentümer und bekommt **kein** Cookie – sonst\nverdrängte jedes neue Projekt das vorige (AN1, UP05).",
+        "description": "Neues Projekt. Ein Architekt oder API-Schlüssel legt es in seiner Organisation an; der Architekt wird\nEigentümer. Beide bekommen **kein** Cookie – sonst verdrängte jedes neue Projekt das vorige (AN1, UP05,\nAN6). Im Analyse-Produkt ist das die einzige Art (3.2).",
         "operationId": "create_project_api_v1_projects_post",
         "responses": {
           "201": {
@@ -14721,6 +16337,12 @@
             "description": "Successful Response"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Create Project",
         "tags": [
           "projects"
@@ -14758,6 +16380,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Delete Project",
         "tags": [
           "projects"
@@ -14799,7 +16427,71 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Project",
+        "tags": [
+          "projects"
+        ]
+      },
+      "patch": {
+        "description": "Name, Notiz und Archiv ändern (AN5, E-AN5-7: archivieren blendet nur aus). Das Audit nennt den Namen\nund ob sich die Notiz geändert hat, nicht ihren Inhalt.",
+        "operationId": "update_own_project_api_v1_projects__project_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchitectProjectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Update Own Project",
         "tags": [
           "projects"
         ]
@@ -14843,6 +16535,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Analysis",
         "tags": [
           "analysis"
@@ -14898,7 +16596,123 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Analysis Comparison",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/analysis/export/dxf": {
+      "get": {
+        "description": "Lageplan mit Baurahmen, Bauband, Vorgaben, Schnitten und Gabarit (Höhenlinien und Körper) als DXF.\n`L93` nur mit Lage (409 `export_not_georeferenced`); Z dann in m NGF, wenn das Gelände bekannt ist.",
+        "operationId": "export_dxf_api_v1_projects__project_id__analysis_export_dxf_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "variant",
+            "required": false,
+            "schema": {
+              "default": "local",
+              "enum": [
+                "local",
+                "L93"
+              ],
+              "title": "Variant",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Export Dxf",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/analysis/export/geojson": {
+      "get": {
+        "description": "Dieselben Ebenen als FeatureCollection in WGS84 (RFC 7946); nur mit Lage (E-AN5-6).",
+        "operationId": "export_geojson_api_v1_projects__project_id__analysis_export_geojson_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Export Geojson",
         "tags": [
           "analysis"
         ]
@@ -14942,6 +16756,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Reset Analysis Parameters",
         "tags": [
           "analysis"
@@ -14994,7 +16814,133 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Set Analysis Parameters",
+        "tags": [
+          "analysis"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/analysis/report": {
+      "get": {
+        "description": "Fertiger Bericht zum aktuellen Stand; sonst 409 `report_not_ready` mit der Prüfsumme.",
+        "operationId": "download_report_api_v1_projects__project_id__analysis_report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "fr",
+              "enum": [
+                "fr",
+                "de"
+              ],
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Download Report",
+        "tags": [
+          "analysis"
+        ]
+      },
+      "post": {
+        "description": "Bericht anfordern. Liegt er für diesen Stand und diese Sprache vor, kommt er sofort (`ready`).",
+        "operationId": "create_report_api_v1_projects__project_id__analysis_report_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Create Report",
         "tags": [
           "analysis"
         ]
@@ -15038,6 +16984,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Options",
         "tags": [
           "configuration"
@@ -15082,6 +17034,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "List Types",
         "tags": [
           "configuration"
@@ -15125,6 +17083,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Configuration",
         "tags": [
           "configuration"
@@ -15193,6 +17157,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Patch Configuration",
         "tags": [
           "configuration"
@@ -15254,6 +17224,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Placement Area",
         "tags": [
           "configuration"
@@ -15315,9 +17291,65 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Post Placement Presets",
         "tags": [
           "configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/details": {
+      "get": {
+        "description": "Name, ganze Notiz und Archiv eines Projekts der Organisation (AN5).",
+        "operationId": "get_own_project_api_v1_projects__project_id__details_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArchitectProjectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Get Own Project",
+        "tags": [
+          "projects"
         ]
       }
     },
@@ -15359,6 +17391,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Envelope",
         "tags": [
           "envelope"
@@ -15401,6 +17439,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Download Sheet",
         "tags": [
           "envelope"
@@ -15443,6 +17487,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Create Sheet",
         "tags": [
           "envelope"
@@ -15487,6 +17537,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Export Project",
         "tags": [
           "inquiry"
@@ -15531,6 +17587,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get My Inquiry",
         "tags": [
           "inquiry"
@@ -15584,6 +17646,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Confirm Contact",
         "tags": [
           "inquiry"
@@ -15637,6 +17705,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Submit Contact",
         "tags": [
           "inquiry"
@@ -15690,6 +17764,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Post Customer Message",
         "tags": [
           "inquiry"
@@ -15734,6 +17814,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Withdraw Inquiry",
         "tags": [
           "inquiry"
@@ -15787,6 +17873,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Lookup Parcels",
         "tags": [
           "site"
@@ -15835,6 +17927,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "List Project Regulations",
         "tags": [
           "rules"
@@ -15887,6 +17985,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Upload Project Regulation",
         "tags": [
           "rules"
@@ -15934,6 +18038,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Remove Project Regulation",
         "tags": [
           "rules"
@@ -15998,7 +18108,73 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Choose Regulation Lot",
+        "tags": [
+          "rules"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/regulations/{document_id}/ocr": {
+      "post": {
+        "description": "Texterkennung der Seiten ohne Textschicht bestätigen (AN7, docs/PLAN_AN7_SCAN.md 3.2). Kostet nichts,\ndauert je Seite einige Sekunden; läuft sie schon oder ist alles erkannt, ändert sich nichts.",
+        "operationId": "request_regulation_ocr_api_v1_projects__project_id__regulations__document_id__ocr_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectRegulationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Request Regulation Ocr",
         "tags": [
           "rules"
         ]
@@ -16062,6 +18238,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Choose Regulation Zone",
         "tags": [
           "rules"
@@ -16110,6 +18292,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "List Own Overrides",
         "tags": [
           "rules"
@@ -16166,6 +18354,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Put Own Override",
         "tags": [
           "rules"
@@ -16224,6 +18418,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Delete Own Override",
         "tags": [
           "rules"
@@ -16268,6 +18468,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Project Rules",
         "tags": [
           "rules"
@@ -16311,6 +18517,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Get Site",
         "tags": [
           "site"
@@ -16363,6 +18575,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Put Site",
         "tags": [
           "site"
@@ -16442,7 +18660,133 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Patch Edge Customer",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/site/position": {
+      "put": {
+        "description": "Gezeichnetes oder hochgeladenes Grundstück auf der Karte verorten oder die Lage korrigieren (AN5,\ndocs/PLAN_AN5_AUSGABE.md 3.2). Nur der Architekt und nur eigene Projekte: Ein Kunde des Konfigurators\nkann seine Zeichnung damit nicht verorten (G27). Danach werden Gelände und Risiken abgefragt.",
+        "operationId": "put_site_position_api_v1_projects__project_id__site_position_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PositionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Put Site Position",
+        "tags": [
+          "site"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/site/scan": {
+      "post": {
+        "description": "Gescannten Plan (PDF, JPEG, PNG) als Vorlage zum Nachzeichnen aufbereiten (AN7, PLAN_AN7_SCAN 3.5):\nSeite als Bild, erkannter Maßstab, Meter je Pixel.\nSpeichert nichts; dauert wegen der Texterkennung 2–5 s.",
+        "operationId": "scan_site_preview_api_v1_projects__project_id__site_scan_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_scan_site_preview_api_v1_projects__project_id__site_scan_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanPreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "summary": "Scan Site Preview",
         "tags": [
           "site"
         ]
@@ -16496,6 +18840,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Upload Site",
         "tags": [
           "site"
@@ -16550,6 +18900,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Submit",
         "tags": [
           "submission"
@@ -16611,6 +18967,12 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
         "summary": "Download Own File",
         "tags": [
           "submission"
@@ -16619,7 +18981,7 @@
     },
     "/api/v1/regulation-files/{file_id}": {
       "get": {
-        "description": "Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für\ndas Büro; die Datei ist beim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.",
+        "description": "Planunterlage als PDF, **inline**, damit `#page=` im Zitat auf die Seite springt (3.6). Nur für\nMitarbeitende; eine fremde Organisation nur Dateien, die ein eigenes Projekt nutzt (AN6). Die Datei ist\nbeim Hochladen als PDF geprüft, `nosniff` verhindert eine andere Deutung.",
         "operationId": "regulation_file_api_v1_regulation_files__file_id__get",
         "parameters": [
           {

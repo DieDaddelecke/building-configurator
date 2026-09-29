@@ -42,6 +42,7 @@ UnknownReason = Literal[
     "missing",
     "not_found_after_search",
     "not_expressible",
+    "scan_unconfirmed",
 ]
 _SECTOR_PREFIX = re.compile(r"^(?:sous-secteur|secteur|zone)s?\s+", re.IGNORECASE)
 _SHORT_CODE_CONTEXT = re.compile(r"(?:zones?|secteurs?)\s*$", re.IGNORECASE)

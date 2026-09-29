@@ -26,9 +26,12 @@ import {
 } from "../../api/regulations";
 import { useStaffProjectRules, type RuleOut } from "../../api/rules";
 import { ruleValue } from "../../rules/format";
+import { AusScan } from "../../rules/RegelnSimulation";
 import type { Baukoerper } from "../../rules/RegelFormular";
-import { Auswertung, fehlerText, grund } from "./Bebauungsplan";
+import { Auswertung } from "./Bebauungsplan";
+import { fehlerText, grund } from "./fehler";
 import { KorrekturFormular } from "./RegelnKorrekturen";
+import { ScanHinweis } from "./ScanHinweis";
 
 const TYPES: SupplementDuType[] = ["lotissement", "cahier_des_charges"];
 const PREFIX = "analyse.supplement";
@@ -190,6 +193,7 @@ function Zusatzdokument({
           {grund(t, document.error) || t("analyse.plu.error.document_failed")}
         </p>
       )}
+      <ScanHinweis projectId={projectId} document={document} />
       {document.status === "active" && regulation.zone_code && kapitel && !aendern && (
         <Auswertung regulation={regulation} kapitel={kapitel} titel={lotLabel(regulation.zone_code, t)} />
       )}
@@ -346,6 +350,7 @@ function Wert({ limit }: { limit: LimitOut | null | undefined }) {
           </a>
         </>
       )}
+      {citation?.from_scan && <AusScan />}
       {/* Wirksamer Wert aus einer Projektkorrektur (AN4): Die Seite kann im Zusatzdokument liegen */}
       {citation?.origin === "project" && <span className="t-mute"> · {t("rules.origin.correction")}</span>}
     </>

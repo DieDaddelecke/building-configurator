@@ -4,7 +4,7 @@
  * Kandidatenliste und Parzellennummer.
  */
 
-import { lazy, Suspense, useEffect, useId, useState } from "react";
+import { lazy, Suspense, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "../api/client";
@@ -18,19 +18,10 @@ import {
 } from "../api/site";
 import type { Basemap, KartenFokus } from "../components/karte/Katasterkarte";
 import { firstPosition } from "./geo";
+import { useDebounced } from "./useDebounced";
 
 const Katasterkarte = lazy(() => import("../components/karte/Katasterkarte"));
 const MAX_PARCELS = 10;
-
-/** Adressvorschläge erst nach einer Tipppause abfragen (Rate-Limit, Kosten beim Anbieter). */
-function useDebounced<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
 
 function kurz(idu: string): string {
   return `${idu.slice(8, 10).replace(/^0/, "")} ${Number(idu.slice(10))}`;

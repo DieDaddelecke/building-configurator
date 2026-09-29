@@ -89,7 +89,8 @@ class LandUsePlan(UuidPk, Created, Base):
     activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
-        CheckConstraint("status IN ('importing','active','superseded','failed')", name="status_known"),
+        # `scan`: hochgeladener Scan, wartet auf die Texterkennung (AN7, docs/PLAN_AN7_SCAN.md 3.1)
+        CheckConstraint("status IN ('importing','active','superseded','failed','scan')", name="status_known"),
         CheckConstraint(
             "(origin = 'gpu' AND gpu_doc_id IS NOT NULL) "
             "OR (origin = 'upload' AND document_sha256 IS NOT NULL)",
@@ -114,8 +115,18 @@ class SourceFile(UuidPk, Created, Base):
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     page_count: Mapped[int] = mapped_column(Integer)
     empty_pages: Mapped[list[int]] = mapped_column(ARRAY(Integer), server_default=text("'{}'"))
+    """Seiten ohne Textschicht; bleibt nach einer Texterkennung unverändert (Grundlage des Fortschritts)."""
+    ocr_state: Mapped[str] = mapped_column(String(10), server_default=text("'none'"))
+    """Texterkennung der Seiten ohne Textschicht (AN7): `none`, `offered` (Hinweis gezeigt), `running`,
+    `done`, `failed`. Am Dokument, nicht am Projekt: Dieselbe Datei wird nur einmal erkannt."""
+    ocr_error: Mapped[str | None] = mapped_column(Text)
+    ocr_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ocr_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    __table_args__ = (CheckConstraint("kind IN ('regulation_pdf')", name="kind_known"),)
+    __table_args__ = (
+        CheckConstraint("kind IN ('regulation_pdf')", name="kind_known"),
+        CheckConstraint("ocr_state IN ('none','offered','running','done','failed')", name="ocr_state_known"),
+    )
 
 
 class SourcePage(Base):
@@ -128,6 +139,9 @@ class SourcePage(Base):
     )
     page: Mapped[int] = mapped_column(Integer, primary_key=True)
     text: Mapped[str] = mapped_column(Text)
+    ocr_confidence: Mapped[float | None] = mapped_column(Float)
+    """None: Textschicht des PDF. Sonst per Texterkennung gelesen, mittlere Sicherheit der Wörter 0–100
+    (AN7)."""
 
 
 class Zone(UuidPk, Created, Base):
@@ -201,6 +215,11 @@ class RegulationChapter(UuidPk, Created, Base):
     bewertet."""
     error: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    billing_organisation_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organisation.id", ondelete="SET NULL")
+    )
+    """Organisation, die die laufende oder letzte Auswertung ausgelöst hat und bezahlt (AN6, 3.3); auch
+    Wiederaufnahmen durch `rules_housekeeping` zählen bei ihr. NULL: GPU-Import des Konfigurators."""
 
     __table_args__ = (
         UniqueConstraint("land_use_plan_id", "code", name="uq_regulation_chapter_plan_code"),
@@ -232,11 +251,21 @@ class RuleExtractionRun(UuidPk, Created, Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer)
     request_id: Mapped[str | None] = mapped_column(String(100))
     output: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organisation.id", ondelete="SET NULL")
+    )
+    """Zahlende Organisation (AN6, 3.4); ihre Monatskosten sind die Summe ihrer Läufe."""
 
     __table_args__ = (
         CheckConstraint("status IN ('succeeded','failed')", name="status_known"),
         Index("ix_rule_extraction_run_chapter", "chapter_id", "created_at"),
         Index("ix_rule_extraction_run_created", "created_at"),
+        Index(
+            "ix_rule_extraction_run_organisation",
+            "organisation_id",
+            "created_at",
+            postgresql_where=text("organisation_id IS NOT NULL"),
+        ),
     )
 
 

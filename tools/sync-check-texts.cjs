@@ -2,6 +2,7 @@
 /**
  * Übernimmt die Texte der Prüfungen aus dem Frontend in die Übersetzungen des Backends, damit das
  * Dossier-PDF (Modul V, docs/PLAN_V_VORENTWURF_UEBERGABE.md 4.2) dieselben Sätze zeigt wie der Konfigurator.
+ * Ebenso die Werte der Regeln (`rules/format.ts` ↔ `app/rules/format.py`) für Steckbrief und Bericht (AN5).
  *
  * Quelle: frontend/src/i18n/{de,fr}.json (verschachtelt, `{{param}}`).
  * Ziel:   backend/app/platform/locales/{de,fr}.json (flach, `{param}`), Schlüssel mit den Präfixen unten.
@@ -28,6 +29,14 @@ const SECTIONS = [
   [["configurator", "design", "area"], "area."],
   [["site", "risks", "kind"], "risk.kind."],
   [["site", "risks", "level"], "risk.level."],
+  [["rules", "value"], "rule_value."],
+  [["rules", "basis"], "rule_basis."],
+  [["rules", "roofForm"], "rule_roof_form."],
+  [["rules", "flatRoof"], "rule_flat_roof."],
+  [["rules", "material"], "rule_material."],
+  [["rules", "color"], "rule_color."],
+  [["rules", "status"], "rule_status."],
+  [["rules", "reason"], "rule_reason."],
 ];
 
 function expected(locale) {

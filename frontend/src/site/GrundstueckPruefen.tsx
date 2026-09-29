@@ -11,6 +11,7 @@ import { api, ApiError, unwrap } from "../api/client";
 import type { SiteOut } from "../api/site";
 import { Planblatt } from "../components/plan/Planblatt";
 import { compass, CUSTOMER_WARNINGS, formatNumber } from "./geo";
+import { GelaendeRisiken } from "./GelaendeRisiken";
 import { KantenListe } from "./KantenListe";
 import { SiteLageplan } from "./SiteLageplan";
 
@@ -125,43 +126,7 @@ export function GrundstueckPruefen({ site, rolle, onEdgeChange, pending, error, 
           </section>
         )}
 
-        <section aria-labelledby="gelaende" className="flex flex-col gap-2">
-          <h2 id="gelaende" className="eyebrow m-0">
-            {t("site.terrain.title")}
-          </h2>
-          {site.terrain.status === "pending" && <p className="t-mute text-sm m-0">{t("site.pending")}</p>}
-          {site.terrain.status === "unavailable" && <p className="t-warn text-sm m-0">{t("site.terrain.unavailable")}</p>}
-          {site.terrain.status === "ok" && site.terrain.slope_percent != null && (
-            <p className="text-sm m-0">
-              {t(site.terrain.flat ? "site.terrain.flat" : "site.terrain.sloped", {
-                slope: formatNumber(site.terrain.slope_percent, lng),
-                altitude: formatNumber(site.terrain.reference_altitude_ngf ?? 0, lng),
-              })}
-            </p>
-          )}
-        </section>
-
-        <section aria-labelledby="risiken" className="flex flex-col gap-2">
-          <h2 id="risiken" className="eyebrow m-0">
-            {t("site.risks.title")}
-          </h2>
-          {site.risks.status === "pending" && <p className="t-mute text-sm m-0">{t("site.pending")}</p>}
-          {site.risks.status === "unavailable" && <p className="t-warn text-sm m-0">{t("site.risks.unavailable")}</p>}
-          {site.risks.status === "ok" && (site.risks.items ?? []).length === 0 && <p className="text-sm m-0">{t("site.risks.none")}</p>}
-          {site.risks.status === "ok" && (site.risks.items ?? []).length > 0 && (
-            <ul className="m-0 p-0 list-none text-sm">
-              {(site.risks.items ?? []).map((risk) => (
-                <li key={risk.kind} className="flex justify-between gap-4 py-1 border-t bd">
-                  <span>{t(`site.risks.kind.${risk.kind}`, { defaultValue: risk.kind })}</span>
-                  <span className={risk.level === "high" ? "t-alert" : "t-mute"}>
-                    {t(`site.risks.level.${risk.level}`)}
-                    {risk.scope === "commune" ? ` · ${t("site.risks.commune")}` : ""}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <GelaendeRisiken site={site} />
 
         <section aria-labelledby="rechtliches" className="flex flex-col gap-2 text-sm">
           <h2 id="rechtliches" className="eyebrow m-0">

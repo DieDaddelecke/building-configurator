@@ -96,7 +96,12 @@ def _site_enrich(
         if site is None or site.outline_hash != outline_hash:
             return {"skipped": "site_changed"}
         polygon = to_shape(site.geometry)
-        points = terrain_domain.sample_points(polygon)
+        # Grundstücke ohne Kataster (Analyse) bekommen ein dichtes Raster für das Profil im Schnitt (AN5)
+        points = (
+            terrain_domain.sample_points(polygon)
+            if site.origin == "parcel"
+            else terrain_domain.grid_points(polygon)
+        )
         points_wgs84 = _wgs84(session, points)
         anchor = polygon.representative_point()
         anchor_wgs84 = _wgs84(session, [(anchor.x, anchor.y)])[0]

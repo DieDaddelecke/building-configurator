@@ -1,12 +1,13 @@
 """Zonenkapitel und allgemeine Bestimmungen im règlement écrit finden (Spez. 5.2.3 Schritt 2, Plan 3.4).
 
 Seitennummern sind 1-basiert und beziehen sich auf das PDF, nicht auf die gedruckte Seitenzahl.
-Erster Weg ist das Inhaltsverzeichnis (Titel und gedruckte Seite), zweiter die Überschriften der Seiten.
+Erster Weg ist das Inhaltsverzeichnis (Titel und gedruckte Seite), zweiter die Überschriften der Seiten;
+finden die Überschriften mehr Kapitel, gelten sie.
 """
 
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 TOC_MAX_PAGES = 8
 HEADING_LINES = 12
@@ -14,6 +15,10 @@ OFFSET_SEARCH = range(-3, 11)
 GENERAL_MAX_PAGES = 40
 CHAPTER_MAX_PAGES = 150
 """Kapitel und allgemeine Seiten zusammen; längere Kapitel werden nicht ausgewertet (`chapter_too_long`)."""
+TOC_MIN_HEADINGS = 3
+"""Eine Seite mit so vielen verschiedenen Zonenüberschriften ist ein Inhaltsverzeichnis, kein Kapitelanfang.
+Nötig, seit die Texterkennung gescannter Seiten Füllpunkte und Seitenzahlen verliert und aus „CHAPITRE 1 :
+LA ZONE Ua …… 13“ eine Überschrift „CHAPITRE 1 : LA ZONE Ua“ wird (AN7, PLAN_AN7_SCAN 7.5)."""
 
 _TOC_LINE = re.compile(r"^(?P<title>\S.*?)\s*(?:\.{2,}|…+|\s{2,}|\s(?=\d+\s*$))\s*(?P<page>\d{1,4})\s*$")
 _ZONE_TITLE = re.compile(r"\bZONES?\s+(?P<code>.+)$", re.IGNORECASE)
@@ -164,38 +169,68 @@ def _general_pages(ranges: list[tuple[str, int, int]]) -> list[int]:
 
 
 def detect_structure(pages: dict[int, str]) -> Structure:
-    """Zonenkapitel und allgemeine Seiten bestimmen. Leere Liste von Kapiteln, wenn nichts erkennbar ist."""
+    """Zonenkapitel und allgemeine Seiten bestimmen. Leere Liste von Kapiteln, wenn nichts erkennbar ist.
+
+    Finden die Überschriften der Seiten mehr Zonenkapitel als das Inhaltsverzeichnis, gelten sie:
+    Verzeichnisse lassen Kapitel aus (Beyenes: Zone UE fehlt, ihre Seiten lagen still im Kapitel UR), und die
+    Texterkennung liest Füllpunkte und Kürzel im Verzeichnis schlecht, die großen Überschriften der
+    Kapitelseiten dagegen sicher. Titel und allgemeine Seiten kommen dann weiter aus dem Verzeichnis, soweit
+    es sie hat (AN7, PLAN_AN7_SCAN 7.5)."""
     if not pages:
         return Structure([], [], "none")
     last_page = max(pages)
+    toc = _structure_from_toc(pages, last_page)
+    headings = _structure_from_headings(pages, last_page)
+    if toc is None:
+        return headings
+    if len(headings.chapters) <= len(toc.chapters):
+        return toc
+    titles = {c.code: c.title for c in toc.chapters}
+    return Structure(
+        [replace(c, title=titles.get(c.code, c.title)) for c in headings.chapters],
+        toc.general_pages or headings.general_pages,
+        "headings",
+    )
+
+
+def _structure_from_toc(pages: dict[int, str], last_page: int) -> Structure | None:
     entries = parse_toc(pages)
     offset = _offset(pages, entries, last_page) if entries else None
-    if entries and offset is not None:
-        starts = sorted(
-            {(e.printed_page + offset, e.title) for e in entries if 1 <= e.printed_page + offset <= last_page}
-        )
-        ranges: list[tuple[str, int, int]] = []
-        chapters: list[Chapter] = []
-        for index, (first, title) in enumerate(starts):
-            following = [p for p, _ in starts[index + 1 :] if p > first]
-            end = (following[0] - 1) if following else last_page
-            ranges.append((title, first, end))
-            code = _zone_code_of_title(title)
-            if code and not any(c.code == code for c in chapters):
-                # Artikel und Abschnitte im Verzeichnis beenden das Zonenkapitel nicht
-                chapter_end = [p for p, t in starts[index + 1 :] if p > first and not _SUB_ENTRY.match(t)]
-                chapters.append(
-                    Chapter(code, title, first, (chapter_end[0] - 1) if chapter_end else last_page)
-                )
-        if chapters:
-            return Structure(chapters, _general_pages(ranges), "toc")
-    return _structure_from_headings(pages, last_page)
+    if not entries or offset is None:
+        return None
+    starts = sorted(
+        {(e.printed_page + offset, e.title) for e in entries if 1 <= e.printed_page + offset <= last_page}
+    )
+    ranges: list[tuple[str, int, int]] = []
+    chapters: list[Chapter] = []
+    for index, (first, title) in enumerate(starts):
+        following = [p for p, _ in starts[index + 1 :] if p > first]
+        end = (following[0] - 1) if following else last_page
+        ranges.append((title, first, end))
+        code = _zone_code_of_title(title)
+        if code and not any(c.code == code for c in chapters):
+            # Artikel und Abschnitte im Verzeichnis beenden das Zonenkapitel nicht
+            chapter_end = [p for p, t in starts[index + 1 :] if p > first and not _SUB_ENTRY.match(t)]
+            chapters.append(Chapter(code, title, first, (chapter_end[0] - 1) if chapter_end else last_page))
+    return Structure(chapters, _general_pages(ranges), "toc") if chapters else None
+
+
+def _zone_headings(text: str) -> set[str]:
+    codes: set[str] = set()
+    for raw in text.splitlines():
+        match = _HEADING.match(re.sub(r"\s+", " ", raw).strip())
+        code = _code(match.group("code")) if match else None
+        if code:
+            codes.add(code)
+    return codes
 
 
 def _structure_from_headings(pages: dict[int, str], last_page: int) -> Structure:
     starts: list[tuple[int, str, str]] = []
     seen: set[str] = set()
     for number in sorted(pages):
+        if len(_zone_headings(pages[number])) >= TOC_MIN_HEADINGS:
+            continue
         for line in _heading_lines(pages[number]):
             match = _HEADING.match(line)
             code = _code(match.group("code")) if match else None

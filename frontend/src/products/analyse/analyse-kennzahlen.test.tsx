@@ -19,7 +19,7 @@ vi.mock("../../api/analysis", async (importOriginal) => ({
 }));
 
 const envelope = fixture as unknown as EnvelopeOut;
-const citation = { page: 9, quote: "25%", quote_verified: true, source_url: "/api/v1/regulation-files/f1#page=9", origin: "extraction" as const, confidence: 0.9, notes: null };
+const citation = { page: 9, quote: "25%", quote_verified: true, source_url: "/api/v1/regulation-files/f1#page=9", origin: "extraction" as const, confidence: 0.9, notes: null, from_scan: false };
 const span = (low: number, high: number) => ({ low, high });
 const parameters = {
   storey_height_m: span(2.7, 3),

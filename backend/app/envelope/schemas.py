@@ -29,6 +29,8 @@ class CitationOut(BaseModel):
     origin: Literal["extraction", "office", "project"]
     confidence: float
     notes: str | None = None
+    from_scan: bool = False
+    """Zitat von einer per Texterkennung gelesenen Seite (AN7, docs/PLAN_AN7_SCAN.md 3.3)."""
 
 
 class LimitOut(BaseModel):

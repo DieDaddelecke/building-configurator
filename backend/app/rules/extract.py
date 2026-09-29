@@ -28,6 +28,7 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
+from app.rules.budget import ORGANISATION_BUDGET_ERROR, organisation_budget_left
 from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION, lexicon
 from app.rules.domain.assess import (
     AssessedRule,
@@ -82,6 +83,9 @@ PASSAGES_FOR_SEARCH = 120
 """Höchstens so viele offene Textstellen gehen an die Nachsuche (mit Zahl zuerst)."""
 SKIP_GAP = ("graphic_reference",)
 """Offene Regeln, die die Nachsuche nicht klären kann: Der Wert steht im Plan, nicht im Text."""
+PDF_REQUEST_MAX_BYTES = 20 * 1024 * 1024
+"""Größere Seitenauszüge (Scans mit 0,3–1 MB je Seite) gehen als erkannter Text statt als PDF; die Anbieter
+nehmen etwa 32 MB je Anfrage, Base64 macht ein Drittel mehr (AN7, PLAN_AN7_SCAN 3.4)."""
 
 
 class RetryableExtractionError(Exception):
@@ -107,10 +111,16 @@ class _Stop(Exception):
 
 
 def input_hash(
-    settings: Settings, source_sha256: str, chapter: RegulationChapter, kind: DocumentKind = "plu"
+    settings: Settings,
+    source_sha256: str,
+    chapter: RegulationChapter,
+    kind: DocumentKind = "plu",
+    ocr: str | None = None,
 ) -> str:
     """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung. Der
-    Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3)."""
+    Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3). `ocr` (`ocr_stamp`) zählt nur im
+    Textmodus: Dort ändert die Texterkennung die Eingabe, im PDF-Modus sieht das Modell dieselben Seitenbilder
+    (AN7, PLAN_AN7_SCAN 3.4)."""
     payload = {
         "source": source_sha256,
         "chapter": [chapter.code, chapter.first_page, chapter.last_page],
@@ -125,7 +135,17 @@ def input_hash(
     if settings.rules_input == "text":
         # Nur dann: Der Hash der PDF-Auswertungen bleibt, gespeicherte Teilantworten bleiben verwendbar (PU12)
         payload["input"] = ["text", hashlib.sha256(TEXT_INPUT_NOTE.encode()).hexdigest()[:16]]
+        if ocr:
+            payload["ocr"] = ocr
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+
+
+def ocr_stamp(source: SourceFile | None) -> str | None:
+    """Kennung der abgeschlossenen Texterkennung einer Datei; None ohne Erkennung (bisherige Kennungen
+    bleiben)."""
+    if source is None or source.ocr_state != "done" or source.ocr_finished_at is None:
+        return None
+    return source.ocr_finished_at.isoformat()
 
 
 def month_cost(session: Session, now: datetime | None = None) -> float:
@@ -185,6 +205,11 @@ class _Calls:
     extra_candidates: list[int] = field(default_factory=list)
     """Seiten außerhalb des Kapitels, der gesendeten allgemeinen Seiten und der Kapitel anderer Zonen."""
     document_kind: DocumentKind = "plu"
+    scan_pages: frozenset[int] = frozenset()
+    """Seiten, deren Text per Texterkennung gelesen wurde (AN7)."""
+    ocr: str | None = None
+    organisation_id: uuid.UUID | None = None
+    """Zahlende Organisation des Kapitels (AN6, PLAN_AN6_MANDANTEN 3.3); None beim GPU-Import."""
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
@@ -236,6 +261,14 @@ class _Calls:
                 budget_usd=self.settings.rules_budget_month_usd,
             )
             raise _Stop(ChapterOutcome("budget_exceeded", f"{spent:.2f}", self.cost), "budget_exceeded")
+        if self.organisation_id is not None:
+            with self.sessions() as session:
+                left = organisation_budget_left(session, self.settings, self.organisation_id)
+            if not left:
+                log.warning("organisation_budget_exceeded", organisation=str(self.organisation_id))
+                raise _Stop(
+                    ChapterOutcome("budget_exceeded", "organisation", self.cost), ORGANISATION_BUDGET_ERROR
+                )
         if (
             self.deadline is not None
             and time.monotonic() + self.settings.rules_request_timeout_seconds > self.deadline
@@ -253,6 +286,7 @@ class _Calls:
                 input_hash=self.digest,
                 prompt_version=PROMPT_VERSION,
                 created_by=ACTOR,
+                organisation_id=self.organisation_id,
                 **values,
             )
             session.add(run)
@@ -296,6 +330,12 @@ class _Calls:
         else:
             chapter_pdf, general_pdf = self._documents()
             extra_pdf = pdf.extract_pages(self._source(), extra) if extra else None
+            size = len(chapter_pdf) + len(general_pdf or b"") + len(extra_pdf or b"")
+            if size > PDF_REQUEST_MAX_BYTES:
+                log.info("rules_input_as_text", chapter=str(self.chapter_id), part=part, pdf_bytes=size)
+                chapter_text, general_text = self._texts()
+                chapter_pdf, general_pdf, extra_pdf = b"", None, None
+                extra_text = self._pages_text(extra) if extra else None
         request = ExtractionRequest(
             chapter_code=self.chapter_code,
             sectors=sectors,
@@ -628,7 +668,8 @@ def extract_chapter(
             session.commit()
             return ChapterOutcome("failed", "chapter_too_long")
         kind = document_kind(plan.du_type)
-        digest = input_hash(settings, source.sha256, chapter, kind)
+        stamp = ocr_stamp(source)
+        digest = input_hash(settings, source.sha256, chapter, kind, stamp)
         if (
             not force
             and chapter.status == "succeeded"
@@ -652,6 +693,13 @@ def extract_chapter(
                 )
             ).scalars()
         }
+        scan_pages = frozenset(
+            session.execute(
+                select(SourcePage.page).where(
+                    SourcePage.source_file_id == source.id, SourcePage.ocr_confidence.is_not(None)
+                )
+            ).scalars()
+        )
         document_texts: dict[int, str] = {}
         extra_candidates: list[int] = []
         if settings.rules_gap_search and kind == "plu":
@@ -704,6 +752,9 @@ def extract_chapter(
             document_texts=document_texts,
             extra_candidates=extra_candidates,
             document_kind=kind,
+            scan_pages=scan_pages,
+            ocr=stamp,
+            organisation_id=chapter.billing_organisation_id,
             model=settings.rules_model,
         )
         file_id, plan_id = source.id, plan.id
@@ -757,6 +808,7 @@ def _evaluate(
         if calls.document_kind == "plu"
         else sorted(rules, key=lambda r: (r.sector, r.kind, r.building_kind))
     )
+    final = scan_reasons(final, calls.scan_pages, calls.chapter_pages)
 
     # 4. Schreiben
     counts_total: dict[str, int] = defaultdict(int)
@@ -768,7 +820,9 @@ def _evaluate(
             return ChapterOutcome("skipped", "chapter_missing")
         # Während der Aufrufe kann ein Sektor dazugekommen sein (zweites Projekt, neue Gemeinde). Der Job
         # dafür endete mit `already_running`; ohne Folgeauftrag bliebe er ohne Regeln (AN2, 7.1 Nr. 11)
-        current_digest = input_hash(calls.settings, calls.source_sha256, chapter, calls.document_kind)
+        current_digest = input_hash(
+            calls.settings, calls.source_sha256, chapter, calls.document_kind, calls.ocr
+        )
         by_sector: dict[str, list[AssessedRule]] = defaultdict(list)
         for assessed_rule in final:
             by_sector[assessed_rule.sector].append(assessed_rule)
@@ -812,6 +866,26 @@ def _evaluate(
         **counts_total,
     )
     return ChapterOutcome("succeeded", None, calls.cost, dict(counts_total))
+
+
+def scan_reasons(
+    rules: list[AssessedRule], scan_pages: frozenset[int], chapter_pages: list[int]
+) -> list[AssessedRule]:
+    """Auf einer Scan-Seite heißt ein nicht bestätigtes Zitat meist: Tesseract hat anders gelesen als das
+    Modell, oft eine Zahl (`_numbers_match`). Eigener Grund, damit der Architekt im Dokument nachsieht statt
+    einen erfundenen Wert zu vermuten (AN7, PLAN_AN7_SCAN 3.3). Ohne Fundstelle (keine Seite erreichte eine
+    Ähnlichkeit, etwa weil eine Zahl fehlt) entscheidet das Kapitel: Liegt es ganz im Scan, gilt der Grund
+    auch dann (7.5)."""
+    if not scan_pages:
+        return rules
+    whole_chapter = bool(chapter_pages) and scan_pages.issuperset(chapter_pages)
+    return [
+        replace(rule, reason="scan_unconfirmed")
+        if rule.reason == "quote_unverified"
+        and (rule.page in scan_pages or (rule.page is None and whole_chapter))
+        else rule
+        for rule in rules
+    ]
 
 
 def _enqueue_follow_up(session: Session, chapter: RegulationChapter, digest: str) -> None:

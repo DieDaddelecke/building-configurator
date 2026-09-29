@@ -22,6 +22,8 @@ class Citation:
     notes: str | None = None
     document_id: str | None = None
     """Dokument der Fundstelle; die Analyse erkennt daran Übernahmen aus Zusatzdokumenten (AN4)."""
+    from_scan: bool = False
+    """Zitat von einer per Texterkennung gelesenen Seite (AN7); nicht Teil der Prüfsumme."""
 
 
 @dataclass(frozen=True)
@@ -81,6 +83,9 @@ class TerrainInput:
     slope_percent: float | None = None
     reference_altitude_ngf: float | None = None
     method: str | None = None
+    samples: tuple[tuple[float, float, float], ...] = ()
+    """Stichproben (x, y in Lambert-93, z in m NGF) für das Profil im Schnitt (AN5); G3 rechnet nicht damit
+    und nimmt sie deshalb nicht in seine Prüfsumme – die Analyse schon."""
 
 
 @dataclass(frozen=True)

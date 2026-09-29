@@ -74,6 +74,7 @@ def _citation(rule: RuleOut) -> Citation:
         confidence=rule.confidence,
         notes=rule.notes,
         document_id=str(rule.source_document_id) if rule.source_document_id else None,
+        from_scan=rule.from_scan,
     )
 
 
@@ -144,6 +145,7 @@ def envelope_input(
                 slope_percent=site.terrain_slope_percent,
                 reference_altitude_ngf=site.terrain_reference_altitude_ngf,
                 method=site.terrain_method,
+                samples=site.terrain_samples,
             ),
             parcels=list(site.parcel_idus),
             revision=site.revision,
@@ -426,6 +428,7 @@ def _citation_out(citation: Citation | None) -> CitationOut | None:
         origin=citation.origin,
         confidence=citation.confidence,
         notes=citation.notes,
+        from_scan=citation.from_scan,
     )
 
 
@@ -552,6 +555,13 @@ def stored_sheet(db: Session, project_id: uuid.UUID, input_hash: str) -> Envelop
             EnvelopeSheet.project_id == project_id, EnvelopeSheet.input_hash == input_hash
         )
     ).scalar_one_or_none()
+
+
+def sheet_storage_keys(db: Session, project_id: uuid.UUID) -> list[str]:
+    """Dateien der Steckbriefe eines Projekts, damit das Löschen sie mitnimmt (AN5 7.1 Nr. 13)."""
+    return list(
+        db.execute(select(EnvelopeSheet.storage_key).where(EnvelopeSheet.project_id == project_id)).scalars()
+    )
 
 
 def request_sheet(db: Session, project_id: uuid.UUID, actor: str | None = None) -> SheetOut:

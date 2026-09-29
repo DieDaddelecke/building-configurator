@@ -6,8 +6,9 @@ import { Kopfzeile } from "../../components/Kopfzeile";
 import { darfVerwalten } from "../../verwaltung/Verwaltung";
 import { Schaufenster } from "./Schaufenster";
 
-/** Rahmen des Analyse-Produkts (AN1): Anmeldung als Mitarbeiter, Kopfzeile, Inhalt.
- *  Rechte prüft allein der Server; ohne Rolle `architect` liefern die Endpunkte 403 oder 404. */
+/** Rahmen des Analyse-Produkts (AN1): Anmeldung als Mitarbeiter, Kopfzeile, Inhalt. Die Kopfzeile nennt die
+ *  Organisation und führt zu ihrer Seite (AN6). Rechte prüft allein der Server; ohne Rolle `architect` liefern die
+ *  Endpunkte 403 oder 404. */
 export function AnalyseLayout() {
   const { t } = useTranslation();
   const [suchparameter] = useSearchParams();
@@ -22,6 +23,11 @@ export function AnalyseLayout() {
       <Kopfzeile untertitel={t("analyse.tagline")}>
         {staff && (
           <div className="flex items-center gap-3">
+            {staff.organisation && (
+              <Link className="link text-sm max-w-40 truncate" to="/organisation" data-testid="organisation-link">
+                {staff.organisation.display_name}
+              </Link>
+            )}
             {darfVerwalten(staff.roles) && (
               <Link className="link text-sm" to="/verwaltung">
                 {t("verwaltung.title")}
@@ -63,7 +69,7 @@ export function AnalyseLayout() {
         </main>
       )}
 
-      {/* Hinweis nach E-A5, solange nur das eigene Büro arbeitet; vor AN6 juristisch prüfen */}
+      {/* Hinweis nach E-A5; fremde Büros erst nach juristischer Prüfung (EMPRISE_EXTERNAL_ORGANISATIONS, AN6) */}
       <footer className="max-w-7xl mx-auto px-6 lg:px-10 py-8">
         <p className="t-faint text-xs m-0">{t("analyse.disclaimer")}</p>
       </footer>

@@ -23,13 +23,15 @@ def retention_cleanup(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any
     """Löscht anonyme Projekte 90 Tage nach der letzten Aktivität (Spez. 10.2).
 
     Modul A erweitert die Bedingung um Projekte ohne Kontakt; Projekte mit Anfrage bleiben. Projekte
-    mit Eigentümer (Architektenkonto, AN1) sind keine Kundenprojekte und bleiben ebenfalls (UP06).
+    mit Eigentümer (Architektenkonto, AN1) oder Organisation (auch per API-Schlüssel angelegt, AN6) sind
+    keine Kundenprojekte und bleiben ebenfalls (UP06).
     """
     days = get_settings().project_retention_days
     with ctx.session() as session:
         deleted = _delete(
             session,
             "DELETE FROM project WHERE status = 'draft' AND owner_staff_user_id IS NULL "
+            "AND organisation_id IS NULL "
             "AND last_activity_at < now() - make_interval(days => :days)",
             {"days": days},
         )

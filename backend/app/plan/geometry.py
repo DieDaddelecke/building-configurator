@@ -25,7 +25,48 @@ class Edge:
 
 
 @dataclass(frozen=True)
+class Area:
+    """Fläche mit Löchern; für Körper, die Ringe allein nicht beschreiben (AN5)."""
+
+    exterior: Ring
+    holes: list[Ring] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class Stage:
+    """Stufe des Gabarits in einer Auslegung (AN5 3.4): Kontur, Unter- und Oberkante über ±0,00."""
+
+    reading: str
+    """`lenient` oder `strict`."""
+    from_m: float
+    to_m: float
+    roof: bool
+    areas: list[Area]
+
+
+@dataclass(frozen=True)
+class Constraint:
+    """Vorgabe des Planwerks: `no_build` oder `restricts`; Flächen und Linien."""
+
+    effect: str
+    label: str
+    rings: list[Ring] = field(default_factory=list)
+    lines: list[Ring] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class Cut:
+    """Schnittlinie A–A oder B–B."""
+
+    key: str
+    start: Point
+    end: Point
+
+
+@dataclass(frozen=True)
 class Plan:
+    """Lageplan. V füllt die Felder bis `convergence_deg`; die Analyse (AN5) die übrigen."""
+
     origin: Point
     georeferenced: bool
     parcel: list[Ring]
@@ -42,6 +83,12 @@ class Plan:
     house_origin: Point | None = None
     rotation_deg: float | None = None
     convergence_deg: float | None = None
+    bands: list[Ring] = field(default_factory=list)
+    constraints: list[Constraint] = field(default_factory=list)
+    cuts: list[Cut] = field(default_factory=list)
+    stages: list[Stage] = field(default_factory=list)
+    reference_ngf: float | None = None
+    """±0,00 in m NGF; die Lambert-93-Datei trägt Z dann in NGF (E-AN5-2)."""
 
     def bounds(self) -> tuple[float, float, float, float]:
         """Ausschnitt: Grundstück und Baukörper, nicht die Nachbarschaft."""

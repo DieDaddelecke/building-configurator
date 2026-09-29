@@ -41,6 +41,12 @@ x-backend: &backend
     EMPRISE_RULES_PRICE_OUTPUT_PER_MTOK: ${RULES_PRICE_OUTPUT_PER_MTOK:-20}
     # pdf: Seitenauszüge als PDF; text: ihre Textschicht (für Modelle ohne PDF-Eingabe, PU12)
     EMPRISE_RULES_INPUT: ${RULES_INPUT:-pdf}
+    # Organisationen (AN6): fremde Büros erst nach juristischer Prüfung (E-A5); Vorgaben für Budget und
+    # Scan-Kontingent je Organisation und Monat, Rate-Limit je API-Schlüssel
+    EMPRISE_EXTERNAL_ORGANISATIONS: ${EXTERNAL_ORGANISATIONS:-false}
+    EMPRISE_ORG_BUDGET_MONTH_USD: ${ORG_BUDGET_MONTH_USD:-20}
+    EMPRISE_ORG_OCR_PAGES_MONTH: ${ORG_OCR_PAGES_MONTH:-2000}
+    EMPRISE_API_KEY_LIMIT_PER_MINUTE: ${API_KEY_LIMIT_PER_MINUTE:-60}
     # Client-IP nur aus privaten Netzen übernehmen (Web-Container, Reverse Proxy)
     FORWARDED_ALLOW_IPS: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
     TZ: ${TZ:-Europe/Paris}

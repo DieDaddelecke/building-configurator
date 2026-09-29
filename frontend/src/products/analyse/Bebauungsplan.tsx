@@ -1,8 +1,6 @@
-import type { TFunction } from "i18next";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ApiError } from "../../api/client";
 import {
   chosenChapter,
   pluOf,
@@ -17,21 +15,10 @@ import {
   type ZoneChoiceIn,
 } from "../../api/regulations";
 import { formatNumber } from "../../site/geo";
+import { fehlerText, grund } from "./fehler";
+import { ScanHinweis } from "./ScanHinweis";
 
 const DU_TYPES: PluDuType[] = ["PLU", "PLUi", "PSMV"];
-
-export function fehlerText(t: TFunction, error: unknown, prefix = "analyse.plu"): string | null {
-  if (!error) return null;
-  const code = error instanceof ApiError ? error.problem.code : "";
-  return t([`${prefix}.error.${code}`, `analyse.plu.error.${code}`, "error.generic"]);
-}
-
-/** Grund eines gescheiterten Lesens oder einer gescheiterten Auswertung in Worten des Büros. */
-export function grund(t: TFunction, reason: string | null): string {
-  if (!reason) return "";
-  if (reason.startsWith("interrupted")) return t("analyse.plu.error.interrupted");
-  return t([`analyse.plu.reason.${reason}`, `analyse.plu.error.${reason}`, "analyse.plu.reason.other"], { reason });
-}
 
 /** Bebauungsplan eines Projekts (AN2, docs/PLAN_AN2_PLU.md 3.8): PDF hochladen, Kapitel und Zone wählen, Stand der Auswertung. */
 export function Bebauungsplan({ projectId }: { projectId: string }) {
@@ -177,9 +164,7 @@ function Dokument({
           {grund(t, document.error) || t("analyse.plu.error.document_failed")}
         </p>
       )}
-      {document.status === "active" && document.empty_pages.length > 0 && (
-        <p className="t-warn text-sm m-0">{t("analyse.plu.emptyPages", { count: document.empty_pages.length })}</p>
-      )}
+      <ScanHinweis projectId={projectId} document={document} />
 
       {document.status === "active" && regulation.zone_code && kapitel && !aendern && (
         <Auswertung regulation={regulation} kapitel={kapitel} />

@@ -5,6 +5,7 @@ Planunterlagen, mit offengelegten Annahmen (D11, L7). Flächen in m², Anteile 0
 """
 
 import uuid
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, model_validator
@@ -205,6 +206,8 @@ class GabaritOut(BaseModel):
     levels: list[GabaritLevelOut]
     terrain_status: str
     terrain_slope_percent: float | None = None
+    reference_altitude_ngf: float | None = None
+    """±0,00 der Stufen = mittlere Geländehöhe der Stichproben in m NGF (AN5, E-AN5-4)."""
 
 
 class SectionCrossingOut(BaseModel):
@@ -252,6 +255,8 @@ class SectionOut(BaseModel):
     levels: list[SectionLevelOut]
     height_lines: list[SectionHeightLineOut]
     prospects: list[SectionProspectOut]
+    terrain: list[list[float]]
+    """Geländeprofil `[s, dz]`, `dz` über der Bezugshöhe (AN5); leer ohne Gelände – dann eben."""
 
 
 class AnalysisOut(BaseModel):
@@ -340,3 +345,25 @@ class AnalysisComparisonOut(BaseModel):
     """Alle Vergleiche, die das Projekt gerade anbietet (für die Auswahl)."""
     figures: list[ComparisonFigureOut]
     rules: list[ComparisonRuleOut]
+
+
+# ---------------------------------------------------------------------------
+# Bericht (AN5, docs/PLAN_AN5_AUSGABE.md 3.6)
+# ---------------------------------------------------------------------------
+
+ReportLocale = Literal["fr", "de"]
+
+
+class ReportIn(BaseModel):
+    locale: ReportLocale = "fr"
+
+
+class ReportOut(BaseModel):
+    """Bericht als PDF: fertig (`ready`) oder in Arbeit (`job_id`). `input_hash` ist die Prüfsumme des
+    Berichts – über alles, was er zeigt –, nicht die der Analyse."""
+
+    status: Literal["ready", "pending"]
+    input_hash: str
+    locale: ReportLocale
+    job_id: uuid.UUID | None = None
+    created_at: datetime | None = None

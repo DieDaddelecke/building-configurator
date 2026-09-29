@@ -64,6 +64,7 @@ const rule = (kind: string, params: Record<string, unknown>, extra: Partial<Rule
   notes: null,
   origin: "extraction",
   source_document_id: "plu",
+  from_scan: false,
   ...extra,
 });
 

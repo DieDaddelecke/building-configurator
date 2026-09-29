@@ -55,6 +55,9 @@ CONTEXT_RADIUS_M = 25.0
 # Gelände (Spez. 5.9.4)
 TERRAIN_SAMPLES = 9
 FLAT_SLOPE_MAX_PERCENT = 5.0
+TERRAIN_GRID_MAX_POINTS = 200
+TERRAIN_GRID_MIN_STEP_M = 2.0
+"""Dichtes Raster für Grundstücke ohne Kataster, Grundlage des Profils im Schnitt (AN5, PLAN_AN5 3.3)."""
 
 # Freies Zeichnen ohne Kataster, Weg E (Plan 3.3)
 MANUAL_MIN_EDGES = 3

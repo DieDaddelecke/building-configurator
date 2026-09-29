@@ -13,15 +13,16 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.config import get_settings
 from app.integrations.etalab_cadastre import DirectoryCadastre
 from app.integrations.ign_bdtopo import DirectoryRoads
 from app.platform import storage
+from app.platform.auth.tokens import PROJECT_COOKIE, hash_token, new_token
 from app.platform.db import get_sessionmaker
 from app.platform.jobs.worker import run_one
-from app.platform.models import FeatureFlag, Job
+from app.platform.models import FeatureFlag, Job, Project
 from app.rules import documents, extract
 from app.rules.models import (
     LandUsePlan,
@@ -35,6 +36,7 @@ from app.rules.plan_import import DirectoryGpu, import_commune
 from app.site.cadastre_import import import_commune as import_cadastre
 from tests.integration.test_site_upload import LOCAL_RING, dxf_bytes
 from tests.rules_support import DOC_ID, FakeExtractor, gpu_directory, regulation_fixture, text_pdf, uh_output
+from tests.scan_support import scan_of, with_scanned_pages
 
 SITE_FIXTURES = Path(__file__).parents[1] / "fixtures" / "site"
 REGULAR = "44209000AD0065"
@@ -82,6 +84,18 @@ def architect(login_as: Callable[..., Any], flags: None) -> Any:
 
 def new_project(client: Any) -> str:
     return str(client.post("/api/v1/projects").json()["id"])
+
+
+def customer_project(client: Any, db_session: Any) -> str:
+    """Anonymes Kundenprojekt mit Cookie, wie es der Konfigurator anlegt. Im Analyse-Produkt legt
+    `POST /projects` ohne Konto keines an (AN6); die Tests prüfen, dass ein solches Projekt dort nichts
+    sieht."""
+    token = new_token()
+    project = Project(access_token_hash=hash_token(token), created_by="customer")
+    db_session.add(project)
+    db_session.commit()
+    client.cookies.set(PROJECT_COOKIE, token)
+    return str(project.id)
 
 
 @pytest.fixture
@@ -180,18 +194,185 @@ def test_upload_reads_chapters_without_costs(
     assert extract_jobs(db_session) == []
 
 
-def test_scanned_regulation_fails_with_reason(client: Any, upload_project: str) -> None:
-    scan = text_pdf(["", "", "Page de garde", ""])
+def run_ocr_jobs(db_session: Any) -> int:
+    """Alle Teile der Texterkennung über den Worker abarbeiten; liefert die Zahl ihrer Läufe. Andere
+    wartende Jobs (Lesen, Auswertung) entfallen vorher: Die Tests rufen sie direkt auf."""
+    db_session.execute(delete(Job).where(Job.kind != "rules_document_ocr", Job.status == "queued"))
+    db_session.commit()
+    runs = 0
+    while run_one("w1", ["default"]):
+        runs += 1
+    db_session.expire_all()
+    return runs
+
+
+def request_ocr(client: Any, project: str, document_id: str) -> Any:
+    return client.post(f"/api/v1/projects/{project}/regulations/{document_id}/ocr")
+
+
+def test_scanned_regulation_waits_for_ocr_and_then_reads(
+    client: Any, upload_project: str, db_session: Any
+) -> None:
+    """AN7 (PLAN_AN7_SCAN 3.1–3.2): statt `document_no_text` ein Hinweis, nach Bestätigung die Erkennung."""
+    scan = scan_of(
+        text_pdf(
+            [
+                "RÈGLEMENT DU PLAN LOCAL D'URBANISME DE LA COMMUNE DE BEYENES",
+                "Page de garde",
+                "ZONE UC\nDISPOSITIONS APPLICABLES À LA ZONE UC\nARTICLE UC 10 - HAUTEUR\n"
+                "La hauteur maximale des constructions est fixée à 9 mètres au faîtage.",
+            ]
+        )
+    )
     response = upload_regulation(client, upload_project, scan)
     assert response.status_code == 202
     document_id = response.json()["document"]["id"]
-    assert read_document(document_id) == {"status": "failed", "error": "document_no_text"}
-    body = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]
-    assert body["document"]["status"] == "failed" and body["document"]["error"] == "document_no_text"
+    assert read_document(document_id) == {"status": "scan", "pages": 3, "empty_pages": 3}
+    body = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
+    assert body["status"] == "scan" and body["error"] is None and body["page_count"] == 3
+    assert body["file_url"].startswith("/api/v1/regulation-files/")
+    assert body["ocr"] == {
+        "state": "offered",
+        "pages_total": 3,
+        "pages_done": 0,
+        "uncertain_pages": [],
+        "still_empty_pages": [],
+        "estimated_seconds": 9,
+        "error": None,
+    }
     rules = client.get(f"/api/v1/admin/projects/{upload_project}/rules").json()
-    assert rules["status"] == "unavailable" and rules["reason"] == "document_no_text"
-    refused = choose(client, upload_project, document_id, zone_code="Uh", chapter_code="Uh")
-    assert refused.status_code == 409 and refused.json()["code"] == "document_failed"
+    assert rules["status"] == "unavailable" and rules["reason"] == "document_scan"
+    refused = choose(client, upload_project, document_id, zone_code="UC", chapter_code="UC")
+    assert refused.status_code == 409 and refused.json()["code"] == "document_scan"
+
+    started = request_ocr(client, upload_project, document_id)
+    assert started.status_code == 202, started.json()
+    assert started.json()["document"]["ocr"]["state"] == "running"
+    # Eine zweite Bestätigung plant nichts dazu
+    assert request_ocr(client, upload_project, document_id).status_code == 202
+    jobs = list(db_session.execute(select(Job).where(Job.kind == "rules_document_ocr")).scalars())
+    assert len(jobs) == 1
+
+    assert run_ocr_jobs(db_session) == 1
+    body = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
+    assert body["status"] == "active"
+    assert body["empty_pages"] == [1, 2, 3]
+    assert body["ocr"]["state"] == "done" and body["ocr"]["pages_done"] == 3
+    assert body["ocr"]["estimated_seconds"] == 0
+    # „Page de garde“ hat weniger als 40 Zeichen: auch nach der Erkennung leer
+    assert body["ocr"]["still_empty_pages"] == [2]
+    assert [c["code"] for c in body["chapters"]] == ["UC"]
+    with sessions() as session:
+        texts = dict(
+            session.execute(
+                select(SourcePage.page, SourcePage.text)
+                .join(SourceFile, SourceFile.id == SourcePage.source_file_id)
+                .where(SourceFile.land_use_plan_id == uuid.UUID(document_id))
+            )
+            .tuples()
+            .all()
+        )
+    assert "9 mètres au faîtage" in " ".join(texts[3].split())
+    # Danach läuft nichts mehr: wieder bestätigen ändert nichts
+    assert request_ocr(client, upload_project, document_id).json()["document"]["ocr"]["state"] == "done"
+    assert run_ocr_jobs(db_session) == 0
+
+
+def test_scan_without_readable_text_fails_after_ocr(
+    client: Any, upload_project: str, db_session: Any
+) -> None:
+    response = upload_regulation(client, upload_project, scan_of(text_pdf(["", "", "a"])))
+    document_id = response.json()["document"]["id"]
+    assert read_document(document_id)["status"] == "scan"
+    request_ocr(client, upload_project, document_id)
+    run_ocr_jobs(db_session)
+    body = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
+    assert (body["status"], body["error"]) == ("failed", "ocr_no_text")
+    assert body["ocr"]["state"] == "failed" and body["ocr"]["still_empty_pages"] == [1, 2, 3]
+
+
+def test_single_scanned_pages_are_read_on_request(client: Any, upload_project: str, db_session: Any) -> None:
+    """Dokument mit Text, zwei Seiten des Kapitels als Scan eingefügt: sofort nutzbar, Erkennung auf Wunsch;
+    die vorhandenen Kapitel bleiben (3.1)."""
+    pdf, _pages = regulation_fixture()
+    response = upload_regulation(client, upload_project, with_scanned_pages(pdf, [10, 11]))
+    document_id = response.json()["document"]["id"]
+    assert read_document(document_id)["status"] == "active"
+    before = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
+    assert before["empty_pages"] == [10, 11]
+    assert before["ocr"]["state"] == "none" and before["ocr"]["pages_total"] == 2
+    chapters = [(c["code"], c["first_page"], c["last_page"]) for c in before["chapters"]]
+
+    assert request_ocr(client, upload_project, document_id).status_code == 202
+    run_ocr_jobs(db_session)
+    after = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
+    assert after["status"] == "active" and after["ocr"]["state"] == "done"
+    assert after["ocr"]["pages_done"] == 2 and after["ocr"]["still_empty_pages"] == []
+    assert [(c["code"], c["first_page"], c["last_page"]) for c in after["chapters"]] == chapters
+
+    # Ohne Seiten ohne Text gibt es nichts zu erkennen
+    other = new_project(client)
+    plain = upload_regulation(client, other, pdf).json()["document"]["id"]
+    read_document(plain)
+    refused = request_ocr(client, other, plain)
+    assert refused.status_code == 409 and refused.json()["code"] == "ocr_not_needed"
+
+
+def test_scanned_chapter_gives_the_same_rules_as_the_text_layer(
+    client: Any, upload_project: str, db_session: Any, settings: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Abnahme 2 und 3 ohne Kosten (PLAN_AN7_SCAN 6): dasselbe Reglement als Scan → dieselben Kapitel;
+    die aufgezeichnete Modellantwort gegen den erkannten Text geprüft. Die Erkennung läuft in Teilen
+    (Plan 3.2)."""
+    monkeypatch.setattr("app.rules.ocr.BATCH_PAGES", 10)
+    text_state = uploaded(client, upload_project)
+    choose(client, upload_project, text_state["document"]["id"], zone_code="Uh", chapter_code="Uh")
+    assert evaluate(db_session, settings).status == "succeeded"
+    text_rules = client.get(f"/api/v1/admin/projects/{upload_project}/rules").json()["zones"][0]["rules"]
+
+    project = new_project(client)
+    client.post(
+        f"/api/v1/projects/{project}/site/upload",
+        files={"file": ("plan.dxf", dxf_bytes((LOCAL_RING, "PARCELLE")), "application/octet-stream")},
+        data={"address_label": "Parzelle aus Datei"},
+    )
+    pdf, _pages = regulation_fixture()
+    response = upload_regulation(client, project, scan_of(pdf, dpi=200, rotate=0.5), name="scan.pdf")
+    document_id = response.json()["document"]["id"]
+    assert read_document(document_id, "scan.pdf")["status"] == "scan"
+    request_ocr(client, project, document_id)
+    assert run_ocr_jobs(db_session) == 3  # 24 Seiten in Teilen zu 10
+    scanned = client.get(f"/api/v1/projects/{project}/regulations").json()[0]["document"]
+    assert scanned["status"] == "active" and scanned["ocr"]["pages_done"] == 24
+    uh = next(c for c in scanned["chapters"] if c["code"] == "Uh")
+    assert (uh["first_page"], uh["last_page"], uh["general_pages"]) == (4, 24, [1, 2, 3])
+
+    assert choose(client, project, document_id, zone_code="Uh", chapter_code="Uh").status_code == 200
+    chapter_id = db_session.execute(
+        select(RegulationChapter.id).where(RegulationChapter.land_use_plan_id == uuid.UUID(document_id))
+    ).scalar_one()
+    outcome = extract.extract_chapter(sessions, settings, chapter_id, FakeExtractor([uh_output()]).factory())
+    assert outcome.status == "succeeded"
+    scan_rules = client.get(f"/api/v1/admin/projects/{project}/rules").json()["zones"][0]["rules"]
+
+    def key(rule: dict[str, Any]) -> tuple[str, str]:
+        return rule["kind"], rule["building_kind"]
+
+    by_key = {key(r): r for r in scan_rules}
+    effective_text = [r for r in text_rules if r["status"] == "effective"]
+    effective_scan = [by_key[key(r)] for r in effective_text if by_key[key(r)]["status"] == "effective"]
+    # Mindestens 95 % der mit Textschicht belegten Werte bestätigt auch der erkannte Text (Abnahme 3)
+    assert len(effective_scan) >= 0.95 * len(effective_text), [
+        (key(r), by_key[key(r)]["status"], by_key[key(r)]["reason"])
+        for r in effective_text
+        if by_key[key(r)]["status"] != "effective"
+    ]
+    # Was nicht bestätigt ist, trägt den Grund des Scans, nicht „Fundstelle nicht bestätigt“
+    assert not [r for r in scan_rules if r["reason"] == "quote_unverified"]
+    assert all(r["from_scan"] for r in scan_rules if r["page"] is not None and r["quote"])
+    assert not any(r["from_scan"] for r in text_rules)
+    for rule in effective_scan:
+        assert rule["params"] == by_key[key(rule)]["params"]
 
 
 @pytest.mark.parametrize(

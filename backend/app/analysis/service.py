@@ -12,8 +12,10 @@ import uuid
 from dataclasses import asdict, dataclass
 from typing import Literal
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.analysis import report
 from app.analysis.domain import ENGINE_VERSION
 from app.analysis.domain.analyse import Analysis, PartAnalysis, SupplementInput, SupplementResult, analyse
 from app.analysis.domain.floor_area import NOT_COUNTED, StoreyArea
@@ -21,7 +23,8 @@ from app.analysis.domain.footprint import Footprint
 from app.analysis.domain.gabarit import Gabarit
 from app.analysis.domain.parameters import DEFAULTS, Parameters
 from app.analysis.domain.section import Section
-from app.analysis.models import AnalysisParameters
+from app.analysis.models import AnalysisParameters, AnalysisReport
+from app.analysis.report import ReportData
 from app.analysis.schemas import (
     AnalysisAssumptionsOut,
     AnalysisComparisonOut,
@@ -43,6 +46,8 @@ from app.analysis.schemas import (
     GabaritHeightsOut,
     GabaritLevelOut,
     GabaritOut,
+    ReportLocale,
+    ReportOut,
     RuleComparisonOut,
     SectionOut,
     SpanOut,
@@ -54,12 +59,17 @@ from app.envelope.domain import local as local_coords
 from app.envelope.domain.derive import ZONE_WITHOUT_RULES, Envelope
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
-from app.platform import audit
+from app.platform import audit, organisations
 from app.platform.db import utcnow
+from app.platform.jobs import enqueue
+from app.platform.models import Project
 from app.platform.problems import Problem
+from app.rules import documents
 from app.rules import service as rules_service
 from app.rules.domain.kinds import params_equal
 from app.rules.schemas import RuleOut, VersionOut
+from app.site import service as site_service
+from app.site.schemas import SiteOut
 
 # ---------------------------------------------------------------------------
 # Annahmen
@@ -134,6 +144,7 @@ def _rule_input(rule: RuleOut) -> RuleInput:
             confidence=rule.confidence,
             notes=rule.notes,
             document_id=str(rule.source_document_id) if rule.source_document_id else None,
+            from_scan=rule.from_scan,
         ),
     )
 
@@ -159,15 +170,127 @@ def _supplements(db: Session, project_id: uuid.UUID) -> tuple[list[SupplementInp
     return inputs, stamps
 
 
-def project_analysis(db: Session, project_id: uuid.UUID) -> AnalysisOut:
+def terrain_stamp(data: EnvelopeInput) -> str:
+    """Prüfsumme der Geländestichproben: Sie bestimmen das Profil im Schnitt, G3 nimmt sie nicht in seine
+    Prüfsumme (AN5, PLAN_AN5 7.1 Nr. 6)."""
+    return hashlib.sha256(json.dumps(data.site.terrain.samples).encode()).hexdigest()[:16]
+
+
+@dataclass(frozen=True)
+class Computed:
+    """Eine gerechnete Analyse mit ihren Eingaben, für Bericht und Dateien (AN5)."""
+
+    data: EnvelopeInput
+    envelope: Envelope | None
+    result: Analysis
+    out: AnalysisOut
+
+
+def compute(db: Session, project_id: uuid.UUID) -> Computed:
     data, envelope = envelope_service.derived(db, project_id)
     params = parameters(db, project_id)
     supplements, stamps = _supplements(db, project_id)
     result = analyse(data, envelope, params, supplements)
     raw = json.dumps(
-        [ENGINE_VERSION, envelope_service.fingerprint(data), params.as_json(), stamps], sort_keys=True
+        [ENGINE_VERSION, envelope_service.fingerprint(data), params.as_json(), stamps, terrain_stamp(data)],
+        sort_keys=True,
     )
-    return _out(result, params, data, custom=_stored(db, project_id) is not None, input_hash=raw)
+    out = _out(result, params, data, custom=_stored(db, project_id) is not None, input_hash=raw)
+    return Computed(data=data, envelope=envelope, result=result, out=out)
+
+
+def project_analysis(db: Session, project_id: uuid.UUID) -> AnalysisOut:
+    return compute(db, project_id).out
+
+
+# ---------------------------------------------------------------------------
+# Bericht (AN5, docs/PLAN_AN5_AUSGABE.md 3.6)
+# ---------------------------------------------------------------------------
+
+REPORT_PREFIX = "analysis"
+REPORT_JOB = "analysis_report"
+
+
+def project_label(project: Project, site: SiteOut) -> str:
+    """Name des Projekts, sonst Adresse, sonst Parzellen – für Kopf und Dateinamen."""
+    return project.name or site.address_label or ", ".join(p.idu for p in site.parcels)
+
+
+def report_data(db: Session, project_id: uuid.UUID, *, with_logo: bool = False) -> ReportData:
+    """Alles, was der Bericht zeigt, in der Form der API; dazu das Erscheinungsbild der Organisation (AN6,
+    docs/PLAN_AN6_MANDANTEN.md 3.5). Das Logo lädt nur der Job, der den Bericht setzt."""
+    project = db.get(Project, project_id)
+    if project is None:
+        raise Problem(404, "not_found")
+    site = site_service.load_site(db, project_id)
+    return ReportData(
+        branding=organisations.branding_for(db, project.organisation_id, load_logo=with_logo),
+        name=project.name,
+        note=project.note,
+        label=project_label(project, site),
+        site=site,
+        envelope=envelope_service.project_envelope(db, project_id),
+        analysis=project_analysis(db, project_id),
+        rules=rules_service.project_rules(db, project_id),
+        overrides=rules_service.list_overrides(db, project_id),
+        regulations=documents.project_regulations(db, project_id),
+    )
+
+
+def report_key(project_id: uuid.UUID, input_hash: str, locale: str) -> str:
+    return f"{REPORT_PREFIX}/{project_id}/{input_hash.removeprefix('sha256:')}_{locale}.pdf"
+
+
+def stored_report(db: Session, project_id: uuid.UUID, input_hash: str, locale: str) -> AnalysisReport | None:
+    return db.execute(
+        select(AnalysisReport).where(
+            AnalysisReport.project_id == project_id,
+            AnalysisReport.input_hash == input_hash,
+            AnalysisReport.locale == locale,
+        )
+    ).scalar_one_or_none()
+
+
+def report_storage_keys(db: Session, project_id: uuid.UUID) -> list[str]:
+    """Dateien der Berichte, damit das Löschen des Projekts sie mitnimmt (7.1 Nr. 13)."""
+    return list(
+        db.execute(
+            select(AnalysisReport.storage_key).where(AnalysisReport.project_id == project_id)
+        ).scalars()
+    )
+
+
+def request_report(db: Session, project_id: uuid.UUID, locale: ReportLocale, actor: str) -> ReportOut:
+    """Bericht liefern oder erzeugen lassen; derselbe Stand entsteht je Sprache nur einmal (E-AN5-10)."""
+    input_hash = report.report_hash(report_data(db, project_id))
+    existing = stored_report(db, project_id, input_hash, locale)
+    if existing is not None:
+        return ReportOut(
+            status="ready", input_hash=input_hash, locale=locale, created_at=existing.generated_at
+        )
+    job_id = enqueue(
+        db,
+        REPORT_JOB,
+        {"project_id": str(project_id), "input_hash": input_hash, "locale": locale},
+        idempotency_key=f"{REPORT_JOB}:{project_id}:{input_hash}:{locale}",
+        project_id=project_id,
+        created_by=actor,
+    )
+    db.commit()
+    return ReportOut(status="pending", input_hash=input_hash, locale=locale, job_id=job_id)
+
+
+def report_file(db: Session, project_id: uuid.UUID, locale: ReportLocale) -> tuple[bytes, str]:
+    """Fertiger Bericht zum aktuellen Stand mit Dateinamen; sonst 409 mit der Prüfsumme als Hinweis."""
+    from app.platform import storage
+
+    data = report_data(db, project_id)
+    input_hash = report.report_hash(data)
+    row = stored_report(db, project_id, input_hash, locale)
+    if row is None:
+        raise Problem(409, "report_not_ready", input_hash=input_hash)
+    name = f"{report.file_stem(data.label)}_{row.generated_at:%Y-%m-%d}_{locale}.pdf"
+    return storage.get_bytes(row.storage_key), name
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +316,7 @@ def _citation(citation: Citation | None) -> CitationOut | None:
         origin=origin,
         confidence=citation.confidence,
         notes=citation.notes,
+        from_scan=citation.from_scan,
     )
 
 
@@ -307,6 +431,7 @@ def _gabarit_out(hull: Gabarit, data: EnvelopeInput) -> GabaritOut:
         ],
         terrain_status=data.site.terrain.status,
         terrain_slope_percent=data.site.terrain.slope_percent,
+        reference_altitude_ngf=data.site.terrain.reference_altitude_ngf,
     )
 
 
@@ -334,6 +459,7 @@ def _section_out(section: Section, origin: tuple[float, float]) -> SectionOut:
                 {"edge_seq": p.edge_seq, "reading": p.reading, "points": [list(x) for x in p.points]}
                 for p in section.prospects
             ],
+            "terrain": [list(point) for point in section.terrain],
         }
     )
 

@@ -20,11 +20,13 @@ from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app.config import Settings
+from app.config import Settings, get_settings
 from app.platform import audit, storage
+from app.platform.auth.context import project_organisation
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
+from app.platform.models import Project
 from app.platform.problems import Problem
 from app.rules import pdf
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES, detect_structure, sector_candidates
@@ -35,11 +37,13 @@ from app.rules.models import (
     RegulationChapter,
     RuleExtractionRun,
     SourceFile,
+    SourcePage,
 )
 from app.rules.plan_import import ChapterValues, ensure_chapter, store_source
 from app.rules.schemas import (
     DocumentChapterOut,
     LotChoiceIn,
+    OcrOut,
     ProjectRegulationOut,
     RegulationDocumentOut,
     UploadDuType,
@@ -50,7 +54,8 @@ log = get_logger("rules_documents")
 READ_ACTOR = "system:rules_document_read"
 UPLOAD_PREFIX = "rules/uploads"
 NO_TEXT_SHARE = 0.5
-"""Mehr als die Hälfte der Seiten ohne Text: gescanntes Reglement, keine Auswertung (RW03)."""
+"""Mehr als die Hälfte der Seiten ohne Text: gescanntes Reglement, erst nach der Texterkennung nutzbar (RW03,
+seit AN7 kein Fehler mehr)."""
 FILE_URL = "/api/v1/regulation-files/{id}"
 SUPPLEMENT_CHAPTER = "DOC"
 """Einziges Kapitel eines Zusatzdokuments: das ganze Dokument oder ein Seitenbereich (AN3, 3.7)."""
@@ -58,6 +63,8 @@ SUPPLEMENT_WHOLE = "Ensemble"
 """Sektor eines Zusatzdokuments ohne Lot: das Dokument als Ganzes."""
 MAX_SUPPLEMENTS = 3
 """Zusatzdokumente je Projekt (E-AN3-6): lotissement, cahier des charges, ein Änderungsstand."""
+OCR_UNCERTAIN_BELOW = 70.0
+"""Erkannte Seite mit mittlerer Wortsicherheit darunter gilt als unsicher (AN7, E-AN7-5)."""
 
 
 def supplement_sector(lot: str | None) -> str:
@@ -120,7 +127,7 @@ def _document_out(db: Session, plan: LandUsePlan) -> RegulationDocumentOut:
         .group_by(RuleExtractionRun.chapter_id)
     ).all():
         stats[row.chapter_id] = (int(row.runs), float(row.cost))
-    status: Any = plan.status if plan.status in ("importing", "active", "failed") else "failed"
+    status: Any = plan.status if plan.status in ("importing", "active", "failed", "scan") else "failed"
     return RegulationDocumentOut(
         id=plan.id,
         title=plan.title,
@@ -129,8 +136,10 @@ def _document_out(db: Session, plan: LandUsePlan) -> RegulationDocumentOut:
         error=plan.error,
         file_name=source.filename if source else None,
         file_url=source.url if source else None,
+        sha256=source.sha256 if source else None,
         page_count=source.page_count if source else None,
         empty_pages=list(source.empty_pages) if source else [],
+        ocr=ocr_out(db, source) if source else None,
         created_at=plan.created_at,
         chapters=[
             DocumentChapterOut(
@@ -152,7 +161,42 @@ def _document_out(db: Session, plan: LandUsePlan) -> RegulationDocumentOut:
     )
 
 
-def _link_out(db: Session, link: ProjectRegulation) -> ProjectRegulationOut:
+def ocr_out(db: Session, source: SourceFile) -> OcrOut:
+    """Stand der Texterkennung für Hinweis, Fortschritt und Zusammenfassung (AN7, 3.2)."""
+    empty = sorted(source.empty_pages)
+    rows = (
+        db.execute(
+            select(
+                SourcePage.page,
+                SourcePage.ocr_confidence,
+                func.char_length(func.regexp_replace(SourcePage.text, r"\s+", "", "g")).label("chars"),
+            ).where(
+                SourcePage.source_file_id == source.id,
+                SourcePage.page.in_(empty),
+                SourcePage.ocr_confidence.is_not(None),
+            )
+        ).all()
+        if empty
+        else []
+    )
+    readable = {row.page for row in rows if row.chars >= pdf.EMPTY_PAGE_CHARS}
+    state: Any = source.ocr_state
+    return OcrOut(
+        state=state,
+        pages_total=len(empty),
+        pages_done=len(rows),
+        uncertain_pages=sorted(
+            row.page
+            for row in rows
+            if row.page in readable and (row.ocr_confidence or 0.0) < OCR_UNCERTAIN_BELOW
+        ),
+        still_empty_pages=sorted(row.page for row in rows if row.page not in readable),
+        estimated_seconds=round((len(empty) - len(rows)) * get_settings().ocr_seconds_per_page),
+        error=source.ocr_error,
+    )
+
+
+def link_out(db: Session, link: ProjectRegulation) -> ProjectRegulationOut:
     plan = db.get(LandUsePlan, link.land_use_plan_id)
     assert plan is not None
     return ProjectRegulationOut(
@@ -170,7 +214,7 @@ def project_regulations(db: Session, project_id: uuid.UUID) -> list[ProjectRegul
         .where(ProjectRegulation.project_id == project_id)
         .order_by(ProjectRegulation.created_at)
     ).scalars()
-    return [_link_out(db, link) for link in sorted(links, key=lambda link: link.role != "plu")]
+    return [link_out(db, link) for link in sorted(links, key=lambda link: link.role != "plu")]
 
 
 def supplement_links(db: Session, project_id: uuid.UUID) -> list[ProjectRegulation]:
@@ -183,10 +227,26 @@ def supplement_links(db: Session, project_id: uuid.UUID) -> list[ProjectRegulati
     )
 
 
-def file_content(db: Session, file_id: uuid.UUID) -> tuple[bytes, str]:
+def file_content(
+    db: Session, file_id: uuid.UUID, organisation_id: uuid.UUID | None = None
+) -> tuple[bytes, str]:
+    """Datei einer Planunterlage. Mit `organisation_id` nur, wenn ein Projekt dieser Organisation das
+    Dokument nutzt (AN6, docs/PLAN_AN6_MANDANTEN.md 3.3); sonst `404` wie eine unbekannte Datei."""
     source = db.get(SourceFile, file_id)
     if source is None:
         raise Problem(404, "not_found")
+    if organisation_id is not None:
+        used = db.execute(
+            select(ProjectRegulation.id)
+            .join(Project, Project.id == ProjectRegulation.project_id)
+            .where(
+                ProjectRegulation.land_use_plan_id == source.land_use_plan_id,
+                Project.organisation_id == organisation_id,
+            )
+            .limit(1)
+        ).first()
+        if used is None:
+            raise Problem(404, "not_found")
     return storage.get_bytes(source.storage_key), source.filename
 
 
@@ -246,7 +306,7 @@ def upload(
         after={"document": str(plan.id), "sha256": sha256, "file_name": file_name[:200], "role": role},
     )
     db.commit()
-    return _link_out(db, link)
+    return link_out(db, link)
 
 
 def _plu_link(
@@ -336,10 +396,8 @@ def _enqueue_read(db: Session, plan: LandUsePlan, file_name: str, actor: str, *,
 
 
 def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, Any]:
-    """Job `rules_document_read`: Seitentexte, Kapitel und Vorschläge für Zonencodes (3.2).
-
-    Legt für jedes erkannte Kapitel eine Zeile **ohne Sektoren** an; solche Kapitel wertet niemand aus.
-    Ein Reglement ohne erkennbare Kapitel ist trotzdem nutzbar – über einen Seitenbereich von Hand."""
+    """Job `rules_document_read`: Seitentexte, Kapitel und Vorschläge für Zonencodes (3.2), über
+    `index_document`. Ein Scan wartet auf die Bestätigung der Texterkennung (`scan`, `rules/ocr.py`)."""
     plan = db.execute(
         select(LandUsePlan).where(LandUsePlan.id == plan_id).with_for_update()
     ).scalar_one_or_none()
@@ -353,11 +411,10 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
         reader = pdf.read_text(data)
     except pdf.PdfProblem as exc:
         return _failed(db, plan, str(exc))
-    if not reader.pages or len(reader.empty_pages) > NO_TEXT_SHARE * len(reader.pages):
+    if not reader.pages:
         return _failed(db, plan, "document_no_text")
-    if document_kind(plan.du_type) == "supplement":
-        return _read_supplement(db, plan, file_name, data, reader)
-    structure = detect_structure(reader.pages)
+    # Datei und Seiten immer speichern, auch bei einem Scan: Der Hinweis vor der Texterkennung nennt
+    # Seitenzahl und Dauer, und die Erkennung schreibt in dieselben Seiten (AN7, docs/PLAN_AN7_SCAN.md 3.1)
     source_id = uuid.uuid4()
     source = store_source(
         db,
@@ -371,16 +428,73 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
         actor=READ_ACTOR,
         source_id=source_id,
     )
-    codes = frozenset(c.code for c in structure.chapters)
+    if is_scan(len(reader.pages), len(reader.empty_pages)):
+        source.ocr_state = "offered"
+        plan.status, plan.error = "scan", None
+        db.commit()
+        log.info(
+            "rules_document_scan",
+            document=str(plan.id),
+            pages=len(reader.pages),
+            empty_pages=len(reader.empty_pages),
+        )
+        return {"status": "scan", "pages": len(reader.pages), "empty_pages": len(reader.empty_pages)}
+    chapters = index_document(db, plan, source, reader.pages)
+    plan.status, plan.error, plan.activated_at = "active", None, utcnow()
+    db.commit()
+    log.info(
+        "rules_document_read",
+        document=str(plan.id),
+        pages=len(reader.pages),
+        empty_pages=len(reader.empty_pages),
+        chapters=chapters,
+    )
+    return {"status": "active", "pages": len(reader.pages), "chapters": chapters}
+
+
+def is_scan(pages: int, empty_pages: int) -> bool:
+    """Mehr als die Hälfte der Seiten ohne Text: gescanntes Dokument, erst nach der Texterkennung nutzbar."""
+    return pages == 0 or empty_pages > NO_TEXT_SHARE * pages
+
+
+def index_document(db: Session, plan: LandUsePlan, source: SourceFile, pages: dict[int, str]) -> int:
+    """Kapitel anlegen, die noch fehlen; vorhandene bleiben unberührt (auch nach einer nachträglichen
+    Texterkennung, AN7 3.2). Jedes Kapitel entsteht **ohne Sektoren**; solche Kapitel wertet niemand aus.
+    Ein Reglement ohne erkennbare Kapitel ist trotzdem nutzbar – über einen Seitenbereich von Hand.
+
+    Zusatzdokument: keine Zonenkapitel, sondern ein Kapitel `DOC` über das ganze Dokument, noch ohne
+    Sektoren – es kostet erst, wenn ein Lot gewählt wird (AN3, 3.7).
+
+    Liefert die Zahl der erkannten Kapitel."""
     existing = set(
         db.execute(
             select(RegulationChapter.code).where(RegulationChapter.land_use_plan_id == plan.id)
         ).scalars()
     )
+    if document_kind(plan.du_type) == "supplement":
+        if SUPPLEMENT_CHAPTER not in existing:
+            db.add(
+                RegulationChapter(
+                    land_use_plan_id=plan.id,
+                    source_file_id=source.id,
+                    code=SUPPLEMENT_CHAPTER,
+                    title=plan.title[:300],
+                    first_page=1,
+                    last_page=source.page_count,
+                    general_pages=[],
+                    sectors=[],
+                    suggested_sectors=[],
+                    detection="document",
+                    created_by=READ_ACTOR,
+                )
+            )
+        return 1
+    structure = detect_structure(pages)
+    codes = frozenset(c.code for c in structure.chapters)
     for chapter in structure.chapters:
         if chapter.code in existing:
             continue
-        chapter_text = "\n".join(reader.pages.get(page, "") for page in chapter.pages)
+        chapter_text = "\n".join(pages.get(page, "") for page in chapter.pages)
         db.add(
             RegulationChapter(
                 land_use_plan_id=plan.id,
@@ -396,70 +510,7 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
                 created_by=READ_ACTOR,
             )
         )
-    plan.status, plan.error, plan.activated_at = "active", None, utcnow()
-    db.commit()
-    log.info(
-        "rules_document_read",
-        document=str(plan.id),
-        pages=len(reader.pages),
-        empty_pages=len(reader.empty_pages),
-        chapters=len(structure.chapters),
-        detection=structure.method,
-    )
-    return {"status": "active", "pages": len(reader.pages), "chapters": len(structure.chapters)}
-
-
-def _read_supplement(
-    db: Session, plan: LandUsePlan, file_name: str, data: bytes, reader: pdf.PdfText
-) -> dict[str, Any]:
-    """Zusatzdokument: keine Zonenkapitel, sondern ein Kapitel `DOC` über das ganze Dokument, noch ohne
-    Sektoren – es kostet erst, wenn ein Lot gewählt wird (AN3, 3.7)."""
-    assert plan.document_sha256 is not None
-    source_id = uuid.uuid4()
-    source = store_source(
-        db,
-        plan,
-        sha256=plan.document_sha256,
-        filename=file_name or f"{plan.document_sha256[:12]}.pdf",
-        url=file_url(source_id),
-        storage_key=storage_key(plan.document_sha256),
-        size_bytes=len(data),
-        reader=reader,
-        actor=READ_ACTOR,
-        source_id=source_id,
-    )
-    exists = db.execute(
-        select(RegulationChapter.id).where(
-            RegulationChapter.land_use_plan_id == plan.id, RegulationChapter.code == SUPPLEMENT_CHAPTER
-        )
-    ).scalar_one_or_none()
-    if exists is None:
-        db.add(
-            RegulationChapter(
-                land_use_plan_id=plan.id,
-                source_file_id=source.id,
-                code=SUPPLEMENT_CHAPTER,
-                title=plan.title[:300],
-                first_page=1,
-                last_page=source.page_count,
-                general_pages=[],
-                sectors=[],
-                suggested_sectors=[],
-                detection="document",
-                created_by=READ_ACTOR,
-            )
-        )
-    plan.status, plan.error, plan.activated_at = "active", None, utcnow()
-    db.commit()
-    log.info(
-        "rules_document_read",
-        document=str(plan.id),
-        pages=len(reader.pages),
-        empty_pages=len(reader.empty_pages),
-        chapters=1,
-        detection="document",
-    )
-    return {"status": "active", "pages": len(reader.pages), "chapters": 1}
+    return len(structure.chapters)
 
 
 def _failed(db: Session, plan: LandUsePlan, error: str) -> dict[str, Any]:
@@ -482,7 +533,7 @@ def mark_read_failed(db: Session, plan_id: uuid.UUID, error: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _link(db: Session, project_id: uuid.UUID, document_id: uuid.UUID) -> ProjectRegulation:
+def project_link(db: Session, project_id: uuid.UUID, document_id: uuid.UUID) -> ProjectRegulation:
     link = db.execute(
         select(ProjectRegulation)
         .where(ProjectRegulation.project_id == project_id, ProjectRegulation.land_use_plan_id == document_id)
@@ -498,6 +549,8 @@ def _ready_document(db: Session, document_id: uuid.UUID) -> tuple[LandUsePlan, S
     plan = db.execute(select(LandUsePlan).where(LandUsePlan.id == document_id).with_for_update()).scalar_one()
     if plan.status == "importing":
         raise Problem(409, "document_not_ready")
+    if plan.status == "scan":
+        raise Problem(409, "document_scan")
     if plan.status != "active":
         raise Problem(409, "document_failed", reason=plan.error)
     source = latest_source(db, plan.id)
@@ -523,7 +576,7 @@ def choose_zone(
 
     Hier entstehen die Kosten: Der Sektor kommt zu den Sektoren des Kapitels; geänderte Eingabe →
     `pending` und Job (Idempotenz über die Eingabe), unveränderte → nichts."""
-    link = _link(db, project_id, document_id)
+    link = project_link(db, project_id, document_id)
     if link.role != "plu":
         raise Problem(409, "not_a_plu")
     plan, source = _ready_document(db, document_id)
@@ -572,7 +625,18 @@ def choose_zone(
         sectors=sectors,
         detection=detection,
     )
-    ensure_chapter(db, settings, plan, source, code, values, current, actor=actor, reason="zone_choice")
+    ensure_chapter(
+        db,
+        settings,
+        plan,
+        source,
+        code,
+        values,
+        current,
+        actor=actor,
+        reason="zone_choice",
+        billing_organisation_id=project_organisation(db, project_id),
+    )
     before = {"zone": link.zone_code, "chapter": link.chapter_code}
     link.zone_code, link.chapter_code = body.zone_code, code
     link.updated_at, link.updated_by = utcnow(), actor
@@ -593,7 +657,7 @@ def choose_zone(
         },
     )
     db.commit()
-    return _link_out(db, link)
+    return link_out(db, link)
 
 
 def choose_lot(
@@ -608,7 +672,7 @@ def choose_lot(
 
     Wie bei der Zonenwahl entstehen hier die Kosten: Das Lot kommt zu den Sektoren des Kapitels; ein neues
     Lot wertet das Dokument neu aus, auch für die Lots anderer Projekte (E-AN3-4)."""
-    link = _link(db, project_id, document_id)
+    link = project_link(db, project_id, document_id)
     if link.role != "supplement":
         raise Problem(409, "not_a_supplement")
     plan, source = _ready_document(db, document_id)
@@ -635,7 +699,16 @@ def choose_lot(
         detection=detection,
     )
     ensure_chapter(
-        db, settings, plan, source, SUPPLEMENT_CHAPTER, values, chapter, actor=actor, reason="lot_choice"
+        db,
+        settings,
+        plan,
+        source,
+        SUPPLEMENT_CHAPTER,
+        values,
+        chapter,
+        actor=actor,
+        reason="lot_choice",
+        billing_organisation_id=project_organisation(db, project_id),
     )
     before = {"lot": link.zone_code}
     link.zone_code, link.chapter_code = sector, SUPPLEMENT_CHAPTER
@@ -651,12 +724,12 @@ def choose_lot(
         after={"document": str(plan.id), "lot": sector, "pages": [pages[0], pages[-1]]},
     )
     db.commit()
-    return _link_out(db, link)
+    return link_out(db, link)
 
 
 def remove(db: Session, project_id: uuid.UUID, document_id: uuid.UUID, actor: str) -> None:
     """Dokument vom Projekt lösen. Das Dokument selbst bleibt (E-AN2-4); Sektoren bleiben am Kapitel."""
-    link = _link(db, project_id, document_id)
+    link = project_link(db, project_id, document_id)
     audit.record(
         db,
         actor_type="staff",

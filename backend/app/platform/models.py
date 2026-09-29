@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Identity,
     Index,
@@ -71,8 +72,18 @@ class Project(UuidPk, Created, Base):
     )
     """Gesetzt für Projekte, die ein Architekt in „Emprise Analyse“ anlegt (AN1). Sie gehören keinem
     Kunden, haben kein Zugangscookie und werden nicht nach 90 Tagen gelöscht (UP06)."""
-    organisation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    """Nur offengehalten für AN6 (Abo für fremde Büros, D15); bis dahin immer NULL."""
+    organisation_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organisation.id", ondelete="RESTRICT")
+    )
+    """Organisation, der das Projekt gehört (AN6, docs/PLAN_AN6_MANDANTEN.md 3.2): gesetzt für Projekte aus
+    „Emprise Analyse“, ob per Konto oder API-Schlüssel angelegt; NULL für Kundenprojekte des Konfigurators.
+    Nur Mitglieder und Schlüssel dieser Organisation sehen das Projekt."""
+    name: Mapped[str | None] = mapped_column(String(120))
+    note: Mapped[str | None] = mapped_column(String(2000))
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    """Name, Notiz und Archiv am Architektenkonto (AN5, docs/PLAN_AN5_AUSGABE.md 3.1). Name und Notiz können
+    einen Bauherrn nennen; sie verlassen das System nicht, außer im Bericht der Analyse. Archivieren blendet
+    nur aus (E-AN5-7)."""
 
     __table_args__ = (
         Index(
@@ -80,6 +91,101 @@ class Project(UuidPk, Created, Base):
             "owner_staff_user_id",
             postgresql_where=text("owner_staff_user_id IS NOT NULL"),
         ),
+        Index(
+            "ix_project_organisation_id",
+            "organisation_id",
+            "last_activity_at",
+            postgresql_where=text("organisation_id IS NOT NULL"),
+        ),
+    )
+
+
+class Organisation(UuidPk, Created, Base):
+    """Büro mit eigenen Projekten, Mitgliedern, Budget und Erscheinungsbild (AN6, docs/PLAN_AN6_MANDANTEN.md
+    3.1). Genau eine Organisation der Art `operator`: das Büro, das Emprise betreibt; nur ihre Mitglieder
+    haben die Rollen des Betriebs. Weitere (`customer`) erst nach juristischer Prüfung (E-A5)."""
+
+    __tablename__ = "organisation"
+
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    display_name: Mapped[str] = mapped_column(String(200))
+    kind: Mapped[str] = mapped_column(String(20))
+    active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
+    budget_month_usd: Mapped[float | None] = mapped_column(Float)
+    """Monatsbudget der Auswertung; NULL = Vorgabe der Umgebung, für `operator` keine eigene Grenze."""
+    ocr_pages_month: Mapped[int | None] = mapped_column(Integer)
+    """Erkannte Seiten je Monat (E-AN7-7); NULL wie beim Budget."""
+    address_lines: Mapped[list[str]] = mapped_column(ARRAY(String(120)), server_default=text("'{}'"))
+    phone: Mapped[str | None] = mapped_column(String(40))
+    email: Mapped[str | None] = mapped_column(String(320))
+    website: Mapped[str | None] = mapped_column(String(200))
+    registration: Mapped[str | None] = mapped_column(String(120))
+    accent_color: Mapped[str | None] = mapped_column(String(7))
+    logo_key: Mapped[str | None] = mapped_column(String(300))
+    branding_revision: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    """Zählt jede Änderung des Erscheinungsbilds; Teil der Prüfsumme des Berichts (3.5)."""
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('operator','customer')", name="kind_known"),
+        CheckConstraint("accent_color IS NULL OR accent_color ~ '^#[0-9a-f]{6}$'", name="accent_color_hex"),
+        Index("uq_organisation_operator", "kind", unique=True, postgresql_where=text("kind = 'operator'")),
+    )
+
+
+class OrganisationMember(Created, Base):
+    """Ein Konto gehört zu höchstens einer Organisation (E-AN6-1)."""
+
+    __tablename__ = "organisation_member"
+
+    staff_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("staff_user.id", ondelete="CASCADE"), primary_key=True
+    )
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organisation.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(20))
+
+    __table_args__ = (CheckConstraint("role IN ('admin','member')", name="role_known"),)
+
+
+class ApiKey(UuidPk, Created, Base):
+    """Zugang ohne Browser für eine Organisation (AN6, 3.6). Nur Präfix und SHA-256 des Schlüssels."""
+
+    __tablename__ = "api_key"
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organisation.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(80))
+    prefix: Mapped[str] = mapped_column(String(12), unique=True)
+    token_hash: Mapped[bytes] = mapped_column(LargeBinary, unique=True)
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String(10)))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint(
+            "scopes <@ ARRAY['read','write']::varchar[] AND cardinality(scopes) > 0", name="scopes_known"
+        ),
+    )
+
+
+class UsageRecord(UuidPk, Created, Base):
+    """Verbrauch einer Organisation, der nicht in `rule_extraction_run` steht – bisher erkannte Seiten
+    (AN6, 3.4). Gebucht bei der Bestätigung, damit der Hinweis dieselbe Zahl nennt."""
+
+    __tablename__ = "usage_record"
+
+    organisation_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organisation.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(20))
+    quantity: Mapped[int] = mapped_column(Integer)
+    reference: Mapped[str | None] = mapped_column(String(100))
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('ocr_pages')", name="kind_known"),
+        Index("ix_usage_record_organisation", "organisation_id", "kind", "created_at"),
     )
 
 
@@ -100,7 +206,7 @@ class AuditLog(Base):
     request_id: Mapped[str | None] = mapped_column(String(64))
 
     __table_args__ = (
-        CheckConstraint("actor_type IN ('staff','customer','system')", name="actor_type_known"),
+        CheckConstraint("actor_type IN ('staff','customer','system','api_key')", name="actor_type_known"),
         Index("ix_audit_log_entity", "entity_type", "entity_id"),
     )
 

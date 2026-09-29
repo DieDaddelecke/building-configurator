@@ -29,6 +29,7 @@ CORE_ROUTERS: tuple[str, ...] = (
     "app.rules.api",
     "app.envelope.api",
     "app.rules.reference_api",
+    "app.platform.org_api",
 )
 """Reihenfolge bestimmt die Reihenfolge in `openapi.json`; nur hinten anfügen."""
 
@@ -82,7 +83,7 @@ PRODUCTS: dict[Product, ProductSpec] = {
     "analyse": ProductSpec(
         name="analyse",
         routers=(*CORE_ROUTERS, "app.analysis.api"),
-        job_modules=CORE_JOB_MODULES,
+        job_modules=(*CORE_JOB_MODULES, "app.analysis.jobs"),
         periodic=CORE_PERIODIC,
         staff_home="/",
         staff_denied="/",

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 
@@ -48,10 +48,11 @@ function gabarit(overrides: Partial<GabaritOut> = {}): GabaritOut {
   };
 }
 
-function section(key: "A" | "B"): SectionOut {
+function section(key: "A" | "B", terrain: number[][] = []): SectionOut {
   const a = key === "A";
   return {
     key,
+    terrain,
     start_local: a ? [10, 31] : [20, 15.5],
     end_local: a ? [10, 0] : [0, 15.5],
     length_m: a ? 31 : 20,
@@ -163,6 +164,30 @@ it("ohne Unterschied der Auslegungen gibt es keinen Wechsel", () => {
   state.analysis = analysis({ gabarit: gleich });
   zeige();
   expect(screen.queryByRole("button", { name: "engste Auslegung" })).not.toBeInTheDocument();
+});
+
+it("zeigt das Geländeprofil im Schnitt und prüft ab 5 % den Höhenbezug", () => {
+  // Hang von +0,80 m an der Straße bis −0,75 m hinten, Bezugshöhe 52,40 m NGF
+  const profil = [[0, 0.8], [15.5, 0.02], [31, -0.75]];
+  state.analysis = analysis({
+    gabarit: gabarit({ terrain_status: "ok", terrain_slope_percent: 5.0, reference_altitude_ngf: 52.4 }),
+    sections: [section("A", profil), section("B")],
+  });
+  zeige();
+  const schnitt = screen.getByRole("img", { name: /Schnitt A–A'/ });
+  const gelaende = within(schnitt).getByTestId("schnitt-gelaende-A");
+  expect(gelaende.querySelectorAll("path")[1]?.getAttribute("d")).toBe("M0.000 -0.800L15.500 -0.020L31.000 0.750");
+  expect(screen.getByText(/Gelände mit 5,0 % Neigung im Schnitt als Profil/)).toHaveTextContent("52,40 m NGF = ±0,00");
+
+  cleanup();
+  state.analysis = analysis({
+    gabarit: gabarit({ terrain_status: "ok", terrain_slope_percent: 8.2, reference_altitude_ngf: 52.4 }),
+    sections: [section("A", profil), section("B")],
+  });
+  zeige();
+  expect(screen.getByText(/Geländeneigung 8,2 % – Höhenbezug nach PLU prüfen \(Messpunkt der Höhe\)/)).toBeInTheDocument();
+  // Ohne Profil bleibt der Boden eben
+  expect(screen.queryByTestId("schnitt-gelaende-B")).not.toBeInTheDocument();
 });
 
 it("erklärt, warum es keinen Gabarit gibt", () => {

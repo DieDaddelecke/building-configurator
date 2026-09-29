@@ -13,6 +13,7 @@ from typing import Annotated, Any, Literal, cast
 
 import httpx2
 from fastapi import APIRouter, Depends, File, Form, Header, Query, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from pydantic import Field
 from sqlalchemy.orm import Session
 
@@ -21,11 +22,13 @@ from app.integrations import geoplateforme
 from app.integrations.http import ExternalServiceError, shared_client
 from app.platform import flags, projects, rate_limit
 from app.platform.auth.context import (
+    Principal,
     RequestAuth,
     Role,
     StaffPrincipal,
     get_auth,
     public,
+    require_owned_project,
     require_project_access,
     require_roles,
 )
@@ -39,6 +42,7 @@ from app.site.domain.manual import ManualEdgeInput
 from app.site.domain.upload import MAX_SELECTED
 from app.site.jobs import latest_imports
 from app.site.schemas import (
+    MAX_SCAN_PAGE,
     AddressOut,
     ArchitectEdgeIn,
     CommuneOut,
@@ -47,6 +51,8 @@ from app.site.schemas import (
     ImportStatusOut,
     LookupIn,
     LookupOut,
+    PositionIn,
+    ScanPreviewOut,
     SiteIn,
     SiteOut,
     SiteReviewItem,
@@ -215,9 +221,29 @@ def put_site(
     if body.edges is not None:
         edges = [ManualEdgeInput(length_m=e.length_m, angle_deg=e.angle_deg) for e in body.edges]
         assert body.address_label is not None  # von SiteIn erzwungen
-        return service.form_manual_site(db, project_id, edges, body.address_label, actor=actor)
+        trace = body.trace.model_dump(exclude_none=True) if body.trace is not None else None
+        return service.form_manual_site(db, project_id, edges, body.address_label, actor=actor, trace=trace)
     assert body.parcel_idus is not None  # von SiteIn erzwungen
     return service.form_site(db, project_id, body.parcel_idus, actor=actor)
+
+
+@router.post("/projects/{project_id}/site/scan", response_model=ScanPreviewOut, dependencies=[Feature])
+async def scan_site_preview(
+    request: Request,
+    file: UploadFile = File(...),
+    page: int = Form(default=1, ge=1, le=MAX_SCAN_PAGE),
+    project_id: uuid.UUID = Depends(require_project_access),
+) -> ScanPreviewOut:
+    """Gescannten Plan (PDF, JPEG, PNG) als Vorlage zum Nachzeichnen aufbereiten (AN7, PLAN_AN7_SCAN 3.5):
+    Seite als Bild, erkannter Maßstab, Meter je Pixel.
+    Speichert nichts; dauert wegen der Texterkennung 2–5 s."""
+    rate_limit.check(request, "site_write", get_settings().site_write_limit_per_hour, 3600)
+    data = await file.read()
+    if not data:
+        raise Problem(422, "upload_invalid", detail="Die Datei ist leer")
+    if len(data) > get_settings().site_upload_max_bytes:
+        raise Problem(413, "upload_too_large")
+    return await run_in_threadpool(service.scan_preview, data, page)
 
 
 @router.post("/projects/{project_id}/site/upload", response_model=UploadResultOut, dependencies=[Feature])
@@ -260,6 +286,19 @@ def get_site(
     project_id: uuid.UUID = Depends(require_project_access), db: Session = Depends(get_db)
 ) -> SiteOut:
     return service.load_site(db, project_id)
+
+
+@router.put("/projects/{project_id}/site/position", response_model=SiteOut, dependencies=[Feature])
+def put_site_position(
+    project_id: uuid.UUID,
+    body: PositionIn,
+    staff: Principal = Depends(require_owned_project),
+    db: Session = Depends(get_db),
+) -> SiteOut:
+    """Gezeichnetes oder hochgeladenes Grundstück auf der Karte verorten oder die Lage korrigieren (AN5,
+    docs/PLAN_AN5_AUSGABE.md 3.2). Nur der Architekt und nur eigene Projekte: Ein Kunde des Konfigurators
+    kann seine Zeichnung damit nicht verorten (G27). Danach werden Gelände und Risiken abgefragt."""
+    return service.position_site(db, project_id, body, staff.actor_id)
 
 
 @router.patch("/projects/{project_id}/site/edges/{seq}", response_model=SiteOut, dependencies=[Feature])

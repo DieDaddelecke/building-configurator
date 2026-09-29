@@ -2,8 +2,12 @@
 
 worker                         Hintergrundjobs ausführen
 openapi [datei]                OpenAPI-Beschreibung schreiben (Grundlage des Frontend-Clients)
-staff-add EMAIL ROLLE [ROLLE]  Mitarbeitende freischalten oder Rollen setzen
+staff-add EMAIL ROLLE [ROLLE] [--organisation NAME]  Mitarbeitende freischalten oder Rollen setzen
 staff-deactivate EMAIL         Zugang sperren und Sitzungen beenden
+org-create NAME ANZEIGENAME [--kind customer|operator]  Organisation anlegen (AN6; fremde erst nach E-A5)
+org-member-add ORGANISATION EMAIL [--role admin|member]  Konto einer Organisation zuordnen
+org-set-budget NAME [--budget USD|default] [--ocr-pages N|default]  Grenzen einer Organisation
+org-list                       Organisationen mit Mitgliedern und Grenzen
 storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
@@ -26,11 +30,11 @@ from typing import Any
 from sqlalchemy import select, update
 
 from app.config import Settings, get_settings
-from app.platform import audit
+from app.platform import audit, organisations
 from app.platform.auth.context import Role
 from app.platform.db import get_sessionmaker, utcnow
 from app.platform.logging import configure_logging
-from app.platform.models import StaffSession, StaffUser
+from app.platform.models import Organisation, OrganisationMember, StaffSession, StaffUser
 
 
 def cmd_worker(args: argparse.Namespace) -> None:
@@ -55,6 +59,18 @@ def cmd_openapi(args: argparse.Namespace) -> None:
         sys.stdout.write(output)
 
 
+def _organisation_by_name(session: Any, name: str | None) -> Organisation:
+    """Organisation nach Namen; ohne Namen die des Betreibers, angelegt beim ersten Konto (AN6)."""
+    if name is None:
+        org = organisations.operator_organisation(session, create=True)
+        assert org is not None
+        return org
+    org = session.execute(select(Organisation).where(Organisation.name == name)).scalar_one_or_none()
+    if org is None:
+        sys.exit(f"{name}: Organisation nicht gefunden")
+    return org
+
+
 def cmd_staff_add(args: argparse.Namespace) -> None:
     roles = sorted({Role(r).value for r in args.roles})
     email = args.email.strip().lower()
@@ -68,6 +84,21 @@ def cmd_staff_add(args: argparse.Namespace) -> None:
             user.roles = roles
             user.active = True
         session.flush()
+        # Jedes Konto gehört zu einer Organisation, sonst wirkt keine Rolle (AN6, PLAN_AN6_MANDANTEN 3.1)
+        membership = session.get(OrganisationMember, user.id)
+        org = (
+            session.get(Organisation, membership.organisation_id)
+            if membership is not None and args.organisation is None
+            else _organisation_by_name(session, args.organisation)
+        )
+        assert org is not None
+        role = args.org_role or (
+            membership.role if membership else "admin" if org.kind == "operator" else "member"
+        )
+        try:
+            organisations.set_membership(session, org, user, role, "cli")
+        except organisations.OrganisationError as exc:
+            sys.exit(f"{email}: {exc.code}")
         audit.record(
             session,
             actor_type="system",
@@ -79,7 +110,88 @@ def cmd_staff_add(args: argparse.Namespace) -> None:
             after={"roles": roles, "active": True},
         )
         session.commit()
-        print(f"{email}: {', '.join(roles)}")
+        print(f"{email}: {', '.join(roles)} · {org.name} ({role})")
+
+
+def cmd_org_create(args: argparse.Namespace) -> None:
+    settings = get_settings()
+    with get_sessionmaker()() as session:
+        try:
+            org = organisations.create_organisation(
+                session, settings, name=args.name, display_name=args.display_name, kind=args.kind, actor="cli"
+            )
+        except organisations.OrganisationError as exc:
+            hint = (
+                " (EMPRISE_EXTERNAL_ORGANISATIONS, erst nach E-A5)" if exc.code.startswith("external") else ""
+            )
+            sys.exit(f"{args.name}: {exc.code}{hint}")
+        session.commit()
+        print(f"{org.name}: {org.id} ({org.kind})")
+
+
+def cmd_org_member_add(args: argparse.Namespace) -> None:
+    """Konto einer Organisation zuordnen; ein neues Konto bekommt die Rolle `architect`."""
+    email = args.email.strip().lower()
+    with get_sessionmaker()() as session:
+        org = _organisation_by_name(session, args.organisation)
+        user = session.execute(select(StaffUser).where(StaffUser.email == email)).scalar_one_or_none()
+        if user is None:
+            user = StaffUser(email=email, roles=["architect"], created_by="cli")
+            session.add(user)
+            session.flush()
+        try:
+            organisations.set_membership(session, org, user, args.role, "cli")
+        except organisations.OrganisationError as exc:
+            sys.exit(f"{email}: {exc.code}")
+        session.commit()
+        print(f"{email}: {org.name} ({args.role})")
+
+
+def cmd_org_set_budget(args: argparse.Namespace) -> None:
+    """Monatsbudget und Scan-Kontingent; `default` setzt die Vorgabe der Umgebung zurück (3.4)."""
+    with get_sessionmaker()() as session:
+        org = _organisation_by_name(session, args.name)
+        before = {"budget_month_usd": org.budget_month_usd, "ocr_pages_month": org.ocr_pages_month}
+        if args.budget is not None:
+            org.budget_month_usd = None if args.budget == "default" else float(args.budget)
+        if args.ocr_pages is not None:
+            org.ocr_pages_month = None if args.ocr_pages == "default" else int(args.ocr_pages)
+        audit.record(
+            session,
+            actor_type="system",
+            actor_id="cli",
+            action="organisation.budget",
+            entity_type="organisation",
+            entity_id=str(org.id),
+            before=before,
+            after={"budget_month_usd": org.budget_month_usd, "ocr_pages_month": org.ocr_pages_month},
+        )
+        session.commit()
+        settings = get_settings()
+        print(
+            f"{org.name}: Budget {organisations.budget_limit(settings, org) or 'ohne eigene Grenze'} $ · "
+            f"Scan {organisations.ocr_limit(settings, org) or 'ohne Grenze'} Seiten je Monat"
+        )
+
+
+def cmd_org_list(args: argparse.Namespace) -> None:
+    settings = get_settings()
+    with get_sessionmaker()() as session:
+        for org in session.execute(select(Organisation).order_by(Organisation.name)).scalars():
+            members = len(
+                session.execute(
+                    select(OrganisationMember.staff_user_id).where(
+                        OrganisationMember.organisation_id == org.id
+                    )
+                ).all()
+            )
+            state = "aktiv" if org.active else "gesperrt"
+            budget, pages = organisations.budget_limit(settings, org), organisations.ocr_limit(settings, org)
+            print(
+                f"{org.name:24} {org.kind:9} {state:8} {members:3} Mitglieder"
+                f" · Budget {'ohne Grenze' if budget is None else f'{budget:g} $'}"
+                f" · Scan {'ohne Grenze' if pages is None else f'{pages} Seiten'}"
+            )
 
 
 def cmd_staff_deactivate(args: argparse.Namespace) -> None:
@@ -500,7 +612,27 @@ def main() -> None:
     p_add = sub.add_parser("staff-add")
     p_add.add_argument("email")
     p_add.add_argument("roles", nargs="+", choices=[r.value for r in Role])
+    p_add.add_argument(
+        "--organisation", help="Name der Organisation; ohne: die bisherige oder die des Betreibers"
+    )
+    p_add.add_argument("--org-role", choices=["admin", "member"])
     p_add.set_defaults(func=cmd_staff_add)
+    p_org = sub.add_parser("org-create")
+    p_org.add_argument("name", help="Kurzname aus Kleinbuchstaben, Ziffern und Bindestrich")
+    p_org.add_argument("display_name")
+    p_org.add_argument("--kind", choices=["customer", "operator"], default="customer")
+    p_org.set_defaults(func=cmd_org_create)
+    p_member = sub.add_parser("org-member-add")
+    p_member.add_argument("organisation")
+    p_member.add_argument("email")
+    p_member.add_argument("--role", choices=["admin", "member"], default="admin")
+    p_member.set_defaults(func=cmd_org_member_add)
+    p_budget = sub.add_parser("org-set-budget")
+    p_budget.add_argument("name")
+    p_budget.add_argument("--budget", help="Dollar je Monat oder `default`")
+    p_budget.add_argument("--ocr-pages", help="erkannte Seiten je Monat oder `default`")
+    p_budget.set_defaults(func=cmd_org_set_budget)
+    sub.add_parser("org-list").set_defaults(func=cmd_org_list)
     p_deactivate = sub.add_parser("staff-deactivate")
     p_deactivate.add_argument("email")
     p_deactivate.set_defaults(func=cmd_staff_deactivate)

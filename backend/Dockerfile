@@ -10,11 +10,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Debian-Sicherheitsupdates einspielen, die das offizielle Python-Image noch nicht enthält (Trivy in CI);
 # dazu die Systembibliotheken von WeasyPrint (Steckbrief als PDF, Modul G3) und eine Schrift mit den
-# nötigen Zeichen. Beides gehört in `base`, damit Tests und Worker dasselbe Verhalten haben.
+# nötigen Zeichen; dazu Tesseract mit Französisch für gescannte PDFs (AN7, docs/PLAN_AN7_SCAN.md). Alles gehört
+# in `base`, damit Tests und Worker dasselbe Verhalten haben.
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
         libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libfribidi0 fonts-dejavu-core \
+        tesseract-ocr tesseract-ocr-fra \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.8 /uv /usr/local/bin/uv

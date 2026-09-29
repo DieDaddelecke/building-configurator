@@ -23,7 +23,7 @@ from app.platform.auth.context import RequestAuth, get_auth, public
 from app.platform.auth.tokens import STAFF_COOKIE, hash_token, new_token
 from app.platform.db import get_db, utcnow
 from app.platform.logging import get_logger
-from app.platform.models import StaffSession, StaffUser
+from app.platform.models import Organisation, StaffSession, StaffUser
 from app.platform.problems import Problem
 from app.products import spec_for
 
@@ -185,11 +185,22 @@ def staff_logout(auth: RequestAuth = Depends(get_auth), db: Session = Depends(ge
     return response
 
 
+class OrganisationInfo(BaseModel):
+    """Organisation des Kontos und Rolle darin (AN6, docs/PLAN_AN6_MANDANTEN.md 3.7)."""
+
+    id: str
+    display_name: str
+    kind: Literal["operator", "customer"]
+    role: Literal["admin", "member"]
+
+
 class StaffInfo(BaseModel):
     id: str
     email: str
     display_name: str | None
     roles: list[str]
+    """Wirksame Rollen: außerhalb der Organisation `operator` höchstens `architect` (AN6)."""
+    organisation: OrganisationInfo | None = None
 
 
 class SessionInfo(BaseModel):
@@ -198,15 +209,26 @@ class SessionInfo(BaseModel):
 
 
 @router.get("/session", response_model=SessionInfo, dependencies=[Depends(public)])
-def current_session(auth: RequestAuth = Depends(get_auth)) -> SessionInfo:
+def current_session(auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)) -> SessionInfo:
     """Wer bin ich. Setzt beim ersten Aufruf das CSRF-Cookie (Middleware)."""
     staff = auth.staff
+    organisation: OrganisationInfo | None = None
+    if staff is not None and staff.organisation_id is not None:
+        org = db.get(Organisation, staff.organisation_id)
+        if org is not None and staff.organisation_kind is not None and staff.org_role is not None:
+            organisation = OrganisationInfo(
+                id=str(org.id),
+                display_name=org.display_name,
+                kind=staff.organisation_kind,
+                role=staff.org_role,
+            )
     return SessionInfo(
         staff=StaffInfo(
             id=str(staff.user_id),
             email=staff.email,
             display_name=staff.display_name,
             roles=sorted(staff.roles),
+            organisation=organisation,
         )
         if staff
         else None,

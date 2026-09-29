@@ -90,6 +90,7 @@ const citation = (page: number) => ({
   origin: "extraction" as const,
   confidence: 0.9,
   notes: null,
+  from_scan: false,
 });
 
 const limit = (kind: string, params: Record<string, unknown>, page: number, status = "effective") => ({

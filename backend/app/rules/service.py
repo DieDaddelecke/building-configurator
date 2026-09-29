@@ -6,7 +6,7 @@ freiwillig: für die Zone (neue Version `office_reviewed`) oder nur für ein Pro
 
 import uuid
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Any, Literal
@@ -22,6 +22,7 @@ from app.platform.logging import get_logger
 from app.platform.problems import Problem
 from app.platform.shared import shared_session
 from app.rules import documents, model_choice
+from app.rules.budget import ORGANISATION_BUDGET_ERROR, organisation_budget_left
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.form import kind_forms
@@ -132,7 +133,33 @@ def _source_url(urls: dict[uuid.UUID, str], file_id: uuid.UUID | None, page: int
     return f"{urls[file_id]}#page={page}" if page else urls[file_id]
 
 
-def _rule_out(rule: Rule, urls: dict[uuid.UUID, str], plan_id: uuid.UUID | None = None) -> RuleOut:
+def _document_reason(plan: LandUsePlan) -> str:
+    """Warum ein hochgeladenes Dokument keine Regeln liefert: Scan vor der Texterkennung (AN7) oder Fehler."""
+    if plan.status == "scan":
+        return "document_scan"
+    return plan.error or "document_failed"
+
+
+def scan_pages(db: Session, file_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, set[int]]:
+    """Seiten je Datei, deren Text per Texterkennung gelesen wurde (AN7, PLAN_AN7_SCAN 3.3)."""
+    ids = list(file_ids)
+    pages: dict[uuid.UUID, set[int]] = defaultdict(set)
+    if ids:
+        for file_id, page in db.execute(
+            select(SourcePage.source_file_id, SourcePage.page).where(
+                SourcePage.source_file_id.in_(ids), SourcePage.ocr_confidence.is_not(None)
+            )
+        ).tuples():
+            pages[file_id].add(page)
+    return pages
+
+
+def _rule_out(
+    rule: Rule,
+    urls: dict[uuid.UUID, str],
+    plan_id: uuid.UUID | None = None,
+    scanned: dict[uuid.UUID, set[int]] | None = None,
+) -> RuleOut:
     return RuleOut(
         kind=rule.kind,
         building_kind=rule.building_kind,
@@ -148,6 +175,9 @@ def _rule_out(rule: Rule, urls: dict[uuid.UUID, str], plan_id: uuid.UUID | None 
         origin=rule.origin,
         source_document_id=plan_id if rule.source_file_id is not None else None,
         search_note=rule.detail if rule.reason in ("not_found_after_search", "not_expressible") else None,
+        from_scan=bool(
+            scanned and rule.source_file_id is not None and rule.page in scanned.get(rule.source_file_id, ())
+        ),
     )
 
 
@@ -396,9 +426,7 @@ def supplement_rules(db: Session, project_id: uuid.UUID) -> list[SupplementRules
             result.append(SupplementRules(**base, status="in_progress", reason="document_reading"))
             continue
         if plan.status != "active":
-            result.append(
-                SupplementRules(**base, status="unavailable", reason=plan.error or "document_failed")
-            )
+            result.append(SupplementRules(**base, status="unavailable", reason=_document_reason(plan)))
             continue
         if link.zone_code is None:
             result.append(SupplementRules(**base, status="unavailable", reason="lot_not_chosen"))
@@ -473,7 +501,7 @@ def _uploaded_rules(
             None, "document_reading", [], plan=plan_out, notices=UPLOAD_NOTICES, status="in_progress"
         )
     if plan.status != "active":
-        return _unavailable(None, plan.error or "document_failed", [], plan=plan_out, notices=UPLOAD_NOTICES)
+        return _unavailable(None, _document_reason(plan), [], plan=plan_out, notices=UPLOAD_NOTICES)
     if link.zone_code is None:
         return _unavailable(None, "zone_not_chosen", [], plan=plan_out, notices=UPLOAD_NOTICES)
     chapter = db.execute(
@@ -659,6 +687,7 @@ def _rules_for_zones(
         f.id: f.url
         for f in db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)).scalars()
     }
+    scanned = scan_pages(db, urls)
 
     zones: list[ZoneRulesOut] = []
     for row in relevant:
@@ -681,7 +710,11 @@ def _rules_for_zones(
             status = "in_progress"
         else:
             status, reason = "unavailable", chapter.error or chapter.status
-        rules = [_rule_out(r, urls, plan.id) for r in rules_by_version.get(version.id, [])] if version else []
+        rules = (
+            [_rule_out(r, urls, plan.id, scanned) for r in rules_by_version.get(version.id, [])]
+            if version
+            else []
+        )
         # „any“ zuerst, damit eine spezifische Korrektur danach die allgemeine einschränkt
         for override in sorted(overrides.get(row.code, []), key=lambda o: o.building_kind != "any"):
             source = override_sources.get(override.source_file_id) if override.source_file_id else None
@@ -917,6 +950,7 @@ def rule_set_detail(db: Session, rule_set_id: uuid.UUID) -> RuleSetOut:
         f.id: f.url
         for f in db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)).scalars()
     }
+    scanned = scan_pages(db, urls)
     rules = (
         list(
             db.execute(
@@ -934,7 +968,7 @@ def rule_set_detail(db: Session, rule_set_id: uuid.UUID) -> RuleSetOut:
         versions=[version_out(v) for v in versions],
         rules=[
             RuleDetailOut(
-                **_rule_out(r, urls, plan.id).model_dump(),
+                **_rule_out(r, urls, plan.id, scanned).model_dump(),
                 detail=r.detail,
                 alternatives=r.alternatives or [],
                 similarity=r.similarity,
@@ -1343,7 +1377,8 @@ def housekeeping(db: Session, settings: Settings) -> dict[str, Any]:
 
     - `extracting` länger als das Zeitlimit: abgebrochen (`interrupted:stale`).
     - `pending` ohne wartenden Job: neu einplanen.
-    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded`, sobald das Budget wieder
+    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded` und
+      `organisation_budget_exceeded` (AN6), sobald das Budget wieder
       reicht (neuer Monat, höheres Budget); vorübergehende Fehler nach 24 h, höchstens 6 gescheiterte Aufrufe
       je Woche.
     - Ausgewertet mit älterer Version der Schranken: neu bewerten (ohne Aufruf, wenn die Antworten vorliegen).
@@ -1397,6 +1432,10 @@ def _restart_reason(
         return "configured" if settings.openrouter_api_key is not None else None
     if chapter.error == "budget_exceeded":
         return "budget" if budget_left else None
+    if chapter.error == ORGANISATION_BUDGET_ERROR:
+        # Neuer Monat oder erhöhtes Budget der zahlenden Organisation (AN6, PLAN_AN6_MANDANTEN 7.1 Nr. 20)
+        left = budget_left and organisation_budget_left(db, settings, chapter.billing_organisation_id)
+        return "budget" if left else None
     if chapter.error.startswith(TRANSIENT_ERRORS) and now - chapter.updated_at > RETRY_TRANSIENT_AFTER:
         failed_week = db.execute(
             select(func.count())

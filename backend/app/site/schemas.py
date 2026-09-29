@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.site.domain import pdfplan
 from app.site.domain import tolerances as tol
 from app.site.domain.edges import EdgeKind
 
@@ -87,6 +88,24 @@ class ManualEdgeIn(BaseModel):
     angle_deg: float = Field(ge=0, lt=360)
 
 
+MAX_SCAN_PAGE = pdfplan.MAX_PAGES
+"""Höchste wählbare Seite eines gescannten Plans (AN7), wie beim vektoriellen PDF; gerendert wird immer nur
+die gewählte."""
+
+
+class TraceIn(BaseModel):
+    """Herkunft einer nach einem Scan nachgezeichneten Parzelle (AN7, docs/PLAN_AN7_SCAN.md 3.5). Der Scan
+    selbst wird nicht gespeichert (3.6)."""
+
+    file_name: str = Field(min_length=1, max_length=200)
+    page: int = Field(default=1, ge=1, le=MAX_SCAN_PAGE)
+    scale_method: Literal["plan", "calibrated"]
+    """`plan`: Maßstab aus dem Plan und Papiermaß; `calibrated`: über zwei Punkte mit bekanntem Abstand."""
+    scale: int | None = Field(default=None, ge=50, le=10_000)
+    reference_m: float | None = Field(default=None, gt=0, le=10_000)
+    """Bei `calibrated` die eingetragene Länge zwischen den beiden Punkten."""
+
+
 class SiteIn(BaseModel):
     """Genau eine Angabe: Parzellen (Wege A–D, Spez. 5.1.1) oder bemaßte Kanten ohne Kataster (Weg E)."""
 
@@ -96,6 +115,8 @@ class SiteIn(BaseModel):
     )
     address_label: str | None = Field(default=None, min_length=1, max_length=200)
     """Nur bei `edges` (Weg E) verwendet: Beschriftung, keine Geokodierung (Plan 3.3)."""
+    trace: TraceIn | None = None
+    """Nur bei `edges`: nach einem Scan nachgezeichnet (AN7); landet in `source_info.trace`."""
 
     @field_validator("parcel_idus")
     @classmethod
@@ -115,6 +136,8 @@ class SiteIn(BaseModel):
             raise ValueError("entweder parcel_idus oder edges angeben")
         if self.edges is not None and not (self.address_label and self.address_label.strip()):
             raise ValueError("address_label ist bei edges Pflicht")
+        if self.trace is not None and self.edges is None:
+            raise ValueError("trace nur mit edges")
         return self
 
 
@@ -191,6 +214,28 @@ class LocalOrigin(BaseModel):
     crs: Literal["EPSG:2154"] = "EPSG:2154"
 
 
+class SitePlacementOut(BaseModel):
+    """Was die Karte zum Einpassen braucht (AN5, docs/PLAN_AN5_AUSGABE.md 3.2): Drehpunkt und wie die lokalen
+    Achsen auf einer Karte mit geografisch Nord oben erscheinen."""
+
+    pivot_local: list[float]
+    """Schwerpunkt des Umrisses in lokalen Metern."""
+    pivot_wgs84: list[float] | None = None
+    """[Länge, Breite] des Drehpunkts; nur mit Lage."""
+    map_rotation_deg: float
+    """Drehung im Uhrzeigersinn: 0 ohne Lage (Blattoben = Norden), mit Lage −γ (Achsen folgen Gitternord)."""
+
+
+class PositionIn(BaseModel):
+    """Lage setzen oder korrigieren: Drehpunkt an `lon`/`lat`, zusätzlich um `rotation_deg` im Uhrzeigersinn
+    gegenüber der jetzigen Darstellung gedreht."""
+
+    lon: float = Field(ge=-6.0, le=10.0)
+    lat: float = Field(ge=41.0, le=52.0)
+    rotation_deg: float = Field(default=0.0, ge=-360.0, le=360.0)
+    expected_revision: int | None = None
+
+
 class SiteOut(BaseModel):
     project_id: uuid.UUID
     origin: SiteOrigin
@@ -224,6 +269,8 @@ class SiteOut(BaseModel):
     terrain: TerrainOut
     risks: RisksOut
     context: ContextOut
+    placement: SitePlacementOut | None = None
+    """Nur für Grundstücke ohne Kataster (Zeichnung, Upload): Grundlage der Karte zum Einpassen (AN5)."""
 
 
 class UploadCandidateOut(BaseModel):
@@ -254,6 +301,26 @@ class UploadResultOut(BaseModel):
     """Maßstab 1:n, mit dem ein PDF in Meter umgerechnet wurde; bei DXF und GeoJSON leer."""
     scale_source: Literal["file", "input"] | None
     """`file`: aus dem Text des Plans gelesen, `input`: von Hand angegeben."""
+
+
+class ScanPreviewOut(BaseModel):
+    """Seite eines gescannten Plans als Vorlage zum Nachzeichnen (AN7, docs/PLAN_AN7_SCAN.md 3.5). Nichts wird
+    gespeichert; das Grundstück entsteht danach wie in Weg E aus bemaßten Kanten (`PUT /site` mit `trace`)."""
+
+    page: int
+    page_count: int
+    image: str
+    """JPEG als `data:`-URL, höchstens 2 500 Pixel an der langen Seite."""
+    width_px: int
+    height_px: int
+    paper_mm: list[float] | None
+    """Breite und Höhe des Blatts; leer bei Bildern ohne verlässliche Auflösung (unter 150 dpi)."""
+    scales: list[int]
+    """Im erkannten Text gefundene Maßstäbe 1:n."""
+    scale: int | None
+    """Maßgeblicher Maßstab: der benannte der Ausgabe („Échelle d'édition“) oder der einzige gefundene."""
+    metres_per_px: float | None
+    """Meter in der Natur je Pixel des Bilds, wenn Papiermaß und Maßstab bekannt sind; sonst kalibrieren."""
 
 
 class SiteReviewItem(BaseModel):

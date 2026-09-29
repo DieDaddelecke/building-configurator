@@ -86,21 +86,27 @@ def parse_elevations(payload: Any, count: int) -> list[float | None]:
     return [float(z) if isinstance(z, int | float) and z > NO_DATA else None for z in values]
 
 
+ELEVATION_BATCH = 100
+"""Punkte je Anfrage: Sie stehen in der Adresse, 100 Punkte sind rund 2,5 KB (AN5, PLAN_AN5 7.1 Nr. 5)."""
+
+
 def elevations(
     client: httpx2.Client, settings: Settings, points: Sequence[tuple[float, float]]
 ) -> list[float | None]:
-    """Höhen in m NGF für Punkte `(lon, lat)` in WGS84."""
-    if not points:
-        return []
-    payload = http.get_json(
-        client,
-        ALTIMETRY,
-        f"{settings.geoplateforme_base_url}/altimetrie/1.0/calcul/alti/rest/elevation.json",
-        params={
-            "lon": "|".join(f"{lon:.7f}" for lon, _ in points),
-            "lat": "|".join(f"{lat:.7f}" for _, lat in points),
-            "resource": "ign_rge_alti_wld",
-            "zonly": "false",
-        },
-    )
-    return parse_elevations(payload, len(points))
+    """Höhen in m NGF für Punkte `(lon, lat)` in WGS84, in Paketen zu `ELEVATION_BATCH`."""
+    result: list[float | None] = []
+    for start in range(0, len(points), ELEVATION_BATCH):
+        batch = points[start : start + ELEVATION_BATCH]
+        payload = http.get_json(
+            client,
+            ALTIMETRY,
+            f"{settings.geoplateforme_base_url}/altimetrie/1.0/calcul/alti/rest/elevation.json",
+            params={
+                "lon": "|".join(f"{lon:.7f}" for lon, _ in batch),
+                "lat": "|".join(f"{lat:.7f}" for _, lat in batch),
+                "resource": "ign_rge_alti_wld",
+                "zonly": "false",
+            },
+        )
+        result.extend(parse_elevations(payload, len(batch)))
+    return result

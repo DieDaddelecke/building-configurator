@@ -38,6 +38,17 @@ export function sortRules<T extends Pick<RuleOut, "kind" | "building_kind">>(rul
   );
 }
 
+/** Marke an einem Zitat von einer per Texterkennung gelesenen Seite (AN7, docs/PLAN_AN7_SCAN.md 3.3). */
+export function AusScan() {
+  const { t } = useTranslation();
+  return (
+    <span className="t-warn" title={t("rules.fromScanTitle")}>
+      {" "}
+      · {t("rules.fromScan")}
+    </span>
+  );
+}
+
 /** Seite als Verweis; eine Projektkorrektur (AN4) mit Fundstelle zeigt die Seite und „Korrektur“, ohne Fundstelle die
  *  Herkunft allein. Ein unbestätigtes Zitat einer Korrektur trägt ein Sternchen wie im Baurahmen. */
 function Quelle({ rule }: { rule: RuleOut }) {
@@ -53,6 +64,7 @@ function Quelle({ rule }: { rule: RuleOut }) {
         {t("rules.page", { page: rule.page })}
         {korrektur && !rule.quote_verified && <span className="t-warn"> *</span>}
       </a>
+      {rule.from_scan && <AusScan />}
       {korrektur && <span className="t-mute"> · {t("rules.origin.correction")}</span>}
     </>
   );
