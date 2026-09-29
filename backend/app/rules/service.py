@@ -24,7 +24,16 @@ from app.rules import documents, model_choice
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.form import kind_forms
-from app.rules.domain.kinds import BUILDING_SPECIFIC_KINDS, ParamProblem, validate_params
+from app.rules.domain.kinds import ParamProblem, validate_params
+from app.rules.domain.resolve import (
+    RESULT_STATUSES,
+    ZoneState,
+    apply_override,
+    overall_status,
+    split_slivers,
+    use_older,
+    zone_state,
+)
 from app.rules.domain.text import verify_quote
 from app.rules.models import (
     LandUsePlan,
@@ -68,19 +77,12 @@ from app.site.service import SiteFootprint
 
 log = get_logger("rules_service")
 FEATURE_FLAG = "rules_simulation"
-SLIVER_MIN_M2 = 1.0
-SLIVER_MIN_SHARE = 0.01
-"""Teilflächen unter 1 m² oder 1 % der Grundstücksfläche werden ignoriert (Spez. 5.2.2)."""
-UNCOVERED_WARNING_SHARE = 0.01
-"""Liegt mehr als dieser Anteil des Grundstücks in keiner Zone des Planwerks, erscheint eine Warnung."""
 LINE_OVERLAY_DISTANCE_M = 1.0
 """Linienhafte Vorgaben (z. B. Baulinie) liegen oft genau auf der Grenze; bis 1 m gelten sie als betroffen."""
 NOTICES = ["notice.rules_simulation", "notice.rules_lotissement"]
 UPLOAD_NOTICES = ["notice.rules_simulation", "notice.rules_upload"]
 """Hochgeladenes Reglement (AN2): ausgewertet ist nur dieses Dokument – ohne Zonenplan, überlagernde
 Vorgaben, Servituden und Zusatzdokumente (docs/PLAN_AN2_PLU.md 3.4)."""
-RESULT_STATUSES = {"simulated", "office_reviewed"}
-SPECIFIC_BUILDING_KINDS = ("main", "annex", "pool")
 
 # Wiederaufnahme (rules_housekeeping)
 PENDING_WITHOUT_JOB_AFTER = timedelta(minutes=30)
@@ -198,36 +200,6 @@ def _override_out(override: ProjectRuleOverride, source: SourceFile | None = Non
         origin="project",
         source_document_id=source.land_use_plan_id if source is not None else None,
     )
-
-
-def apply_override(
-    rules: list[RuleOut], override: ProjectRuleOverride, source: SourceFile | None = None
-) -> list[RuleOut]:
-    """Korrektur für ein Projekt einsetzen. Die spezifischere Regel geht vor:
-
-    - `any` ersetzt alle Regeln dieser Art.
-    - `main`, `annex` oder `pool` ersetzt die Regel dieses Baukörpers. Eine automatische Regel für `any`
-      gilt dann nur noch für die übrigen Baukörper und erscheint für diese einzeln; bei Regelarten, die das
-      Grundstück als Ganzes betreffen (Grundfläche, Stellplätze …), ersetzt die Korrektur sie ganz.
-    """
-    specific = override.building_kind
-    present = {(r.kind, r.building_kind) for r in rules}
-    result: list[RuleOut] = []
-    for rule in rules:
-        if rule.kind != override.kind:
-            result.append(rule)
-        elif specific == "any" or rule.building_kind == specific:
-            continue
-        elif rule.building_kind == "any":
-            if override.kind in BUILDING_SPECIFIC_KINDS:
-                result.extend(
-                    rule.model_copy(update={"building_kind": other})
-                    for other in SPECIFIC_BUILDING_KINDS
-                    if other != specific and (rule.kind, other) not in present
-                )
-        else:
-            result.append(rule)
-    return [*result, _override_out(override, source)]
 
 
 def _validated(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -371,8 +343,7 @@ def resolve_rules(
             geometry=geometry,
             options=options,
         )
-        current_has_rules = current is not None and current.out.status == "partial"
-        if older.out.status == "ok" or (older.out.status == "partial" and not current_has_rules):
+        if use_older(current.out.status if current is not None else None, older.out.status):
             for zone in older.out.zones:
                 if zone.status in RESULT_STATUSES:
                     zone.status = "outdated"
@@ -429,7 +400,6 @@ def supplement_rules(db: Session, project_id: uuid.UUID) -> list[SupplementRules
         if link.zone_code is None:
             result.append(SupplementRules(**base, status="unavailable", reason="lot_not_chosen"))
             continue
-        warnings: list[str] = []
         rules = _rules_for_zones(
             db,
             project_id,
@@ -445,7 +415,7 @@ def supplement_rules(db: Session, project_id: uuid.UUID) -> list[SupplementRules
             ],
             site_area=1.0,
             commune=None,
-            warnings=warnings,
+            warnings=[],
             ignored=[],
             uncovered_share=0.0,
             overlay_rows=[],
@@ -463,7 +433,7 @@ def supplement_rules(db: Session, project_id: uuid.UUID) -> list[SupplementRules
                 rules=list(zone.rules),
                 hints=list(zone.hints),
                 version_id=zone.version.id if zone.version else None,
-                updating="rules_updating" in warnings,
+                updating="rules_updating" in rules.out.warnings,
             )
         )
     return result
@@ -543,7 +513,6 @@ def _plan_rules(
     options: RulesOptions = CURRENT,
 ) -> RulesResult:
     """GPU-Weg: Zonen des Planstands mit dem Grundstück verschneiden, Vorgaben der Gemeinde dazu."""
-    warnings = list(base_warnings)
     part = "ST_Union(ST_Intersection(z.geometry, s.g))"
     rows = db.execute(
         text(
@@ -561,15 +530,19 @@ def _plan_rules(
         {"wkb": footprint.wkb, "plan": plan.id},
     ).all()
     site_area = footprint.area_m2 or 1.0
-    relevant = [r for r in rows if r.area >= SLIVER_MIN_M2 and r.area >= SLIVER_MIN_SHARE * site_area]
-    ignored = [
-        IgnoredZoneOut(code=r.code, area_m2=round(float(r.area), 2)) for r in rows if r not in relevant
-    ]
-    if len(relevant) > 1:
-        warnings.append("multiple_zones")
-    uncovered = max(0.0, 1.0 - sum(float(r.area) for r in rows) / site_area)
-    if rows and uncovered >= UNCOVERED_WARNING_SHARE:
-        warnings.append("zone_coverage_incomplete")
+    split = split_slivers(
+        [
+            _ZoneRow(
+                code=r.code,
+                label=r.label,
+                chapter_code=r.chapter_code,
+                area=float(r.area),
+                part_wkb=bytes(r.part_wkb) if r.part_wkb is not None else None,
+            )
+            for r in rows
+        ],
+        site_area,
+    )
 
     overlay_rows = db.execute(
         text(
@@ -594,21 +567,12 @@ def _plan_rules(
         db,
         project_id,
         plan,
-        [
-            _ZoneRow(
-                code=r.code,
-                label=r.label,
-                chapter_code=r.chapter_code,
-                area=float(r.area),
-                part_wkb=bytes(r.part_wkb) if r.part_wkb is not None else None,
-            )
-            for r in relevant
-        ],
+        split.relevant,
         site_area=site_area,
         commune=commune,
-        warnings=warnings,
-        ignored=ignored,
-        uncovered_share=round(uncovered, 4) if rows else 0.0,
+        warnings=[*base_warnings, *split.warnings],
+        ignored=[IgnoredZoneOut(code=r.code, area_m2=round(r.area, 2)) for r in split.ignored],
+        uncovered_share=split.uncovered_share,
         overlay_rows=list(overlay_rows),
         notices=NOTICES,
         geometry=geometry,
@@ -624,7 +588,7 @@ def _rules_for_zones(
     *,
     site_area: float,
     commune: str | None,
-    warnings: list[str],
+    warnings: Sequence[str],
     ignored: list[IgnoredZoneOut],
     uncovered_share: float,
     overlay_rows: list[Any],
@@ -688,26 +652,20 @@ def _rules_for_zones(
     scanned = scan_pages(db, urls)
 
     zones: list[ZoneRulesOut] = []
+    states: list[ZoneState] = []
     for row in relevant:
         rule_set = rule_sets.get(row.code)
         version_id = chosen.get(row.code) or (rule_set.current_version_id if rule_set else None)
         version = versions.get(version_id) if version_id else None
         chapter = chapters.get(row.chapter_code) if row.chapter_code else None
-        status: str
-        reason: str | None = None
-        if version is not None and row.code in chosen:
-            # Frühere Version zum Vergleich: Status nach Herkunft, nicht `retired` (PLAN_AN4 7.1 Nr. 4)
-            status = "office_reviewed" if version.origin == "office" else "simulated"
-        elif version is not None:
-            status = version.status
-            if chapter is not None and chapter.status in ("pending", "extracting"):
-                warnings.append("rules_updating")
-        elif chapter is None:
-            status, reason = "unavailable", "chapter_not_found"
-        elif chapter.status in ("pending", "extracting"):
-            status = "in_progress"
-        else:
-            status, reason = "unavailable", chapter.error or chapter.status
+        state = zone_state(
+            version.status if version else None,
+            chapter.status if chapter else None,
+            version_origin=version.origin if version else None,
+            pinned=row.code in chosen,
+            chapter_error=chapter.error if chapter else None,
+        )
+        states.append(state)
         rules = (
             [_rule_out(r, urls, plan.id, scanned) for r in rules_by_version.get(version.id, [])]
             if version
@@ -716,7 +674,11 @@ def _rules_for_zones(
         # „any“ zuerst, damit eine spezifische Korrektur danach die allgemeine einschränkt
         for override in sorted(overrides.get(row.code, []), key=lambda o: o.building_kind != "any"):
             source = override_sources.get(override.source_file_id) if override.source_file_id else None
-            rules = apply_override(rules, override, source)
+            rules = apply_override(
+                rules,
+                _override_out(override, source),
+                lambda rule, building_kind: rule.model_copy(update={"building_kind": building_kind}),
+            )
         zones.append(
             ZoneRulesOut(
                 code=row.code,
@@ -724,8 +686,8 @@ def _rules_for_zones(
                 chapter_code=row.chapter_code,
                 area_m2=round(float(row.area), 2),
                 share=round(float(row.area) / site_area, 4),
-                status=status,
-                reason=reason,
+                status=state.status,
+                reason=state.reason,
                 rule_set_id=rule_set.id if rule_set else None,
                 version=version_out(version) if version else None,
                 rules=[r for r in rules if r.status != "text_only"],
@@ -733,17 +695,8 @@ def _rules_for_zones(
             )
         )
 
-    statuses = {z.status for z in zones}
-    if not zones:
-        overall, overall_reason = "unavailable", "no_zone"
-    elif statuses <= RESULT_STATUSES:
-        overall, overall_reason = "ok", None
-    elif "in_progress" in statuses and not statuses & RESULT_STATUSES:
-        overall, overall_reason = "in_progress", None
-    elif statuses & RESULT_STATUSES:
-        overall, overall_reason = "partial", None
-    else:
-        overall, overall_reason = "unavailable", zones[0].reason
+    overall, overall_reason = overall_status(states)
+    updating = ["rules_updating"] if any(state.updating for state in states) else []
     overlays: list[OverlayOut] = []
     for row in overlay_rows:
         overlay = OverlayOut(
@@ -760,7 +713,7 @@ def _rules_for_zones(
         ignored_zones=ignored,
         uncovered_share=uncovered_share,
         overlays=overlays,
-        warnings=sorted(set(warnings)),
+        warnings=sorted({*warnings, *updating}),
         notices=notices,
     )
     if not geometry:

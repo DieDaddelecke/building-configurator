@@ -34,7 +34,7 @@ from app.rules.models import (
     Zone,
 )
 from app.rules.plan_import import DirectoryGpu, import_commune
-from app.rules.schemas import RuleIn, RuleOut, RuleSetVersionIn
+from app.rules.schemas import RuleIn, RuleSetVersionIn
 from app.site.cadastre_import import import_commune as import_cadastre
 from tests.rules_support import DOC_ID, FakeExtractor, gpu_directory, uh_output
 
@@ -669,46 +669,3 @@ def test_partly_uncovered_site_is_flagged(
     db_session.commit()
     body = client.get(f"/api/v1/projects/{site_project}/rules").json()
     assert "zone_coverage_incomplete" in body["warnings"] and body["uncovered_share"] > 0.2
-
-
-def _rule(kind: str, building_kind: str) -> RuleOut:
-    return RuleOut(
-        kind=kind,
-        building_kind=building_kind,
-        status="effective",
-        reason=None,
-        params={"min_m": 3},
-        page=7,
-        quote="q",
-        quote_verified=True,
-        source_url=None,
-        confidence=0.9,
-        notes=None,
-        origin="extraction",
-    )
-
-
-def test_project_override_for_main_building_narrows_general_rule() -> None:
-    from app.rules.models import ProjectRuleOverride
-
-    def override(kind: str, building_kind: str) -> ProjectRuleOverride:
-        return ProjectRuleOverride(
-            kind=kind, building_kind=building_kind, status="effective", params={}, note="x"
-        )
-
-    rules = [_rule("setback_side", "any"), _rule("max_footprint_ratio", "any")]
-    side = service.apply_override(rules, override("setback_side", "main"))
-    assert sorted((r.kind, r.building_kind, r.origin) for r in side) == [
-        ("max_footprint_ratio", "any", "extraction"),
-        ("setback_side", "annex", "extraction"),
-        ("setback_side", "main", "project"),
-        ("setback_side", "pool", "extraction"),
-    ]
-    footprint = service.apply_override(rules, override("max_footprint_ratio", "main"))
-    assert [(r.kind, r.building_kind, r.origin) for r in footprint if r.kind == "max_footprint_ratio"] == [
-        ("max_footprint_ratio", "main", "project")
-    ]
-    everything = service.apply_override(side, override("setback_side", "any"))
-    assert [(r.kind, r.building_kind) for r in everything if r.kind == "setback_side"] == [
-        ("setback_side", "any")
-    ]
