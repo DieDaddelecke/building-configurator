@@ -34,7 +34,8 @@ RUN uv sync --locked --no-install-project --no-dev
 COPY alembic.ini ./
 COPY migrations ./migrations
 COPY app ./app
-RUN useradd --system --uid 10001 --home-dir /app emprise
+# Dateiverzeichnis (EMPRISE_FILES_DIR): ein frisches Docker-Volume übernimmt Eigentümer und Rechte von hier
+RUN useradd --system --uid 10001 --home-dir /app emprise     && mkdir -p /data/files && chown 10001:10001 /data/files
 USER 10001
 ARG RELEASE=dev
 ENV EMPRISE_RELEASE=${RELEASE}

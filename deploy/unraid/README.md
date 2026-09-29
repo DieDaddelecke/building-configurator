@@ -71,6 +71,12 @@ done
 
 In `.env` von Hand: `OIDC_ISSUER` (`https://auth.aslani.work/application/o/emprise/`), `OIDC_CLIENT_SECRET` (Wert aus Abschnitt 3), Pfade `APPDATA_DIR` und `BACKUP_DIR`. `chmod 600 .env`.
 
+Dateiverzeichnis für Reglements, Steckbriefe, Berichte und Übergaben (`APPDATA_DIR/files`, im Container `/data/files`); es muss dem Container-Nutzer 10001 gehören, sonst bricht der Migrate-Job bei `storage-init` ab:
+
+```bash
+mkdir -p /mnt/user/appdata/emprise/files && chown 10001:10001 /mnt/user/appdata/emprise/files
+```
+
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
@@ -104,7 +110,7 @@ Migrationen werden dabei nicht zurückgedreht (abwärtskompatibel, docs/BETRIEB.
 | Was | Wie | Wohin |
 |---|---|---|
 | Datenbank Emprise | Container `backup`, täglich um `BACKUP_HOUR`, 14 Tage | `BACKUP_DIR` |
-| Dateien (SeaweedFS), Datenbank Authentik | Unraid-Plugin „Appdata Backup“ über `APPDATA_DIR` beider Stacks | Backup-Freigabe |
+| Dateien (`APPDATA_DIR/files`), Datenbank Authentik | Unraid-Plugin „Appdata Backup“ über `APPDATA_DIR` beider Stacks | Backup-Freigabe |
 | Außer Haus | `BACKUP_DIR` und Appdata-Sicherung zusätzlich auf ein zweites Ziel in der EU | z. B. zweites Gerät oder EU-Speicher |
 
 Sofortige Sicherung: `docker compose run --rm backup now`. Die Datei `BACKUP_DIR/last-success` enthält den Zeitpunkt der letzten erfolgreichen Sicherung.

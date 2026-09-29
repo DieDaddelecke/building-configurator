@@ -12,7 +12,7 @@ Einrichten der Module, typische Störungen und Handgriffe (Plan 6.8). Befehle mi
 | `worker-long` (Unraid) | Warteschlange `long`: Auswertung, Lesen, Texterkennung, Importe | `GET /api/health/jobs` |
 | `migrate` | Einmaliger Job vor jeder Auslieferung: `alembic upgrade head` | Exit-Code |
 | Datenbank | PostgreSQL 16 + PostGIS 3, Rollen `migrator`, `app`, `readonly` | `/api/health/ready` |
-| Objektspeicher | Dateien, privat, versioniert | `GET /api/v1/admin/ops/status` → `storage_ok` |
+| Dateiverzeichnis | Dateien, privat, unter `EMPRISE_FILES_DIR` (`/data/files`, seit 29.09.2026 statt SeaweedFS) | `GET /api/v1/admin/ops/status` → `storage_ok` |
 | Mail | Transaktionsmails über SMTP | `POST /api/v1/admin/ops/test-mail` |
 
 Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder Datenbank gestört“; `/api/health/jobs` ≠ 200 → „Worker steht oder ist überlastet“. Dazu Alarme auf Log-Einträge (Fehler-Tracking): `rules_extract_failed` (Kapitel gescheitert, Abschnitt 9), `rules_budget_exceeded` (Monatsbudget der Claude API erreicht), `road_import_implausible` (Straßenachsen, Abschnitt 8), `dossier_failed` (Dossier einer Fassung endgültig gescheitert, Abschnitt 14). Das in Plan G3 6.2 genannte `envelope_derive_failed` ist im Code nicht angelegt.
@@ -308,7 +308,7 @@ Aus demselben Repository entsteht ein Bereich für Architekturbüros ([PLAN_ANAL
 
 **Hochgeladene Reglements (AN2)**
 
-- Ablage: `rules/uploads/<sha256>.pdf` im Objektspeicher des Stacks, Seitentexte in `source_page`. Dasselbe PDF ist dasselbe Dokument für alle Projekte (PU01); es bleibt, wenn ein Projekt gelöscht wird (E-AN2-4) – ein Reglement enthält keine personenbezogenen Daten. Ungenutzte Dokumente räumt noch nichts auf; bei Bedarf von Hand (`DELETE FROM land_use_plan WHERE origin = 'upload' AND id NOT IN (SELECT land_use_plan_id FROM project_regulation)` – löscht auch Läufe und senkt damit die Monatskosten, nur zum Monatsbeginn).
+- Ablage: `rules/uploads/<sha256>.pdf` im Dateiverzeichnis, Seitentexte in `source_page`. Dasselbe PDF ist dasselbe Dokument für alle Projekte (PU01); es bleibt, wenn ein Projekt gelöscht wird (E-AN2-4) – ein Reglement enthält keine personenbezogenen Daten. Ungenutzte Dokumente räumt noch nichts auf; bei Bedarf von Hand (`DELETE FROM land_use_plan WHERE origin = 'upload' AND id NOT IN (SELECT land_use_plan_id FROM project_regulation)` – löscht auch Läufe und senkt damit die Monatskosten, nur zum Monatsbeginn).
 - Kosten je Kapitel stehen im Abschnitt „Bebauungsplan“ der Projektseite (Aufrufe, Dollar) und in `rule_extraction_run`; Größenordnung wie beim GPU-Weg (9): 1–2 $ je Kapitel. Ein **weiterer Sektor** desselben Kapitels wertet es neu aus (E-AN2-2).
 - **„Wird gelesen“ bleibt stehen:** Job `rules_document_read` prüfen (Abschnitt 4; `SELECT status, last_error FROM job WHERE kind = 'rules_document_read' ORDER BY created_at DESC`). Scheitert er dreimal, steht das Dokument auf `failed: interrupted:<Art>`; erneutes Hochladen derselben Datei liest neu.
 - **Scan:** mehr als die Hälfte der Seiten ohne Textschicht. Seit AN7 kein Fehler mehr, sondern Status `scan` mit Hinweis und Texterkennung (unten „Gescannte PDFs“). Ein PDF mit Textschicht (Géoportail de l'Urbanisme, Gemeinde) bleibt genauer.
@@ -380,7 +380,7 @@ Aus demselben Repository entsteht ein Bereich für Architekturbüros ([PLAN_ANAL
 - **Kapitel „Monatsbudget der Organisation erreicht“** (`organisation_budget_exceeded`): nimmt `rules_housekeeping` von selbst wieder auf, sobald das Budget der zahlenden Organisation (`regulation_chapter.billing_organisation_id`) wieder reicht – neuer Monat oder `org-set-budget`. `409 organisation_budget_exceeded` bei der Zonenwahl: dasselbe, es entsteht gar kein Job. `409 ocr_quota_exceeded` bei der Texterkennung: Kontingent erhöhen oder bis zum neuen Monat warten.
 - **Trennung:** Projekte, Reglements, Regeln und Dateien sieht nur die eigene Organisation; auch Betriebsrollen reichen nicht in fremde Organisationen (E-AN6-7). Unterstützung für ein fremdes Büro nur mit dessen Zustimmung und über die Datenbank. Rollen des Betriebs (`ops`, `rules_admin`, `catalog_admin`) wirken nur in „Eigenes Büro“; `staff-add` und die Mitgliederverwaltung lehnen sie anderswo ab.
 - **API-Schlüssel** legt der `admin` einer Organisation auf ihrer Seite an (höchstens 10, bis 730 Tage); Anleitung für Büros: [API_ANALYSE.md](API_ANALYSE.md). Gespeichert ist nur die Prüfsumme. Widerrufen ohne Oberfläche: `UPDATE api_key SET revoked_at = now() WHERE prefix = '<8 Zeichen>'`. Aufrufe mit Schlüssel stehen im Log mit Route und Status, im Audit mit `actor_type = 'api_key'`; Rate-Limit `API_KEY_LIMIT_PER_MINUTE` (60) je Schlüssel. Der Reverse Proxy muss den Kopf `Authorization` durchreichen (Standard bei Nginx Proxy Manager und Caddy).
-- **Erscheinungsbild:** Logos unter `organisations/<id>/logo-<revision>.png` im Objektspeicher; ein ersetztes Logo wird gelöscht. Berichte mit Erscheinungsbild entstehen nach jeder Änderung beim nächsten Abruf neu.
+- **Erscheinungsbild:** Logos unter `organisations/<id>/logo-<revision>.png` im Dateiverzeichnis; ein ersetztes Logo wird gelöscht. Berichte mit Erscheinungsbild entstehen nach jeder Änderung beim nächsten Abruf neu.
 
 **Störungen beim Hochladen einer Parzelle**
 

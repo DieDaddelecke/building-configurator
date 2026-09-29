@@ -1,71 +1,62 @@
-"""Privater, S3-kompatibler Objektspeicher.
+"""Private Dateien im Verzeichnis `EMPRISE_FILES_DIR` (REFACTORING_PLAN S6).
 
-Zugriff von außen nur über kurzlebige signierte URLs (Spez. 10.1).
+Ein Host, eine Anwendung: Statt eines S3-Dienstes liegen die Dateien in einem Verzeichnis, das API, Worker und
+Migrationsjob einbinden. Die Schlüssel bleiben dieselben wie im früheren Bucket (`regulations/<sha256>.pdf`,
+`envelope-sheets/…`) und sind relative Pfade darunter. Schreiben ist atomar (temporäre Datei, dann
+`os.replace`); ein Schlüssel, der aus dem Verzeichnis führt, wird abgewiesen. Von außen gibt es nur den Weg
+über die API (Spez. 10.1).
 """
 
-from functools import lru_cache
-from typing import TYPE_CHECKING
-
-import boto3
-from botocore.config import Config
+import os
+import tempfile
+from pathlib import Path, PurePosixPath
 
 from app.config import get_settings
 
-if TYPE_CHECKING:
-    from mypy_boto3_s3 import S3Client
+
+class InvalidKey(ValueError):
+    """Schlüssel leer, absolut oder mit `..`: Er zeigte aus dem Dateiverzeichnis hinaus."""
 
 
-def _client(endpoint_url: str | None) -> "S3Client":
-    settings = get_settings()
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint_url,
-        region_name=settings.s3_region,
-        aws_access_key_id=settings.s3_access_key.get_secret_value() if settings.s3_access_key else None,
-        aws_secret_access_key=settings.s3_secret_key.get_secret_value() if settings.s3_secret_key else None,
-        config=Config(
-            signature_version="s3v4",
-            s3={"addressing_style": "path"},
-            connect_timeout=5,
-            read_timeout=30,
-            retries={"max_attempts": 3, "mode": "standard"},
-        ),
-    )
+def root() -> Path:
+    return Path(get_settings().files_dir)
 
 
-@lru_cache
-def client() -> "S3Client":
-    return _client(get_settings().s3_endpoint_url)
-
-
-@lru_cache
-def public_client() -> "S3Client":
-    settings = get_settings()
-    return _client(settings.s3_public_endpoint_url or settings.s3_endpoint_url)
+def path_for(key: str) -> Path:
+    parts = PurePosixPath(key).parts
+    if not parts or key.startswith("/") or "\\" in key or any(p in ("", ".", "..") for p in parts):
+        raise InvalidKey(key)
+    return root().joinpath(*parts)
 
 
 def put_bytes(key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
-    client().put_object(Bucket=get_settings().s3_bucket, Key=key, Body=data, ContentType=content_type)
+    """`content_type` bleibt für die Aufrufer gleich; den Typ kennt die Fachtabelle, nicht die Datei."""
+    target = path_for(key)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.")
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    except BaseException:
+        Path(temporary).unlink(missing_ok=True)
+        raise
 
 
 def get_bytes(key: str) -> bytes:
-    response = client().get_object(Bucket=get_settings().s3_bucket, Key=key)
-    body: bytes = response["Body"].read()
-    return body
+    """Hebt `FileNotFoundError`, wenn es die Datei nicht gibt."""
+    return path_for(key).read_bytes()
 
 
 def delete(key: str) -> None:
-    client().delete_object(Bucket=get_settings().s3_bucket, Key=key)
-
-
-def presigned_get_url(key: str, expires_seconds: int = 300) -> str:
-    return public_client().generate_presigned_url(
-        "get_object", Params={"Bucket": get_settings().s3_bucket, "Key": key}, ExpiresIn=expires_seconds
-    )
+    """Wie beim Bucket: Eine fehlende Datei ist kein Fehler."""
+    path_for(key).unlink(missing_ok=True)
 
 
 def roundtrip_check(key: str) -> bool:
-    """Schreiben, Lesen, Löschen einer Probe (Betriebsprüfung, Proof of Concept)."""
+    """Schreiben, Lesen, Löschen einer Probe (Betriebsstatus, `storage-init`)."""
     probe = b"emprise-storage-check"
     put_bytes(key, probe, "text/plain")
     try:

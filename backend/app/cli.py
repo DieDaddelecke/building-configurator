@@ -8,7 +8,8 @@ org-create NAME ANZEIGENAME [--kind customer|operator]  Organisation anlegen (AN
 org-member-add ORGANISATION EMAIL [--role admin|member]  Konto einer Organisation zuordnen
 org-set-budget NAME [--budget USD|default] [--ocr-pages N|default]  Grenzen einer Organisation
 org-list                       Organisationen mit Mitgliedern und Grenzen
-storage-init                   Bucket mit Versionierung anlegen, falls er fehlt
+storage-init                   Dateiverzeichnis anlegen und prüfen (im Migrate-Job)
+storage-copy-from-s3 [--overwrite]  Übergang: Dateien aus dem früheren Bucket ins Verzeichnis kopieren
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
@@ -218,20 +219,92 @@ def cmd_staff_deactivate(args: argparse.Namespace) -> None:
 
 
 def cmd_storage_init(args: argparse.Namespace) -> None:
-    """Bucket mit Versionierung anlegen, falls er fehlt (idempotent).
+    """Dateiverzeichnis anlegen und mit einer Probe prüfen (im Migrate-Job, idempotent). Schlägt fehl, wenn
+    der Nutzer des Containers (10001) nicht schreiben darf – dann das Verzeichnis auf dem Host freigeben."""
+    import uuid
 
-    Für selbst betriebene S3-Dienste (MinIO lokal, SeaweedFS auf Unraid). Bei einem verwalteten
-    Anbieter legt OpenTofu den Bucket an; der Befehl ändert dann nichts.
-    """
     from app.platform import storage
 
+    root = storage.root()
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        ok = storage.roundtrip_check(f"ops-check/storage-init-{uuid.uuid4()}")
+    except OSError as exc:
+        sys.exit(f"Dateiverzeichnis {root} nicht beschreibbar: {exc}")
+    if not ok:
+        sys.exit(f"Dateiverzeichnis {root}: Probe gelesen, aber verändert")
+    print(f"Dateiverzeichnis {root}: bereit")
+
+
+STORED_KEYS = """
+    SELECT storage_key FROM source_file
+    UNION SELECT storage_key FROM envelope_sheet
+    UNION SELECT storage_key FROM analysis_report
+    UNION SELECT storage_key FROM plan_document
+    UNION SELECT source_xlsx_key FROM building_type_version
+    UNION SELECT source_dxf_key FROM building_type_version
+    UNION SELECT logo_key FROM organisation WHERE logo_key IS NOT NULL
+    UNION SELECT f ->> 'storage_key' FROM submission, jsonb_array_elements(dossier_files) AS f
+"""
+"""Alle Stellen, an denen die Anwendung Dateien ablegt (`storage.put_bytes`)."""
+
+
+def cmd_storage_copy_from_s3(args: argparse.Namespace) -> None:
+    """Übergang (REFACTORING_PLAN S6): jede Datei, die die Datenbank nennt, aus dem früheren Bucket
+    (`EMPRISE_S3_*`) ins Dateiverzeichnis kopieren, danach jedes Reglement (`source_file`) an seiner Prüfsumme
+    messen. Nicht die Liste des Buckets: SeaweedFS 3.97 nennt dort Schlüssel mit doppeltem Präfix. Vorhandene
+    Dateien bleiben, außer mit `--overwrite`; nicht referenzierte Objekte bleiben im alten Speicher. Entfällt
+    mit dem Ausbau von SeaweedFS."""
+    import hashlib
+
+    import boto3
+    from botocore.config import Config
+    from botocore.exceptions import ClientError
+    from sqlalchemy import text
+
+    from app.platform import storage
+    from app.rules.models import SourceFile
+
     settings = get_settings()
-    client = storage.client()
-    existing = {b["Name"] for b in client.list_buckets().get("Buckets", [])}
-    if settings.s3_bucket not in existing:
-        client.create_bucket(Bucket=settings.s3_bucket)
-    client.put_bucket_versioning(Bucket=settings.s3_bucket, VersioningConfiguration={"Status": "Enabled"})
-    print(f"bucket {settings.s3_bucket}: bereit")
+    client = boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint_url,
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key.get_secret_value() if settings.s3_access_key else None,
+        aws_secret_access_key=settings.s3_secret_key.get_secret_value() if settings.s3_secret_key else None,
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+    )
+    with get_sessionmaker()() as session:
+        keys = sorted(session.execute(text(STORED_KEYS)).scalars())
+        sources = session.execute(select(SourceFile.storage_key, SourceFile.sha256)).all()
+    copied = skipped = size = 0
+    missing: list[str] = []
+    for key in keys:
+        if storage.path_for(key).exists() and not args.overwrite:
+            skipped += 1
+            continue
+        try:
+            data = client.get_object(Bucket=settings.s3_bucket, Key=key)["Body"].read()
+        except ClientError:
+            missing.append(key)
+            continue
+        storage.put_bytes(key, data)
+        copied, size = copied + 1, size + len(data)
+    print(
+        f"{len(keys)} Dateien in der Datenbank; kopiert: {copied} ({size / 1e6:.1f} MB); vorhanden: {skipped}"
+    )
+    for key in missing:
+        print(f"fehlt im Bucket: {key}")
+    bad = []
+    for key, sha256 in sources:
+        try:
+            if hashlib.sha256(storage.get_bytes(key)).hexdigest() != sha256:
+                bad.append(key)
+        except FileNotFoundError:
+            bad.append(key)
+    print(f"Reglements: {len(sources) - len(bad)} von {len(sources)} mit stimmender Prüfsumme")
+    if bad:
+        print("Reglement fehlt oder weicht ab: " + ", ".join(bad))
 
 
 def cmd_cadastre_import(args: argparse.Namespace) -> None:
@@ -549,6 +622,9 @@ def main() -> None:
     p_deactivate.add_argument("email")
     p_deactivate.set_defaults(func=cmd_staff_deactivate)
     sub.add_parser("storage-init").set_defaults(func=cmd_storage_init)
+    p_copy = sub.add_parser("storage-copy-from-s3")
+    p_copy.add_argument("--overwrite", action="store_true", help="vorhandene Dateien ersetzen")
+    p_copy.set_defaults(func=cmd_storage_copy_from_s3)
     p_import = sub.add_parser("cadastre-import")
     p_import.add_argument("--commune", action="append", help="INSEE-Code, mehrfach möglich")
     p_import.add_argument("--force", action="store_true", help="Stand erneut importieren, Mengenprüfung aus")

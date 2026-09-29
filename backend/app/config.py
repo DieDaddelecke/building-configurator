@@ -46,7 +46,10 @@ class Settings(BaseSettings):
     """Vorgabe für erkannte Seiten je Monat einer fremden Organisation (E-AN7-7)."""
     api_key_limit_per_minute: int = 60
 
-    # Objektspeicher (S3-kompatibel)
+    # Dateien (Reglements, Steckbriefe, Berichte, Übergaben) im Verzeichnis, das API und Worker einbinden
+    files_dir: str = "/data/files"
+
+    # Früherer Objektspeicher (S3-kompatibel): nur noch für `storage-copy-from-s3` (REFACTORING_PLAN S6)
     s3_endpoint_url: str | None = None
     s3_public_endpoint_url: str | None = None
     s3_region: str = "fr-par"

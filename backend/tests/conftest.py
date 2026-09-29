@@ -5,6 +5,7 @@ Tests ohne Datenbank laufen auch ohne diese Variable.
 """
 
 import os
+import tempfile
 import uuid
 from collections.abc import Callable, Iterator
 from typing import Any
@@ -25,6 +26,8 @@ if ADMIN_URL:
         username="migrator", password="migrator", database=TEST_DB
     ).render_as_string(hide_password=False)
 os.environ["EMPRISE_ENV"] = "test"
+# Dateien je Testlauf in einem eigenen Verzeichnis, nie im Dateiverzeichnis der lokalen Anwendung
+os.environ["EMPRISE_FILES_DIR"] = tempfile.mkdtemp(prefix="emprise-files-")
 # Bestehende Tests zählen Aufrufe; die Nachsuche prüfen eigene Tests (tests/integration/test_rules_gaps.py)
 os.environ.setdefault("EMPRISE_RULES_GAP_SEARCH", "false")
 os.environ.setdefault("EMPRISE_OIDC_ISSUER", "http://oidc.test/emprise")

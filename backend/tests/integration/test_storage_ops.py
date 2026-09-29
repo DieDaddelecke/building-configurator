@@ -1,29 +1,12 @@
-"""Objektspeicher und Betriebsstatus. Braucht einen S3-Dienst (lokal MinIO): TEST_S3=1."""
+"""Betriebsstatus mit Probe des Dateiverzeichnisses und Testmail."""
 
-import os
 from typing import Any
 
-import pytest
 from sqlalchemy import select
 
-from app.platform import storage
 from app.platform.models import Job
 
-requires_s3 = pytest.mark.skipif(os.environ.get("TEST_S3") != "1", reason="TEST_S3=1 fehlt")
 
-
-@requires_s3
-def test_storage_roundtrip_and_presigned_url() -> None:
-    assert storage.roundtrip_check("test/roundtrip.txt") is True
-    storage.put_bytes("test/signed.txt", b"x", "text/plain")
-    try:
-        url = storage.presigned_get_url("test/signed.txt", expires_seconds=60)
-        assert "X-Amz-Signature=" in url
-    finally:
-        storage.delete("test/signed.txt")
-
-
-@requires_s3
 def test_ops_status_and_test_mail(client: Any, login_as: Any, db_session: Any) -> None:
     login_as("ops", email="ops@buero.test")
     status = client.get("/api/v1/admin/ops/status")

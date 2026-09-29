@@ -46,6 +46,7 @@ services:
       retries: 30
 
   storage:
+    # Früherer Objektspeicher: nur noch Quelle für `storage-copy-from-s3` (REFACTORING_PLAN S6), entfällt danach.
     # S3-kompatibel wie auf Unraid (ANNAHMEN A16, A22). MinIO ist auf quay.io seit dem 25.09.2026
     # nicht mehr anonym abrufbar; SeaweedFS spricht denselben S3-Anschluss, hört auf 8333 und ist
     # auf dem Rechner unter Port 9000 erreichbar. Keine Konsole: Dateien über die API oder die CLI.
@@ -96,16 +97,18 @@ services:
     image: emprise-backend:local
     command: ["sh", "-c", "alembic upgrade head && python -m app.cli storage-init"]
     environment: *backend-env
+    volumes:
+      - files-data:/data/files
     depends_on:
       db:
-        condition: service_healthy
-      storage:
         condition: service_healthy
     restart: on-failure:5
 
   api:
     image: emprise-backend:local
     environment: *backend-env
+    volumes:
+      - files-data:/data/files
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -121,6 +124,8 @@ services:
     image: emprise-backend:local
     command: ["python", "-m", "app.cli", "worker"]
     environment: *backend-env
+    volumes:
+      - files-data:/data/files
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -158,3 +163,5 @@ services:
 volumes:
   db-data:
   storage-data:
+  # Dateien der Anwendung (EMPRISE_FILES_DIR, REFACTORING_PLAN S6)
+  files-data:

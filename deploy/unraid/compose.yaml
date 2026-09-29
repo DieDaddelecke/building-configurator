@@ -5,6 +5,9 @@ name: emprise
 x-backend: &backend
   image: emprise-backend:${EMPRISE_RELEASE:-current}
   restart: unless-stopped
+  # Dateien der Anwendung (REFACTORING_PLAN S6); das Verzeichnis gehört dem Container-Nutzer 10001 (README 4)
+  volumes:
+    - ${APPDATA_DIR:-/mnt/user/appdata/emprise}/files:/data/files
   environment: &backend-env
     EMPRISE_ENV: production
     EMPRISE_LOG_LEVEL: INFO
