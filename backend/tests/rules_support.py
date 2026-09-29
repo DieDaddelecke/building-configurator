@@ -10,7 +10,7 @@ from typing import Any
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
-from app.integrations.openrouter import ExtractionError, ExtractionRequest, ExtractionResponse
+from app.rules.domain.extraction import ExtractionError, ExtractionRequest, ExtractionResponse
 
 FIXTURES = Path(__file__).parent / "fixtures" / "rules"
 DOC_ID = "911b23511c396d7211def55c6bf40bd4"

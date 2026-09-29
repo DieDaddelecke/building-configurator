@@ -9,9 +9,9 @@ import openai
 import pytest
 
 from app.config import Settings
-from app.integrations.openrouter import GAP_TOOL, ExtractionError, ExtractionRequest, OpenRouterExtractor
+from app.integrations.openrouter import GAP_TOOL, OpenRouterExtractor
 from app.rules.domain.assess import AssessedRule, DocumentPages, fill_gaps, rule_key
-from app.rules.domain.extraction import gap_instruction, parse_gaps
+from app.rules.domain.extraction import ExtractionError, ExtractionRequest, gap_instruction, parse_gaps
 from app.rules.extract import find_gaps
 from tests.rules_support import rule
 

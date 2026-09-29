@@ -17,7 +17,7 @@ import base64
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any
 
 import openai
 
@@ -28,7 +28,9 @@ from app.rules.domain.extraction import (
     OUTPUT_SCHEMA,
     TEXT_INPUT_NOTE,
     VERIFICATION_SCHEMA,
-    DocumentKind,
+    ExtractionError,
+    ExtractionRequest,
+    ExtractionResponse,
     gap_instruction,
     system_prompt,
     user_instruction,
@@ -46,55 +48,6 @@ _WITHOUT_FORCED_TOOL: set[str] = set()
 """Modelle, die einen erzwungenen Funktionsaufruf abgelehnt haben (je Prozess gemerkt)."""
 
 log = get_logger("integrations.openrouter")
-
-
-@dataclass(frozen=True)
-class ExtractionRequest:
-    chapter_code: str
-    sectors: list[str]
-    chapter_pdf: bytes
-    chapter_pages: list[int]
-    general_pdf: bytes | None
-    general_pages: list[int]
-    claims: list[dict[str, Any]] | None = None
-    """Gegenprüfung: nummerierte Regeln ohne Werte (Sektor, Art, Baukörper, Seite, Zitat).
-    None: Auswertung."""
-    document_kind: DocumentKind = "plu"
-    """`supplement`: Zusatzdokument mit eigenem Prompt, Sektoren sind Lots (AN3)."""
-    chapter_text: str | None = None
-    """Textschicht statt PDF (PU12): Seiten mit Marken `=== page n ===`; dann bleibt `chapter_pdf` leer."""
-    general_text: str | None = None
-    gaps: dict[str, Any] | None = None
-    """Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.6): Lücken und offene Stellen; dann weder Auswertung noch
-    Gegenprüfung."""
-    extra_pdf: bytes | None = None
-    """Zusatzseiten der Nachsuche als drittes PDF (bzw. `extra_text`)."""
-    extra_pages: list[int] = field(default_factory=list)
-    extra_text: str | None = None
-
-
-@dataclass(frozen=True)
-class ExtractionResponse:
-    output: dict[str, Any]
-    model: str
-    request_id: str | None
-    stop_reason: str | None
-    usage: dict[str, int]
-    served_by_fallback: bool
-    duration_ms: int
-    cost_usd: float
-
-
-class ExtractionError(Exception):
-    def __init__(self, reason: str, *, retryable: bool, usage: dict[str, int] | None = None) -> None:
-        super().__init__(f"{SERVICE}: {reason}")
-        self.reason = reason
-        self.retryable = retryable
-        self.usage = usage or {}
-
-
-class RuleExtractor(Protocol):
-    def extract(self, request: ExtractionRequest) -> ExtractionResponse: ...
 
 
 @dataclass(frozen=True)

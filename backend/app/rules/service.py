@@ -26,7 +26,6 @@ from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.form import kind_forms
 from app.rules.domain.kinds import BUILDING_SPECIFIC_KINDS, ParamProblem, validate_params
 from app.rules.domain.text import verify_quote
-from app.rules.extract import RUNNING_STALE_AFTER, month_cost
 from app.rules.models import (
     LandUsePlan,
     ProjectRegulation,
@@ -40,6 +39,7 @@ from app.rules.models import (
     SourceFile,
     SourcePage,
 )
+from app.rules.runs import RUNNING_STALE_AFTER, month_cost
 from app.rules.schemas import (
     ChapterCoverageOut,
     CommuneCoverageOut,

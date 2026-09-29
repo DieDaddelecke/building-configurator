@@ -17,11 +17,11 @@ from sqlalchemy.exc import DBAPIError
 from app.config import get_settings
 from app.integrations.etalab_cadastre import DirectoryCadastre
 from app.integrations.ign_bdtopo import DirectoryRoads
-from app.integrations.openrouter import ExtractionError, ExtractionRequest, ExtractionResponse
 from app.platform import storage
 from app.platform.db import get_sessionmaker
 from app.platform.models import AuditLog, FeatureFlag, Job
 from app.rules import extract, service
+from app.rules.domain.extraction import ExtractionError, ExtractionRequest, ExtractionResponse
 from app.rules.models import (
     LandUsePlan,
     OverlayConstraint,

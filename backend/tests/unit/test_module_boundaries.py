@@ -5,6 +5,8 @@ importieren. Die Prüfung läuft über den Syntaxbaum, damit auch Importe innerh
 """
 
 import ast
+import subprocess
+import sys
 from collections.abc import Iterator
 from importlib import import_module
 from pathlib import Path
@@ -49,6 +51,44 @@ def test_core_does_not_import_product_modules() -> None:
                     f"{path.relative_to(APP.parent)} importiert {module}: Der Kern trägt Konfigurator und "
                     "Analyse und darf nichts aus deren Fachmodulen kennen (PLAN_ANALYSE 3)."
                 )
+
+
+READ_PATHS = (
+    "app.envelope.service",
+    "app.analysis.service",
+    "app.configuration.service",
+    "app.site.service",
+    "app.rules.service",
+    "app.rules.documents",
+)
+"""Rechnen und Lesen ohne Sprachmodell: Baurahmen, Analyse, Konfiguration, Grundstück, Regeln und Upload."""
+
+
+def test_read_paths_do_not_load_the_llm_adapter() -> None:
+    """LLM extrahiert, Python rechnet (REFACTORING_PLAN S11, B-68): Wer nur liest oder rechnet, lädt weder den
+    Adapter noch das `openai`-SDK. In einem eigenen Prozess, weil andere Tests es schon geladen haben."""
+    watched = ("openai", "app.integrations.openrouter", "app.rules.extract")
+    code = "; ".join(
+        [
+            "import sys",
+            *(f"import {module}" for module in READ_PATHS),
+            f"print(sorted(m for m in {watched!r} if m in sys.modules))",
+        ]
+    )
+    loaded = subprocess.run(  # noqa: S603  fester Code aus diesem Test
+        [sys.executable, "-c", code], cwd=APP.parent, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    assert loaded == "[]", f"Lesepfade laden {loaded}"
+
+
+def test_rules_domain_does_not_import_adapters() -> None:
+    """Die Schnittstelle zum Sprachmodell gehört der Domäne (B-69); Adapter hängen von ihr ab, nicht
+    umgekehrt."""
+    for path in sorted((APP / "rules" / "domain").rglob("*.py")):
+        for module in _imports(path):
+            assert not module.startswith(("app.integrations", "app.platform", "openai", "sqlalchemy")), (
+                f"{path.relative_to(APP.parent)} importiert {module}"
+            )
 
 
 def test_every_listed_module_is_importable() -> None:

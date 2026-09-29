@@ -21,13 +21,14 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.integrations.http import ExternalServiceError, new_client
-from app.integrations.openrouter import OpenRouterExtractor, RuleExtractor
+from app.integrations.openrouter import OpenRouterExtractor
 from app.platform import scan
 from app.platform.db import get_sessionmaker
 from app.platform.jobs import LONG, JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
 from app.rules import documents, extract, model_choice, ocr, plan_import, service
+from app.rules.domain.extraction import RuleExtractor
 from app.rules.extract import RetryableExtractionError
 
 log = get_logger("rules_jobs")

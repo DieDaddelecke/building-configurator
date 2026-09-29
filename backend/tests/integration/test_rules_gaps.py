@@ -15,10 +15,10 @@ import pytest
 from sqlalchemy import select
 
 from app.config import get_settings
-from app.integrations.openrouter import ExtractionError, ExtractionRequest
 from app.platform import storage
 from app.platform.db import get_sessionmaker
 from app.rules import extract
+from app.rules.domain.extraction import ExtractionError, ExtractionRequest
 from app.rules.models import LandUsePlan, RegulationChapter, Rule, RuleSet, RuleSetVersion
 from app.rules.plan_import import DirectoryGpu, import_commune
 from tests.rules_support import DOC_ID, FakeExtractor, gpu_directory, rule, uh_output

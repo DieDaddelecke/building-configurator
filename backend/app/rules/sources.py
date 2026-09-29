@@ -18,8 +18,8 @@ from app.platform.jobs import enqueue
 from app.rules import pdf
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES
 from app.rules.domain.extraction import DocumentKind, document_kind
-from app.rules.extract import input_hash, ocr_stamp
 from app.rules.models import LandUsePlan, RegulationChapter, SourceFile, SourcePage
+from app.rules.runs import input_hash, ocr_stamp
 
 
 def store_source(

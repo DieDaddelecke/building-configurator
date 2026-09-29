@@ -9,7 +9,7 @@ danach durch die Schranken in `assess`.
 import hashlib
 import json
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from app.rules.domain import lexicon
 from app.rules.domain.kinds import (
@@ -399,7 +399,7 @@ TEXT_INPUT_NOTE = """The PDFs are given here as their extracted text layer, each
 named like the PDF. A line `=== page n ===` starts page n of that PDF: use n as `page`. Tables and drawings \
 lose their layout in this form; report a value from a table only if row and column are unambiguous."""
 """Vorspann der Anfrage, wenn das Modell die Textschicht statt der PDFs bekommt (PU12). Gehört über
-`extract.input_hash` zur Eingabe: Eine Änderung führt zu einer neuen Auswertung."""
+`runs.input_hash` zur Eingabe: Eine Änderung führt zu einer neuen Auswertung."""
 
 
 def system_prompt(kind: DocumentKind = "plu") -> str:
@@ -672,3 +672,61 @@ def _param_value(name: str, entry: dict[str, Any]) -> Any:
             else None
         )
     return None
+
+
+# ---------------------------------------------------------------------------
+# Schnittstelle zum Sprachmodell (REFACTORING_PLAN S11, B-69). Die Domäne beschreibt Anfrage, Antwort und
+# Fehler; der Adapter `integrations/openrouter.py` setzt sie um. Das Sprachmodell liefert nur Auszüge, die
+# Schranken in `assess` und der Mensch im Büro entscheiden.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ExtractionRequest:
+    chapter_code: str
+    sectors: list[str]
+    chapter_pdf: bytes
+    chapter_pages: list[int]
+    general_pdf: bytes | None
+    general_pages: list[int]
+    claims: list[dict[str, Any]] | None = None
+    """Gegenprüfung: nummerierte Regeln ohne Werte (Sektor, Art, Baukörper, Seite, Zitat).
+    None: Auswertung."""
+    document_kind: DocumentKind = "plu"
+    """`supplement`: Zusatzdokument mit eigenem Prompt, Sektoren sind Lots (AN3)."""
+    chapter_text: str | None = None
+    """Textschicht statt PDF (PU12): Seiten mit Marken `=== page n ===`; dann bleibt `chapter_pdf` leer."""
+    general_text: str | None = None
+    gaps: dict[str, Any] | None = None
+    """Nachsuche (PLAN_G2_VOLLSTAENDIGKEIT 3.6): Lücken und offene Stellen; dann weder Auswertung noch
+    Gegenprüfung."""
+    extra_pdf: bytes | None = None
+    """Zusatzseiten der Nachsuche als drittes PDF (bzw. `extra_text`)."""
+    extra_pages: list[int] = field(default_factory=list)
+    extra_text: str | None = None
+
+
+@dataclass(frozen=True)
+class ExtractionResponse:
+    output: dict[str, Any]
+    model: str
+    request_id: str | None
+    stop_reason: str | None
+    usage: dict[str, int]
+    served_by_fallback: bool
+    duration_ms: int
+    cost_usd: float
+
+
+class ExtractionError(Exception):
+    """Aufruf gescheitert; `reason` landet am Lauf, `retryable` entscheidet über einen neuen Versuch."""
+
+    def __init__(self, reason: str, *, retryable: bool, usage: dict[str, int] | None = None) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.retryable = retryable
+        self.usage = usage or {}
+
+
+class RuleExtractor(Protocol):
+    def extract(self, request: ExtractionRequest) -> ExtractionResponse: ...

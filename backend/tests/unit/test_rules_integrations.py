@@ -11,13 +11,8 @@ import pytest
 from app.config import Settings
 from app.integrations import gpu, openrouter
 from app.integrations.http import ExternalServiceError
-from app.integrations.openrouter import (
-    EXTRACTION_TOOL,
-    ExtractionError,
-    ExtractionRequest,
-    OpenRouterExtractor,
-)
-from app.rules.domain.extraction import TEXT_INPUT_NOTE
+from app.integrations.openrouter import EXTRACTION_TOOL, OpenRouterExtractor
+from app.rules.domain.extraction import TEXT_INPUT_NOTE, ExtractionError, ExtractionRequest
 from app.rules.plan_import import choose_partition
 from tests.rules_support import DOC_ID, fixture_json, text_pdf, uh_output
 

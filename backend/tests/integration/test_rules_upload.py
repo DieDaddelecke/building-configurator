@@ -33,6 +33,7 @@ from app.rules.models import (
     SourcePage,
 )
 from app.rules.plan_import import DirectoryGpu, import_commune
+from app.rules.runs import input_hash
 from app.site.cadastre_import import import_commune as import_cadastre
 from tests.integration.test_site_upload import LOCAL_RING, dxf_bytes
 from tests.rules_support import DOC_ID, FakeExtractor, gpu_directory, regulation_fixture, text_pdf, uh_output
@@ -569,7 +570,7 @@ def test_a_model_without_pdf_input_gets_the_text_layer_with_page_marks(
     runs = db_session.execute(select(RuleExtractionRun).where(RuleExtractionRun.chapter_id == chapter_id))
     assert {run.input_hash for run in runs.scalars()} == {chapter.input_hash}
     source = db_session.get(SourceFile, chapter.source_file_id)
-    assert chapter.input_hash != extract.input_hash(settings, source.sha256, chapter)
+    assert chapter.input_hash != input_hash(settings, source.sha256, chapter)
 
 
 # ---------------------------------------------------------------------------

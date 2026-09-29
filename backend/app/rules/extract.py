@@ -15,14 +15,12 @@ from collections import defaultdict
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from dataclasses import asdict, dataclass, field, replace
-from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.integrations.openrouter import ExtractionError, ExtractionRequest, RuleExtractor
 from app.platform import storage
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
@@ -44,16 +42,17 @@ from app.rules.domain.assess import (
 )
 from app.rules.domain.chapters import CHAPTER_MAX_PAGES
 from app.rules.domain.extraction import (
-    TEXT_INPUT_NOTE,
     DocumentKind,
     ExtractedRule,
+    ExtractionError,
+    ExtractionRequest,
     GapSearchResult,
+    RuleExtractor,
     VerificationCheck,
     document_kind,
     parse_gaps,
     parse_output,
     parse_verification,
-    prompt_fingerprint,
 )
 from app.rules.domain.kinds import MANDATORY_KINDS
 from app.rules.domain.passages import Passage, chapter_passages, for_search
@@ -69,12 +68,11 @@ from app.rules.models import (
     SourceFile,
     SourcePage,
 )
+from app.rules.runs import RUNNING_STALE_AFTER, input_hash, month_cost, ocr_stamp
 
 log = get_logger("rules_extract")
 ACTOR = "system:rules_extract"
 SessionFactory = Callable[[], AbstractContextManager[Session]]
-RUNNING_STALE_AFTER = timedelta(minutes=70)
-"""Länger als das Zeitlimit des Jobs (60 min) „läuft“ kein Kapitel; danach gilt der Lauf als abgebrochen."""
 CLAIMS_PER_CALL = 30
 """Regeln je Aufruf der Gegenprüfung; kleinere Antworten, weniger Risiko für `max_tokens`."""
 RUN_EXTRACTION, RUN_VERIFICATION, RUN_GAP_SEARCH = 1, 2, 3
@@ -107,55 +105,6 @@ class _Stop(Exception):
         super().__init__(error)
         self.outcome = outcome
         self.error = error
-
-
-def input_hash(
-    settings: Settings,
-    source_sha256: str,
-    chapter: RegulationChapter,
-    kind: DocumentKind = "plu",
-    ocr: str | None = None,
-) -> str:
-    """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung. Der
-    Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3). `ocr` (`ocr_stamp`) zählt nur im
-    Textmodus: Dort ändert die Texterkennung die Eingabe, im PDF-Modus sieht das Modell dieselben Seitenbilder
-    (AN7, PLAN_AN7_SCAN 3.4)."""
-    payload = {
-        "source": source_sha256,
-        "chapter": [chapter.code, chapter.first_page, chapter.last_page],
-        "general": chapter.general_pages,
-        "sectors": sorted(chapter.sectors),
-        "model": settings.rules_model,
-        "effort": settings.rules_effort,
-        "runs": settings.rules_runs,
-        "gap_search": [settings.rules_gap_search, settings.rules_gap_extra_pages_max],
-        "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
-    }
-    if settings.rules_input == "text":
-        # Nur dann: Der Hash der PDF-Auswertungen bleibt, gespeicherte Teilantworten bleiben verwendbar (PU12)
-        payload["input"] = ["text", hashlib.sha256(TEXT_INPUT_NOTE.encode()).hexdigest()[:16]]
-        if ocr:
-            payload["ocr"] = ocr
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
-
-
-def ocr_stamp(source: SourceFile | None) -> str | None:
-    """Kennung der abgeschlossenen Texterkennung einer Datei; None ohne Erkennung (bisherige Kennungen
-    bleiben)."""
-    if source is None or source.ocr_state != "done" or source.ocr_finished_at is None:
-        return None
-    return source.ocr_finished_at.isoformat()
-
-
-def month_cost(session: Session, now: datetime | None = None) -> float:
-    current = now or utcnow()
-    start = datetime(current.year, current.month, 1, tzinfo=UTC)
-    total = session.execute(
-        select(func.coalesce(func.sum(RuleExtractionRun.cost_usd), 0.0)).where(
-            RuleExtractionRun.created_at >= start
-        )
-    ).scalar_one()
-    return float(total)
 
 
 def plan_complete(session: Session, plan_id: uuid.UUID) -> bool:

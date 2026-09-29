@@ -228,6 +228,8 @@ def require_roles(*roles: Role, organisations: bool = False) -> Callable[..., St
             raise Problem(403, "forbidden")
         return staff
 
+    # Für `test_access_policies`: Offene Routen ohne `project_id` müssen dort begründet sein (B-23)
+    dependency.__open_to_organisations__ = organisations  # type: ignore[attr-defined]
     return dependency
 
 

@@ -1,8 +1,10 @@
 """Jede Route trägt genau eine Zugriffsregel (Plan 3.2).
 
 Öffentliche Routen sind hier ausdrücklich aufgezählt; eine neue öffentliche Route fällt so im Review auf.
+Ebenso die `/admin`-Routen, die allen Organisationen offenstehen, ohne ein Projekt im Pfad zu nennen (B-23).
 """
 
+import re
 from typing import Any
 
 from fastapi.dependencies.models import Dependant
@@ -59,3 +61,42 @@ def test_every_route_declares_exactly_one_access_policy() -> None:
                 public_seen.add(key)
     assert not problems, problems
     assert public_seen == PUBLIC_ROUTES
+
+
+OPEN_WITHOUT_PROJECT = {
+    # Nur die Beschreibung der Regelarten für das Formular, keine Daten
+    ("GET", "/api/v1/admin/rule-kinds"),
+    # Prüft im Handler, ob die Datei zu einem Projekt der Organisation gehört (rules/api.py)
+    ("GET", "/api/v1/regulation-files/{file_id}"),
+}
+
+
+def _role_policies(dependant: Dependant) -> list[Any]:
+    found: list[Any] = []
+    for dep in dependant.dependencies:
+        if str(getattr(dep.call, "__access_policy__", "")).startswith("roles:"):
+            found.append(dep.call)
+        else:
+            found.extend(_role_policies(dep))
+    return found
+
+
+def test_organisation_check_cannot_be_bypassed_by_a_path_name() -> None:
+    """`require_roles` prüft die Organisation nur über den Pfadparameter `project_id` (B-23, REFACTORING_PLAN
+    S11). Deshalb: Ein Projekt im Pfad heißt genau so, und eine Route, die allen Organisationen offensteht und
+    kein Projekt nennt, ist oben begründet."""
+    app = create_app()
+    problems: list[str] = []
+    open_seen: set[tuple[str, str]] = set()
+    for route in iter_route_contexts(app.routes):
+        if not isinstance(route.original_route, APIRoute):
+            continue
+        path = str(route.path)
+        for policy in _role_policies(route.dependant):
+            for name in re.findall(r"/projects/\{([^}:]+)", path):
+                if name != "project_id":
+                    problems.append(f"{path}: Projekt als {{{name}}} statt {{project_id}}")
+            if getattr(policy, "__open_to_organisations__", False) and "{project_id}" not in path:
+                open_seen |= {(method, path) for method in route.methods or ()}
+    assert not problems, problems
+    assert open_seen == OPEN_WITHOUT_PROJECT
