@@ -4,6 +4,109 @@ Neueste Einträge zuerst. Ein Eintrag je Session, geschrieben von `/handoff`. De
 
 ---
 
+## 28.09.2026 – AN4, Parzellen-Upload (UP17–UP19), KI-Modell (PU11, PU12) und vollständige Regelauswertung
+
+**Auftrag:** „Stelle AN4 fertig“; danach Zurufe aus der Praxis:
+- Konturen nach dem Upload „hinzu- und abwählen“.
+- Linien „zusammenführen, wenn Punkte zu eng beieinander liegen“.
+- „Kerben der Beschriftung“ bearbeiten.
+- Das KI-Modell der PLU-Auswertung einstellen.
+- Text statt PDF an das Modell geben.
+- Modellvergleiche.
+- Ein automatischer zweiter Durchlauf, der nach fehlenden Angaben sucht („nicht möglichst viele, sondern alle Regeln“).
+
+Am Ende „beende alle offenen Punkte dieses chats“ und „committe und pushe wie vorgeschlagen, danach /handoff“.
+
+**Commits** (gepusht auf `main`, thematisch getrennt; gemischte Abschnitte stecken im jeweils späteren Commit, deshalb ist erst `adf7ac4` für sich prüfbar):
+
+| Commit | Inhalt |
+|---|---|
+| `18018d3` | Hand-off der AN3-Session |
+| `219a285` | AN4 |
+| `f184906` | UP17 |
+| `3a391cc` | UP18 |
+| `d9f57ec` | UP19 |
+| `c799735` | PU11 |
+| `1c4ba2b` | PU12 und Modell über die Umgebung |
+| `adf7ac4` | G2-Vollständigkeit samt OpenAPI und Frontend-Typen |
+
+**Neu**
+- Pläne mit Selbstprüfung:
+  - [docs/PLAN_AN4_KORREKTUR.md](docs/PLAN_AN4_KORREKTUR.md)
+  - [docs/PLAN_G2_VOLLSTAENDIGKEIT.md](docs/PLAN_G2_VOLLSTAENDIGKEIT.md), mit Probelauf in 7.5
+  - Nachträge PLAN_AN1 9–11 (UP17–UP19) und PLAN_AN2_PLU 8–9 (PU11, PU12, Modellvergleiche)
+- **AN4:**
+  - Regelformular aus `GET /admin/rule-kinds`, auch im Büro (RW15).
+  - Korrekturen je Projekt mit Begründung und Fundstelle (Migration 0015).
+  - Übernahme aus Zusatzdokumenten, zwei Stände vergleichen.
+- **G2:**
+  - Modellwahl (Migration 0016, später in die gemeinsame Datenbank verschoben).
+  - Textschicht für Modelle ohne PDF-Eingabe.
+  - Anweisung `g2-prompt-5`.
+  - Rückfall für Modelle ohne erzwungenen Funktionsaufruf.
+  - Nachsuche (Lauf 3) mit Alternativbezeichnungen und Zusatzseiten.
+  - Abdeckung der Textstellen (Migration 0017).
+  - Referenzlisten mit Messung, Entwurf `backend/app/rules/reference_seed/beyenes_uc.json`.
+- **Gemeinsame Datenbank** `emprise_shared` für beide Produkte:
+  - eigene Migrationen `backend/migrations_shared`
+  - `shared-migrate`
+  - Verwaltung `/verwaltung` in Konfigurator und Analyse
+  - auf Unraid eigener Stack `deploy/unraid/compose.shared.yaml`
+
+**Geändert**
+- ANNAHMEN:
+  - neu: KR01–KR09, UP17–UP19, PU11, PU12, VA01–VA10
+  - angepasst: G16, RW03, RW15, PS08, EA12
+- BETRIEB: 9 (Modell, Nachsuche, Kosten), 15 (AN4, Modellwahl), neu 16 (gemeinsame Verwaltung).
+- Unraid README:
+  - Hostname der Analyse
+  - neu Abschnitt 10 (gemeinsamer Stack)
+- README, neue Stolperstellen:
+  - Regelarten und Formular
+  - abgebrochenes `docker compose run` läuft weiter
+  - gemeinsame Alembic-Umgebung
+  - Laufzeit-Image
+- PLAN_ANALYSE: AN4 umgesetzt, AN7 und E-A7 neu.
+- UMSETZUNGSPLAN D18 und R1.
+- AGENTS: Stand, Tabelle, Präfixe KR, VA.
+- Beim lokalen Neustart gefunden und behoben (PLAN_G2 7.4 Nr. 14–15):
+  - Das Laufzeit-Image kopierte die gemeinsamen Migrationen nicht.
+  - Relative Links in der Splat-Route der Verwaltung.
+  - Beim Umzug der Modellwahl fehlte der Anzeigename.
+
+**Entschieden**
+- E-AN4-1 bis E-AN4-9 nach Empfehlung, mit dem Auftrag „Stelle AN4 fertig“.
+- Auf „welche Fragen bleiben offen“:
+  - **E-A7:** Gescannte PDFs werden gelesen, mit Hinweis auf die Mehrkosten und eigenem Limit im Abo, als Modul AN7.
+  - **Hostname** `emprise-analyse.aslani.work` (PS08).
+  - **Hinweistexte L7** schreibt der Nutzer selbst und ersetzt die Rückfalltexte nach und nach (G16).
+- PU11: Die Modellwahl ist „eine Einstellung für alle“. PU12: Text für Modelle ohne PDF-Eingabe, Claude bleibt bei PDF.
+- G2-Vollständigkeit (PLAN_G2_VOLLSTAENDIGKEIT, Kontext und 3):
+  - Nicht gefundene Pflichtangaben bleiben offen; der Architekt bestätigt sie.
+  - Referenzliste Beyenes UC, von Hand erweiterbar in einer programmweiten Verwaltung.
+  - Die Nachsuche nutzt dasselbe Modell.
+  - Die Verwaltung ist gemeinsam für beide Produkte, die Modellwahl zieht dorthin.
+  - Auf Unraid ein eigener kleiner Stack.
+  - Probelauf E freigegeben.
+  - E-VA-1 bis E-VA-4 nach Empfehlung.
+
+**Ohne Dateiänderung**
+- **Erste echte Auswertungen** (Beyenes UC, Opus 5, PDF: 0,73 $, 13 Werte) und alle Modellvergleiche: in PLAN_AN2_PLU 9 und PLAN_G2 7.5.
+- **OpenRouter:** Laut OpenRouter sind 3,84 $ von 10 $ verbraucht (Stand beim Hand-off; die Anzeige hinkt nach).
+- **Berichtigt:** Die abgelehnte DeepSeek-Auswertung lief trotzdem, 21 Minuten in der Kopie, 0,013 $. Meine erste Aussage „keine Kosten“ war falsch; die Stolperstelle steht im README.
+- **Lokal:**
+  - Beide Stacks sind neu gebaut.
+  - Die Modellwahl der Analyse (Opus 5.5) gilt jetzt gemeinsam.
+  - Die Referenzliste ist eingespielt.
+  - `/verwaltung` ist in beiden Apps im Browser geprüft (PLAN_G2 7.6).
+- **Cloudflare-Tunnel:** Er lief zeitweise für den Fernzugriff und ist beendet. Die Anmeldung darüber ging nicht, weil der OIDC-Testdienst nur lokal erreichbar ist.
+
+**Memory:**
+- geändert: `feedback-plan-dann-umsetzen`
+- neu: `project-vollstaendige-regelauswertung`, `feedback-kosten-und-abgelehnte-aufrufe`
+
+---
+
 ## 28.09.2026 – Emprise Analyse: AN3 vollständig (Gabarit und Schnitt)
 
 **Auftrag:** „welches ist der nächste Schritt, um Emprise Analyse abzuschließen?“ – Antwort: RA2 (Rest von AN3, AN4, AN5), als Nächstes Gabarit und Schnitt, parallel Schlüssel und echte Unterlagen. Darauf „ja, beginne mit dem Modulplan für Gabarit und Schnitt – beende AN3“, am Ende „committe und pushe alle Änderungen, danach /handoff“.

@@ -1,137 +1,125 @@
 # Hand-off für die nächste Session
 
-> **Stand:** 28.09.2026 · **Letzte Session:** Emprise Analyse – AN3 vollständig (Gabarit und Schnitt), committet und gepusht (Eintrag vom 28.09.2026 oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
+> **Stand:** 28.09.2026 · **Letzte Session:** AN4, Parzellen-Upload (UP17–UP19), KI-Modell (PU11, PU12) und vollständige Regelauswertung mit gemeinsamer Verwaltung – committet und gepusht (Eintrag vom 28.09.2026 oben in [AENDERUNGEN.md](AENDERUNGEN.md)).
 > Momentaufnahme, bei jedem `/handoff` neu geschrieben. Dauerhaftes steht nicht hier, sondern in README (Stolperstellen), BETRIEB (Module im Betrieb), ANNAHMEN und Spez. Anhang E.4.
 
 ---
 
 ## 1. Aktueller Stand
 
-- **Git:** `main` gepusht bis `ec5a6e1` (AN3 vollständig); die Hand-off-Dokumente dieser Session kommen als eigener Commit dazu. CI zu `ec5a6e1` lief beim Hand-off noch; die CI zu `e87bb5e` (OpenRouter) ist grün.
-- **Hauskonfigurator:** R0 (ohne Auslieferung auf Unraid), G1–G3, A, H1–H3 und V fachlich unverändert. Einzige Berührung: `site/KantenListe.tsx` hat `relative` am Tabellenrahmen (Telefonbreite).
-- **Emprise Analyse (D18):** AN0–AN3 umgesetzt, **AN3 jetzt vollständig**: Gabarit in Höhenstufen (beide Auslegungen, Grenzbebauung bis zur erlaubten Höhe, Dachzone), Nutzfläche je Geschoss aus dem Gabarit, zwei Schnitte A–A'/B–B', Oberfläche „Gabarit und Schnitt“. Pläne [PLAN_ANALYSE](docs/PLAN_ANALYSE.md), [PLAN_AN3](docs/PLAN_AN3_ANALYSE.md), [PLAN_AN3_GABARIT](docs/PLAN_AN3_GABARIT.md); Festlegungen EA01–EA17; Betrieb [BETRIEB 15](docs/BETRIEB.md). Offen: AN4, AN5 (RA2), AN6 (RA3, eigener Auslöser).
-- **G2:** Auswertung über OpenRouter (RW28), weiterhin **ohne Schlüssel** keine echte Auswertung (beide Produkte). H1 fehlen fünf echte Typdateien und die XLSX-Vorlage.
-- **Lokale Container** am 28.09.2026 neu gebaut (`docker compose build migrate web`), beide Stacks laufen mit aktuellem Stand und `openai`-Paket.
-- **Tests:** Backend 606 (mit `TEST_S3=1`), Frontend 178, dazu ruff, Format, mypy, Typprüfung und Lint grün. Playwright lief nicht; für Konfigurator, V und das Analyse-Produkt gibt es kein Szenario.
-- **Entscheidungen:** D1–D4, D8, D10, D11–D18 entschieden; G17; am 25.09.2026 Budget, Authentik-Hostname, E-AN2-5; am 26.09.2026 OpenRouter (RW28); am 28.09.2026 E-AN3G-1 bis E-AN3G-8 nach Empfehlung (PLAN_AN3_GABARIT 6). **Spezifikation:** Korrekturen S1–S17 in Anhang E.4 (S3 und S5 gelöst).
+- **Git:** `main` gepusht bis `adf7ac4`; die acht Commits der Session sind nach Themen getrennt, für sich prüfbar erst `adf7ac4`. Die CI zu `adf7ac4` lief beim Hand-off noch (zu `ec5a6e1` grün). Die Hand-off-Dokumente dieser Session sind noch nicht committet.
+- **Hauskonfigurator:** R0 (ohne Unraid), G1–G3, A, H1–H3 und V fachlich vollständig. Neu: Regelformular statt JSON in beiden Büro-Formularen (AN4, RW15), Abdeckung im Büro-Regelwerk, Link zur Verwaltung; die Nachsuche gilt auch hier.
+- **Emprise Analyse (D18):** AN0–AN4 umgesetzt, dazu UP17–UP19 (Konturen zusammenstellen, kurze Stücke, Beschriftungen). Offen: AN5, AN7 (gescannte PDFs, entschieden, ohne Modulplan), AN6. Pläne: [PLAN_ANALYSE](docs/PLAN_ANALYSE.md), [PLAN_AN4](docs/PLAN_AN4_KORREKTUR.md).
+- **G2:**
+  - Schlüssel von OpenRouter lokal aktiv (`.env`, gitignored).
+  - Modell wählt der Betrieb in `/verwaltung` für beide Produkte; lokal Opus 5.5 gewählt, Vorgabe der Umgebung weiter `anthropic/claude-opus-5`.
+  - `g2-prompt-5` mit Nachsuche, Abdeckung und Referenzlisten ([PLAN_G2_VOLLSTAENDIGKEIT](docs/PLAN_G2_VOLLSTAENDIGKEIT.md), VA01–VA10, BETRIEB 9, 15, 16); etwa 1,46 $ je Kapitel.
+- **Gemeinsame Datenbank** `emprise_shared`: lokal im Datenbankserver des Hauptstacks; auf Unraid noch nicht eingerichtet ([deploy/unraid/README.md](deploy/unraid/README.md) 10).
+- **Lokal:** beide Stacks am 28.09.2026 abends neu gebaut; Referenzliste Beyenes UC als Entwurf eingespielt; die Datenbank `emprise_probe` der Vergleichsläufe besteht noch.
+- **Tests:** Backend 697 (mit `TEST_S3=1`), Frontend 210, ruff, Format, mypy, Typprüfung, Lint grün. Playwright lief nicht.
+- **Entscheidungen:**
+  - D1–D4, D8, D10, D11–D18, G17, E-AN3G-1 bis -8.
+  - Am 28.09.2026: E-AN4-1 bis -9, E-A7 (Scans → AN7), Hostname `emprise-analyse.aslani.work`, Hinweistexte schreibt der Nutzer, PU11, PU12, G2-Vollständigkeit mit E-VA-1 bis -4 (AENDERUNGEN).
+  - Spezifikation: S1–S17 in Anhang E.4.
 
 ## 2. Ergebnisse der letzten Session, die nur im Chat standen
 
-Keine offenen: Browserprüfung und Prüflauf stehen in PLAN_AN3_GABARIT 7.4, die Laufzeit (Median 59 ms für `GET /analysis`) in BETRIEB 15. Die Antwort auf „Was fehlt zum Abschluss?“ – RA2 = AN4 und AN5, dazu echte Unterlagen mit Schlüssel – steht in 4.1 und 5.
+- Guthaben bei OpenRouter: 3,84 $ von 10 $ verbraucht (Anzeige beim Hand-off; sie hinkt nach). Kosten je Lauf: PLAN_AN2_PLU 9, PLAN_G2 7.5.
+- Die Live-Auswertung Beyenes in der Analyse ist noch Version 1 (Opus 5, vor der Nachsuche). An der Referenzliste gemessen: 13 von 25 richtig, 1 falsch (pauschale Grundfläche 0,9), 8 fehlen still (PLAN_G2 7.6).
+- Befund 7 (Art. UC 11.1) ist im Code behoben; der Nachweis kommt erst mit dem nächsten bezahlten Lauf (PLAN_G2 7.5).
+- Der Schlüssel stand im Chat → erneuern (4.3).
 
 ## 3. Offene Entscheidungen des Nutzers
 
 | Priorität | Nr. | Frage | Wo |
 |---|---|---|---|
-| 1 | E2 | Mailanbieter (EU-Drittanbieter, Empfehlung Scaleway TEM, sonst Brevo); am 25.09.2026 „später“ – A und V können ohne ihn nicht produktiv gehen | Spez. 16, BETRIEB 5 |
-| 1 | – | Echte Sammeladresse des Büros für `EMPRISE_OFFICE_EMAIL` und **Name des Büros** für die Einwilligungstexte | AF02, AF05, VU08 |
-| 2 | – | Gescannte PDFs (Parzelle, Reglement, Zusatzdokumente) lesen? Nur mit Bilderkennung über die Schnittstelle – Kosten je Aufruf. Empfehlung: nach dem Schlüssel | UP16, PU03, RW03 |
-| 2 | – | Hostname und Authentik-Anwendung für den Analyse-Stack (Vorschlag `analyse.aslani.work`) | BETRIEB 15, PS08 |
-| 2 (vor Beta) | – | Rechtliche Prüfung: Simulation (Hinweise, Haftung, Konturen, Weg E), die **vier** vorläufigen Rechtstexte (A und V) und die ODbL-Quellenangabe | Plan 6.9, RW16, AF05, VU08, VU11 |
-| 2 | E-A5 | Rechtlicher Rahmen des Analyse-Produkts: Hinweis im Fuß genügt, solange nur das eigene Büro arbeitet; **vor AN6 juristisch prüfen** | PLAN_ANALYSE 6 |
-| 2 | – | Festlegungen H10–H14 (Format Eingang/Garagentor, links/rechts, Umfang der Katalogoberfläche) bestätigen oder ändern | ANNAHMEN H10–H14 |
-| 2 | – | Anfrage ohne Grundstück außerhalb des Einzugsgebiets: eigener Kontaktweg oder Hinweis `site.outside` ändern? | AF11 |
-| 2 | – | Antwortvorlage des Büros mit CU-Hinweis nachholen? | AF12, Plan 3.6 |
-| 2 | – | Wer schreibt die Hinweistexte L7 (auch `notice.rules_upload`, `notice.site_without_cadastre`)? Bis dahin Rückfalltext | G16, G30, BR11, PU05, EA12, Plan 8 |
-| 2 | – | Datenschutzerklärung: Kartenkacheln direkt vom IGN – Hinweis genügt (Empfehlung) oder Kachel-Proxy? | G15 |
-| 2 | D5, D6 | Betriebsverantwortung; Datenschutzrolle Emprise ↔ Büro (bestimmt die Löschung nach einer Anfrage) | Plan 9 |
-| 2 | – | Ablauf der Anfragebearbeitung im Büro (Antwortfrist, Vorlagen); Standort des Unraid-Servers (EU, L8) | Plan 8 |
-| 3 | – | Gegenprüfung statt zweitem Lauf (RW19) in Plan 3.4 übernehmen? Empfehlung: nach der Messung mit der Referenzmenge | RW19 |
-| 3 | E-A1, E-A6 | Endgültiger Produktname statt „Emprise Analyse“ und Kostendeckel je Organisation – beides erst vor AN6 | PLAN_ANALYSE 6 |
-| 3 | – | Géorisques-Token vor öffentlichem Start | G12 |
-| 3 | – | Umsetzungsplan als Ganzes freigeben (dann Plan 7 und Spez. E.4 einarbeiten); D2 (Beta), D7, E1–E12 | Plan 9, Spez. 16 |
+| 1 | – | **Referenzliste Beyenes UC prüfen**, dann auf „geprüft“ setzen. Dabei klären: Abstände kleiner Nebengebäude (unter 12 m², unter 2,5 m) als feste Werte wie in der Liste oder als „nicht abbildbar“ wie im Probelauf? | `/verwaltung` → Referenzlisten, PLAN_G2 7.5 |
+| 1 | – | **Beyenes UC neu auswerten** (etwa 1,46 $)? Empfehlung: nach der Prüfung der Liste – behebt 0,9 und belegt Befund 7. Sonst die Grundfläche per AN4 korrigieren | PLAN_G2 7.5–7.6 |
+| 1 | E2 | Mailanbieter (Empfehlung Scaleway TEM, sonst Brevo); am 25.09. „später“ | Spez. 16, BETRIEB 5 |
+| 1 | – | Sammeladresse (`EMPRISE_OFFICE_EMAIL`) und Name des Büros für die Einwilligungstexte | AF02, AF05, VU08 |
+| 2 | – | **Opus 5.5 als Vorgabe** (`EMPRISE_RULES_MODEL`, Unraid `RULES_MODEL`)? Empfehlung ja: fand am meisten, je Token günstiger (4/20 $ statt 5/25 $). Sonst nach der Auslieferung in `/verwaltung` wählen | PLAN_AN2_PLU 9, PLAN_G2 7.5 |
+| 2 (vor Beta) | – | Rechtliche Prüfung: Simulation, die vier vorläufigen Rechtstexte, ODbL-Quellenangabe | Plan 6.9, RW16, AF05, VU08, VU11 |
+| 2 | E-A5 | Rechtlicher Rahmen des Analyse-Produkts; vor AN6 juristisch prüfen | PLAN_ANALYSE 6 |
+| 2 | – | H10–H14 bestätigen; AF11 (Anfrage außerhalb des Gebiets), AF12 (Antwortvorlage mit CU-Hinweis); G15 (Kartenkacheln) | ANNAHMEN |
+| 2 | D5, D6 | Betriebsverantwortung; Datenschutzrolle Emprise ↔ Büro; Ablauf der Anfragebearbeitung; Standort des Unraid-Servers (L8) | Plan 8, 9 |
+| 3 | – | Gegenprüfung statt zweitem Lauf (RW19) in Plan 3.4 übernehmen? Messbar jetzt mit Referenzlisten (VA03) | RW19 |
+| 3 | E-A1, E-A6 | Produktname; Kostendeckel je Organisation mit eigenem Limit für Scans (E-A7) – vor AN6 | PLAN_ANALYSE 6 |
+| 3 | – | Géorisques-Token; Umsetzungsplan freigeben (Plan 7, Spez. E.4 einarbeiten); D2, D7, E1–E12 | G12, Plan 9, Spez. 16 |
 
 ## 4. Offene Arbeitspunkte
 
 ### 4.1 Emprise Analyse abschließen (RA2)
 
-1. **Nächstes Modul AN4** (PLAN_ANALYSE 4, noch ohne Modulplan): Regelformular statt JSON (RW15), Wert je Projekt übersteuern mit Begründung, fehlende Regeln ergänzen, zwei Stände vergleichen, **Werte aus Zusatzdokumenten mit Zitat übernehmen** (Quelle an `project_rule_override`). Danach **AN5**: Bericht-PDF (mit Gabarit und Schnitt), DXF mit Höhenstufen in 3D (E-AN3G-5), GeoJSON, Projektliste, Georeferenzierung – sie bringt Gelände, also auch das Geländeprofil im Schnitt (E-AN3G-4).
-2. **Echte Unterlagen durch den Upload:** das vollständige PLUi Erdre et Gesvres (333 Seiten), ein PLU einer anderen Gemeinde, ein echtes règlement de lotissement mit Tabelle je Lot – Kapitelerkennung, Lesedauer, Vorschläge, Zuordnung der Lots. Mit Schlüssel Dauer und Kosten in BETRIEB 15 eintragen (PLAN_ANALYSE 7 Punkt 7); dabei den Gabarit mit echten höhenabhängigen Regeln und die Schnittlinien an einem schiefen Grundstück ansehen, Laufzeit nachmessen (BETRIEB 15).
-3. **Nutzfläche gegen Handrechnung:** drei reale Grundstücke des Büros (PLAN_ANALYSE 7 Punkt 6); Abweichungen als Annahmen (EA03–EA05, EA15).
-4. Zitat-PDFs in Chrome und Firefox öffnen (PU06; springt `#page=` auf die Seite?).
-5. **Vor Daten in Produktion:** `GET /projects/{id}/export` fehlt dem Analyse-Produkt (UP07); vor AN6 auch die Betroffenenrechte neu bewerten.
-6. Echten Katasterauszug und eine echte CAD-DXF aus dem Büro durch den Upload schicken (PLAN_AN1 8.3).
-7. Ende-zu-Ende-Szenario für das Analyse-Produkt (Parzelle, Reglement, Zone, Analyse, Gabarit, Zusatzdokument); Komponententest für `KonturWahl` mit vielen Flächen.
-8. Später: ungenutzte hochgeladene Dokumente aufräumen (E-AN2-4, BETRIEB 15 – bisher nur per SQL); Vergleichstabelle der Zusatzdokumente in Telefonbreite gestapelt statt verschiebbar; frei gezogene Schnittlinie, falls Architekten sie vermissen (E-AN3G-3).
+1. **AN5** (PLAN_ANALYSE 4): Bericht-PDF mit Gabarit und Schnitt, DXF in 3D (E-AN3G-5), GeoJSON, Projektliste, Georeferenzierung mit Gelände (E-AN3G-4).
+2. **Modulplan AN7** mit Selbstprüfung (PLAN_ANALYSE 4, E-A7); der Schlüssel ist da.
+3. **Echte Unterlagen:** PLUi Erdre et Gesvres (333 Seiten – bei etwa 1,46 $ je Kapitel vorher das Budget prüfen), ein PLU einer anderen Gemeinde, ein règlement de lotissement mit Tabelle je Lot. Dauer und Kosten gehören nach BETRIEB 15.
+4. Nutzfläche gegen Handrechnung an drei realen Grundstücken (PLAN_ANALYSE 7 Punkt 6); Zitat-PDFs in Chrome und Firefox (PU06).
+5. Vor Daten in Produktion: Export fehlt (UP07); vor AN6 die Betroffenenrechte neu bewerten. Echte CAD-DXF aus dem Büro (PLAN_AN1 8.3).
+6. Ende-zu-Ende-Szenario Analyse (Parzelle bis Zusatzdokument, mit Korrektur); Komponententest `KonturWahl` mit vielen Flächen. Später: ungenutzte Dokumente aufräumen (E-AN2-4), Vergleichstabelle in Telefonbreite gestapelt, frei gezogene Schnittlinie (E-AN3G-3).
 
-### 4.2 Ende-zu-Ende-Tests und Nachprüfung von H2, H3 und V
+### 4.2 G2-Vollständigkeit nacharbeiten (PLAN_G2_VOLLSTAENDIGKEIT)
 
-1. Playwright-Szenarien: „Kunde wählt Typ, verschiebt das Haus, wählt Linie und Optionen, übergibt den Vorentwurf“ (H2, H3, V) und Weg E; für A siehe 4.4. Für V braucht die CI zusätzlich `tests.e2e_seed_types`, `legal-seed` und den Code aus Mailpit.
-2. Im Browser ansehen: gesperrter Typ mit echten Regeln, Mehrzonen-Grundstück, Berührung, Höhenprüfung mit Gelände; für H3 ein Grundstück mit wirksamer `annex`- und `unsealed_min`-Regel; für V eine Übergabe **mit** Abweichungen und ein Dossier für Weg E.
-3. **DXF im ArchiCAD des Büros prüfen** (BETRIEB 14); bisher nur mit `ezdxf` zurückgelesen.
-4. Aufräumen in `backend/app/configuration/domain/placement.py`: unbenutzter Parameter `facade` in `_band_checks`, ungenutzte Hilfen `footprint_polygons`, `all_segments`.
-5. Ungenutztes im Frontend: `vatRate` in `configuration/Linien.tsx`, Schlüssel `configurator.options.kind`, `configurator.options.perM2`, `configurator.plan_layers`, `submission.disabled` in `i18n/{de,fr}.json`.
-6. Tests ergänzen: Zufahrt zum Garagentor (`garage_driveway`, HK07) hat keinen Test; `test_moving_the_house_rechecks_the_outbuildings` akzeptiert 200 oder 422 und ist damit schwach.
+1. Nach der Entscheidung in 3: Beyenes neu auswerten, messen und in 7.5 nachtragen; weitere Referenzlisten anlegen (Zonen von Treillières als Referenzmenge nach Spez. 11.4, andere Gemeinden).
+2. **Staffel der Grundflächenzahl** im Schema und in der Berechnung (E-VA-4, eigener Plan).
+3. **Sperre oder Bestätigung** vor bezahlten Neuauswertungen durch `rules_housekeeping` bei neuer `ENGINE_VERSION` (BETRIEB 15, „Neu auswerten kostet“).
+4. Denkaufwand `xhigh`/`max` an OpenRouter durchreichen. Später E-VA-1 (Nachsuche für Zusatzdokumente) und E-VA-2 (Begriffe in der Verwaltung pflegen).
+5. `emprise_probe` löschen, wenn keine Modelltests mehr anstehen (`DROP DATABASE emprise_probe`).
 
-### 4.3 H3 und V weiterentwickeln (nach Bedarf)
+### 4.3 G2 und G3 mit Schlüssel
 
-- Schnellstellungen des Hauses (H2) kennen den Carport nicht (Plan H3 10.3).
-- Nicht geprüft: `spaces_per_m2_sdp`, `setback_between_buildings`, `color_families_allowed`, `max_area` (EA06); kein Keller, keine Photovoltaik-Belegung, keine Ausführungen und Mengen (Plan 7, X3).
-- Ein Preis-Editor fehlt: Preise kommen nur aus dem XLSX (H05, H14); die Importbeschreibung sollte „netto (HT)“ und „Terrasse je m²“ nennen (siehe 4.5).
-- V: Anhänge an Nachrichten, Kopie einer Fassung als neue Konfiguration (Spez. 5.10.8), Webhooks (X5), erweitertes Dossier (X4) – bewusst offen (Plan V 1, 9.3).
+1. **Schlüssel erneuern** (openrouter.ai/keys) und lokal in `.env` eintragen, auf Unraid in `.env` und `.env.analyse`.
+2. Kapitel von Treillières neu auswerten (`rules-extract --pending` bzw. „Neu auswerten“; Monatsbudget beachten). Danach `setback_street.band`, `max_area` und die Abdeckung in `/buero/regeln` prüfen.
+3. `envelope-check --commune 44209` über alle Zonen (BETRIEB 10), Anteile für H2 und H3; dann Beta der Flags erwägen. Später mehrbändige Reglements (RW23).
 
-### 4.4 Modul A nacharbeiten
+### 4.4 Ende-zu-Ende und Nachprüfung (H2, H3, V, A, H1)
 
-1. Test: Projekt mit Anfrage überlebt `retention_cleanup`, Projekt mit unbestätigtem Kontakt nicht (AF10); Docstring in `backend/app/platform/tasks.py` anpassen.
-2. Punkte aus AF11 und AF12 nach Entscheidung (Abschnitt 3).
-3. E2E-Szenario „Kunde stellt Anfrage“; Komponententests für `Anfragen.tsx`/`AnfrageDetail.tsx`.
-4. Löschung eines Projekts im Browser ohne Anfrage prüfen (`DatenschutzAktionen`, Weiterleitung auf `/`, veraltetes Cookie) – die Löschung liegt seit AN1 im Kern.
-5. Später: Büro-Funktion für die Endlöschung nach einer Anfrage (nach D6).
+1. Playwright: Kunde bis Vorentwurf (H2, H3, V), Weg E, „Kunde stellt Anfrage“ (A).
+2. Im Browser ansehen: gesperrter Typ, Mehrzonen, Gelände, H3 mit `annex`/`unsealed_min`, V mit Abweichungen. DXF im ArchiCAD des Büros prüfen (BETRIEB 14).
+3. Aufräumen:
+   - `configuration/domain/placement.py` (`facade`, `footprint_polygons`, `all_segments`)
+   - im Frontend `vatRate`, `configurator.options.kind`/`.perM2`, `configurator.plan_layers`, `submission.disabled`
+   - Tests: `garage_driveway` (HK07) fehlt; `test_moving_the_house_rechecks_the_outbuildings` ist schwach
+4. A: Test zu AF10 und Docstring in `platform/tasks.py`; Komponententests für `Anfragen.tsx`/`AnfrageDetail.tsx`; Löschung im Browser prüfen; Endlöschung nach D6.
+5. H1: fünf echte Typen mit Fassadenrollen (Plan H1 12), XLSX-Vorlage mit „netto (HT)“ und „Terrasse je m²“, Docstring der Rollen in `catalog/api.py` (H01, H14); optional Entwurf direkt bearbeiten, Tests für Preise und Typstand, Playwright Katalogpflege, Fehlertexte der Konsistenzprüfung über `code`.
+6. Nach Bedarf (Plan H3 10.3, EA06, H05, Plan V 9.3): Carport in Schnellstellungen, ungeprüfte Regelarten, Preis-Editor, V-Ausbau.
 
-### 4.5 H1 abschließen
+### 4.5 Auslieferung und Betrieb
 
-1. **Fünf Platzhalter-Typen** als echte XLSX/DXF erfassen (Plan H1 Kapitel 12) und hochladen; Linien und Optionen zuerst, **Fassadenrollen zuweisen**. `backend/tests/e2e_seed_types.py` zeigt ein Muster mit Preisen.
-2. XLSX-Vorlage zum Herunterladen; darin „Preise netto (HT)“ und „Terrasse je m²“ ergänzen.
-3. Docstring von `backend/app/catalog/api.py` nennt die Rollen falsch (`architect` liest nur); laut Code bearbeiten `architect` und `catalog_admin` (H01, H14).
-4. Optional: Entwurf direkt bearbeiten statt neue Version; Komponententests für Preise und Typstand; Playwright Katalogpflege; Fehlertexte der Konsistenzprüfung über `code` übersetzen.
+1. Unraid in Betrieb nehmen ([deploy/unraid/README.md](deploy/unraid/README.md) 2–4, Authentik `auth.aslani.work`).
+2. **Zuerst den gemeinsamen Stack** (README 10: `./deploy.sh shared`, `SHARED_*` in beiden `.env`).
+3. Dann G1–V nach README 9 und BETRIEB 1: `openrouter.ai`, Migrate-Job bis 0017 mit `shared-migrate`, `legal-seed`, Flags. **`EMPRISE_OFFICE_EMAIL` ist auf Unraid noch nicht verdrahtet.** Keine `demo_*`-Typen; vor `configurator` und `submission` einen Preiskatalog veröffentlichen (BETRIEB 13, 14).
+4. Analyse unter `emprise-analyse.aslani.work` (README 2), mit eigener Authentik-Anwendung und `./deploy.sh analyse`.
+5. Überwachung (README 7), Offsite-Sicherung mit `emprise-shared`, erste Wiederherstellungsübung; SMTP nach E2; Hauptzweig schützen.
+6. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6), mit Analyse-Projekten; die gemeinsame Datenbank enthält nur Namen und Kennungen von Betriebskonten.
+7. Band `minio-data` und den Test-Stack `emprise-g1` entfernen.
 
-### 4.6 G2 und G3 abschließen (sobald ein Schlüssel eingetragen ist)
+### 4.6 Weitere Punkte
 
-1. **Schlüssel von OpenRouter** (Nutzer, [openrouter.ai/keys](https://openrouter.ai/keys)): in `.env` und `.env.analyse` bzw. lokal `EMPRISE_OPENROUTER_API_KEY`. Die Images sind aktuell (28.09.2026); nach dem Eintragen `docker compose up -d api worker` und `docker compose -f compose.analyse.yaml up -d`, dann `docker compose exec api python -m app.cli rules-extract --pending`. Kosten, Dauer, Anteil der Gegenprüfung in BETRIEB 9 eintragen.
-2. Wegen `g2-prompt-4` (Parameter `band`, Regelart `max_area`) alle Kapitel neu auswerten; prüfen, ob `setback_street.band` gefüllt ist und ob `max_area` nur echte Obergrenzen trifft.
-3. Referenzmenge der Zonen von Treillières messen (Spez. 11.4).
-4. `envelope-check --commune 44209` über alle Zonen wiederholen, Anteil unvollständiger Konturen in BETRIEB 10 festhalten; für H2 den Anteil gesperrter Typen je Zone prüfen; für H3, wie oft `annex`, `unsealed_min` und `facade` wirksam werden.
-5. Danach Beta für `rules_simulation`/`envelope_simulation`/`inquiry`/`configurator`/`submission` erwägen.
-6. Später: OCR (RW03); mehrbändige Reglements (RW23). Das Korrekturformular (RW15) gehört zu AN4 (4.1).
-
-### 4.7 Auslieferung und Betrieb
-
-1. Unraid in Betrieb nehmen ([deploy/unraid/README.md](deploy/unraid/README.md) 2–4; Authentik unter `auth.aslani.work`, DNS only), danach TLS, Authentik, `staff-add`, Login prüfen.
-2. G1–V auf Unraid nach Unraid README 9 und BETRIEB 1 (ausgehender Zugang `openrouter.ai`, `.env` mit `OPENROUTER_API_KEY`, Migrationen 0007–0014, `legal-seed`, Flags). **`EMPRISE_OFFICE_EMAIL` ist in `deploy/unraid/compose.yaml` und `deploy/unraid/.env.example` noch nicht verdrahtet** – ergänzen. `demo_*`-Typen und Demo-Preise nie in Produktion; vor `configurator` und `submission` einen Preiskatalog veröffentlichen (BETRIEB 13, 14).
-3. Zweiten Stack ausliefern, sobald gewünscht: `.env.analyse` aus der Vorlage (mit `OPENROUTER_API_KEY`), eigene Authentik-Anwendung, `./deploy.sh analyse` (BETRIEB 15).
-4. Überwachung (Uptime Kuma, Unraid README 7) mit den Log-Alarmen aus BETRIEB 1, auch `dossier_failed`; Offsite-Sicherung; erste Wiederherstellungsübung.
-5. SMTP nach E2 eintragen, Testmail; GitHub-Hauptzweig schützen.
-6. Verarbeitungsverzeichnis (Plan 4.1 Kriterium 6): Staff-E-Mail, Mailadressen in Jobs (A12), IP-HMAC (A7), Steckbriefe (BR10), Kundenkontakt, Einwilligungen, Snapshots, Konfiguration, Dossierdateien; die Projekte des Analyse-Produkts (Eigentümer, hochgeladene Umrisse, Annahmen); hochgeladene Reglements und Zusatzdokumente enthalten in der Regel keine personenbezogenen Daten (PU01; ein cahier des charges kann Namen von Verkäufern nennen – prüfen). Die Schnittstelle (OpenRouter) erhält nur Planunterlagen.
-7. Den ungenutzten Band `minio-data` entfernen (`docker volume rm emprise_minio-data`, README).
-
-### 4.8 Weitere Punkte
-
-1. **Spezifikation:** S1–S17 mit Stand in Spez. Anhang E.4; zusammen mit Plan Kapitel 7 einarbeiten, sobald der Plan freigegeben ist (Abschnitt 3).
-2. Büro-Oberfläche „Regelwerke“ (G2: „Erneut versuchen“, „Neu auswerten“, „veraltet“) mit echten Daten ansehen; hochgeladene Reglements erscheinen dort nicht (nur je Projekt im Analyse-Produkt).
-3. Einwilligung zur Datenweitergabe im Mockup (Spez. Anh. E.2 M10): serverseitig da, das Mockup zeigt sie weiter nicht.
-4. Vor Erweiterung des Einzugsgebiets: CNIG-Typliste der überlagernden Vorgaben prüfen (BR05).
-5. Log `envelope_derive_failed` (Plan G3 6.2) anlegen oder im Plan streichen.
-6. Alten Test-Stack der G1-Session entfernen: `docker compose -p emprise-g1 down -v`.
+- Spez. S1–S17 mit Plan 7 einarbeiten, sobald der Plan freigegeben ist.
+- „Regelwerke“ im Büro mit echten Daten ansehen.
+- Einwilligung im Mockup (Spez. E.2 M10).
+- CNIG-Typliste (BR05).
+- Log `envelope_derive_failed` (Plan G3 6.2).
 
 ## 5. Empfohlener nächster Schritt
 
-1. Priorität 1 aus Abschnitt 3 (Mailanbieter E2, Büro-Angaben), sobald bekannt; den **Schlüssel von OpenRouter** eintragen (4.6 Punkt 1).
-2. Mit Schlüssel zuerst 4.1 Punkt 2 (echte Unterlagen): Das zeigt, welche Fehler das Modell in der Praxis macht – genau die soll AN4 korrigieren. Ohne Schlüssel: **Modulplan AN4 mit Selbstprüfung, dann Umsetzung** (4.1 Punkt 1) oder die Auslieferung auf Unraid (4.7).
-3. Bald 4.2 und 4.1 Punkt 7: Playwright-Szenarien.
+1. Hand-off-Dokumente committen, CI zu `adf7ac4` ansehen.
+2. Referenzliste Beyenes UC prüfen (3), dann mit Freigabe neu auswerten und messen (4.2 Punkt 1); Schlüssel erneuern.
+3. Danach AN5 oder Modulplan AN7 – oder Auslieferung auf Unraid samt gemeinsamem Stack (4.5).
 
 ## 6. Hinweise
 
-- Stolperstellen (lokaler Stack, Docker-Start, Tests, `uv lock`, Telefonbreite, Browserprüfung mit PDFs, Scheinauswertung und vorübergehender Büro-Korrektur) stehen dauerhaft in [README.md](README.md).
-- Der volle Backend-Lauf dauerte diesmal 11 Minuten; im Hintergrund mit `docker compose run -T` starten.
-- Im Testprojekt „Testparzelle Zone Uh“ (Analyse-Stack) stehen zwei Audit-Einträge der vorübergehenden Korrektur vom 28.09.2026; die Korrektur selbst ist gelöscht.
+- Stolperstellen stehen dauerhaft in [README.md](README.md): gemeinsame Alembic-Umgebung, Laufzeit-Image, weiterlaufendes `docker compose run`, geteilte Cookies beider Apps.
+- Zwischencommits `219a285` bis `1c4ba2b` bauen einzeln nicht (gemischte Abschnitte im späteren Commit); bei `git bisect` überspringen.
+- Der volle Backend-Lauf dauerte 8,5 Minuten; im Hintergrund mit `docker compose run -T`.
 
 ## 7. Startprompt für die neue Session
 
 ```
 Lies HANDOFF.md und den obersten Eintrag in AENDERUNGEN.md. Fasse den Stand in fünf Sätzen zusammen.
-Frage mich danach in höchstens drei Fragen (Empfehlung an erster Stelle), was als Nächstes kommt
-(HANDOFF 4.1: Modul AN4 oder echte Unterlagen mit Schlüssel – oder die Auslieferung auf Unraid, 4.7)
-und was aus Priorität 1 in HANDOFF 3 inzwischen feststeht.
-Arbeite das Gewählte ab (Modulplan mit Selbstprüfung, dann Umsetzung). Committe und pushe nur auf
-meine Anweisung.
+Frage mich danach in höchstens drei Fragen (Empfehlung an erster Stelle): Ergebnis meiner Prüfung
+der Referenzliste Beyenes UC und Freigabe der Neuauswertung (HANDOFF 3, Priorität 1), Opus 5.5 als
+Vorgabe, und was als Nächstes kommt (AN5, Modulplan AN7 oder Auslieferung auf Unraid, HANDOFF 4).
+Arbeite das Gewählte ab (Modulplan mit Selbstprüfung, dann Umsetzung). Bezahlte Läufe nur nach
+meiner Freigabe. Committe und pushe nur auf meine Anweisung.
 ```
