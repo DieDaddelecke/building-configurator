@@ -22,7 +22,6 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.platform import audit, storage
-from app.platform.auth.context import project_organisation
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
@@ -635,7 +634,6 @@ def choose_zone(
         current,
         actor=actor,
         reason="zone_choice",
-        billing_organisation_id=project_organisation(db, project_id),
     )
     before = {"zone": link.zone_code, "chapter": link.chapter_code}
     link.zone_code, link.chapter_code = body.zone_code, code
@@ -708,7 +706,6 @@ def choose_lot(
         chapter,
         actor=actor,
         reason="lot_choice",
-        billing_organisation_id=project_organisation(db, project_id),
     )
     before = {"lot": link.zone_code}
     link.zone_code, link.chapter_code = sector, SUPPLEMENT_CHAPTER

@@ -1,11 +1,11 @@
-"""Wer fragt an: Mitarbeitende (Sitzung nach OIDC), Kunde (anonymes Projekt-Cookie) oder ein API-Schlüssel
-einer Organisation (AN6).
+"""Wer fragt an: Mitarbeitende (Sitzung nach OIDC) oder Kunde (anonymes Projekt-Cookie). Den Zugang über
+API-Schlüssel einer Organisation (AN6) gibt es seit dem 29.09.2026 nicht mehr (REFACTORING_PLAN S8).
 
 Jeder Endpunkt MUSS genau eine Zugriffsregel aus diesem Modul als Abhängigkeit tragen.
 `tests/integration/test_access_policies.py` prüft das für alle Routen,
 `tests/integration/test_organisations.py` die Trennung der Organisationen (docs/PLAN_AN6_MANDANTEN.md 3.2):
-Projekte einer Organisation sehen nur ihre Mitglieder und Schlüssel, und die Rollen des Betriebs wirken nur in
-der Organisation `operator`.
+Projekte einer Organisation sehen nur ihre Mitglieder, und die Rollen des Betriebs wirken nur in der
+Organisation `operator`.
 """
 
 import uuid
@@ -19,20 +19,12 @@ from fastapi import Depends, Request
 from sqlalchemy import and_, select, update
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
-from app.platform import rate_limit
 from app.platform.auth.tokens import PROJECT_COOKIE, STAFF_COOKIE, hash_token
 from app.platform.db import get_db, get_engine, utcnow
-from app.platform.models import ApiKey, Organisation, OrganisationMember, Project, StaffSession, StaffUser
+from app.platform.models import Organisation, OrganisationMember, Project, StaffSession, StaffUser
 from app.platform.problems import Problem
 
 ACTIVITY_WRITE_INTERVAL = timedelta(minutes=10)
-SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-API_KEY_SCHEME = "Bearer emp_"
-"""Nur dieser Kopf gilt als API-Schlüssel; andere `Authorization`-Köpfe (etwa von einem Proxy) bleiben
-unbeachtet."""
-API_KEY_PATHS = ("/api/v1/projects",)
-"""Schlüssel reichen nur für die Projektendpunkte (3.6), nie für `/admin`, Organisation oder Sitzung."""
 
 
 class Role(StrEnum):
@@ -80,37 +72,17 @@ class StaffPrincipal:
         return self.organisation_kind == "operator"
 
 
-@dataclass(frozen=True)
-class ApiPrincipal:
-    """Aufruf mit API-Schlüssel (3.6): handelt für die Organisation wie ein Architekt, ohne Person."""
-
-    key_id: uuid.UUID
-    organisation_id: uuid.UUID
-    scopes: frozenset[str]
-
-    @property
-    def actor_id(self) -> str:
-        return f"api_key:{self.key_id}"
-
-    @property
-    def actor_type(self) -> Literal["api_key"]:
-        return "api_key"
-
-
-Principal = StaffPrincipal | ApiPrincipal
-"""Wer Projekte einer Organisation bearbeitet: Architekt mit Organisation oder Schlüssel."""
+Principal = StaffPrincipal
+"""Wer Projekte einer Organisation bearbeitet: ein Architekt mit Organisation (`RequestAuth.principal`)."""
 
 
 @dataclass(frozen=True)
 class RequestAuth:
     staff: StaffPrincipal | None = None
     project_id: uuid.UUID | None = None
-    api: ApiPrincipal | None = None
 
     @property
     def principal(self) -> Principal | None:
-        if self.api is not None:
-            return self.api
         staff = self.staff
         if staff is not None and staff.organisation_id is not None and Role.architect in staff.roles:
             return staff
@@ -169,58 +141,16 @@ def _resolve_project(db: Session, token: str) -> uuid.UUID | None:
     return project_id
 
 
-def api_key_path_allowed(path: str) -> bool:
-    return any(path == prefix or path.startswith(prefix + "/") for prefix in API_KEY_PATHS)
-
-
-def _resolve_api_key(request: Request, db: Session, token: str) -> ApiPrincipal:
-    """Schlüssel prüfen (3.6). Mit Cookies abgelehnt: Dann entfiele die CSRF-Prüfung für eine Anfrage, die
-    ein Browser mit Sitzung schickt."""
-    if request.cookies:
-        raise Problem(400, "api_key_with_cookies")
-    if not api_key_path_allowed(request.url.path):
-        raise Problem(403, "api_key_not_allowed")
-    now = utcnow()
-    key = db.execute(
-        select(ApiKey)
-        .join(Organisation, Organisation.id == ApiKey.organisation_id)
-        .where(
-            ApiKey.token_hash == hash_token(token),
-            ApiKey.revoked_at.is_(None),
-            ApiKey.expires_at > now,
-            Organisation.active.is_(True),
-        )
-    ).scalar_one_or_none()
-    if key is None:
-        raise Problem(401, "api_key_invalid")
-    scopes = frozenset(key.scopes)
-    if request.method not in SAFE_METHODS and "write" not in scopes:
-        raise Problem(403, "api_key_read_only")
-    rate_limit.check_value("api_key", str(key.id), get_settings().api_key_limit_per_minute, 60)
-    if key.last_used_at is None or now - key.last_used_at > ACTIVITY_WRITE_INTERVAL:
-        _touch(ApiKey, key.id, "last_used_at")
-    return ApiPrincipal(key_id=key.id, organisation_id=key.organisation_id, scopes=scopes)
-
-
-def api_key_token(request: Request) -> str | None:
-    header = request.headers.get("authorization", "")
-    return header[len("Bearer ") :] if header.startswith(API_KEY_SCHEME) else None
-
-
 def get_auth(request: Request, db: Session = Depends(get_db)) -> RequestAuth:
     cached = getattr(request.state, "auth", None)
     if isinstance(cached, RequestAuth):
         return cached
-    key_token = api_key_token(request)
-    if key_token is not None:
-        auth = RequestAuth(api=_resolve_api_key(request, db, key_token))
-    else:
-        staff_token = request.cookies.get(STAFF_COOKIE)
-        project_token = request.cookies.get(PROJECT_COOKIE)
-        auth = RequestAuth(
-            staff=_resolve_staff(db, staff_token) if staff_token else None,
-            project_id=_resolve_project(db, project_token) if project_token else None,
-        )
+    staff_token = request.cookies.get(STAFF_COOKIE)
+    project_token = request.cookies.get(PROJECT_COOKIE)
+    auth = RequestAuth(
+        staff=_resolve_staff(db, staff_token) if staff_token else None,
+        project_id=_resolve_project(db, project_token) if project_token else None,
+    )
     request.state.auth = auth
     return auth
 
@@ -303,7 +233,7 @@ def require_roles(*roles: Role, organisations: bool = False) -> Callable[..., St
 
 @_policy("organisation")
 def require_organisation(auth: RequestAuth = Depends(get_auth)) -> Principal:
-    """Architekt mit Organisation oder Schlüssel: Liste und Anlage der Projekte der Organisation (3.2)."""
+    """Architekt mit Organisation: Liste und Anlage der Projekte der Organisation (3.2)."""
     principal = auth.principal
     if principal is None and auth.staff is None:
         raise Problem(401, "authentication_required")
@@ -322,7 +252,7 @@ def require_org_member(staff: StaffPrincipal = Depends(require_staff)) -> StaffP
 
 @_policy("org_admin")
 def require_org_admin(staff: StaffPrincipal = Depends(require_staff)) -> StaffPrincipal:
-    """Verwaltung der eigenen Organisation: Mitglieder, Erscheinungsbild, Schlüssel (3.1)."""
+    """Verwaltung der eigenen Organisation: Name und Mitglieder (3.1)."""
     if staff.organisation_id is None or staff.org_role != "admin":
         raise Problem(403, "forbidden")
     return staff
@@ -333,7 +263,7 @@ def require_project_access(
     project_id: uuid.UUID, auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)
 ) -> uuid.UUID:
     """Das Projekt aus dem eigenen Cookie – oder ein Projekt der eigenen Organisation für einen Architekten
-    oder einen Schlüssel (AN1, UP05, AN6). Fremde Projekte erscheinen als nicht vorhanden.
+    (AN1, UP05, AN6). Fremde Projekte erscheinen als nicht vorhanden.
 
     Kundenprojekte haben keine Organisation und bleiben für Mitarbeitende über diesen Weg unerreichbar; das
     Büro sieht sie über die eigenen `/admin`-Endpunkte.
@@ -350,7 +280,7 @@ def require_project_access(
 def require_owned_project(
     project_id: uuid.UUID, auth: RequestAuth = Depends(get_auth), db: Session = Depends(get_db)
 ) -> Principal:
-    """Nur ein Architekt oder Schlüssel der Organisation des Projekts (AN2, docs/PLAN_AN2_PLU.md 3.7; AN6).
+    """Nur ein Architekt der Organisation des Projekts (AN2, docs/PLAN_AN2_PLU.md 3.7; AN6).
     Für Aktionen, die Kosten auslösen (Auswertung eines hochgeladenen Reglements): Das Projekt-Cookie eines
     Kunden reicht nicht. Sonst `404` wie bei fremden Projekten."""
     principal = auth.principal

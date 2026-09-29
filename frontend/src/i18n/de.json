@@ -221,8 +221,7 @@
         "refusal": "Das Modell hat die Auswertung abgelehnt.",
         "other": "Grund: {{reason}}",
         "ocr_no_text": "Auch nach der Texterkennung ist mehr als die Hälfte der Seiten ohne Text – vermutlich Pläne oder ein sehr schlechter Scan. Bitte eine bessere Fassung hochladen, etwa aus dem Géoportail de l'Urbanisme oder von der Gemeinde.",
-        "ocr_unavailable": "Die Texterkennung ist auf dem Server nicht eingerichtet. Bitte den Betrieb verständigen.",
-        "organisation_budget_exceeded": "Das Monatsbudget Ihrer Organisation ist erreicht. Die Auswertung startet von selbst im neuen Monat oder wenn der Betrieb das Budget erhöht."
+        "ocr_unavailable": "Die Texterkennung ist auf dem Server nicht eingerichtet. Bitte den Betrieb verständigen."
       },
       "error": {
         "not_a_pdf": "Die Datei ist kein PDF.",
@@ -239,9 +238,7 @@
         "page_out_of_range": "Die Seitenangabe liegt außerhalb des Dokuments.",
         "interrupted": "Das Lesen wurde unterbrochen. Bitte das PDF erneut hochladen.",
         "document_scan": "Das Reglement ist ein Scan. Bitte zuerst den Text erkennen lassen.",
-        "ocr_not_needed": "Das Dokument hat keine Seiten ohne Text.",
-        "organisation_budget_exceeded": "Das Monatsbudget Ihrer Organisation ist erreicht; eine neue Auswertung ist erst im nächsten Monat oder mit höherem Budget möglich.",
-        "ocr_quota_exceeded": "Das Scan-Kontingent Ihrer Organisation reicht diesen Monat nicht: {{pages}} Seiten wären zu erkennen, frei sind noch {{remaining}} von {{limit}}."
+        "ocr_not_needed": "Das Dokument hat keine Seiten ohne Text."
       }
     },
     "scan": {
@@ -610,27 +607,13 @@
     },
     "organisation": {
       "eyebrow": "Organisation",
-      "introAdmin": "Mitglieder, Erscheinungsbild von Bericht und DXF, Verbrauch und API-Schlüssel Ihrer Organisation. Alle Mitglieder sehen dieselben Projekte.",
-      "introMember": "Verbrauch Ihrer Organisation in diesem und den letzten Monaten. Mitglieder, Erscheinungsbild und API-Schlüssel verwaltet die Rolle „Verwaltung“.",
+      "introAdmin": "Name und Mitglieder Ihrer Organisation. Alle Mitglieder sehen dieselben Projekte.",
+      "introMember": "Alle Mitglieder Ihrer Organisation sehen dieselben Projekte. Name und Mitglieder verwaltet die Rolle „Verwaltung“.",
       "none": "Ihr Konto gehört zu keiner Organisation. Bitte den Betrieb verständigen.",
       "cancel": "Abbrechen",
       "role": {
         "member": "Mitglied",
         "admin": "Verwaltung"
-      },
-      "usage": {
-        "title": "Verbrauch",
-        "cost": "Auswertung durch das KI-Modell",
-        "ocr": "Texterkennung",
-        "ofLimit": "{{value}} von {{limit}}",
-        "noLimit": "Ohne eigene Grenze; es gilt das Budget der Instanz.",
-        "pages_one": "{{count}} Seite",
-        "pages_other": "{{count}} Seiten",
-        "pagesOfLimit_one": "{{count}} von {{limit}} Seiten",
-        "pagesOfLimit_other": "{{count}} von {{limit}} Seiten",
-        "hint": "Kalendermonat in UTC. Ist die Grenze erreicht, wartet eine Auswertung bis zum neuen Monat oder bis der Betrieb die Grenze erhöht; eine Texterkennung wird abgelehnt.",
-        "history": "Verbrauch der letzten Monate",
-        "month": "Monat"
       },
       "members": {
         "title": "Mitglieder",
@@ -646,65 +629,18 @@
         "submit": "Hinzufügen",
         "hint": "Anmelden kann sich das Mitglied, sobald der Betrieb das Konto beim Anmeldedienst eingerichtet hat (mit zweitem Faktor). Entfernen sperrt das Konto; die Projekte bleiben bei der Organisation."
       },
-      "branding": {
-        "title": "Erscheinungsbild",
-        "intro": "Name, Anschrift und Logo erscheinen im Kopf des Berichts, Name und Anschrift im Schriftfeld des DXF. Jede Änderung erzeugt beim nächsten Abruf einen neuen Bericht.",
-        "displayName": "Anzeigename",
-        "registration": "Kennung",
-        "registrationHint": "Etwa „N° d'inscription à l'Ordre des architectes“ oder SIRET",
-        "address": "Anschrift",
-        "addressHint_one": "Höchstens {{count}} Zeile",
-        "addressHint_other": "Höchstens {{count}} Zeilen",
-        "phone": "Telefon",
-        "email": "E-Mail",
-        "website": "Website",
-        "accent": "Akzentfarbe",
-        "accentPicker": "Akzentfarbe wählen",
-        "accentHint": "Für Überschriften und Linien im Bericht; leer lassen für Schwarz.",
-        "accentTooLight": "Zu hell: Auf Weiß braucht die Farbe einen Kontrast von mindestens {{min}} : 1.",
+      "name": {
+        "title": "Name",
+        "label": "Anzeigename",
         "save": "Speichern",
-        "saved": "Gespeichert.",
-        "logo": "Logo",
-        "logoHint": "PNG oder JPEG, höchstens 1 MB und 2 000 Pixel; wird auf 800 Pixel verkleinert. Kein SVG.",
-        "removeLogo": "Logo entfernen",
-        "preview": "Vorschau: Kopf der ersten Berichtsseite",
-        "previewEyebrow": "Emprise Analyse",
-        "previewTitle": "Analyse de la parcelle"
-      },
-      "keys": {
-        "title": "API-Schlüssel",
-        "intro": "Für eigene Programme und CAD-Anbindungen: Aufruf mit dem Kopf „Authorization: Bearer <Schlüssel>“, nur für die Projektendpunkte (/api/v1/projects…). Ein Schlüssel handelt wie ein Architekt Ihrer Organisation; Kosten zählen zu ihrem Budget.",
-        "empty": "Noch kein Schlüssel angelegt.",
-        "scope": {
-          "read": "nur lesen",
-          "write": "lesen und schreiben"
-        },
-        "meta": "angelegt {{created}} · zuletzt genutzt {{used}} · läuft ab {{expires}}",
-        "revokedOn": "widerrufen am {{date}}",
-        "revoke": "Widerrufen",
-        "confirmRevoke": "Wirklich widerrufen",
-        "new": "Neuer Schlüssel",
-        "name": "Name (wofür)",
-        "days": "Gültig (Tage)",
-        "writeScope": "Auch schreiben (Projekte anlegen, hochladen, auswerten)",
-        "create": "Schlüssel anlegen",
-        "createdTitle": "Schlüssel „{{name}}“ angelegt",
-        "createdHint": "Der Schlüssel wird nur jetzt angezeigt; gespeichert wird nur eine Prüfsumme. Geht er verloren, widerrufen Sie ihn und legen einen neuen an.",
-        "copy": "Kopieren",
-        "copied": "Kopiert",
-        "done": "Fertig"
+        "saved": "Gespeichert."
       },
       "error": {
-        "invalid_color": "Die Farbe muss als Hex-Wert angegeben werden, etwa #2b45b0.",
-        "color_contrast_too_low": "Die Farbe ist zu hell für Text auf Weiß.",
-        "logo_format": "Das Logo muss ein PNG oder JPEG sein.",
-        "logo_too_large": "Das Logo ist zu groß (höchstens 1 MB und 2 000 Pixel).",
         "member_exists": "Diese Person ist schon Mitglied.",
         "member_of_other_organisation": "Diese Adresse gehört zu einer anderen Organisation.",
         "operator_roles_outside_operator": "Dieses Konto hat Rollen des Betriebs und kann keiner anderen Organisation angehören.",
         "last_admin": "Die Organisation braucht mindestens ein Mitglied mit der Rolle „Verwaltung“.",
-        "cannot_remove_self": "Sie können sich nicht selbst entfernen.",
-        "api_key_limit": "Höchstens 10 aktive Schlüssel je Organisation. Bitte zuerst einen widerrufen."
+        "cannot_remove_self": "Sie können sich nicht selbst entfernen."
       }
     }
   },

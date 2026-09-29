@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from app.platform.logging import request_id_var
 from app.platform.models import AuditLog
 
-ActorType = Literal["staff", "customer", "system", "api_key"]
+ActorType = Literal["staff", "customer", "system"]
+"""`api_key` steht nur noch in älteren Einträgen (AN6, bis 29.09.2026)."""
 
 
 def record(
@@ -24,9 +25,6 @@ def record(
     before: dict[str, Any] | None = None,
     after: dict[str, Any] | None = None,
 ) -> None:
-    if actor_id is not None and actor_id.startswith("api_key:"):
-        # Fachmodule übergeben für Architekten und API-Schlüssel dieselbe Art (AN6, PLAN_AN6_MANDANTEN 3.6)
-        actor_type = "api_key"
     session.add(
         AuditLog(
             actor_type=actor_type,

@@ -21,7 +21,6 @@ from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.platform.problems import Problem
 from app.rules import documents, model_choice
-from app.rules.budget import ORGANISATION_BUDGET_ERROR, organisation_budget_left
 from app.rules.domain import ENGINE_VERSION
 from app.rules.domain.assess import coverage as count_coverage
 from app.rules.domain.form import kind_forms
@@ -1370,8 +1369,7 @@ def housekeeping(db: Session, settings: Settings) -> dict[str, Any]:
 
     - `extracting` länger als das Zeitlimit: abgebrochen (`interrupted:stale`).
     - `pending` ohne wartenden Job: neu einplanen.
-    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded` und
-      `organisation_budget_exceeded` (AN6), sobald das Budget wieder
+    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded`, sobald das Budget wieder
       reicht (neuer Monat, höheres Budget); vorübergehende Fehler nach 24 h, höchstens 6 gescheiterte Aufrufe
       je Woche.
     - Ausgewertet mit älterer Version der Schranken: neu bewerten (ohne Aufruf, wenn die Antworten vorliegen).
@@ -1425,10 +1423,6 @@ def _restart_reason(
         return "configured" if settings.openrouter_api_key is not None else None
     if chapter.error == "budget_exceeded":
         return "budget" if budget_left else None
-    if chapter.error == ORGANISATION_BUDGET_ERROR:
-        # Neuer Monat oder erhöhtes Budget der zahlenden Organisation (AN6, PLAN_AN6_MANDANTEN 7.1 Nr. 20)
-        left = budget_left and organisation_budget_left(db, settings, chapter.billing_organisation_id)
-        return "budget" if left else None
     if chapter.error.startswith(TRANSIENT_ERRORS) and now - chapter.updated_at > RETRY_TRANSIENT_AFTER:
         failed_week = db.execute(
             select(func.count())

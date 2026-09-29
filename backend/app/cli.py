@@ -6,8 +6,7 @@ staff-add EMAIL ROLLE [ROLLE] [--organisation NAME]  Mitarbeitende freischalten 
 staff-deactivate EMAIL         Zugang sperren und Sitzungen beenden
 org-create NAME ANZEIGENAME [--kind customer|operator]  Organisation anlegen (AN6; fremde erst nach E-A5)
 org-member-add ORGANISATION EMAIL [--role admin|member]  Konto einer Organisation zuordnen
-org-set-budget NAME [--budget USD|default] [--ocr-pages N|default]  Grenzen einer Organisation
-org-list                       Organisationen mit Mitgliedern und Grenzen
+org-list                       Organisationen mit Mitgliedern
 storage-init                   Dateiverzeichnis anlegen und prüfen (im Migrate-Job)
 cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
@@ -145,35 +144,7 @@ def cmd_org_member_add(args: argparse.Namespace) -> None:
         print(f"{email}: {org.name} ({args.role})")
 
 
-def cmd_org_set_budget(args: argparse.Namespace) -> None:
-    """Monatsbudget und Scan-Kontingent; `default` setzt die Vorgabe der Umgebung zurück (3.4)."""
-    with get_sessionmaker()() as session:
-        org = _organisation_by_name(session, args.name)
-        before = {"budget_month_usd": org.budget_month_usd, "ocr_pages_month": org.ocr_pages_month}
-        if args.budget is not None:
-            org.budget_month_usd = None if args.budget == "default" else float(args.budget)
-        if args.ocr_pages is not None:
-            org.ocr_pages_month = None if args.ocr_pages == "default" else int(args.ocr_pages)
-        audit.record(
-            session,
-            actor_type="system",
-            actor_id="cli",
-            action="organisation.budget",
-            entity_type="organisation",
-            entity_id=str(org.id),
-            before=before,
-            after={"budget_month_usd": org.budget_month_usd, "ocr_pages_month": org.ocr_pages_month},
-        )
-        session.commit()
-        settings = get_settings()
-        print(
-            f"{org.name}: Budget {organisations.budget_limit(settings, org) or 'ohne eigene Grenze'} $ · "
-            f"Scan {organisations.ocr_limit(settings, org) or 'ohne Grenze'} Seiten je Monat"
-        )
-
-
 def cmd_org_list(args: argparse.Namespace) -> None:
-    settings = get_settings()
     with get_sessionmaker()() as session:
         for org in session.execute(select(Organisation).order_by(Organisation.name)).scalars():
             members = len(
@@ -184,12 +155,7 @@ def cmd_org_list(args: argparse.Namespace) -> None:
                 ).all()
             )
             state = "aktiv" if org.active else "gesperrt"
-            budget, pages = organisations.budget_limit(settings, org), organisations.ocr_limit(settings, org)
-            print(
-                f"{org.name:24} {org.kind:9} {state:8} {members:3} Mitglieder"
-                f" · Budget {'ohne Grenze' if budget is None else f'{budget:g} $'}"
-                f" · Scan {'ohne Grenze' if pages is None else f'{pages} Seiten'}"
-            )
+            print(f"{org.name:24} {org.kind:9} {state:8} {members:3} Mitglieder")
 
 
 def cmd_staff_deactivate(args: argparse.Namespace) -> None:
@@ -540,11 +506,6 @@ def main() -> None:
     p_member.add_argument("email")
     p_member.add_argument("--role", choices=["admin", "member"], default="admin")
     p_member.set_defaults(func=cmd_org_member_add)
-    p_budget = sub.add_parser("org-set-budget")
-    p_budget.add_argument("name")
-    p_budget.add_argument("--budget", help="Dollar je Monat oder `default`")
-    p_budget.add_argument("--ocr-pages", help="erkannte Seiten je Monat oder `default`")
-    p_budget.set_defaults(func=cmd_org_set_budget)
     sub.add_parser("org-list").set_defaults(func=cmd_org_list)
     p_deactivate = sub.add_parser("staff-deactivate")
     p_deactivate.add_argument("email")

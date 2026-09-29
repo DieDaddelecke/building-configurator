@@ -59,7 +59,7 @@ from app.envelope.domain import local as local_coords
 from app.envelope.domain.derive import ZONE_WITHOUT_RULES, Envelope
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
-from app.platform import audit, organisations
+from app.platform import audit
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.models import Project
@@ -216,15 +216,13 @@ def project_label(project: Project, site: SiteOut) -> str:
     return project.name or site.address_label or ", ".join(p.idu for p in site.parcels)
 
 
-def report_data(db: Session, project_id: uuid.UUID, *, with_logo: bool = False) -> ReportData:
-    """Alles, was der Bericht zeigt, in der Form der API; dazu das Erscheinungsbild der Organisation (AN6,
-    docs/PLAN_AN6_MANDANTEN.md 3.5). Das Logo lädt nur der Job, der den Bericht setzt."""
+def report_data(db: Session, project_id: uuid.UUID) -> ReportData:
+    """Alles, was der Bericht zeigt, in der Form der API."""
     project = db.get(Project, project_id)
     if project is None:
         raise Problem(404, "not_found")
     site = site_service.load_site(db, project_id)
     return ReportData(
-        branding=organisations.branding_for(db, project.organisation_id, load_logo=with_logo),
         name=project.name,
         note=project.note,
         label=project_label(project, site),

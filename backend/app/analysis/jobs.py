@@ -31,7 +31,7 @@ def analysis_report(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     with ctx.session() as session:
         if service.stored_report(session, project_id, requested, locale) is not None:
             return {"skipped": "already_generated", "input_hash": requested}
-        data = service.report_data(session, project_id, with_logo=True)
+        data = service.report_data(session, project_id)
         current = report.report_hash(data)
         if current != requested:
             log.info(

@@ -1311,74 +1311,9 @@ export interface paths {
         head?: never;
         /**
          * Update Organisation
-         * @description Anzeigename und Schriftfeld für Bericht und DXF (3.5). Jede Änderung zählt `branding_revision` hoch:
-         *     Der nächste Bericht entsteht neu.
+         * @description Anzeigename der Organisation (Kopf der Seiten, Sitzung).
          */
         patch: operations["update_organisation_api_v1_organisation_patch"];
-        trace?: never;
-    };
-    "/api/v1/organisation/api-keys": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Api Keys */
-        get: operations["list_api_keys_api_v1_organisation_api_keys_get"];
-        put?: never;
-        /**
-         * Create Api Key
-         * @description Neuer Schlüssel; er erscheint nur in dieser Antwort. `write` schließt `read` ein.
-         */
-        post: operations["create_api_key_api_v1_organisation_api_keys_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/api-keys/{key_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Revoke Api Key */
-        delete: operations["revoke_api_key_api_v1_organisation_api_keys__key_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/organisation/logo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Organisation Logo
-         * @description Logo für die Vorschau des Berichtskopfs.
-         */
-        get: operations["get_organisation_logo_api_v1_organisation_logo_get"];
-        /**
-         * Put Organisation Logo
-         * @description Logo als PNG oder JPEG, höchstens 1 MB und 2000 Pixel; wird verkleinert und als PNG neu geschrieben
-         *     (3.5, E-AN6-6: kein SVG).
-         */
-        put: operations["put_organisation_logo_api_v1_organisation_logo_put"];
-        post?: never;
-        /** Delete Organisation Logo */
-        delete: operations["delete_organisation_logo_api_v1_organisation_logo_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/organisation/members": {
@@ -1423,26 +1358,6 @@ export interface paths {
         head?: never;
         /** Change Member Role */
         patch: operations["change_member_role_api_v1_organisation_members__user_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/organisation/usage": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Usage
-         * @description Kosten der Auswertung und erkannte Seiten der letzten sechs Monate mit den Grenzen der Organisation.
-         */
-        get: operations["get_usage_api_v1_organisation_usage_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/projects": {
@@ -2508,76 +2423,6 @@ export interface components {
             /** Top Certain */
             top_certain: boolean;
         };
-        /** ApiKeyCreatedOut */
-        ApiKeyCreatedOut: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
-            expires_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Last Used At */
-            last_used_at: string | null;
-            /** Name */
-            name: string;
-            /** Prefix */
-            prefix: string;
-            /** Revoked At */
-            revoked_at: string | null;
-            /** Scopes */
-            scopes: ("read" | "write")[];
-            /** Token */
-            token: string;
-        };
-        /** ApiKeyIn */
-        ApiKeyIn: {
-            /**
-             * Days
-             * @default 365
-             */
-            days: number;
-            /** Name */
-            name: string;
-            /** Scopes */
-            scopes: ("read" | "write")[];
-        };
-        /** ApiKeyOut */
-        ApiKeyOut: {
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
-            expires_at: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Last Used At */
-            last_used_at: string | null;
-            /** Name */
-            name: string;
-            /** Prefix */
-            prefix: string;
-            /** Revoked At */
-            revoked_at: string | null;
-            /** Scopes */
-            scopes: ("read" | "write")[];
-        };
         /** ArchitectEdgeIn */
         ArchitectEdgeIn: {
             /** Kind */
@@ -2669,11 +2514,6 @@ export interface components {
             dxf: string;
             /** Xlsx */
             xlsx: string;
-        };
-        /** Body_put_organisation_logo_api_v1_organisation_logo_put */
-        Body_put_organisation_logo_api_v1_organisation_logo_put: {
-            /** File */
-            file: string;
         };
         /** Body_scan_site_preview_api_v1_projects__project_id__site_scan_post */
         Body_scan_site_preview_api_v1_projects__project_id__site_scan_post: {
@@ -4180,15 +4020,6 @@ export interface components {
             /** Version */
             version: number;
         };
-        /** MonthUsageOut */
-        MonthUsageOut: {
-            /** Cost Usd */
-            cost_usd: number;
-            /** Month */
-            month: string;
-            /** Ocr Pages */
-            ocr_pages: number;
-        };
         /** MyInquiryOut */
         MyInquiryOut: {
             /** Can Withdraw */
@@ -4325,25 +4156,10 @@ export interface components {
             /** Vat Rate */
             vat_rate: number;
         };
-        /**
-         * OrganisationIn
-         * @description Nur die genannten Felder ändern sich; ein leerer Text löscht die Angabe.
-         */
+        /** OrganisationIn */
         OrganisationIn: {
-            /** Accent Color */
-            accent_color?: string | null;
-            /** Address Lines */
-            address_lines?: string[] | null;
             /** Display Name */
-            display_name?: string | null;
-            /** Email */
-            email?: string | null;
-            /** Phone */
-            phone?: string | null;
-            /** Registration */
-            registration?: string | null;
-            /** Website */
-            website?: string | null;
+            display_name: string;
         };
         /**
          * OrganisationInfo
@@ -4367,18 +4183,8 @@ export interface components {
         };
         /** OrganisationOut */
         OrganisationOut: {
-            /** Accent Color */
-            accent_color: string | null;
-            /** Address Lines */
-            address_lines: string[];
-            /** Branding Revision */
-            branding_revision: number;
             /** Display Name */
             display_name: string;
-            /** Email */
-            email: string | null;
-            /** Has Logo */
-            has_logo: boolean;
             /**
              * Id
              * Format: uuid
@@ -4391,12 +4197,6 @@ export interface components {
             kind: "operator" | "customer";
             /** Name */
             name: string;
-            /** Phone */
-            phone: string | null;
-            /** Registration */
-            registration: string | null;
-            /** Website */
-            website: string | null;
         };
         /** OrientationOut */
         OrientationOut: {
@@ -6395,15 +6195,6 @@ export interface components {
             /** Scale Source */
             scale_source: ("file" | "input") | null;
             site: components["schemas"]["SiteOut"] | null;
-        };
-        /** UsageOut */
-        UsageOut: {
-            /** Budget Month Usd */
-            budget_month_usd: number | null;
-            /** Months */
-            months: components["schemas"]["MonthUsageOut"][];
-            /** Ocr Pages Month */
-            ocr_pages_month: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -8872,161 +8663,6 @@ export interface operations {
             };
         };
     };
-    list_api_keys_api_v1_organisation_api_keys_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiKeyOut"][];
-                };
-            };
-        };
-    };
-    create_api_key_api_v1_organisation_api_keys_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ApiKeyIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiKeyCreatedOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    revoke_api_key_api_v1_organisation_api_keys__key_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_organisation_logo_api_v1_organisation_logo_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "image/png": unknown;
-                };
-            };
-        };
-    };
-    put_organisation_logo_api_v1_organisation_logo_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_put_organisation_logo_api_v1_organisation_logo_put"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OrganisationOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_organisation_logo_api_v1_organisation_logo_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OrganisationOut"];
-                };
-            };
-        };
-    };
     list_members_api_v1_organisation_members_get: {
         parameters: {
             query?: never;
@@ -9142,26 +8778,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_usage_api_v1_organisation_usage_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UsageOut"];
                 };
             };
         };

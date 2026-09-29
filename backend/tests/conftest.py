@@ -92,8 +92,6 @@ CLEAN_TABLES = [
     "ref_road",
     "ref_commune",
     "ref_import",
-    "usage_record",
-    "api_key",
     "organisation_member",
     "staff_session",
     "staff_user",

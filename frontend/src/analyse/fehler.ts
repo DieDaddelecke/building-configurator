@@ -7,7 +7,7 @@ import { ApiError } from "../api/client";
 export function fehlerText(t: TFunction, error: unknown, prefix = "analyse.plu"): string | null {
   if (!error) return null;
   const code = error instanceof ApiError ? error.problem.code : "";
-  // Weitere Felder des Problems (etwa `remaining` beim Scan-Kontingent, AN6) stehen dem Text zur Verfügung
+  // Weitere Felder des Problems stehen dem Text als Werte zur Verfügung
   const werte = error instanceof ApiError ? { ...error.problem } : {};
   return t([`${prefix}.error.${code}`, `analyse.plu.error.${code}`, "error.generic"], werte);
 }

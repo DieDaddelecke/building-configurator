@@ -11,7 +11,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.config import get_settings
-from app.platform.auth.context import API_KEY_SCHEME, api_key_path_allowed
 from app.platform.auth.tokens import CSRF_COOKIE, CSRF_HEADER, new_token
 from app.platform.logging import get_logger, request_id_var
 from app.platform.problems import problem_response
@@ -60,16 +59,6 @@ class CsrfMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if request.headers.get("authorization", "").startswith(API_KEY_SCHEME):
-            # API-Schlüssel (AN6, docs/PLAN_AN6_MANDANTEN.md 3.6): Ein Browser sendet einen fremden
-            # `Authorization`-Kopf nur nach CORS-Freigabe, die es nicht gibt. Ohne Cookies ist die Anfrage
-            # deshalb nicht fälschbar; mit Cookies wird sie abgelehnt, statt die Prüfung zu umgehen
-            if request.cookies:
-                return problem_response(request, 400, "api_key_with_cookies")
-            if not api_key_path_allowed(request.url.path):
-                # Auch öffentliche Routen ohne `get_auth`: Ein Schlüssel gilt nur für `/projects` (3.6)
-                return problem_response(request, 403, "api_key_not_allowed")
-            return await call_next(request)
         cookie = request.cookies.get(CSRF_COOKIE)
         if request.method not in SAFE_METHODS and request.url.path.startswith("/api/"):
             header = request.headers.get(CSRF_HEADER)

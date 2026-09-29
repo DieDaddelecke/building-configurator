@@ -221,8 +221,7 @@
         "refusal": "Le modèle a refusé l'analyse.",
         "other": "Motif : {{reason}}",
         "ocr_no_text": "Même après la reconnaissance de texte, plus de la moitié des pages restent sans texte – sans doute des plans ou un scan de très mauvaise qualité. Veuillez déposer une meilleure version, par exemple celle du Géoportail de l'Urbanisme ou de la commune.",
-        "ocr_unavailable": "La reconnaissance de texte n'est pas installée sur le serveur. Veuillez prévenir l'exploitation.",
-        "organisation_budget_exceeded": "Le budget mensuel de votre organisation est atteint. L'analyse reprendra d'elle-même le mois prochain ou lorsque l'exploitant augmentera le budget."
+        "ocr_unavailable": "La reconnaissance de texte n'est pas installée sur le serveur. Veuillez prévenir l'exploitation."
       },
       "error": {
         "not_a_pdf": "Le fichier n'est pas un PDF.",
@@ -239,9 +238,7 @@
         "page_out_of_range": "Les pages indiquées sont hors du document.",
         "interrupted": "La lecture a été interrompue. Veuillez déposer le PDF à nouveau.",
         "document_scan": "Le règlement est un scan. Lancez d'abord la reconnaissance du texte.",
-        "ocr_not_needed": "Le document n'a aucune page sans texte.",
-        "organisation_budget_exceeded": "Le budget mensuel de votre organisation est atteint ; une nouvelle analyse sera possible le mois prochain ou avec un budget plus élevé.",
-        "ocr_quota_exceeded": "Le quota de reconnaissance de texte de votre organisation ne suffit pas ce mois-ci : {{pages}} pages à reconnaître, il en reste {{remaining}} sur {{limit}}."
+        "ocr_not_needed": "Le document n'a aucune page sans texte."
       }
     },
     "scan": {
@@ -610,27 +607,13 @@
     },
     "organisation": {
       "eyebrow": "Organisation",
-      "introAdmin": "Membres, présentation du rapport et du DXF, consommation et clés d'API de votre organisation. Tous les membres voient les mêmes projets.",
-      "introMember": "Consommation de votre organisation ce mois-ci et les mois précédents. Les membres, la présentation et les clés d'API sont gérés par le rôle « Administration ».",
+      "introAdmin": "Nom et membres de votre organisation. Tous les membres voient les mêmes projets.",
+      "introMember": "Tous les membres de votre organisation voient les mêmes projets. Le nom et les membres sont gérés par le rôle « Administration ».",
       "none": "Votre compte n'appartient à aucune organisation. Merci de prévenir l'exploitant.",
       "cancel": "Annuler",
       "role": {
         "member": "Membre",
         "admin": "Administration"
-      },
-      "usage": {
-        "title": "Consommation",
-        "cost": "Analyse par le modèle d'IA",
-        "ocr": "Reconnaissance de texte",
-        "ofLimit": "{{value}} sur {{limit}}",
-        "noLimit": "Pas de limite propre ; le budget de l'instance s'applique.",
-        "pages_one": "{{count}} page",
-        "pages_other": "{{count}} pages",
-        "pagesOfLimit_one": "{{count}} page sur {{limit}}",
-        "pagesOfLimit_other": "{{count}} pages sur {{limit}}",
-        "hint": "Mois calendaire en UTC. Une fois la limite atteinte, une analyse attend le mois suivant ou une hausse de la limite par l'exploitant ; une reconnaissance de texte est refusée.",
-        "history": "Consommation des derniers mois",
-        "month": "Mois"
       },
       "members": {
         "title": "Membres",
@@ -646,65 +629,18 @@
         "submit": "Ajouter",
         "hint": "Le membre peut se connecter dès que l'exploitant a créé son compte auprès du service de connexion (avec second facteur). Retirer un membre bloque son compte ; les projets restent à l'organisation."
       },
-      "branding": {
-        "title": "Présentation",
-        "intro": "Le nom, l'adresse et le logo figurent dans l'en-tête du rapport, le nom et l'adresse dans le cartouche du DXF. Toute modification produit un nouveau rapport à la prochaine demande.",
-        "displayName": "Nom affiché",
-        "registration": "Identifiant",
-        "registrationHint": "Par exemple « N° d'inscription à l'Ordre des architectes » ou SIRET",
-        "address": "Adresse",
-        "addressHint_one": "{{count}} ligne au plus",
-        "addressHint_other": "{{count}} lignes au plus",
-        "phone": "Téléphone",
-        "email": "E-mail",
-        "website": "Site web",
-        "accent": "Couleur d'accent",
-        "accentPicker": "Choisir la couleur d'accent",
-        "accentHint": "Pour les titres et les filets du rapport ; laisser vide pour le noir.",
-        "accentTooLight": "Trop claire : sur fond blanc, la couleur doit atteindre un contraste d'au moins {{min}} : 1.",
+      "name": {
+        "title": "Nom",
+        "label": "Nom affiché",
         "save": "Enregistrer",
-        "saved": "Enregistré.",
-        "logo": "Logo",
-        "logoHint": "PNG ou JPEG, 1 Mo et 2 000 pixels au plus ; réduit à 800 pixels. Pas de SVG.",
-        "removeLogo": "Supprimer le logo",
-        "preview": "Aperçu : en-tête de la première page du rapport",
-        "previewEyebrow": "Emprise Analyse",
-        "previewTitle": "Analyse de la parcelle"
-      },
-      "keys": {
-        "title": "Clés d'API",
-        "intro": "Pour vos propres programmes et liaisons CAO : appel avec l'en-tête « Authorization: Bearer <clé> », uniquement pour les points d'accès des projets (/api/v1/projects…). Une clé agit comme un architecte de votre organisation ; les coûts comptent dans son budget.",
-        "empty": "Aucune clé pour l'instant.",
-        "scope": {
-          "read": "lecture seule",
-          "write": "lecture et écriture"
-        },
-        "meta": "créée le {{created}} · dernière utilisation {{used}} · expire le {{expires}}",
-        "revokedOn": "révoquée le {{date}}",
-        "revoke": "Révoquer",
-        "confirmRevoke": "Confirmer la révocation",
-        "new": "Nouvelle clé",
-        "name": "Nom (usage)",
-        "days": "Validité (jours)",
-        "writeScope": "Aussi en écriture (créer des projets, téléverser, analyser)",
-        "create": "Créer la clé",
-        "createdTitle": "Clé « {{name}} » créée",
-        "createdHint": "La clé n'est affichée que maintenant ; seule une empreinte est conservée. En cas de perte, révoquez-la et créez-en une nouvelle.",
-        "copy": "Copier",
-        "copied": "Copié",
-        "done": "Terminé"
+        "saved": "Enregistré."
       },
       "error": {
-        "invalid_color": "La couleur doit être indiquée en hexadécimal, par exemple #2b45b0.",
-        "color_contrast_too_low": "La couleur est trop claire pour du texte sur fond blanc.",
-        "logo_format": "Le logo doit être un PNG ou un JPEG.",
-        "logo_too_large": "Le logo est trop grand (1 Mo et 2 000 pixels au plus).",
         "member_exists": "Cette personne est déjà membre.",
         "member_of_other_organisation": "Cette adresse appartient à une autre organisation.",
         "operator_roles_outside_operator": "Ce compte a des rôles d'exploitation et ne peut appartenir à une autre organisation.",
         "last_admin": "L'organisation doit garder au moins un membre avec le rôle « Administration ».",
-        "cannot_remove_self": "Vous ne pouvez pas vous retirer vous-même.",
-        "api_key_limit": "10 clés actives au plus par organisation. Merci d'en révoquer une d'abord."
+        "cannot_remove_self": "Vous ne pouvez pas vous retirer vous-même."
       }
     }
   },

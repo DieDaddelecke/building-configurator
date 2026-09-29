@@ -28,7 +28,6 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
-from app.rules.budget import ORGANISATION_BUDGET_ERROR, organisation_budget_left
 from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION, lexicon
 from app.rules.domain.assess import (
     AssessedRule,
@@ -208,8 +207,6 @@ class _Calls:
     scan_pages: frozenset[int] = frozenset()
     """Seiten, deren Text per Texterkennung gelesen wurde (AN7)."""
     ocr: str | None = None
-    organisation_id: uuid.UUID | None = None
-    """Zahlende Organisation des Kapitels (AN6, PLAN_AN6_MANDANTEN 3.3); None beim GPU-Import."""
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
@@ -261,14 +258,6 @@ class _Calls:
                 budget_usd=self.settings.rules_budget_month_usd,
             )
             raise _Stop(ChapterOutcome("budget_exceeded", f"{spent:.2f}", self.cost), "budget_exceeded")
-        if self.organisation_id is not None:
-            with self.sessions() as session:
-                left = organisation_budget_left(session, self.settings, self.organisation_id)
-            if not left:
-                log.warning("organisation_budget_exceeded", organisation=str(self.organisation_id))
-                raise _Stop(
-                    ChapterOutcome("budget_exceeded", "organisation", self.cost), ORGANISATION_BUDGET_ERROR
-                )
         if (
             self.deadline is not None
             and time.monotonic() + self.settings.rules_request_timeout_seconds > self.deadline
@@ -286,7 +275,6 @@ class _Calls:
                 input_hash=self.digest,
                 prompt_version=PROMPT_VERSION,
                 created_by=ACTOR,
-                organisation_id=self.organisation_id,
                 **values,
             )
             session.add(run)
@@ -754,7 +742,6 @@ def extract_chapter(
             document_kind=kind,
             scan_pages=scan_pages,
             ocr=stamp,
-            organisation_id=chapter.billing_organisation_id,
             model=settings.rules_model,
         )
         file_id, plan_id = source.id, plan.id

@@ -63,13 +63,10 @@ def render(
     notes: list[str],
     *,
     all_layers: bool = True,
-    cartouche: list[str] | None = None,
 ) -> bytes:
     """DXF als Bytes. `notes` sind Textzeilen (Vorgang, Quelle, Ursprung) oben links am Plan.
 
-    `all_layers=False` legt auch die Ebenen von V nur an, wenn sie belegt sind (Analyse, AN5). `cartouche`
-    ist das Schriftfeld der Organisation unten links auf der Ebene `CARTOUCHE` (AN6, PLAN_AN6_MANDANTEN 3.5);
-    ohne Angaben entsteht die Ebene nicht."""
+    `all_layers=False` legt auch die Ebenen von V nur an, wenn sie belegt sind (Analyse, AN5)."""
     import ezdxf  # lokal: nur der Worker braucht die Bibliothek
     from ezdxf import units
 
@@ -151,14 +148,10 @@ def render(
                 mesh.optimize(precision=DECIMALS)
 
     msp.add_point((dx, dy), dxfattribs=layer("ORIGINE"))
-    min_x, min_y, _max_x, max_y = plan.bounds()
+    min_x, _min_y, _max_x, max_y = plan.bounds()
     for index, note in enumerate(notes):
         msp.add_text(note, height=TEXT_HEIGHT_M, dxfattribs=layer("TEXTE")).set_placement(
             (round(min_x + dx, DECIMALS), round(max_y + dy + (len(notes) - index) * 0.8, DECIMALS))
-        )
-    for index, entry in enumerate(cartouche or []):
-        msp.add_text(entry, height=TEXT_HEIGHT_M, dxfattribs=layer("CARTOUCHE", 7)).set_placement(
-            (round(min_x + dx, DECIMALS), round(min_y + dy - (index + 2) * 0.8, DECIMALS))
         )
 
     stream = io.StringIO()

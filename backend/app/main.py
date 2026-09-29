@@ -1,7 +1,6 @@
 """FastAPI-Anwendung. Welche Fachmodule ihre Router unter `/api/v1` einhängen, sagt `app.products`."""
 
 from importlib import import_module
-from typing import Any
 
 import sentry_sdk
 from fastapi import APIRouter, FastAPI
@@ -10,7 +9,6 @@ from starlette.middleware.sessions import SessionMiddleware
 import app.registry  # noqa: F401  Jobs registrieren, damit enqueue sie kennt
 from app.config import Settings, get_settings
 from app.platform import health
-from app.platform.auth.context import API_KEY_PATHS
 from app.platform.logging import configure_logging
 from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
 from app.platform.problems import install_problem_handlers
@@ -28,31 +26,6 @@ def init_sentry(settings: Settings) -> None:
             send_default_pii=False,
             traces_sample_rate=0.0,
         )
-
-
-def document_api_keys(app: FastAPI) -> None:
-    """API-Schlüssel im OpenAPI-Dokument (AN6, docs/PLAN_AN6_MANDANTEN.md 3.6): Schema `bearerAuth` an den
-    Projektendpunkten, wahlweise neben der Sitzung. Geprüft wird in `get_auth`, nicht hier."""
-    base = app.openapi
-
-    def openapi() -> dict[str, Any]:
-        first = app.openapi_schema is None
-        schema = base()
-        if first:
-            schema.setdefault("components", {})["securitySchemes"] = {
-                "bearerAuth": {
-                    "type": "http",
-                    "scheme": "bearer",
-                    "description": "API-Schlüssel der Organisation (emp_…), nur für /api/v1/projects",
-                }
-            }
-            for path, operations in schema.get("paths", {}).items():
-                if any(path == p or path.startswith(p + "/") for p in API_KEY_PATHS):
-                    for operation in operations.values():
-                        operation["security"] = [{"bearerAuth": []}, {}]
-        return schema
-
-    app.openapi = openapi  # type: ignore[method-assign]
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -87,5 +60,4 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         https_only=settings.cookie_secure,
     )
     app.add_middleware(RequestContextMiddleware)
-    document_api_keys(app)
     return app

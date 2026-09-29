@@ -13,9 +13,7 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
-from app.platform import audit, organisations, scan, storage
-from app.platform.auth.context import project_organisation
+from app.platform import audit, scan, storage
 from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
@@ -32,8 +30,7 @@ BATCH_PAGES = 20
 
 def request(db: Session, project_id: uuid.UUID, document_id: uuid.UUID, actor: str) -> ProjectRegulationOut:
     """Texterkennung nach dem Hinweis bestätigen. Läuft sie schon oder ist alles erkannt, ändert sich
-    nichts. Die offenen Seiten zählen beim Scan-Kontingent der Organisation des Projekts (AN6,
-    docs/PLAN_AN6_MANDANTEN.md 3.4); reicht es nicht, `409 ocr_quota_exceeded`."""
+    nichts."""
     link = documents.project_link(db, project_id, document_id)
     plan = db.execute(select(LandUsePlan).where(LandUsePlan.id == document_id).with_for_update()).scalar_one()
     if plan.status not in ("scan", "active"):
@@ -44,11 +41,6 @@ def request(db: Session, project_id: uuid.UUID, document_id: uuid.UUID, actor: s
     source = db.execute(select(SourceFile).where(SourceFile.id == source.id).with_for_update()).scalar_one()
     open_pages = _open_pages(db, source)
     if source.ocr_state != "running" and open_pages:
-        organisation_id = project_organisation(db, project_id)
-        if organisation_id is not None:
-            organisations.reserve_ocr_pages(
-                db, get_settings(), organisation_id, len(open_pages), f"source_file:{source.id}", actor
-            )
         before = source.ocr_state
         source.ocr_state, source.ocr_error = "running", None
         source.ocr_started_at, source.ocr_finished_at = utcnow(), None

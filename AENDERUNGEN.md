@@ -26,7 +26,7 @@ Danach „weiter mit AN6 und AN7“, dann „comitte und pushe alle änderungen�
 Nicht committet: Behebung der beiden CI-Fehler (`# noqa: S608` in 0020, Testwert `emp_beispiel`, `.gitleaksignore` mit dem Fund aus `24d3627`), eine README-Stolperstelle, die Hand-off-Dokumente.
 
 **Neu**
-- Pläne mit Selbstprüfung: [PLAN_AN5_AUSGABE](docs/PLAN_AN5_AUSGABE.md), [PLAN_AN7_SCAN](docs/PLAN_AN7_SCAN.md), [PLAN_AN6_MANDANTEN](docs/PLAN_AN6_MANDANTEN.md). Dazu die API-Anleitung [docs/API_ANALYSE.md](docs/API_ANALYSE.md).
+- Pläne mit Selbstprüfung: [PLAN_AN5_AUSGABE](docs/PLAN_AN5_AUSGABE.md), [PLAN_AN7_SCAN](docs/PLAN_AN7_SCAN.md), [PLAN_AN6_MANDANTEN](docs/PLAN_AN6_MANDANTEN.md). Dazu die API-Anleitung [docs/API_ANALYSE.md](docs/archiv/API_ANALYSE.md).
 - **AN5** (Migration 0018, AU01–AU12):
   - Projekte mit Name, Notiz und Archiv.
   - Lage auf der Katasterebene einpassen: starr in Lambert-93, mit Gitterkonvergenz.

@@ -20,11 +20,9 @@ from app.analysis.report import ascii_text, file_stem
 from app.envelope.domain import local as local_coords
 from app.plan import dxf
 from app.plan.geometry import Area, Constraint, Cut, Edge, Plan, Point, Ring, Stage, rings
-from app.platform import organisations
 from app.platform.db import utcnow
 from app.platform.i18n import translate
 from app.platform.models import Project
-from app.platform.organisations import Branding
 from app.platform.problems import Problem
 from app.site import service as site_service
 from app.site.schemas import SiteOut
@@ -44,9 +42,6 @@ class Source:
     project: Project
     label: str
     """Name des Projekts, sonst Adresse, sonst Parzellen."""
-    branding: Branding | None = None
-    """Schriftfeld der Organisation im DXF (AN6, PLAN_AN6_MANDANTEN 3.5); ohne Logo, DXF bettet keine Bilder
-    ein."""
 
 
 def load(db: Session, project_id: uuid.UUID) -> Source:
@@ -60,27 +55,7 @@ def load(db: Session, project_id: uuid.UUID) -> Source:
         site=site,
         project=project,
         label=label,
-        branding=organisations.branding_for(db, project.organisation_id, load_logo=False),
     )
-
-
-def cartouche(source: Source, variant: Variant) -> list[str] | None:
-    """Büro, Anschrift, Kontakt und Kennung, dazu Projekt, Datum und Variante (3.5). ASCII wie die übrigen
-    Texte des DXF, damit ältere CAD-Programme sie lesen."""
-    if source.branding is None:
-        return None
-    lines = [
-        source.branding.display_name,
-        *source.branding.contact_lines,
-        translate(
-            "export.dxf.cartouche",
-            "fr",
-            label=source.label,
-            date=f"{utcnow():%d/%m/%Y}",
-            variant=variant,
-        ),
-    ]
-    return [ascii_text(line) for line in lines if ascii_text(line)]
 
 
 # ---------------------------------------------------------------------------
@@ -206,9 +181,7 @@ def dxf_file(source: Source, variant: Variant) -> tuple[bytes, str]:
     if variant == "L93" and not source.site.georeferenced:
         raise Problem(409, "export_not_georeferenced")
     plan = plan_for(source.computed, source.site.georeferenced)
-    data = dxf.render(
-        plan, variant, _notes(source, plan, variant), all_layers=False, cartouche=cartouche(source, variant)
-    )
+    data = dxf.render(plan, variant, _notes(source, plan, variant), all_layers=False)
     return data, f"{file_stem(source.label)}_{utcnow():%Y-%m-%d}_{variant}.dxf"
 
 

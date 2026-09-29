@@ -653,194 +653,6 @@
         "title": "AnalysisStoreysOut",
         "type": "object"
       },
-      "ApiKeyCreatedOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "expires_at": {
-            "format": "date-time",
-            "title": "Expires At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "last_used_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Used At"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "prefix": {
-            "title": "Prefix",
-            "type": "string"
-          },
-          "revoked_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Revoked At"
-          },
-          "scopes": {
-            "items": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "title": "Scopes",
-            "type": "array"
-          },
-          "token": {
-            "title": "Token",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "prefix",
-          "scopes",
-          "created_at",
-          "expires_at",
-          "last_used_at",
-          "revoked_at",
-          "token"
-        ],
-        "title": "ApiKeyCreatedOut",
-        "type": "object"
-      },
-      "ApiKeyIn": {
-        "properties": {
-          "days": {
-            "default": 365,
-            "maximum": 730.0,
-            "minimum": 1.0,
-            "title": "Days",
-            "type": "integer"
-          },
-          "name": {
-            "maxLength": 80,
-            "minLength": 2,
-            "title": "Name",
-            "type": "string"
-          },
-          "scopes": {
-            "items": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "minItems": 1,
-            "title": "Scopes",
-            "type": "array"
-          }
-        },
-        "required": [
-          "name",
-          "scopes"
-        ],
-        "title": "ApiKeyIn",
-        "type": "object"
-      },
-      "ApiKeyOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "expires_at": {
-            "format": "date-time",
-            "title": "Expires At",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "last_used_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Used At"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "prefix": {
-            "title": "Prefix",
-            "type": "string"
-          },
-          "revoked_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Revoked At"
-          },
-          "scopes": {
-            "items": {
-              "enum": [
-                "read",
-                "write"
-              ],
-              "type": "string"
-            },
-            "title": "Scopes",
-            "type": "array"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "prefix",
-          "scopes",
-          "created_at",
-          "expires_at",
-          "last_used_at",
-          "revoked_at"
-        ],
-        "title": "ApiKeyOut",
-        "type": "object"
-      },
       "ArchitectEdgeIn": {
         "properties": {
           "kind": {
@@ -1114,20 +926,6 @@
           "dxf"
         ],
         "title": "Body_import_type_version_api_v1_admin_catalog_types__slug__versions_post",
-        "type": "object"
-      },
-      "Body_put_organisation_logo_api_v1_organisation_logo_put": {
-        "properties": {
-          "file": {
-            "contentMediaType": "application/octet-stream",
-            "title": "File",
-            "type": "string"
-          }
-        },
-        "required": [
-          "file"
-        ],
-        "title": "Body_put_organisation_logo_api_v1_organisation_logo_put",
         "type": "object"
       },
       "Body_scan_site_preview_api_v1_projects__project_id__site_scan_post": {
@@ -5575,29 +5373,6 @@
         "title": "ModuleVersionOut",
         "type": "object"
       },
-      "MonthUsageOut": {
-        "properties": {
-          "cost_usd": {
-            "title": "Cost Usd",
-            "type": "number"
-          },
-          "month": {
-            "title": "Month",
-            "type": "string"
-          },
-          "ocr_pages": {
-            "title": "Ocr Pages",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "month",
-          "cost_usd",
-          "ocr_pages"
-        ],
-        "title": "MonthUsageOut",
-        "type": "object"
-      },
       "MyInquiryOut": {
         "properties": {
           "can_withdraw": {
@@ -5979,97 +5754,17 @@
         "type": "object"
       },
       "OrganisationIn": {
-        "description": "Nur die genannten Felder ändern sich; ein leerer Text löscht die Angabe.",
         "properties": {
-          "accent_color": {
-            "anyOf": [
-              {
-                "maxLength": 7,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Accent Color"
-          },
-          "address_lines": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "maxItems": 4,
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Address Lines"
-          },
           "display_name": {
-            "anyOf": [
-              {
-                "maxLength": 200,
-                "minLength": 2,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "maxLength": 320,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
-          },
-          "phone": {
-            "anyOf": [
-              {
-                "maxLength": 40,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Phone"
-          },
-          "registration": {
-            "anyOf": [
-              {
-                "maxLength": 120,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Registration"
-          },
-          "website": {
-            "anyOf": [
-              {
-                "maxLength": 200,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Website"
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Display Name",
+            "type": "string"
           }
         },
+        "required": [
+          "display_name"
+        ],
         "title": "OrganisationIn",
         "type": "object"
       },
@@ -6112,46 +5807,9 @@
       },
       "OrganisationOut": {
         "properties": {
-          "accent_color": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Accent Color"
-          },
-          "address_lines": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Address Lines",
-            "type": "array"
-          },
-          "branding_revision": {
-            "title": "Branding Revision",
-            "type": "integer"
-          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
-          },
-          "has_logo": {
-            "title": "Has Logo",
-            "type": "boolean"
           },
           "id": {
             "format": "uuid",
@@ -6169,54 +5827,13 @@
           "name": {
             "title": "Name",
             "type": "string"
-          },
-          "phone": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Phone"
-          },
-          "registration": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Registration"
-          },
-          "website": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Website"
           }
         },
         "required": [
           "id",
           "name",
           "display_name",
-          "kind",
-          "address_lines",
-          "phone",
-          "email",
-          "website",
-          "registration",
-          "accent_color",
-          "has_logo",
-          "branding_revision"
+          "kind"
         ],
         "title": "OrganisationOut",
         "type": "object"
@@ -12110,46 +11727,6 @@
         "title": "UploadResultOut",
         "type": "object"
       },
-      "UsageOut": {
-        "properties": {
-          "budget_month_usd": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Budget Month Usd"
-          },
-          "months": {
-            "items": {
-              "$ref": "#/components/schemas/MonthUsageOut"
-            },
-            "title": "Months",
-            "type": "array"
-          },
-          "ocr_pages_month": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ocr Pages Month"
-          }
-        },
-        "required": [
-          "budget_month_usd",
-          "ocr_pages_month",
-          "months"
-        ],
-        "title": "UsageOut",
-        "type": "object"
-      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -12479,13 +12056,6 @@
         ],
         "title": "ZoneRulesOut",
         "type": "object"
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "description": "API-Schlüssel der Organisation (emp_…), nur für /api/v1/projects",
-        "scheme": "bearer",
-        "type": "http"
       }
     }
   },
@@ -15857,7 +15427,7 @@
         ]
       },
       "patch": {
-        "description": "Anzeigename und Schriftfeld für Bericht und DXF (3.5). Jede Änderung zählt `branding_revision` hoch:\nDer nächste Bericht entsteht neu.",
+        "description": "Anzeigename der Organisation (Kopf der Seiten, Sitzung).",
         "operationId": "update_organisation_api_v1_organisation_patch",
         "requestBody": {
           "content": {
@@ -15892,184 +15462,6 @@
           }
         },
         "summary": "Update Organisation",
-        "tags": [
-          "organisation"
-        ]
-      }
-    },
-    "/api/v1/organisation/api-keys": {
-      "get": {
-        "operationId": "list_api_keys_api_v1_organisation_api_keys_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ApiKeyOut"
-                  },
-                  "title": "Response List Api Keys Api V1 Organisation Api Keys Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "List Api Keys",
-        "tags": [
-          "organisation"
-        ]
-      },
-      "post": {
-        "description": "Neuer Schlüssel; er erscheint nur in dieser Antwort. `write` schließt `read` ein.",
-        "operationId": "create_api_key_api_v1_organisation_api_keys_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApiKeyIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiKeyCreatedOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Create Api Key",
-        "tags": [
-          "organisation"
-        ]
-      }
-    },
-    "/api/v1/organisation/api-keys/{key_id}": {
-      "delete": {
-        "operationId": "revoke_api_key_api_v1_organisation_api_keys__key_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "key_id",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "title": "Key Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Revoke Api Key",
-        "tags": [
-          "organisation"
-        ]
-      }
-    },
-    "/api/v1/organisation/logo": {
-      "delete": {
-        "operationId": "delete_organisation_logo_api_v1_organisation_logo_delete",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Delete Organisation Logo",
-        "tags": [
-          "organisation"
-        ]
-      },
-      "get": {
-        "description": "Logo für die Vorschau des Berichtskopfs.",
-        "operationId": "get_organisation_logo_api_v1_organisation_logo_get",
-        "responses": {
-          "200": {
-            "content": {
-              "image/png": {}
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Organisation Logo",
-        "tags": [
-          "organisation"
-        ]
-      },
-      "put": {
-        "description": "Logo als PNG oder JPEG, höchstens 1 MB und 2000 Pixel; wird verkleinert und als PNG neu geschrieben\n(3.5, E-AN6-6: kein SVG).",
-        "operationId": "put_organisation_logo_api_v1_organisation_logo_put",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_put_organisation_logo_api_v1_organisation_logo_put"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganisationOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Put Organisation Logo",
         "tags": [
           "organisation"
         ]
@@ -16247,28 +15639,6 @@
         ]
       }
     },
-    "/api/v1/organisation/usage": {
-      "get": {
-        "description": "Kosten der Auswertung und erkannte Seiten der letzten sechs Monate mit den Grenzen der Organisation.",
-        "operationId": "get_usage_api_v1_organisation_usage_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UsageOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Usage",
-        "tags": [
-          "organisation"
-        ]
-      }
-    },
     "/api/v1/projects": {
       "get": {
         "description": "Projekte der eigenen Organisation, neueste zuerst (AN1, AN6); `archived=true` zeigt das Archiv (AN5).\nAlle Mitglieder einer Organisation sehen dieselben Projekte (E-AN1-4).",
@@ -16311,12 +15681,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "List Own Projects",
         "tags": [
           "projects"
@@ -16337,12 +15701,6 @@
             "description": "Successful Response"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Create Project",
         "tags": [
           "projects"
@@ -16380,12 +15738,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Delete Project",
         "tags": [
           "projects"
@@ -16427,12 +15779,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Project",
         "tags": [
           "projects"
@@ -16485,12 +15831,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Update Own Project",
         "tags": [
           "projects"
@@ -16535,12 +15875,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Analysis",
         "tags": [
           "analysis"
@@ -16596,12 +15930,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Analysis Comparison",
         "tags": [
           "analysis"
@@ -16658,12 +15986,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Export Dxf",
         "tags": [
           "analysis"
@@ -16706,12 +16028,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Export Geojson",
         "tags": [
           "analysis"
@@ -16756,12 +16072,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Reset Analysis Parameters",
         "tags": [
           "analysis"
@@ -16814,12 +16124,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Set Analysis Parameters",
         "tags": [
           "analysis"
@@ -16876,12 +16180,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Download Report",
         "tags": [
           "analysis"
@@ -16934,12 +16232,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Create Report",
         "tags": [
           "analysis"
@@ -16984,12 +16276,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Options",
         "tags": [
           "configuration"
@@ -17034,12 +16320,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "List Types",
         "tags": [
           "configuration"
@@ -17083,12 +16363,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Configuration",
         "tags": [
           "configuration"
@@ -17157,12 +16431,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Patch Configuration",
         "tags": [
           "configuration"
@@ -17224,12 +16492,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Placement Area",
         "tags": [
           "configuration"
@@ -17291,12 +16553,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Post Placement Presets",
         "tags": [
           "configuration"
@@ -17341,12 +16597,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Own Project",
         "tags": [
           "projects"
@@ -17391,12 +16641,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Envelope",
         "tags": [
           "envelope"
@@ -17439,12 +16683,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Download Sheet",
         "tags": [
           "envelope"
@@ -17487,12 +16725,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Create Sheet",
         "tags": [
           "envelope"
@@ -17537,12 +16769,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Export Project",
         "tags": [
           "inquiry"
@@ -17587,12 +16813,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get My Inquiry",
         "tags": [
           "inquiry"
@@ -17646,12 +16866,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Confirm Contact",
         "tags": [
           "inquiry"
@@ -17705,12 +16919,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Submit Contact",
         "tags": [
           "inquiry"
@@ -17764,12 +16972,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Post Customer Message",
         "tags": [
           "inquiry"
@@ -17814,12 +17016,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Withdraw Inquiry",
         "tags": [
           "inquiry"
@@ -17873,12 +17069,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Lookup Parcels",
         "tags": [
           "site"
@@ -17927,12 +17117,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "List Project Regulations",
         "tags": [
           "rules"
@@ -17985,12 +17169,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Upload Project Regulation",
         "tags": [
           "rules"
@@ -18038,12 +17216,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Remove Project Regulation",
         "tags": [
           "rules"
@@ -18108,12 +17280,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Choose Regulation Lot",
         "tags": [
           "rules"
@@ -18168,12 +17334,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Request Regulation Ocr",
         "tags": [
           "rules"
@@ -18238,12 +17398,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Choose Regulation Zone",
         "tags": [
           "rules"
@@ -18292,12 +17446,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "List Own Overrides",
         "tags": [
           "rules"
@@ -18354,12 +17502,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Put Own Override",
         "tags": [
           "rules"
@@ -18418,12 +17560,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Delete Own Override",
         "tags": [
           "rules"
@@ -18468,12 +17604,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Project Rules",
         "tags": [
           "rules"
@@ -18517,12 +17647,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Get Site",
         "tags": [
           "site"
@@ -18575,12 +17699,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Put Site",
         "tags": [
           "site"
@@ -18660,12 +17778,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Patch Edge Customer",
         "tags": [
           "site"
@@ -18720,12 +17832,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Put Site Position",
         "tags": [
           "site"
@@ -18780,12 +17886,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Scan Site Preview",
         "tags": [
           "site"
@@ -18840,12 +17940,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Upload Site",
         "tags": [
           "site"
@@ -18900,12 +17994,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Submit",
         "tags": [
           "submission"
@@ -18967,12 +18055,6 @@
             "description": "Validation Error"
           }
         },
-        "security": [
-          {
-            "bearerAuth": []
-          },
-          {}
-        ],
         "summary": "Download Own File",
         "tags": [
           "submission"

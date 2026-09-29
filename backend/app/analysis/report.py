@@ -8,7 +8,6 @@ Der Inhalt hängt nur an `ReportData`; deren Prüfsumme benennt den Bericht (`re
 gleicher Bericht – für jede Person, deshalb nennt der Kopf keinen Bearbeiter (7.1 Nr. 19).
 """
 
-import base64
 import hashlib
 import html
 import json
@@ -22,7 +21,6 @@ from app.analysis import drawing
 from app.analysis.schemas import AnalysisOut, AnalysisPartOut, GabaritOut, SupplementAnalysisOut
 from app.envelope.schemas import EnvelopeEdgeOut, EnvelopeOut, HeightsOut, SetbackOut
 from app.platform.i18n import Locale, translate
-from app.platform.organisations import HEX_COLOR, Branding
 from app.rules.documents import SUPPLEMENT_WHOLE
 from app.rules.format import reason_text, rule_value
 from app.rules.schemas import ProjectOverrideOut, ProjectRegulationOut, ProjectRulesOut, RuleOut, ZoneRulesOut
@@ -39,8 +37,6 @@ HASH_CHARS = 12
 class ReportData:
     """Alles, was im Bericht steht, in der Form der API: Bericht und Oberfläche zeigen dieselben Werte."""
 
-    branding: Branding | None
-    """Erscheinungsbild der Organisation (AN6, docs/PLAN_AN6_MANDANTEN.md 3.5); None: Bericht wie vor AN6."""
     name: str | None
     note: str | None
     label: str
@@ -92,9 +88,6 @@ def report_hash(data: ReportData) -> str:
         "overrides": [_stable(o.model_dump(mode="json")) for o in data.overrides],
         "regulations": [_stable(r.model_dump(mode="json")) for r in data.regulations],
     }
-    if data.branding is not None:
-        # Nur mit Erscheinungsbild: Berichte ohne behalten ihre Prüfsumme (AN6, 7.1 Nr. 9)
-        payload["branding_revision"] = data.branding.revision
     raw = json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str)
     return "sha256:" + hashlib.sha256(raw.encode()).hexdigest()
 
@@ -228,28 +221,6 @@ def distance_text(setback: SetbackOut, heights: HeightsOut | None, t: _Text) -> 
 # ---------------------------------------------------------------------------
 
 
-def _brand(branding: Branding | None) -> str:
-    """Kopf der ersten Seite rechts: Logo, Name und Schriftfeld der Organisation (AN6, 3.5). Das Logo ist ein
-    von Emprise neu geschriebenes PNG und kommt als data-URI, WeasyPrint lädt also nichts nach."""
-    if branding is None:
-        return ""
-    logo = (
-        f'<img class="brand-logo" src="data:image/png;base64,{base64.b64encode(branding.logo_png).decode()}">'
-        if branding.logo_png
-        else ""
-    )
-    lines = "".join(f"<div>{_esc(line)}</div>" for line in branding.contact_lines)
-    return (
-        f'<div class="brand">{logo}<div class="brand-name">{_esc(branding.display_name)}</div>'
-        f'<div class="brand-lines">{lines}</div></div>'
-    )
-
-
-def _css_string(value: str) -> str:
-    """Text für `content: "…"` in CSS: Backslash, Anführungszeichen und Zeilenumbrüche maskieren."""
-    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
-
-
 def _head(data: ReportData, t: _Text, generated_at: datetime, report: str) -> str:
     site, analysis = data.site, data.analysis
     parcels = ", ".join(p.idu for p in site.parcels)
@@ -263,7 +234,7 @@ def _head(data: ReportData, t: _Text, generated_at: datetime, report: str) -> st
     ]
     note = f'<div class="note">{_esc(data.note)}</div>' if data.note else ""
     return (
-        _brand(data.branding) + f'<div class="eyebrow">{t.e("report.eyebrow")}</div>'
+        f'<div class="eyebrow">{t.e("report.eyebrow")}</div>'
         f"<h1>{_esc(data.label or t('report.untitled'))}</h1>"
         f"{_pairs(meta)}{note}"
         f'<div class="stamp">{t.e("report.disclaimer")}</div>'
@@ -832,30 +803,14 @@ ul { margin: 1mm 0; padding-left: 5mm; }
 .figure { margin: 2mm 0; break-inside: avoid; }
 .legend span { margin-right: 4mm; font-size: 7pt; }
 .swatch { display: inline-block; width: 3mm; height: 3mm; margin-right: 1mm; vertical-align: -0.3mm; }
-.brand { float: right; width: 62mm; margin: 0 0 3mm 4mm; text-align: right; font-size: 7pt; color: #52606d; }
-.brand-logo { max-width: 40mm; max-height: 16mm; margin-bottom: 1.5mm; }
-.brand-name { font-size: 9pt; font-weight: bold; color: #1f2933; }
-"""
-
-BRAND_STYLE = """
-@page { @top-right { content: "%(name)s"; font-size: 6.5pt; color: #6b7280; } }
-"""
-ACCENT_STYLE = """
-h2 { border-bottom-color: %(color)s; }
-.eyebrow, .brand-name { color: %(color)s; }
 """
 
 
 def render_html(data: ReportData, *, locale: Locale, generated_at: datetime, report: str) -> str:
-    """Vollständiges HTML des Berichts (3.6); mit Erscheinungsbild der Organisation deren Name in der
-    Kopfzeile jeder Seite und die Akzentfarbe für Überschriften (AN6, 3.5)."""
+    """Vollständiges HTML des Berichts (3.6)."""
     t = _Text(locale)
     footer = t("report.footer").replace('"', "'")
     style = STYLE % {"footer": footer, "hash": _short(report)}
-    if data.branding is not None:
-        style += BRAND_STYLE % {"name": _css_string(data.branding.display_name)}
-        if data.branding.accent_color and HEX_COLOR.match(data.branding.accent_color):
-            style += ACCENT_STYLE % {"color": data.branding.accent_color}
     body = "".join(
         [
             _head(data, t, generated_at, report),
