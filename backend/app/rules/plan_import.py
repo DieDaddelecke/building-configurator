@@ -13,7 +13,6 @@ Text je Seite, Kapitel erkennen → in einer Transaktion speichern → Auswertun
 
 import hashlib
 import json
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -21,26 +20,21 @@ from typing import Any, Protocol
 import httpx2
 from shapely.geometry import shape
 from shapely.geometry.base import BaseGeometry
-from sqlalchemy import delete, exists, insert, select, text
+from sqlalchemy import delete, exists, select, text
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.integrations import gpu
 from app.integrations.http import ExternalServiceError
-from app.platform import storage
 from app.platform.db import utcnow
-from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
 from app.rules.domain.chapters import (
-    CHAPTER_MAX_PAGES,
     Chapter,
     Structure,
     chapter_for_zone,
     detect_structure,
 )
-from app.rules.domain.extraction import DocumentKind, document_kind
-from app.rules.extract import input_hash, ocr_stamp
 from app.rules.models import (
     LandUsePlan,
     OverlayConstraint,
@@ -51,6 +45,7 @@ from app.rules.models import (
     SourcePage,
     Zone,
 )
+from app.rules.sources import ChapterValues, ensure_chapter, store_source
 
 log = get_logger("rules_import")
 ACTOR = "system:plu_import"
@@ -331,28 +326,6 @@ def _store_zones_and_overlays(
     return count
 
 
-def enqueue_extraction(
-    session: Session,
-    settings: Settings,
-    chapter: RegulationChapter,
-    source_sha256: str,
-    created_by: str,
-    kind: DocumentKind = "plu",
-) -> None:
-    import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
-
-    # Schlüssel über die Eingabe: geänderte Seiten oder Sektoren ergeben einen neuen Job, gleiche keinen
-    stamp = ocr_stamp(session.get(SourceFile, chapter.source_file_id)) if chapter.source_file_id else None
-    digest = input_hash(settings, source_sha256, chapter, kind, stamp)
-    enqueue(
-        session,
-        "rules_extract",
-        {"chapter_id": str(chapter.id)},
-        idempotency_key=f"rules_extract:{chapter.id}:{digest}",
-        created_by=created_by,
-    )
-
-
 def _zone_stamp(plan_zones: list[gpu.GpuFeature]) -> str | None:
     stamps = [str(z.properties.get("gpu_timestamp") or "") for z in plan_zones]
     return max(stamps, default="") or None
@@ -509,135 +482,6 @@ def _store_source(session: Session, plan: LandUsePlan, regulation: _Regulation) 
         actor=ACTOR,
         data=regulation.data,
     )
-
-
-def store_source(
-    session: Session,
-    plan: LandUsePlan,
-    *,
-    sha256: str,
-    filename: str,
-    url: str,
-    storage_key: str,
-    size_bytes: int,
-    reader: pdf.PdfText,
-    actor: str,
-    data: bytes | None = None,
-    source_id: uuid.UUID | None = None,
-) -> SourceFile:
-    """Planunterlage und ihre Seitentexte speichern; eine Datei mit gleicher Prüfsumme wird
-    wiederverwendet. Frühere Dateien bleiben: Regeln verweisen auf sie.
-
-    `data` legt die Datei in den Objektspeicher; ein Upload liegt dort schon (AN2). `source_id` vergibt
-    die Kennung vorab, wenn die Adresse der Datei sie enthält (`/api/v1/regulation-files/<id>`)."""
-    existing = (
-        session.execute(
-            select(SourceFile)
-            .where(SourceFile.land_use_plan_id == plan.id, SourceFile.sha256 == sha256)
-            .order_by(SourceFile.created_at.desc())
-        )
-        .scalars()
-        .first()
-    )
-    if existing is not None:
-        return existing
-    if data is not None:
-        storage.put_bytes(storage_key, data, "application/pdf")
-    source_file = SourceFile(
-        id=source_id or uuid.uuid4(),
-        land_use_plan_id=plan.id,
-        kind="regulation_pdf",
-        filename=filename[:300],
-        url=url,
-        sha256=sha256,
-        storage_key=storage_key,
-        size_bytes=size_bytes,
-        page_count=len(reader.pages),
-        empty_pages=reader.empty_pages,
-        created_by=actor,
-    )
-    session.add(source_file)
-    session.flush()
-    session.execute(
-        insert(SourcePage),
-        [
-            {"source_file_id": source_file.id, "page": n, "text": t.replace("\x00", "")}
-            for n, t in reader.pages.items()
-        ],
-    )
-    return source_file
-
-
-@dataclass(frozen=True)
-class ChapterValues:
-    """Eingabe eines Kapitels: was die Auswertung liest und für welche Sektoren."""
-
-    title: str
-    first_page: int
-    last_page: int
-    general_pages: list[int]
-    sectors: list[str]
-    detection: str
-
-    @property
-    def page_count(self) -> int:
-        return self.last_page - self.first_page + 1 + len(self.general_pages)
-
-
-def ensure_chapter(
-    session: Session,
-    settings: Settings,
-    plan: LandUsePlan,
-    source_file: SourceFile,
-    code: str,
-    values: ChapterValues,
-    chapter: RegulationChapter | None,
-    *,
-    actor: str,
-    reason: str,
-    notes: list[str] | None = None,
-) -> RegulationChapter:
-    """Kapitel anlegen oder an die Eingabe angleichen (RW20).
-
-    Unveränderte Kapitel behalten Status und Läufe. Geänderte werden `pending` und neu eingeplant; die
-    Wiederverwendung gespeicherter Aufrufe hängt an der Eingabe, nicht an der Kapitelzeile. Zu lange
-    Kapitel werden nicht ausgewertet (`chapter_too_long`, RW23). Gemeinsam für GPU-Import und Upload (AN2).
-    """
-    fields = {
-        "source_file_id": source_file.id,
-        "title": values.title[:300],
-        "first_page": values.first_page,
-        "last_page": values.last_page,
-        "general_pages": values.general_pages,
-        "sectors": values.sectors,
-        "detection": values.detection,
-    }
-    if chapter is None:
-        chapter = RegulationChapter(land_use_plan_id=plan.id, code=code, created_by=actor, **fields)
-        session.add(chapter)
-        changed = True
-    else:
-        changed = any(getattr(chapter, key) != value for key, value in fields.items())
-        for key, value in fields.items():
-            setattr(chapter, key, value)
-    session.flush()
-    if values.page_count > CHAPTER_MAX_PAGES:
-        if notes is not None:
-            notes.append(f"chapter_too_long:{code}")
-        chapter.status, chapter.error, chapter.updated_at = "failed", "chapter_too_long", utcnow()
-        return chapter
-    if values.sectors and (changed or chapter.status == "pending"):
-        if chapter.status != "extracting":
-            chapter.status, chapter.error, chapter.updated_at = "pending", None, utcnow()
-        enqueue_extraction(
-            session,
-            settings,
-            chapter,
-            source_file.sha256,
-            f"{actor}:{reason}",
-            document_kind(plan.du_type),
-        )
-    return chapter
 
 
 def _sync_chapters(

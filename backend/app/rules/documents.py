@@ -38,7 +38,6 @@ from app.rules.models import (
     SourceFile,
     SourcePage,
 )
-from app.rules.plan_import import ChapterValues, ensure_chapter, store_source
 from app.rules.schemas import (
     DocumentChapterOut,
     LotChoiceIn,
@@ -48,6 +47,7 @@ from app.rules.schemas import (
     UploadDuType,
     ZoneChoiceIn,
 )
+from app.rules.sources import ChapterValues, ensure_chapter, store_source
 
 log = get_logger("rules_documents")
 READ_ACTOR = "system:rules_document_read"
