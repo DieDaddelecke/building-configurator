@@ -2211,7 +2211,7 @@
       "fromEvaluationConfirm": "Remplacer toutes les entrées par l’analyse actuelle de cette application ? La liste redevient un brouillon.",
       "export": "Exporter",
       "delete": "Supprimer la liste",
-      "deleteConfirm": "Supprimer cette liste de référence pour les deux produits ?",
+      "deleteConfirm": "Supprimer cette liste de référence ? Elle vaut pour le configurateur et Emprise Analyse.",
       "version": "Version",
       "counts": "{{hit}} sur {{total}} justes ({{recall}} %) · {{wrong}} fausses · {{named}} ouvertes et visibles · {{dismissed}} écartées · {{silent}} manquantes en silence",
       "extra_one": "Une règle en vigueur ne figure pas dans la liste.",

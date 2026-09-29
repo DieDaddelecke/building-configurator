@@ -5,8 +5,8 @@ import { Kopf } from "../components/Kopf";
 import { Kopfzeile } from "../components/Kopfzeile";
 import { darfVerwalten, Verwaltung } from "./Verwaltung";
 
-/** Rahmen der gemeinsamen Verwaltung im Hauskonfigurator (`/verwaltung`): eigene Seite neben dem Büro, weil die
- *  Daten beiden Produkten gehören (PLAN_G2_VOLLSTAENDIGKEIT 3.9). Anmeldung wie im Büro. */
+/** Rahmen der Verwaltung unter `/verwaltung`: eigene Seite neben dem Büro, weil die Daten keinem Büro gehören
+ *  (PLAN_G2_VOLLSTAENDIGKEIT 3.9). Anmeldung wie im Büro. */
 export function VerwaltungRahmen() {
   const { t } = useTranslation();
   const session = useSession();

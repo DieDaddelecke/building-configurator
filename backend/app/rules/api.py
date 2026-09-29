@@ -33,7 +33,6 @@ from app.platform.auth.context import (
 )
 from app.platform.db import get_db
 from app.platform.problems import Problem
-from app.platform.shared import get_shared_db
 from app.rules import documents, model_choice, ocr, service
 from app.rules.schemas import (
     CoverageOut,
@@ -92,12 +91,10 @@ def rules_coverage(staff: StaffPrincipal = Reader, db: Session = Depends(get_db)
 
 
 @router.get("/admin/rules/model", response_model=RulesModelOut)
-def get_rules_model(
-    staff: StaffPrincipal = Reader, db: Session = Depends(get_db), shared_db: Session = Depends(get_shared_db)
-) -> RulesModelOut:
-    """KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,
+def get_rules_model(staff: StaffPrincipal = Reader, db: Session = Depends(get_db)) -> RulesModelOut:
+    """KI-Modell der Auswertung für Konfigurator und Analyse, mit Preisen und Kosten des Monats (PU11,
     VA09)."""
-    return service.rules_model_out(db, shared_db, get_settings())
+    return service.rules_model_out(db, get_settings())
 
 
 @router.get("/admin/rules/models", response_model=list[ModelOptionOut])
@@ -128,22 +125,20 @@ def set_rules_model(
     body: RulesModelIn,
     staff: StaffPrincipal = Operator,
     db: Session = Depends(get_db),
-    shared_db: Session = Depends(get_shared_db),
     client: httpx2.Client = Depends(shared_client),
 ) -> RulesModelOut:
-    """Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf
-    (PU11, VA09)."""
+    """Modell für alle künftigen Auswertungen; die Vorgabe der Umgebung hebt die Wahl auf (PU11, VA09)."""
     settings = get_settings()
     reset = body.model == settings.rules_model
     try:
         options = [] if reset else model_choice.available_models(client, settings)
         name = staff.display_name or staff.email
-        model_choice.choose(shared_db, settings, options, body.model, staff.actor_id, name)
+        model_choice.choose(db, settings, options, body.model, staff.actor_id, name)
     except ExternalServiceError:
         raise Problem(503, "models_unavailable") from None
     except model_choice.ModelNotAvailable:
         raise Problem(422, "model_not_available") from None
-    return service.rules_model_out(db, shared_db, settings)
+    return service.rules_model_out(db, settings)
 
 
 @router.post("/admin/rules/imports", status_code=202)

@@ -1,5 +1,5 @@
-"""KI-Modell der Auswertung wählen (docs/PLAN_AN2_PLU.md 8, ANNAHMEN PU11); seit VA09 in der gemeinsamen
-Datenbank beider Produkte. In Tests liegt sie in der Testdatenbank (keine eigene Verbindung)."""
+"""KI-Modell der Auswertung wählen (docs/PLAN_AN2_PLU.md 8, ANNAHMEN PU11); eine Einstellung für Konfigurator
+und Analyse (VA09)."""
 
 import uuid
 from collections.abc import Callable, Iterator
@@ -12,8 +12,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.integrations.http import new_client, shared_client
-from app.platform.models import AppSetting, StaffUser
-from app.platform.shared import SharedAudit, SharedSetting
+from app.platform.models import AppSetting, AuditLog
 from app.rules import extract, jobs, model_choice
 from tests.rules_model_support import LISTING
 
@@ -70,12 +69,10 @@ def test_operator_chooses_a_model_for_all_future_evaluations(
     assert effective.rules_model == "anthropic/claude-sonnet-5"
     # Ohne Cache-Preis in der Liste leitet die Kostenrechnung ihn ab (test_rules_model_choice)
     assert effective.rules_price_cache_read_per_mtok is None
-    audit = db_session.execute(
-        select(SharedAudit).where(SharedAudit.action == "rules_model_changed")
-    ).scalar_one()
+    audit = db_session.execute(select(AuditLog).where(AuditLog.action == "rules_model_changed")).scalar_one()
     assert (audit.before, audit.after) == ({"model": DEFAULT}, {"model": "anthropic/claude-sonnet-5"})
-    assert audit.product == "emprise" and audit.actor_id.startswith("emprise:")
-    setting = db_session.get(SharedSetting, model_choice.SETTING_KEY)
+    assert audit.actor_type == "staff" and audit.entity_type == "app_setting"
+    setting = db_session.get(AppSetting, model_choice.SETTING_KEY)
     assert setting.updated_by_name and body["updated_by_name"] == setting.updated_by_name
 
     # Die Vorgabe der Umgebung hebt die Wahl auf – auch ohne Liste von OpenRouter
@@ -83,7 +80,7 @@ def test_operator_chooses_a_model_for_all_future_evaluations(
     back = client.put("/api/v1/admin/rules/model", json={"model": DEFAULT}).json()
     assert (back["model"], back["source"]) == (DEFAULT, "default")
     db_session.expire_all()
-    assert db_session.get(SharedSetting, model_choice.SETTING_KEY) is None
+    assert db_session.get(AppSetting, model_choice.SETTING_KEY) is None
 
 
 def test_a_model_without_pdf_input_gets_the_text_layer(
@@ -129,37 +126,3 @@ def test_the_evaluation_job_uses_the_chosen_model_from_its_start(
     assert (settings.rules_model, settings.rules_price_input_per_mtok) == ("anthropic/claude-sonnet-5", 2.0)
     # Eingabe-Hash und Kosten hängen am gewählten Modell; der Aufruf nutzt dieselben Einstellungen
     assert settings.rules_price_output_per_mtok == 10.0
-
-
-def test_shared_migrate_moves_the_instance_choice_once(
-    db_session: Any, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Eine Wahl aus PU11 (`app_setting`) zieht beim Migrate-Job in die gemeinsame Datenbank (VA09)."""
-    from app import cli
-
-    value = {"model": "anthropic/claude-sonnet-5", "price_input_per_mtok": 2.0, "price_output_per_mtok": 10.0}
-    staff = StaffUser(email="sarah@emprise.local", display_name="Sarah", roles=["ops"])
-    db_session.add(staff)
-    db_session.flush()
-    db_session.add(AppSetting(key=model_choice.SETTING_KEY, value=value, updated_by=str(staff.id)))
-    db_session.commit()
-    cli._move_model_setting(get_settings())
-    db_session.expire_all()
-    assert db_session.get(AppSetting, model_choice.SETTING_KEY) is None
-    moved = db_session.get(SharedSetting, model_choice.SETTING_KEY)
-    assert moved is not None and moved.value["model"] == "anthropic/claude-sonnet-5"
-    assert moved.updated_by_name == "Sarah"
-    assert (
-        model_choice.effective_settings(db_session, get_settings()).rules_model == "anthropic/claude-sonnet-5"
-    )
-    # Eine zweite Instanz mit eigener Wahl: die gemeinsame gilt, die eigene entfällt
-    db_session.add(
-        AppSetting(key=model_choice.SETTING_KEY, value={**value, "model": "x/y"}, updated_by="staff-2")
-    )
-    db_session.commit()
-    cli._move_model_setting(get_settings())
-    db_session.expire_all()
-    assert (
-        db_session.get(SharedSetting, model_choice.SETTING_KEY).value["model"] == "anthropic/claude-sonnet-5"
-    )
-    assert "verworfen" in capsys.readouterr().out

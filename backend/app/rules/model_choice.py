@@ -1,7 +1,7 @@
 """KI-Modell der Regelauswertung wählen (docs/PLAN_AN2_PLU.md 8, ANNAHMEN PU11).
 
-Eine Einstellung für beide Produkte in der gemeinsamen Datenbank (`shared_setting`, PLAN_G2_VOLLSTAENDIGKEIT
-3.9, VA09). Ohne Eintrag gelten Modell und Preise der Umgebung der jeweiligen Instanz (Vorgabe). Wählbar
+Eine Einstellung für Konfigurator und Analyse (`app_setting`, VA09). Ohne Eintrag gelten Modell und Preise
+der Umgebung (Vorgabe). Wählbar
 sind nur Modelle aus der öffentlichen Liste von OpenRouter, die ein Werkzeug erzwingen können; die Preise
 kommen aus derselben Liste, damit Kostenzählung und Monatsbudget stimmen. Wer kein PDF
 liest, bekommt die Textschicht mit Seitenmarken (PU12). Jede Auswertung liest die Einstellung beim Start
@@ -20,10 +20,10 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.integrations import http
-from app.platform import shared
+from app.platform import audit
 from app.platform.db import utcnow
 from app.platform.logging import get_logger
-from app.platform.shared import SharedSetting
+from app.platform.models import AppSetting
 
 log = get_logger("rules_model")
 
@@ -142,9 +142,8 @@ def available_models(
 
 
 def effective_settings(session: Session, settings: Settings) -> Settings:
-    """Einstellungen mit dem gewählten Modell und seinen Preisen; ohne Wahl die der Umgebung. `session`:
-    gemeinsame Datenbank (`shared.shared_session`)."""
-    row = session.get(SharedSetting, SETTING_KEY)
+    """Einstellungen mit dem gewählten Modell und seinen Preisen; ohne Wahl die der Umgebung."""
+    row = session.get(AppSetting, SETTING_KEY)
     if row is None:
         return settings
     value = row.value or {}
@@ -165,7 +164,7 @@ def effective_settings(session: Session, settings: Settings) -> Settings:
 
 
 def current(session: Session, settings: Settings) -> CurrentModel:
-    row = session.get(SharedSetting, SETTING_KEY)
+    row = session.get(AppSetting, SETTING_KEY)
     effective = effective_settings(session, settings)
     chosen = row is not None and effective is not settings
     return CurrentModel(
@@ -188,10 +187,9 @@ def choose(
     actor_id: str,
     actor_name: str | None = None,
 ) -> None:
-    """Modell für alle künftigen Auswertungen beider Produkte einstellen. Die Vorgabe der Umgebung löscht den
-    Eintrag. `session`: gemeinsame Datenbank."""
+    """Modell für alle künftigen Auswertungen einstellen. Die Vorgabe der Umgebung löscht den Eintrag."""
     before = effective_settings(session, settings).rules_model
-    row = session.get(SharedSetting, SETTING_KEY)
+    row = session.get(AppSetting, SETTING_KEY)
     if model_id == settings.rules_model:
         if row is not None:
             session.delete(row)
@@ -207,20 +205,19 @@ def choose(
             "price_cache_write_per_mtok": option.price_cache_write_per_mtok,
             "input": "pdf" if option.reads_pdf else "text",
         }
-        who = shared.actor(settings, actor_id)
         if row is None:
             session.add(
-                SharedSetting(key=SETTING_KEY, value=value, updated_by=who, updated_by_name=actor_name)
+                AppSetting(key=SETTING_KEY, value=value, updated_by=actor_id, updated_by_name=actor_name)
             )
         else:
-            row.value, row.updated_at, row.updated_by, row.updated_by_name = value, utcnow(), who, actor_name
-    shared.record(
+            row.value, row.updated_at, row.updated_by = value, utcnow(), actor_id
+            row.updated_by_name = actor_name
+    audit.record(
         session,
-        settings,
+        actor_type="staff",
         actor_id=actor_id,
-        actor_name=actor_name,
         action="rules_model_changed",
-        entity_type="shared_setting",
+        entity_type="app_setting",
         entity_id=SETTING_KEY,
         before={"model": before},
         after={"model": model_id},

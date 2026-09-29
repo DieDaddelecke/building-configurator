@@ -1,5 +1,5 @@
-/** Gemeinsame Verwaltung: Referenzlisten (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA10). Listen liegen in der
- *  gemeinsamen Datenbank beider Produkte; gemessen wird die Auswertung der Instanz, in der die Seite läuft. */
+/** Verwaltung: Referenzlisten (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA10). Eine Liste gilt für Konfigurator und
+ *  Analyse; gemessen wird die Auswertung der Anwendung. */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

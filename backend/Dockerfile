@@ -31,9 +31,8 @@ CMD ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port
 FROM base AS runtime
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-install-project --no-dev
-COPY alembic.ini alembic_shared.ini ./
+COPY alembic.ini ./
 COPY migrations ./migrations
-COPY migrations_shared ./migrations_shared
 COPY app ./app
 RUN useradd --system --uid 10001 --home-dir /app emprise
 USER 10001

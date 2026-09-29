@@ -15362,7 +15362,7 @@
     },
     "/api/v1/admin/rules/model": {
       "get": {
-        "description": "KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,\nVA09).",
+        "description": "KI-Modell der Auswertung für Konfigurator und Analyse, mit Preisen und Kosten des Monats (PU11,\nVA09).",
         "operationId": "get_rules_model_api_v1_admin_rules_model_get",
         "responses": {
           "200": {
@@ -15382,7 +15382,7 @@
         ]
       },
       "put": {
-        "description": "Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf\n(PU11, VA09).",
+        "description": "Modell für alle künftigen Auswertungen; die Vorgabe der Umgebung hebt die Wahl auf (PU11, VA09).",
         "operationId": "set_rules_model_api_v1_admin_rules_model_put",
         "requestBody": {
           "content": {

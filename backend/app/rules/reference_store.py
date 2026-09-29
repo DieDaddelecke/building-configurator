@@ -1,8 +1,6 @@
-"""Referenzlisten in der gemeinsamen Datenbank pflegen und Auswertungen dieser Instanz daran messen
-(docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA03, VA10).
+"""Referenzlisten pflegen und Auswertungen daran messen (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA03, VA10).
 
-Listen und Einträge liegen in der gemeinsamen Datenbank (`shared_db`), die Auswertungen in der Datenbank der
-Instanz (`db`). Jede Änderung steht im gemeinsamen Audit. Einträge prüft dieselbe Funktion wie die Dateien
+Jede Änderung steht im Audit-Log. Einträge prüft dieselbe Funktion wie die Dateien
 (`domain.reference.parse_entries`), sodass Import, Formular und Datei dieselben Regeln haben.
 """
 
@@ -12,8 +10,8 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.config import Settings
-from app.platform import shared
+from app.platform import audit
+from app.platform.audit import ActorType
 from app.platform.db import utcnow
 from app.platform.problems import Problem
 from app.rules import reference
@@ -49,16 +47,16 @@ def _checked(items: list[dict[str, Any]]) -> None:
         raise Problem(422, "reference_invalid", detail=str(problem)) from None
 
 
-def _entries(shared_db: Session, list_id: uuid.UUID) -> list[EntryRow]:
+def _entries(db: Session, list_id: uuid.UUID) -> list[EntryRow]:
     return list(
-        shared_db.execute(
+        db.execute(
             select(EntryRow).where(EntryRow.list_id == list_id).order_by(EntryRow.position, EntryRow.id)
         ).scalars()
     )
 
 
-def _row(shared_db: Session, list_id: uuid.UUID) -> ListRow:
-    row = shared_db.get(ListRow, list_id)
+def _row(db: Session, list_id: uuid.UUID) -> ListRow:
+    row = db.get(ListRow, list_id)
     if row is None:
         raise Problem(404, "not_found")
     return row
@@ -129,9 +127,9 @@ def _list_out(db: Session, row: ListRow, entries: list[EntryRow]) -> ReferenceLi
     )
 
 
-def detail_out(db: Session, shared_db: Session, list_id: uuid.UUID) -> ReferenceListDetailOut:
-    row = _row(shared_db, list_id)
-    entries = _entries(shared_db, list_id)
+def detail_out(db: Session, list_id: uuid.UUID) -> ReferenceListDetailOut:
+    row = _row(db, list_id)
+    entries = _entries(db, list_id)
     base = _list_out(db, row, entries)
     return ReferenceListDetailOut(
         **base.model_dump(),
@@ -152,9 +150,9 @@ def detail_out(db: Session, shared_db: Session, list_id: uuid.UUID) -> Reference
     )
 
 
-def lists_out(db: Session, shared_db: Session) -> list[ReferenceListOut]:
-    rows = shared_db.execute(select(ListRow).order_by(ListRow.document_title, ListRow.sector)).scalars()
-    return [_list_out(db, row, _entries(shared_db, row.id)) for row in rows]
+def lists_out(db: Session) -> list[ReferenceListOut]:
+    rows = db.execute(select(ListRow).order_by(ListRow.document_title, ListRow.sector)).scalars()
+    return [_list_out(db, row, _entries(db, row.id)) for row in rows]
 
 
 def candidates(db: Session) -> list[ReferenceCandidateOut]:
@@ -177,23 +175,22 @@ def candidates(db: Session) -> list[ReferenceCandidateOut]:
     return list(grouped.values())
 
 
-def _touch(row: ListRow, settings: Settings, actor_id: str, actor_name: str | None) -> None:
-    row.updated_at, row.updated_by, row.updated_by_name = (
-        utcnow(),
-        shared.actor(settings, actor_id),
-        actor_name,
-    )
+def _touch(row: ListRow, actor_id: str, actor_name: str | None) -> None:
+    row.updated_at, row.updated_by, row.updated_by_name = utcnow(), actor_id, actor_name
+
+
+def _actor_type(actor_id: str) -> ActorType:
+    """Befehle der Kommandozeile melden sich als `system:<Befehl>`, alle anderen sind Konten des Büros."""
+    return "system" if actor_id.startswith("system:") else "staff"
 
 
 def create_list(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     body: ReferenceListIn,
     actor_id: str,
     actor_name: str | None,
 ) -> ReferenceListDetailOut:
-    exists = shared_db.execute(
+    exists = db.execute(
         select(ListRow.id).where(
             ListRow.document_sha256 == body.document_sha256, ListRow.sector == body.sector
         )
@@ -206,81 +203,72 @@ def create_list(
         sector=body.sector,
         note=body.note,
         status="draft",
-        created_by=shared.actor(settings, actor_id),
+        created_by=actor_id,
     )
-    _touch(row, settings, actor_id, actor_name)
-    shared_db.add(row)
-    shared_db.flush()
-    shared.record(
-        shared_db,
-        settings,
+    _touch(row, actor_id, actor_name)
+    db.add(row)
+    db.flush()
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_list_created",
         entity_type="reference_list",
         entity_id=str(row.id),
         after={"document": body.document_title, "sector": body.sector},
     )
-    shared_db.commit()
-    return detail_out(db, shared_db, row.id)
+    db.commit()
+    return detail_out(db, row.id)
 
 
 def update_list(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     list_id: uuid.UUID,
     body: ReferenceListPatch,
     actor_id: str,
     actor_name: str | None,
 ) -> ReferenceListDetailOut:
-    row = _row(shared_db, list_id)
+    row = _row(db, list_id)
     before = {"status": row.status, "title": row.document_title}
     changes = body.model_dump(exclude_none=True)
     for key, value in changes.items():
         setattr(row, key, value)
-    _touch(row, settings, actor_id, actor_name)
-    shared.record(
-        shared_db,
-        settings,
+    _touch(row, actor_id, actor_name)
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_list_changed",
         entity_type="reference_list",
         entity_id=str(row.id),
         before=before,
         after=changes,
     )
-    shared_db.commit()
-    return detail_out(db, shared_db, list_id)
+    db.commit()
+    return detail_out(db, list_id)
 
 
-def delete_list(
-    shared_db: Session, settings: Settings, list_id: uuid.UUID, actor_id: str, actor_name: str | None
-) -> None:
-    row = _row(shared_db, list_id)
-    shared.record(
-        shared_db,
-        settings,
+def delete_list(db: Session, list_id: uuid.UUID, actor_id: str, actor_name: str | None) -> None:
+    row = _row(db, list_id)
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_list_deleted",
         entity_type="reference_list",
         entity_id=str(row.id),
         before={
             "document": row.document_title,
             "sector": row.sector,
-            "entries": len(_entries(shared_db, list_id)),
+            "entries": len(_entries(db, list_id)),
         },
     )
-    shared_db.delete(row)
-    shared_db.commit()
+    db.delete(row)
+    db.commit()
 
 
 def put_entry(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     list_id: uuid.UUID,
     body: ReferenceEntryIn,
     actor_id: str,
@@ -288,68 +276,63 @@ def put_entry(
     entry_id: uuid.UUID | None = None,
 ) -> ReferenceListDetailOut:
     """Eintrag anlegen (ohne `entry_id`, ans Ende) oder ersetzen. Die Liste wird wieder Entwurf."""
-    row = _row(shared_db, list_id)
+    row = _row(db, list_id)
     item = body.model_dump()
     _checked([item])
-    who = shared.actor(settings, actor_id)
     if entry_id is None:
-        position = shared_db.execute(
+        position = db.execute(
             select(func.coalesce(func.max(EntryRow.position), 0)).where(EntryRow.list_id == list_id)
         ).scalar_one()
-        shared_db.add(EntryRow(list_id=list_id, position=position + 1, updated_by=who, **item))
+        db.add(EntryRow(list_id=list_id, position=position + 1, updated_by=actor_id, **item))
         action = "reference_entry_added"
     else:
-        entry = shared_db.get(EntryRow, entry_id)
+        entry = db.get(EntryRow, entry_id)
         if entry is None or entry.list_id != list_id:
             raise Problem(404, "not_found")
         for key, value in item.items():
             setattr(entry, key, value)
-        entry.updated_at, entry.updated_by = utcnow(), who
+        entry.updated_at, entry.updated_by = utcnow(), actor_id
         action = "reference_entry_changed"
     row.status = "draft"
-    _touch(row, settings, actor_id, actor_name)
-    shared.record(
-        shared_db,
-        settings,
+    _touch(row, actor_id, actor_name)
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action=action,
         entity_type="reference_list",
         entity_id=str(list_id),
         after={k: item[k] for k in ("kind", "building_kind", "expected", "page")},
     )
-    shared_db.commit()
-    return detail_out(db, shared_db, list_id)
+    db.commit()
+    return detail_out(db, list_id)
 
 
 def delete_entry(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     list_id: uuid.UUID,
     entry_id: uuid.UUID,
     actor_id: str,
     actor_name: str | None,
 ) -> ReferenceListDetailOut:
-    row = _row(shared_db, list_id)
-    entry = shared_db.get(EntryRow, entry_id)
+    row = _row(db, list_id)
+    entry = db.get(EntryRow, entry_id)
     if entry is None or entry.list_id != list_id:
         raise Problem(404, "not_found")
-    shared.record(
-        shared_db,
-        settings,
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_entry_deleted",
         entity_type="reference_list",
         entity_id=str(list_id),
         before={"kind": entry.kind, "building_kind": entry.building_kind, "page": entry.page},
     )
-    shared_db.delete(entry)
+    db.delete(entry)
     row.status = "draft"
-    _touch(row, settings, actor_id, actor_name)
-    shared_db.commit()
-    return detail_out(db, shared_db, list_id)
+    _touch(row, actor_id, actor_name)
+    db.commit()
+    return detail_out(db, list_id)
 
 
 EXPECTED_FROM_STATUS = {"effective": "effective", "not_regulated": "not_regulated", "text_only": "text_only"}
@@ -381,45 +364,39 @@ def entries_from_rules(rules: list[Rule]) -> list[dict[str, Any]]:
 
 def from_evaluation(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     list_id: uuid.UUID,
     actor_id: str,
     actor_name: str | None,
 ) -> ReferenceListDetailOut:
     """Einträge durch die aktuelle Auswertung dieser Instanz ersetzen; die Liste wird Entwurf."""
-    row = _row(shared_db, list_id)
+    row = _row(db, list_id)
     versions = reference.versions_for(db, row.document_sha256, row.sector)
     if not versions:
         raise Problem(404, "reference_not_evaluated")
     rules = list(db.execute(select(Rule).where(Rule.rule_set_version_id == versions[-1].id)).scalars())
-    _replace_entries(shared_db, settings, row, entries_from_rules(rules), actor_id)
+    _replace_entries(db, row, entries_from_rules(rules), actor_id)
     row.status = "draft"
-    _touch(row, settings, actor_id, actor_name)
-    shared.record(
-        shared_db,
-        settings,
+    _touch(row, actor_id, actor_name)
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_list_from_evaluation",
         entity_type="reference_list",
         entity_id=str(row.id),
         after={"version": versions[-1].version},
     )
-    shared_db.commit()
-    return detail_out(db, shared_db, list_id)
+    db.commit()
+    return detail_out(db, list_id)
 
 
-def _replace_entries(
-    shared_db: Session, settings: Settings, row: ListRow, items: list[dict[str, Any]], actor_id: str
-) -> None:
+def _replace_entries(db: Session, row: ListRow, items: list[dict[str, Any]], actor_id: str) -> None:
     _checked(items)
-    for entry in _entries(shared_db, row.id):
-        shared_db.delete(entry)
-    shared_db.flush()
-    who = shared.actor(settings, actor_id)
+    for entry in _entries(db, row.id):
+        db.delete(entry)
+    db.flush()
     for position, item in enumerate(items, start=1):
-        shared_db.add(
+        db.add(
             EntryRow(
                 list_id=row.id,
                 position=position,
@@ -430,24 +407,22 @@ def _replace_entries(
                 page=item.get("page"),
                 quote=str(item["quote"]),
                 note=str(item.get("note") or ""),
-                updated_by=who,
+                updated_by=actor_id,
             )
         )
 
 
-def measurement(
-    db: Session, shared_db: Session, list_id: uuid.UUID, version: int | None
-) -> ReferenceMeasurementOut:
-    row = _row(shared_db, list_id)
-    result = _measure(db, row, _entries(shared_db, list_id), version)
+def measurement(db: Session, list_id: uuid.UUID, version: int | None) -> ReferenceMeasurementOut:
+    row = _row(db, list_id)
+    result = _measure(db, row, _entries(db, list_id), version)
     if result is None:
         raise Problem(404, "reference_not_evaluated")
     return result
 
 
-def export(shared_db: Session, list_id: uuid.UUID) -> dict[str, Any]:
+def export(db: Session, list_id: uuid.UUID) -> dict[str, Any]:
     """Datei im Format der mitgelieferten Listen (`reference_seed`), zum Sichern und Weitergeben."""
-    row = _row(shared_db, list_id)
+    row = _row(db, list_id)
     return {
         "format": reference.FORMAT,
         "document": {"title": row.document_title, "sha256": row.document_sha256},
@@ -464,15 +439,13 @@ def export(shared_db: Session, list_id: uuid.UUID) -> dict[str, Any]:
                 "quote": e.quote,
                 "note": e.note,
             }
-            for e in _entries(shared_db, list_id)
+            for e in _entries(db, list_id)
         ],
     }
 
 
 def import_list(
     db: Session,
-    shared_db: Session,
-    settings: Settings,
     data: dict[str, Any],
     replace: bool,
     actor_id: str,
@@ -483,7 +456,7 @@ def import_list(
         parsed = reference.parse_list(data)
     except ReferenceProblem as problem:
         raise Problem(422, "reference_invalid", detail=str(problem)) from None
-    row = shared_db.execute(
+    row = db.execute(
         select(ListRow).where(ListRow.document_sha256 == parsed.sha256, ListRow.sector == parsed.sector)
     ).scalar_one_or_none()
     if row is not None and not replace:
@@ -493,23 +466,22 @@ def import_list(
             document_sha256=parsed.sha256,
             document_title=parsed.title or parsed.sha256[:12],
             sector=parsed.sector,
-            created_by=shared.actor(settings, actor_id),
+            created_by=actor_id,
         )
-        shared_db.add(row)
-        shared_db.flush()
+        db.add(row)
+        db.flush()
     row.note = parsed.note
     row.status = parsed.status if parsed.status in ("draft", "checked") else "draft"
-    _replace_entries(shared_db, settings, row, list(data.get("entries") or []), actor_id)
-    _touch(row, settings, actor_id, actor_name)
-    shared.record(
-        shared_db,
-        settings,
+    _replace_entries(db, row, list(data.get("entries") or []), actor_id)
+    _touch(row, actor_id, actor_name)
+    audit.record(
+        db,
+        actor_type=_actor_type(actor_id),
         actor_id=actor_id,
-        actor_name=actor_name,
         action="reference_list_imported",
         entity_type="reference_list",
         entity_id=str(row.id),
         after={"document": row.document_title, "sector": row.sector, "entries": len(parsed.entries)},
     )
-    shared_db.commit()
-    return detail_out(db, shared_db, row.id)
+    db.commit()
+    return detail_out(db, row.id)

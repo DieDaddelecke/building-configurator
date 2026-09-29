@@ -1,7 +1,7 @@
-"""Referenzlisten in der gemeinsamen Datenbank (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA03).
+"""Referenzlisten (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA03).
 
-Eine Liste gehört zu einem Dokument (Prüfsumme der Planunterlage) und einem Sektor, nicht zu einem Büro oder
-einer Instanz: Beide Produkte messen ihre Auswertungen desselben Dokuments daran.
+Eine Liste gehört zu einem Dokument (Prüfsumme der Planunterlage) und einem Sektor, nicht zu einem Büro:
+Konfigurator und Analyse messen ihre Auswertungen desselben Dokuments daran.
 """
 
 import uuid
@@ -12,12 +12,12 @@ from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.platform.shared import SharedBase
+from app.platform.db import Base
 
 EXPECTED = "('effective','not_regulated','text_only','graphic_reference','not_expressible')"
 
 
-class ReferenceList(SharedBase):
+class ReferenceList(Base):
     __tablename__ = "reference_list"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,7 +38,7 @@ class ReferenceList(SharedBase):
     )
 
 
-class ReferenceEntry(SharedBase):
+class ReferenceEntry(Base):
     __tablename__ = "reference_entry"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

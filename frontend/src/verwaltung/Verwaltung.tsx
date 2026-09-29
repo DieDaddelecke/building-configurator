@@ -18,9 +18,9 @@ const tab = ({ isActive }: { isActive: boolean }) =>
   `px-1 py-2 -mb-px border-b-2 ${isActive ? "bd-accent t-ink font-medium" : "border-transparent t-mute"}`;
 
 /**
- * Gemeinsame Verwaltung beider Produkte (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.9–3.10): KI-Modell der Auswertung und
- * Referenzlisten. Dieselben Seiten im Hauskonfigurator (`/verwaltung`, eigener Rahmen) und in Emprise Analyse
- * (`/verwaltung` im Rahmen der App); die Daten liegen in der gemeinsamen Datenbank, nicht bei einem Büro.
+ * Verwaltung für Konfigurator und Analyse (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.9–3.10): KI-Modell der Auswertung
+ * und Referenzlisten. Dieselben Seiten unter `/verwaltung` (eigener Rahmen) und `/analyse/verwaltung` (im Rahmen
+ * der Analyse); die Daten gehören keinem Büro.
  */
 export function Verwaltung({ darf }: { darf: boolean }) {
   const { t } = useTranslation();

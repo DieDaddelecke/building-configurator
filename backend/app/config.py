@@ -20,10 +20,6 @@ class Settings(BaseSettings):
     # Datenbank: die Anwendung arbeitet mit der Rolle `app`, Migrationen mit `migrator` (Plan 6.6)
     database_url: str = "postgresql+psycopg://app:app@localhost:5432/emprise"
     migration_database_url: str | None = None
-    shared_database_url: str | None = None
-    """Gemeinsame Datenbank beider Produkte (KI-Modell, Referenzlisten; PLAN_G2_VOLLSTAENDIGKEIT 3.9). Ohne
-    Angabe liegen die gemeinsamen Tabellen in der Datenbank dieser Instanz (Tests, eine Instanz allein)."""
-    shared_migration_database_url: str | None = None
 
     # Geheimnis für Signaturen (OIDC-Zwischenspeicher, Rate-Limit-Schlüssel)
     secret_key: SecretStr = SecretStr("local-development-only-change-me")

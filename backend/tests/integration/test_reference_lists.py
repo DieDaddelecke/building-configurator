@@ -1,7 +1,6 @@
-"""Referenzlisten in der gemeinsamen Verwaltung (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA10).
+"""Referenzlisten in der Verwaltung (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.10, VA10).
 
-Die gemeinsame Datenbank liegt in Tests in der Testdatenbank. Gemessen wird die Auswertung des Kapitels Uh
-(Treillières) mit der aufgezeichneten Modellantwort.
+Gemessen wird die Auswertung des Kapitels Uh (Treillières) mit der aufgezeichneten Modellantwort.
 """
 
 import uuid
@@ -17,7 +16,7 @@ from app import cli
 from app.config import get_settings
 from app.platform import storage
 from app.platform.db import get_sessionmaker
-from app.platform.shared import SharedAudit
+from app.platform.models import AuditLog
 from app.rules import extract
 from app.rules.models import LandUsePlan, RegulationChapter, SourceFile
 from app.rules.plan_import import DirectoryGpu, import_commune
@@ -128,7 +127,7 @@ def test_list_entries_measurement_and_status(
     )
     assert invalid.status_code == 422 and invalid.json()["code"] == "reference_invalid"
 
-    actions = set(db_session.execute(select(SharedAudit.action)).scalars())
+    actions = set(db_session.execute(select(AuditLog.action)).scalars())
     assert {"reference_list_created", "reference_entry_added", "reference_list_changed"} <= actions
 
 
@@ -168,6 +167,8 @@ def test_seed_list_imports_and_is_not_evaluated_here(
     assert "25 Einträge" in capsys.readouterr().out
     row = db_session.execute(select(ReferenceList)).scalar_one()
     assert (row.sector, row.status) == ("UC", "draft")
+    imported = db_session.execute(select(AuditLog).where(AuditLog.action == "reference_list_imported")).one()
+    assert (imported[0].actor_type, imported[0].actor_id) == ("system", "system:reference-import")
     login_as("ops")
     listed = client.get("/api/v1/admin/reference-lists").json()
     assert listed[0]["entries_count"] == 25 and listed[0]["summary"] is None

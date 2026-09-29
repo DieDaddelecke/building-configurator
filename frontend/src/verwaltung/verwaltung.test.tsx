@@ -141,7 +141,7 @@ it("ist dem Betrieb vorbehalten", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("dem Betrieb vorbehalten");
 });
 
-it("zeigt das KI-Modell für beide Produkte mit Wer-hat-gewählt", () => {
+it("zeigt das KI-Modell für Konfigurator und Analyse mit Wer-hat-gewählt", () => {
   renderAt("/verwaltung");
   expect(screen.getByRole("link", { name: "Referenzlisten" })).toBeInTheDocument();
   expect(screen.getByTestId("ki-modell")).toHaveTextContent("anthropic/claude-opus-5.5");

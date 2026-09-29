@@ -335,7 +335,7 @@ Aus demselben Repository entsteht ein Bereich für Architekturbüros ([PLAN_ANAL
 **KI-Modell der Auswertung (PLAN_AN2_PLU 8, PU11)**
 
 - Migration **0016**: Tabelle `app_setting` (leer). Keine neuen Jobs oder Flags. Die API holt die Liste der Modelle bei `openrouter.ai` ohne Schlüssel und hält sie eine Stunde vor; ist OpenRouter nicht erreichbar, meldet der Dialog das (`503 models_unavailable`) und das Modell bleibt.
-- **Seit VA09 in der gemeinsamen Datenbank** (Abschnitt 16): `app_setting` gilt nicht mehr; `shared-migrate` zieht eine vorhandene Wahl einmal um. Die folgenden Befehle betreffen deshalb `shared_setting` statt `app_setting` in `emprise_shared`, das Audit steht in `shared_audit`.
+- **Für Konfigurator und Analyse** (Abschnitt 16): Von VA09 bis zum 29.09.2026 lag die Wahl in `shared_setting` der gemeinsamen Datenbank; seit Migration 0021 wieder in `app_setting` (mit `updated_by_name`).
 - **Ansehen ohne Oberfläche:** `SELECT value, updated_at, updated_by FROM app_setting WHERE key = 'rules_model'`; keine Zeile = Vorgabe aus der Umgebung. **Zurück zur Vorgabe** ohne Oberfläche: `DELETE FROM app_setting WHERE key = 'rules_model'`. Jede Wahl steht im Audit-Log (`rules_model_changed`, altes und neues Modell).
 - Ein Wechsel gilt für die nächste Auswertung eines Kapitels; eine laufende bleibt beim alten Modell. Ausgewertete Kapitel werden nicht von selbst neu ausgewertet; der Lauf nennt das Modell (`rule_extraction_run.model`).
 
@@ -392,23 +392,24 @@ Aus demselben Repository entsteht ein Bereich für Architekturbüros ([PLAN_ANAL
 **Grenzen**
 
 - Das Analyse-Produkt kennt **keine Datenauskunft** (`GET /projects/{id}/export` liegt in Modul A, UP07) und kein Löschen einer ganzen Organisation; die Löschung eines Projekts gibt es. Beides vor dem Freischalten fremder Büros mit E-A5 klären (PLAN_AN6 3.8).
-- Im Image liegen beide Oberflächen. Unter `/index.html` zeigt der Analyse-Stack die Seite des Konfigurators; deren Aufrufe laufen dort ins Leere (PS06).
-- Regelwerke werden nicht geteilt: Eine Auswertung, die beide Produkte brauchen, kostet zweimal (PLAN_ANALYSE 3, letzter Punkt).
+- Gespeicherte Antworten gelten je Kapitel: Dasselbe Dokument als Upload eines Analyse-Projekts und aus dem GPU-Import wird je einmal ausgewertet und bezahlt (PLAN_ANALYSE 3, letzter Punkt).
 
-## 16. Gemeinsame Verwaltung beider Produkte (PLAN_G2_VOLLSTAENDIGKEIT 3.9–3.10)
+## 16. Verwaltung: KI-Modell und Referenzlisten (PLAN_G2_VOLLSTAENDIGKEIT 3.9–3.10)
 
-Konfigurator und Analyse teilen eine Datenbank `emprise_shared`: KI-Modell der Auswertung (`shared_setting`), Referenzlisten (`reference_list`, `reference_entry`) und ihr Audit (`shared_audit`). Oberfläche: `/verwaltung` in beiden Produkten, Rollen `ops` und `rules_admin`; nicht an ein Büro gebunden (VA09, VA10).
+KI-Modell der Auswertung (`app_setting`) und Referenzlisten (`reference_list`, `reference_entry`) gelten für Konfigurator und Analyse; jede Änderung steht im Audit-Log. Oberfläche: `/verwaltung` und `/analyse/verwaltung`, Rollen `ops` und `rules_admin`; nicht an ein Büro gebunden (VA09, VA10).
 
-- **Lokal:** `emprise_shared` im Datenbankserver des Hauptstacks, angelegt von `db-init-shared` (Hauptstack) bzw. `db-init-analyse` (Analyse-Stack), beide mehrfach ausführbar. Beide Stacks bekommen `EMPRISE_SHARED_DATABASE_URL` und `EMPRISE_SHARED_MIGRATION_DATABASE_URL`.
-- **Unraid:** eigener Stack `emprise-shared` (`deploy/unraid/compose.shared.yaml`, Werte in `.env.shared`) mit eigener Postgres-Instanz, eigener Sicherung und dem Netz `emprise-shared`; nur `migrate`, `api` und `worker` beider Produkte treten bei. Einrichten: `deploy/unraid/README.md` Abschnitt 10. Ohne das Netz bricht `deploy.sh` mit Hinweis ab.
-- **Migrationen:** eigene Umgebung `backend/migrations_shared` mit Versionstabelle `alembic_version_shared`; beide Migrate-Jobs rufen `python -m app.cli shared-migrate` (Sperre `pg_advisory_lock`, nur erweiternde Migrationen; ist die Datenbank voraus, meldet der Job das und läuft weiter). Stand ansehen: `SELECT * FROM alembic_version_shared`.
-- **Ohne eigene Verbindung** (Tests, eine Instanz allein) liegen die gemeinsamen Tabellen in der Datenbank der Instanz. Tests verwenden nie die gemeinsame Datenbank der Stacks (`tests/conftest.py` entfernt deren Adresse).
-- **Referenzliste einspielen:** `python -m app.cli reference-import beyenes_uc.json` (mitgelieferte Listen in `app/rules/reference_seed`; `--replace` ersetzt). Messen ohne Oberfläche: `python -m app.cli reference-check <datei> --version all` gegen die Auswertungen der jeweiligen Instanz.
-- **Sicherung:** lokal mit dem Server; auf Unraid Container `backup` des Stacks `emprise-shared` in `BACKUP_DIR` von `.env.shared`. Wiederherstellung wie bei den Produkten (`deploy/unraid/README.md` Abschnitt 6), Datenbank `emprise_shared` ohne PostGIS.
+- **Eine Datenbank seit 29.09.2026** (Migration 0021, REFACTORING_PLAN S4): Die frühere gemeinsame Datenbank `emprise_shared` mit eigener Migrationskette, `shared-migrate`, `db-init-shared` und dem Unraid-Stack `emprise-shared` entfallen. 0021 legt die Tabellen an, übernimmt `shared_setting` und `shared_audit`, wenn sie in derselben Datenbank liegen, und löscht `alembic_version_shared`.
+- **Daten aus einer eigenen `emprise_shared` übernehmen** (lokal am 29.09.2026 so gemacht), solange `emprise` noch auf 0020 steht: die Tabellen in `emprise` einspielen, dann `docker compose up -d --build`; der Migrate-Job führt sie zusammen. Zeilenzahlen vorher und nachher vergleichen; `emprise_shared` bleibt liegen, bis der Betrieb sie löscht.
+
+  ```bash
+  docker compose exec -T db pg_dump -U postgres -t shared_setting -t shared_audit -t reference_list -t reference_entry -t alembic_version_shared emprise_shared | docker compose exec -T db psql -U postgres -d emprise -v ON_ERROR_STOP=1
+  ```
+
+- **Referenzliste einspielen:** `python -m app.cli reference-import beyenes_uc.json` (mitgelieferte Listen in `app/rules/reference_seed`; `--replace` ersetzt). Messen ohne Oberfläche: `python -m app.cli reference-check <datei> --version all`.
+- **Sicherung:** mit der Datenbank `emprise` (Abschnitt 6).
 
 **Störungen**
 
 - `/verwaltung` meldet „dem Betrieb vorbehalten“: Konto ohne Rolle `ops` oder `rules_admin` (`staff-add`).
-- `404 reference_not_evaluated`: Das Dokument der Liste ist in dieser Instanz nicht ausgewertet (Prüfsumme der Planunterlage und Sektor). Die Liste gilt trotzdem; gemessen wird dort, wo das Dokument ausgewertet ist.
+- `404 reference_not_evaluated`: Das Dokument der Liste ist hier nicht ausgewertet (Prüfsumme der Planunterlage und Sektor). Die Liste gilt trotzdem; gemessen wird, sobald das Dokument ausgewertet ist.
 - `409 reference_list_exists`: Für Dokument und Sektor gibt es schon eine Liste; beim Import „vorhandene Liste ersetzen“ wählen.
-- API startet nicht, Log nennt `emprise_shared`: Stack `emprise-shared` läuft nicht oder `SHARED_APP_DB_PASSWORD` weicht von `APP_DB_PASSWORD` in `.env.shared` ab.

@@ -10,7 +10,7 @@ const usd = (value: number, language: string) =>
 
 /**
  * KI-Modell der Auswertung (PLAN_AN2_PLU 8, ANNAHMEN PU11): eine Einstellung für alle künftigen Auswertungen
- * beider Produkte, gepflegt in der gemeinsamen Verwaltung (VA09). Ändern dürfen `ops` und `rules_admin`, weil
+ * in Konfigurator und Analyse, gepflegt in der Verwaltung (VA09). Ändern dürfen `ops` und `rules_admin`, weil
  * die Wahl die Kosten aller Projekte bestimmt; anderswo zeigt der Abschnitt das Modell und verweist mit
  * `aendernUnter` auf die Verwaltung. Liste und Preise kommen vom Server (Liste von OpenRouter). Modelle ohne
  * PDF-Eingabe bekommen die Textschicht der Seiten (PU12); der Dialog sagt, was dabei verloren geht.

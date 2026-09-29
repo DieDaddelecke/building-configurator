@@ -1066,14 +1066,13 @@ export interface paths {
         };
         /**
          * Get Rules Model
-         * @description KI-Modell der Auswertung für beide Produkte, mit Preisen und Kosten des Monats dieser Instanz (PU11,
+         * @description KI-Modell der Auswertung für Konfigurator und Analyse, mit Preisen und Kosten des Monats (PU11,
          *     VA09).
          */
         get: operations["get_rules_model_api_v1_admin_rules_model_get"];
         /**
          * Set Rules Model
-         * @description Modell für alle künftigen Auswertungen beider Produkte; die Vorgabe der Umgebung hebt die Wahl auf
-         *     (PU11, VA09).
+         * @description Modell für alle künftigen Auswertungen; die Vorgabe der Umgebung hebt die Wahl auf (PU11, VA09).
          */
         put: operations["set_rules_model_api_v1_admin_rules_model_put"];
         post?: never;

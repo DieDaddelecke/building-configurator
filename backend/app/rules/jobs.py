@@ -27,7 +27,6 @@ from app.platform.db import get_sessionmaker
 from app.platform.jobs import JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
-from app.platform.shared import shared_session
 from app.rules import documents, extract, model_choice, ocr, plan_import, service
 from app.rules.extract import RetryableExtractionError
 
@@ -100,9 +99,9 @@ RULES_EXTRACT_TIMEOUT_SECONDS = 3600
 def rules_extract(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     final_attempt = ctx.attempt >= get_job_spec("rules_extract").max_attempts
     started = time.monotonic()
-    with shared_session() as shared_db:
+    with _session() as session:
         # Modell und Preise einmal beim Start: Eine Auswertung mischt keine Modelle (PLAN_AN2_PLU 8)
-        settings = model_choice.effective_settings(shared_db, get_settings())
+        settings = model_choice.effective_settings(session, get_settings())
     try:
         result = extract.extract_chapter(
             _session,

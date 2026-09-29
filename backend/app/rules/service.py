@@ -20,7 +20,6 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.platform.problems import Problem
-from app.platform.shared import shared_session
 from app.rules import documents, model_choice
 from app.rules.budget import ORGANISATION_BUDGET_ERROR, organisation_budget_left
 from app.rules.domain import ENGINE_VERSION
@@ -876,22 +875,16 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
         )
     return CoverageOut(
         configured=settings.openrouter_api_key is not None,
-        model=_effective_model(settings),
+        model=model_choice.effective_settings(db, settings).rules_model,
         month_cost_usd=round(month_cost(db), 2),
         budget_month_usd=settings.rules_budget_month_usd,
         communes=communes,
     )
 
 
-def _effective_model(settings: Settings) -> str:
-    with shared_session() as shared_db:
-        return model_choice.effective_settings(shared_db, settings).rules_model
-
-
-def rules_model_out(db: Session, shared_db: Session, settings: Settings) -> RulesModelOut:
-    """Eingestelltes KI-Modell mit Preisen, Kosten des Monats dieser Instanz und Budget (PLAN_AN2_PLU 8;
-    die Wahl steht in der gemeinsamen Datenbank, VA09)."""
-    chosen = model_choice.current(shared_db, settings)
+def rules_model_out(db: Session, settings: Settings) -> RulesModelOut:
+    """Eingestelltes KI-Modell mit Preisen, Kosten des Monats und Budget (PLAN_AN2_PLU 8, VA09)."""
+    chosen = model_choice.current(db, settings)
     return RulesModelOut(
         model=chosen.model,
         source=chosen.source,

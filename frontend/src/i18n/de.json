@@ -2211,7 +2211,7 @@
       "fromEvaluationConfirm": "Alle Einträge durch die aktuelle Auswertung dieser Anwendung ersetzen? Die Liste wird wieder Entwurf.",
       "export": "Exportieren",
       "delete": "Liste löschen",
-      "deleteConfirm": "Diese Referenzliste für beide Produkte löschen?",
+      "deleteConfirm": "Diese Referenzliste löschen? Sie gilt für Konfigurator und Analyse.",
       "version": "Version",
       "counts": "{{hit}} von {{total}} richtig ({{recall}} %) · {{wrong}} falsch · {{named}} sichtbar offen · {{dismissed}} verworfen · {{silent}} still fehlend",
       "extra_one": "Eine wirksame Regel steht nicht in der Liste.",

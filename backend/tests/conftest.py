@@ -25,10 +25,6 @@ if ADMIN_URL:
         username="migrator", password="migrator", database=TEST_DB
     ).render_as_string(hide_password=False)
 os.environ["EMPRISE_ENV"] = "test"
-# Gemeinsame Tabellen liegen in der Testdatenbank, nie in der gemeinsamen Datenbank der lokalen Stacks
-# (backend-dev erbt deren Adresse aus compose.yaml; PLAN_G2_VOLLSTAENDIGKEIT 3.9)
-os.environ.pop("EMPRISE_SHARED_DATABASE_URL", None)
-os.environ.pop("EMPRISE_SHARED_MIGRATION_DATABASE_URL", None)
 # Bestehende Tests zählen Aufrufe; die Nachsuche prüfen eigene Tests (tests/integration/test_rules_gaps.py)
 os.environ.setdefault("EMPRISE_RULES_GAP_SEARCH", "false")
 os.environ.setdefault("EMPRISE_OIDC_ISSUER", "http://oidc.test/emprise")
@@ -106,23 +102,19 @@ CLEAN_TABLES = [
     "app_setting",
     "reference_entry",
     "reference_list",
-    "shared_setting",
-    "shared_audit",
     "legal_text",
     "rate_limit_counter",
     "audit_log",
 ]
 
 
-@pytest.fixture(scope="session")
-def database() -> Iterator[str]:
-    if not ADMIN_URL:
-        pytest.skip("TEST_ADMIN_DATABASE_URL fehlt: Datenbanktests übersprungen")
-    admin = create_engine(ADMIN_URL, isolation_level="AUTOCOMMIT")
+def create_database(admin: Any, name: str) -> None:
+    """Leere Datenbank mit PostGIS und den Rechten wie in Betrieb; Eigentümer ist `migrator`."""
+    assert ADMIN_URL
     with admin.connect() as conn:
         conn.execute(text(ROLES_SQL))
-        conn.execute(text(f'CREATE DATABASE "{TEST_DB}" OWNER migrator'))
-    test_admin = create_engine(make_url(ADMIN_URL).set(database=TEST_DB), isolation_level="AUTOCOMMIT")
+        conn.execute(text(f'CREATE DATABASE "{name}" OWNER migrator'))
+    test_admin = create_engine(make_url(ADMIN_URL).set(database=name), isolation_level="AUTOCOMMIT")
     with test_admin.connect() as conn:
         conn.execute(text("CREATE EXTENSION postgis"))
         conn.execute(text("GRANT USAGE ON SCHEMA public TO app, readonly"))
@@ -134,6 +126,14 @@ def database() -> Iterator[str]:
         )
     test_admin.dispose()
 
+
+@pytest.fixture(scope="session")
+def database() -> Iterator[str]:
+    if not ADMIN_URL:
+        pytest.skip("TEST_ADMIN_DATABASE_URL fehlt: Datenbanktests übersprungen")
+    admin = create_engine(ADMIN_URL, isolation_level="AUTOCOMMIT")
+    create_database(admin, TEST_DB)
+
     from alembic import command
     from alembic.config import Config
 
@@ -141,16 +141,12 @@ def database() -> Iterator[str]:
 
     config = Config(str(BACKEND_DIR / "alembic.ini"))
     command.upgrade(config, "head")
-    # Gemeinsame Tabellen ohne eigene Verbindung in derselben Datenbank (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
-    command.upgrade(Config(str(BACKEND_DIR / "alembic_shared.ini")), "head")
     try:
         yield TEST_DB
     finally:
         from app.platform.db import get_engine
-        from app.platform.shared import get_shared_engine
 
         get_engine().dispose()
-        get_shared_engine().dispose()
         with admin.connect() as conn:
             conn.execute(text(f'DROP DATABASE IF EXISTS "{TEST_DB}" WITH (FORCE)'))
         admin.dispose()
