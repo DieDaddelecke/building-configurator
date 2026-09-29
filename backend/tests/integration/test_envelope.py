@@ -409,3 +409,27 @@ def test_service_returns_input_and_envelope_for_later_modules(db_session: Any, p
     assert data.site.parcels == [REGULAR]
     site = site_service.envelope_site(db_session, uuid.UUID(project))
     assert site.engine_version.startswith("g1-")
+
+
+def test_envelope_check_leaves_nothing_behind(
+    project: str, db_session: Any, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`envelope-check` rechnet über echte Parzellen und speichert nichts, obwohl `form_site` committet."""
+    import argparse
+    import contextlib
+
+    from app import cli
+
+    def counts() -> list[int]:
+        return [
+            db_session.execute(text(f"SELECT count(*) FROM {table}")).scalar_one()
+            for table in ("project", "site", "site_edge", "job")
+        ]
+
+    monkeypatch.setattr(cli, "configure_logging", lambda *args, **kwargs: None)
+    before = counts()
+    with contextlib.suppress(SystemExit):
+        cli.cmd_envelope_check(argparse.Namespace(commune="44209", zone=None, sample=3))
+    output = capsys.readouterr().out
+    assert "Parzellen: 3" in output and "Dauer" in output
+    assert counts() == before

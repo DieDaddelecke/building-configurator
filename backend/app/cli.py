@@ -29,7 +29,7 @@ from sqlalchemy import select, update
 from app.config import get_settings
 from app.platform import audit, organisations
 from app.platform.auth.context import Role
-from app.platform.db import get_sessionmaker, utcnow
+from app.platform.db import get_engine, get_sessionmaker, utcnow
 from app.platform.logging import configure_logging
 from app.platform.models import Organisation, OrganisationMember, StaffSession, StaffUser
 
@@ -398,7 +398,8 @@ def cmd_envelope_check(args: argparse.Namespace) -> None:
 
     Prüft auf Ausnahmen, ungültige Geometrien und die Schachtelung der Konturen und misst die Dauer.
     Jede Parzelle läuft in einer eigenen Transaktion, die am Ende zurückgerollt wird; Projekte, Grundstücke
-    und Jobs bleiben also nicht zurück.
+    und Jobs bleiben also nicht zurück. Die Dienste committen selbst (`form_site`); in der äußeren
+    Transaktion geben sie nur einen Savepoint frei.
     """
     import statistics
     import time
@@ -406,6 +407,7 @@ def cmd_envelope_check(args: argparse.Namespace) -> None:
     from collections import Counter
 
     from sqlalchemy import text as sql_text
+    from sqlalchemy.orm import Session
 
     import app.registry  # noqa: F401  Jobarten registrieren; `form_site` legt `site_enrich` an
     from app.envelope import service as envelope_service
@@ -440,7 +442,9 @@ def cmd_envelope_check(args: argparse.Namespace) -> None:
     durations: list[float] = []
     problems: list[str] = []
     for idu in idus:
-        session = factory()
+        connection = get_engine().connect()
+        outer = connection.begin()
+        session = Session(bind=connection, join_transaction_mode="create_savepoint")
         started = time.perf_counter()
         try:
             project = Project(access_token_hash=uuid.uuid4().bytes, created_by="envelope-check")
@@ -462,8 +466,9 @@ def cmd_envelope_check(args: argparse.Namespace) -> None:
         except Exception as exc:  # Ausnahmen sind hier das Ergebnis des Laufs
             problems.append(f"{idu}: {type(exc).__name__}: {exc}")
         finally:
-            session.rollback()
             session.close()
+            outer.rollback()
+            connection.close()
 
     print(f"Parzellen: {len(idus)} (Gemeinde {args.commune or 'alle'}, Zone {args.zone or 'alle'})")
     for name, count in sorted(statuses.items()):
