@@ -215,7 +215,7 @@ def upgrade() -> None:
             f"""
             UPDATE {table} SET {column} = (SELECT id FROM organisation WHERE kind = 'operator')
             WHERE {column} IS NULL
-            """
+            """  # noqa: S608  Tabellen- und Spaltennamen fest
         )
 
     # Rechte wie in 0001, falls der Anbieter keine Default Privileges setzt (Plan 6.6)

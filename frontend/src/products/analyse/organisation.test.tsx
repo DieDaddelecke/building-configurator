@@ -68,7 +68,7 @@ const created: ApiKeyCreatedOut = {
   expires_at: "2027-09-29T10:00:00Z",
   last_used_at: null,
   revoked_at: null,
-  token: "emp_ab12cd34_geheim",
+  token: "emp_beispiel",
 };
 
 const mutation = (fn: (...args: unknown[]) => void, result?: unknown, error: () => unknown = () => null) => ({
@@ -141,7 +141,7 @@ it("zeigt einen neuen Schlüssel einmal und legt ihn nur lesend an, wenn nichts 
   await user.type(within(bereich).getByLabelText("Name (wofür)"), "CAD");
   await user.click(within(bereich).getByRole("button", { name: "Schlüssel anlegen" }));
   expect(state.create).toHaveBeenCalledWith({ name: "CAD", scopes: ["read"], days: 365 });
-  expect(within(bereich).getByTestId("api-key-token")).toHaveTextContent("emp_ab12cd34_geheim");
+  expect(within(bereich).getByTestId("api-key-token")).toHaveTextContent("emp_beispiel");
   await user.click(within(bereich).getByRole("button", { name: "Fertig" }));
   expect(within(bereich).queryByTestId("api-key-token")).not.toBeInTheDocument();
 });
