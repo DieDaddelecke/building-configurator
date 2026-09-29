@@ -1,5 +1,5 @@
 # Prüfungen je Pull Request und auf main (Plan 6.5 Schritt 1–2).
-# Auslieferung nach Staging/Produktion folgt nach der Anbieterwahl (D3) in deploy.yml.
+# Ausgeliefert wird bis zur Beta per deploy/unraid/deploy.sh (D3).
 name: CI
 
 on:

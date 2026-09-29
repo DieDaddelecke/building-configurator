@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Geheimnis für Signaturen (OIDC-Zwischenspeicher, Rate-Limit-Schlüssel)
     secret_key: SecretStr = SecretStr("local-development-only-change-me")
 
-    # Anmeldung Büro über OIDC (Entscheidung D4 offen; Anbieter per Konfiguration)
+    # Anmeldung Büro über OIDC (D4: Authentik, entschieden 14.09.2026; Anbieter per Konfiguration)
     oidc_issuer: str | None = None
     oidc_client_id: str | None = None
     oidc_client_secret: SecretStr | None = None
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     georisques_token: SecretStr | None = None
     cadastre_base_url: str = "https://cadastre.data.gouv.fr/data/etalab-cadastre"
 
-    # Grundstück (G1). Einzugsgebiet als INSEE-Codes; Entscheidung D1 offen, Vorschlag: um Treillières
+    # Grundstück (G1). Einzugsgebiet als INSEE-Codes; D1 (14.09.2026): bis zur Beta Treillières
     cadastre_communes: list[str] = Field(default_factory=lambda: ["44209"])
     cadastre_max_count_change_ratio: float = 0.02
     cadastre_max_count_change_absolute: int = 50

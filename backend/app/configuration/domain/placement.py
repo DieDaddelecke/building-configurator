@@ -7,13 +7,12 @@ die Eigenschaftstests.
 
 from dataclasses import dataclass, field
 
-from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 
 from app.configuration.domain import tolerances as tol
 from app.configuration.domain.checks import FAIL, HINT, PASS, UNKNOWN, Check, type_checks
 from app.configuration.domain.context import PartContext, SiteContext
-from app.configuration.domain.geometry import clean, distance, place, polygons, segments, union
+from app.configuration.domain.geometry import distance, place, union
 from app.configuration.domain.house import HouseType, role_edges
 from app.configuration.domain.rotations import (
     ridge_deviation_deg,
@@ -298,12 +297,3 @@ def _roles_hint(house: HouseType, ctx: SiteContext) -> list[Check]:
     if ctx.is_free or house.facade_roles:
         return []
     return [Check(code="facade_roles_missing", kind="site", status=HINT, binding=False)]
-
-
-def footprint_polygons(result: PlacementResult) -> tuple[list[Polygon], list[Polygon]]:
-    """Fassade und Projektion der Lage als Flächenlisten."""
-    return polygons(clean(result.facade)), polygons(clean(result.projection))
-
-
-def all_segments(geometry: BaseGeometry) -> list[tuple[Point, Point]]:
-    return segments(geometry)

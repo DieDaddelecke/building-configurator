@@ -3,8 +3,9 @@
 `pypdf` (BSD) statt PyMuPDF (AGPL, Spez. 5.2.3 Schritt 1), weil Emprise ein öffentlich erreichbarer
 Dienst ist (Annahme in docs/ANNAHMEN.md). PDFs gelten als nicht vertrauenswürdig (Spez. 10.1): Größe und
 Seitenzahl sind begrenzt, eingebettete Inhalte werden nicht ausgeführt.
-OCR für Seiten ohne Textschicht ist noch nicht eingebaut; solche Seiten zählen als leer und das Modell
-liest sie aus dem PDF selbst, die Zitatprüfung scheitert dann aber (Regel `unknown`).
+Seiten ohne Textschicht zählen hier als leer. Hochgeladene Dokumente erkennt `rules/ocr.py` nach
+Bestätigung (AN7); beim GPU-Import gibt es keine Texterkennung, das Modell liest solche Seiten aus dem PDF
+selbst, die Zitatprüfung scheitert dann aber (Regel `unknown`).
 """
 
 import io
