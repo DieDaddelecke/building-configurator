@@ -14,6 +14,7 @@ Kurze Stücke des Umrisses (Kerben von Beschriftungen) bilden keine eigene Kante
 Was bewusst fehlt: DWG (E-A2), gescannte PDFs (UP16), Löcher im Umriss.
 """
 
+import hashlib
 import io
 import json
 import math
@@ -356,3 +357,33 @@ def short_piece_m_for(scale: int | None) -> float:
     if scale is None:
         return tol.UPLOAD_SHORT_PIECE_M
     return max(tol.UPLOAD_SHORT_PIECE_M, tol.UPLOAD_SHORT_PIECE_PAPER_M * scale)
+
+
+def upload_provenance(
+    file_name: str, data: bytes, parcel_file: ParcelFile, chosen: Candidate, indices: Sequence[int]
+) -> dict[str, Any]:
+    """Herkunft eines hochgeladenen Grundstücks (E-AN1-1, L3): Die Datei wird nicht gespeichert, wohl aber
+    Name, Prüfsumme, Format und Kontur. Bei einer Vereinigung die Konturen (UP17), bei PDF Maßstab und Seite
+    (UP14), mit Lage aus der Datei die Methode (AN5, 3.2). Kurze Stücke bilden keine eigene Kante (UP18);
+    die Schwelle gehört zur Herkunft."""
+    provenance: dict[str, Any] = {
+        "file_name": file_name,
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "format": parcel_file.format,
+        "layer": chosen.layer,
+        "name": chosen.name,
+        "index": chosen.index,
+        "crs": chosen.crs,
+        "short_piece_m": short_piece_m_for(parcel_file.scale),
+    }
+    if len(indices) > 1:
+        provenance |= {"index": None, "indices": list(indices)}
+    if parcel_file.format == "pdf":
+        provenance |= {
+            "scale": parcel_file.scale,
+            "scale_source": parcel_file.scale_source,
+            "page": parcel_file.page,
+        }
+    if chosen.georeferenced:
+        provenance["position"] = {"method": "file"}
+    return provenance

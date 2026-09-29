@@ -55,6 +55,7 @@ from app.envelope import service as envelope_service
 from app.envelope.domain import ENGINE_VERSION as ENVELOPE_ENGINE_VERSION
 from app.platform.db import utcnow
 from app.platform.problems import Problem
+from app.site.domain.local import rings as local_rings
 
 FEATURE_FLAG = "configurator"
 
@@ -582,19 +583,15 @@ def placement_area(db: Session, project_id: uuid.UUID, type_slug: str | None) ->
         rotations=[
             RotationAreaOut(
                 rotation_deg=rotation,
-                rings_local=[ring for poly in polygons(surfaces[rotation]) for ring in _rings(poly)],
+                # Die Fläche liegt schon in lokalen Metern
+                rings_local=[
+                    ring for poly in polygons(surfaces[rotation]) for ring in local_rings(poly, (0.0, 0.0))
+                ],
                 area_m2=round(float(surfaces[rotation].area), 2),
             )
             for rotation in rotations
         ],
     )
-
-
-def _rings(polygon: Polygon) -> list[list[list[float]]]:
-    return [
-        [[round(float(x), 3), round(float(y), 3)] for x, y, *_ in ring.coords]
-        for ring in (polygon.exterior, *polygon.interiors)
-    ]
 
 
 def _same_type(row: Configuration | None, published: PublishedType) -> bool:

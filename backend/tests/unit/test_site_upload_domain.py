@@ -1,5 +1,6 @@
 """Lesen einer Parzellendatei ohne Datenbank (AN1, `app/site/domain/upload.py`)."""
 
+import hashlib
 import json
 
 import pytest
@@ -8,6 +9,7 @@ from shapely.geometry import Polygon
 from app.site.domain.upload import (
     Candidate,
     Crs,
+    ParcelFile,
     UploadInvalid,
     build_candidates,
     detect_crs,
@@ -15,6 +17,7 @@ from app.site.domain.upload import (
     read_geojson,
     read_parcel_file,
     short_piece_m_for,
+    upload_provenance,
 )
 
 LOCAL = [(0.0, 0.0), (20.0, 0.0), (20.0, 30.0), (0.0, 30.0)]
@@ -152,3 +155,28 @@ def test_the_short_piece_threshold_grows_with_the_plan_scale() -> None:
     assert short_piece_m_for(500) == 2.0
     assert short_piece_m_for(2500) == pytest.approx(2.5)
     assert short_piece_m_for(5000) == pytest.approx(5.0)
+
+
+def test_provenance_names_file_and_contour_without_keeping_the_file() -> None:
+    parcel_file = ParcelFile(rings=[], format="geojson")
+    info = upload_provenance("plan.geojson", b"{}", parcel_file, piece(3, L93, "65", crs="EPSG:2154"), [3])
+    assert info == {
+        "file_name": "plan.geojson",
+        "sha256": hashlib.sha256(b"{}").hexdigest(),
+        "format": "geojson",
+        "layer": None,
+        "name": "65",
+        "index": 3,
+        "crs": "EPSG:2154",
+        "short_piece_m": 2.0,
+        "position": {"method": "file"},
+    }
+
+
+def test_provenance_of_merged_pdf_contours_keeps_scale_page_and_pieces() -> None:
+    parcel_file = ParcelFile(rings=[], format="pdf", scale=2500, scale_source="input", page=2)
+    info = upload_provenance("plan.pdf", b"%PDF", parcel_file, piece(4, LOCAL), [4, 9])
+    assert (info["index"], info["indices"]) == (None, [4, 9])
+    assert (info["scale"], info["scale_source"], info["page"]) == (2500, "input", 2)
+    assert info["short_piece_m"] == pytest.approx(2.5)
+    assert "position" not in info

@@ -14,7 +14,7 @@ from typing import Any, cast
 
 import shapely
 from geoalchemy2.shape import from_shape, to_shape
-from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 from sqlalchemy import delete, select, text
 from sqlalchemy.orm import Session
@@ -40,6 +40,7 @@ from app.site.domain.edges import (
     edge_facts,
     split_edges,
 )
+from app.site.domain.local import rings as local_rings
 from app.site.domain.manual import ManualEdgeInput, ManualPolygonInvalid, build_manual_polygon
 from app.site.domain.outline import ParcelInput, SiteNotContiguous, merge_parcels, to_local
 from app.site.domain.upload import (
@@ -49,7 +50,7 @@ from app.site.domain.upload import (
     build_candidates,
     merge_candidates,
     read_parcel_file,
-    short_piece_m_for,
+    upload_provenance,
 )
 from app.site.models import L93, Site, SiteEdge, SiteParcel, SiteRisk, Terrain
 from app.site.schemas import (
@@ -57,7 +58,6 @@ from app.site.schemas import (
     ContextOut,
     EdgeOut,
     LocalOrigin,
-    LocalRing,
     LookupIn,
     LookupOut,
     ParcelOut,
@@ -320,13 +320,7 @@ def form_site(db: Session, project_id: uuid.UUID, idus: list[str], actor: str) -
     classification = classify(edges, facts, site_area_m2=outline.area_m2, neighbour_coverage=coverage)
     warnings = [*classification.warnings, *(["area_mismatch"] if outline.area_mismatch else [])]
 
-    if site is None:
-        site = Site(project_id=project_id, created_by=actor, revision=1)
-        db.add(site)
-    else:
-        site.revision += 1
-        for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
-            db.execute(delete(model).where(model.site_id == site.id))
+    site = _renewed_site(db, site, project_id, actor)
     site.geometry = from_shape(outline.polygon, srid=L93)
     site.area_m2 = round(outline.area_m2, tol.STORAGE_DECIMALS)
     site.area_official_m2 = outline.area_official_m2
@@ -362,6 +356,26 @@ def form_site(db: Session, project_id: uuid.UUID, idus: list[str], actor: str) -
                 created_by=actor,
             )
         )
+    _add_edges(db, site, classification, actor)
+    _enqueue_enrichment(db, site, project_id, actor)
+    db.commit()
+    return load_site(db, project_id)
+
+
+def _renewed_site(db: Session, site: Site | None, project_id: uuid.UUID, actor: str) -> Site:
+    """Neues Grundstück anlegen oder das vorhandene für einen neuen Umriss leeren (nächste Revision)."""
+    if site is None:
+        site = Site(project_id=project_id, created_by=actor, revision=1)
+        db.add(site)
+        return site
+    site.revision += 1
+    for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
+        db.execute(delete(model).where(model.site_id == site.id))
+    return site
+
+
+def _add_edges(db: Session, site: Site, classification: Classification, actor: str) -> None:
+    """Kanten mit automatischer Einordnung speichern; für einen neuen Umriss gibt es keine Korrekturen."""
     for edge in classification.edges:
         geometry = edge.geometry
         db.add(
@@ -386,16 +400,6 @@ def form_site(db: Session, project_id: uuid.UUID, idus: list[str], actor: str) -
                 created_by=actor,
             )
         )
-    enqueue(
-        db,
-        "site_enrich",
-        {"site_id": str(site.id), "outline_hash": outline_hash},
-        idempotency_key=f"site_enrich:{site.id}:{site.revision}",
-        project_id=project_id,
-        created_by=actor,
-    )
-    db.commit()
-    return load_site(db, project_id)
 
 
 def _db_now(db: Session) -> Any:
@@ -469,13 +473,7 @@ def _store_sketch_site(
     ):
         return load_site(db, project_id)
 
-    if site is None:
-        site = Site(project_id=project_id, created_by=actor, revision=1)
-        db.add(site)
-    else:
-        site.revision += 1
-        for model in (SiteParcel, SiteEdge, Terrain, SiteRisk):
-            db.execute(delete(model).where(model.site_id == site.id))
+    site = _renewed_site(db, site, project_id, actor)
     classification = _sketch_classification(polygon, area_m2, short_piece_m)
     site.origin = origin
     site.georeferenced = georeferenced
@@ -497,30 +495,7 @@ def _store_sketch_site(
     site.updated_at = _db_now(db)
     _apply_classification(site, classification, list(classification.warnings))
     db.flush()
-    for edge in classification.edges:
-        geometry = edge.geometry
-        db.add(
-            SiteEdge(
-                site_id=site.id,
-                seq=geometry.seq,
-                ring=geometry.ring,
-                geometry=from_shape(shapely.LineString(geometry.coords), srid=L93),
-                length_m=round(geometry.length_m, tol.STORAGE_DECIMALS),
-                normal_azimuth_deg=round(geometry.normal_azimuth_deg, 2),
-                kind=edge.kind,
-                kind_auto=edge.kind_auto,
-                override_kind=None,
-                classification_source="auto",
-                confidence=edge.confidence,
-                neighbour_share=edge.facts.neighbour_share,
-                street_candidate=edge.facts.street_candidate,
-                probe_in_parcel=edge.facts.probe_in_parcel,
-                road_share=edge.facts.road_share,
-                street_name=edge.facts.street_name,
-                adjacent=list(edge.facts.adjacent),
-                created_by=actor,
-            )
-        )
+    _add_edges(db, site, classification, actor)
     if georeferenced:
         _enqueue_enrichment(db, site, project_id, actor)
     db.commit()
@@ -627,8 +602,8 @@ def _candidate_out(candidate: Candidate, overview_origin: tuple[float, float]) -
         name=candidate.name,
         crs=candidate.crs,
         georeferenced=candidate.georeferenced,
-        outline_local=_rings(candidate.polygon, origin),
-        outline_overview=_rings(candidate.polygon, overview_origin),
+        outline_local=local_rings(candidate.polygon, origin),
+        outline_overview=local_rings(candidate.polygon, overview_origin),
     )
 
 
@@ -686,25 +661,7 @@ def form_uploaded_site(
         except UploadInvalid as exc:
             raise Problem(422, exc.code, detail=str(exc), **exc.extra) from None
     min_x, min_y, _, _ = chosen.polygon.bounds
-    source_info: dict[str, Any] = {
-        "file_name": file_name,
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "format": parcel_file.format,
-        "layer": chosen.layer,
-        "name": chosen.name,
-        "index": chosen.index,
-        "crs": chosen.crs,
-        # Kurze Stücke bilden keine eigene Kante (UP18); die Schwelle gehört zur Herkunft
-        "short_piece_m": short_piece_m_for(parcel_file.scale),
-    }
-    if len(wanted) > 1:
-        # Herkunft der Vereinigung (UP17, L3): welche Konturen der Datei das Grundstück bilden
-        source_info |= {"index": None, "indices": wanted}
-    if parcel_file.format == "pdf":
-        source_info |= {**scale_info, "page": parcel_file.page}
-    if chosen.georeferenced:
-        # Lage aus der Datei, bis der Architekt sie korrigiert (AN5, 3.2)
-        source_info["position"] = {"method": "file"}
+    source_info = upload_provenance(file_name, data, parcel_file, chosen, wanted)
     site = _store_sketch_site(
         db,
         project_id,
@@ -1079,24 +1036,6 @@ def review_queue(
 # ---------------------------------------------------------------------------
 
 
-def _rings(geometry: BaseGeometry, origin: tuple[float, float]) -> list[LocalRing]:
-    polygons: list[Polygon] = []
-    if isinstance(geometry, Polygon):
-        polygons = [geometry]
-    elif isinstance(geometry, MultiPolygon):
-        polygons = list(geometry.geoms)
-    elif hasattr(geometry, "geoms"):
-        polygons = [g for g in geometry.geoms if isinstance(g, Polygon)]
-    rings: list[LocalRing] = []
-    for polygon in polygons:
-        if polygon.is_empty:  # Zuschnitt der Umgebung kann leere Teile liefern
-            continue
-        for ring in (polygon.exterior, *polygon.interiors):
-            if len(ring.coords) >= 4:
-                rings.append([list(to_local((float(x), float(y)), origin)) for x, y, *_ in ring.coords])
-    return rings
-
-
 @dataclass(frozen=True)
 class SiteFootprint:
     """Für andere Module (Plan 3.2): Umriss in Lambert-93 als WKB, Fläche, Gemeinden, Revision."""
@@ -1267,7 +1206,7 @@ def _sketch_site_out(db: Session, site: Site) -> SiteOut:
         area_m2=site.area_m2,
         area_official_m2=None,
         local_origin=LocalOrigin(e=origin[0], n=origin[1]),
-        outline_local=_rings(polygon, origin),
+        outline_local=local_rings(polygon, origin),
         outline_geojson=outline_geojson,
         parcels=[],
         edges=[_edge_out(e, origin) for e in edges],
@@ -1383,7 +1322,7 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
         area_m2=site.area_m2,
         area_official_m2=site.area_official_m2,
         local_origin=LocalOrigin(e=site.local_origin_e, n=site.local_origin_n),
-        outline_local=_rings(polygon, origin),
+        outline_local=local_rings(polygon, origin),
         outline_geojson=json.loads(outline_geojson),
         parcels=[
             ParcelOut(
@@ -1410,10 +1349,12 @@ def load_site(db: Session, project_id: uuid.UUID) -> SiteOut:
         risks=_risks_out(site, risks),
         context=ContextOut(
             parcels=[
-                ring for r in context_parcels for ring in _rings(shapely.from_wkb(bytes(r.wkb)), origin)
+                ring for r in context_parcels for ring in local_rings(shapely.from_wkb(bytes(r.wkb)), origin)
             ],
             buildings=[
-                ring for r in context_buildings for ring in _rings(shapely.from_wkb(bytes(r.wkb)), origin)
+                ring
+                for r in context_buildings
+                for ring in local_rings(shapely.from_wkb(bytes(r.wkb)), origin)
             ],
         ),
     )

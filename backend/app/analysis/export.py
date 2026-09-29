@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 
 from app.analysis import service
 from app.analysis.report import ascii_text, file_stem
-from app.envelope.domain import local as local_coords
 from app.plan import dxf
 from app.plan.geometry import Area, Constraint, Cut, Edge, Plan, Point, Ring, Stage, rings
 from app.platform.db import utcnow
@@ -25,6 +24,7 @@ from app.platform.i18n import translate
 from app.platform.models import Project
 from app.platform.problems import Problem
 from app.site import service as site_service
+from app.site.domain import local as local_coords
 from app.site.schemas import SiteOut
 
 Variant = Literal["local", "L93"]

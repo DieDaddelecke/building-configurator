@@ -410,12 +410,12 @@ def test_context_rings_skip_empty_parts() -> None:
     """Der Zuschnitt der Umgebung per ST_Intersection kann leere Polygone liefern (gefunden im E2E-Test)."""
     from shapely.geometry import GeometryCollection, MultiPolygon
 
-    from app.site.service import _rings
+    from app.site.domain.local import rings as local_rings
 
     geometry = GeometryCollection([Polygon(), MultiPolygon([rect(0, 0, 1, 1)])])
-    rings = _rings(geometry, (E0, N0))
+    rings = local_rings(geometry, (E0, N0))
     assert rings == [] or all(len(r) >= 4 for r in rings)
-    assert _rings(Polygon(), (E0, N0)) == []
+    assert local_rings(Polygon(), (E0, N0)) == []
 
 
 # ---------------------------------------------------------------------------

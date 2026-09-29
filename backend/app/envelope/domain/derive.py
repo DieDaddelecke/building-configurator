@@ -17,7 +17,6 @@ from app.envelope.domain import tolerances as tol
 from app.envelope.domain.bands import Band
 from app.envelope.domain.heights import Heights, from_rule
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput, ZoneInput
-from app.envelope.domain.local import polygons
 from app.envelope.domain.setbacks import (
     RuleIndex,
     Setback,
@@ -28,6 +27,7 @@ from app.envelope.domain.setbacks import (
     rule_for,
     setbacks_for_edge,
 )
+from app.site.domain.local import polygons
 
 READINGS = ("lenient", "strict")
 """`lenient` = weiteste Auslegung (größte Fläche), `strict` = engste (kleinste)."""

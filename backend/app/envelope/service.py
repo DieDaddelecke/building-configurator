@@ -18,7 +18,6 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.envelope.domain import ENGINE_VERSION
-from app.envelope.domain import local as local_coords
 from app.envelope.domain.bands import Band
 from app.envelope.domain.derive import Contour, EdgeResult, Envelope, Limit, PartResult, derive_envelope
 from app.envelope.domain.inputs import (
@@ -52,6 +51,7 @@ from app.platform.problems import Problem
 from app.rules import service as rules_service
 from app.rules.schemas import RuleOut
 from app.site import service as site_service
+from app.site.domain import local as local_coords
 from app.site.schemas import LocalOrigin
 
 FEATURE_FLAG = "envelope_simulation"

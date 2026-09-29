@@ -1,7 +1,7 @@
 """Geometrie eines Lageplans, für PDF und DXF gleich (V 3.7, seit AN0 im Kern).
 
 Alle Koordinaten sind lokale Meter (Ost, Nord) relativ zu `site.local_origin`; Lambert-93 ist lokal plus
-Ursprung (reine Verschiebung, `envelope/domain/local.py`). Für Weg E hat der Ursprung keine geografische
+Ursprung (reine Verschiebung, `site/domain/local.py`). Für Weg E hat der Ursprung keine geografische
 Bedeutung (G27): `georeferenced` ist dann falsch, und es entsteht keine Lambert-93-Datei.
 """
 

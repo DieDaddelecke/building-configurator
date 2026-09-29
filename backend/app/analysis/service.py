@@ -55,7 +55,6 @@ from app.analysis.schemas import (
     SupplementAnalysisOut,
 )
 from app.envelope import service as envelope_service
-from app.envelope.domain import local as local_coords
 from app.envelope.domain.derive import ZONE_WITHOUT_RULES, Envelope
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
@@ -69,6 +68,7 @@ from app.rules import service as rules_service
 from app.rules.domain.kinds import params_equal
 from app.rules.schemas import RuleOut, VersionOut
 from app.site import service as site_service
+from app.site.domain import local as local_coords
 from app.site.schemas import SiteOut
 
 # ---------------------------------------------------------------------------

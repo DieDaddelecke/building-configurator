@@ -1,9 +1,11 @@
-"""Umrechnung Lambert-93 → lokale Meter (Ost, Nord) für Anzeige und Steckbrief (Spez. 4.2)."""
+"""Umrechnung Lambert-93 → lokale Meter (Ost, Nord) für Anzeige und Steckbrief (Spez. 4.2).
+
+Der Ursprung gehört dem Grundstück; Grundstück, Baurahmen, Analyse und Konfiguration rechnen damit."""
 
 from shapely.geometry import LineString, MultiLineString, MultiPolygon, Point, Polygon
 from shapely.geometry.base import BaseGeometry
 
-from app.envelope.domain import tolerances as tol
+from app.site.domain import tolerances as tol
 
 Ring = list[list[float]]
 
