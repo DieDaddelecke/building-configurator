@@ -24,7 +24,7 @@ from app.integrations.http import ExternalServiceError, new_client
 from app.integrations.openrouter import OpenRouterExtractor, RuleExtractor
 from app.platform import scan
 from app.platform.db import get_sessionmaker
-from app.platform.jobs import JobContext, job, periodic
+from app.platform.jobs import LONG, JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
 from app.rules import documents, extract, model_choice, ocr, plan_import, service
@@ -58,7 +58,7 @@ def _session() -> Iterator[Session]:
         session.close()
 
 
-@job("plu_import", max_attempts=3, timeout_seconds=900)
+@job("plu_import", queue=LONG, max_attempts=3, timeout_seconds=900)
 def plu_import(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
     communes = payload.get("communes") or settings.cadastre_communes
@@ -95,7 +95,7 @@ periodic("plu_import", kind="plu_import", every=timedelta(days=7))
 RULES_EXTRACT_TIMEOUT_SECONDS = 3600
 
 
-@job("rules_extract", max_attempts=5, timeout_seconds=RULES_EXTRACT_TIMEOUT_SECONDS)
+@job("rules_extract", queue=LONG, max_attempts=5, timeout_seconds=RULES_EXTRACT_TIMEOUT_SECONDS)
 def rules_extract(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     final_attempt = ctx.attempt >= get_job_spec("rules_extract").max_attempts
     started = time.monotonic()
@@ -130,7 +130,7 @@ def rules_extract(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-@job("rules_document_read", max_attempts=3, timeout_seconds=900)
+@job("rules_document_read", queue=LONG, max_attempts=3, timeout_seconds=900)
 def rules_document_read(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     """Hochgeladenes Reglement lesen: Seitentexte, Kapitel, Vorschläge für Zonencodes (AN2). Kostet
     nichts; die Auswertung beginnt erst mit der Zonenwahl des Architekten."""
@@ -145,7 +145,7 @@ def rules_document_read(ctx: JobContext, payload: dict[str, Any]) -> dict[str, A
         raise
 
 
-@job("rules_document_ocr", max_attempts=3, timeout_seconds=900)
+@job("rules_document_ocr", queue=LONG, max_attempts=3, timeout_seconds=900)
 def rules_document_ocr(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     """Nächster Teil der Texterkennung (AN7, docs/PLAN_AN7_SCAN.md 3.2). Kostet nichts; jede Seite ist sofort
     gespeichert, ein Abbruch verliert höchstens eine."""

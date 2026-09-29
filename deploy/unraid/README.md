@@ -117,7 +117,7 @@ docker compose exec -T db psql -U postgres -d restore_test -c "CREATE EXTENSION 
 docker compose exec -T backup sh -c 'pg_restore --no-owner --no-comments --role=migrator -d restore_test "$(ls /backups/emprise-*.dump | tail -1)"'
 ```
 
-Für den Ernstfall statt `restore_test` die Datenbank `emprise` neu anlegen (vorher `api`, `worker` stoppen), danach `./deploy.sh`.
+Für den Ernstfall statt `restore_test` die Datenbank `emprise` neu anlegen (vorher `api`, `worker`, `worker-long` stoppen), danach `./deploy.sh`.
 
 ## 7. Überwachung
 
@@ -126,7 +126,7 @@ Vorschlag ohne externe Dienste: Uptime Kuma als Container auf Unraid mit drei Pr
 | Prüfung | Alarm, wenn |
 |---|---|
 | `https://building-configurator.aslani.work/api/health/ready` | nicht 200 |
-| `https://building-configurator.aslani.work/api/health/jobs` | nicht 200 (Worker steht) |
+| `https://building-configurator.aslani.work/api/health/jobs` | nicht 200 (`worker` oder `worker-long` steht; die Antwort nennt die Warteschlange) |
 | `https://auth.aslani.work/-/health/ready/` | nicht 200 |
 
 Die Frische der Sicherung prüft ein User Script: Alarm, wenn `last-success` älter als 26 Stunden ist.
@@ -144,7 +144,7 @@ Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in [docs/BETRIEB
 
 - **Ausgehender Zugang:** Die Compose-Netze sperren ausgehenden Verkehr nicht; eine Firewall auf Unraid oder im Router muss die Hosts aus BETRIEB 1 erlauben.
 - **`.env`** (Namen ohne Präfix `EMPRISE_`, `compose.yaml` setzt ihn): `CADASTRE_COMMUNES=["44209","44…"]` (INSEE-Codes, D1), `OPENROUTER_API_KEY`, `RULES_BUDGET_MONTH_USD`. `EMPRISE_OFFICE_EMAIL` (Modul A) ist in `compose.yaml` und `.env.example` noch nicht verdrahtet (HANDOFF 4). Weitere Einstellungen (Zeitlimits, Rate-Limits, Basis-URLs) haben Standardwerte in `backend/app/config.py`, Details in `docs/ANNAHMEN.md`.
-- **Géorisques-Token** nur, falls die Schnittstelle v1 abgeschaltet wird: in `compose.override.yaml` bei `api` und `worker` `EMPRISE_GEORISQUES_TOKEN` setzen, nicht leer übergeben.
+- **Géorisques-Token** nur, falls die Schnittstelle v1 abgeschaltet wird: in `compose.override.yaml` bei `api`, `worker` und `worker-long` `EMPRISE_GEORISQUES_TOKEN` setzen, nicht leer übergeben.
 - **Nach dem ersten Ausliefern:** `docker compose exec api python -m app.cli cadastre-import` (danach wöchentlich durch den Worker); Planstände sofort mit `plu-import` statt nach einer Woche. Ohne Schlüssel stehen die Kapitel auf „gescheitert: not_configured“ und werden nach dem Eintragen innerhalb einer Stunde ausgewertet (`rules_housekeeping`), sofort mit `rules-extract --pending` (kostet Token, Größenordnung in BETRIEB 9). Vor `inquiry`: `legal-seed` (BETRIEB 11). `staff-add` auch für die Katalogpflege (`catalog_admin` oder `architect`). Die Demo-Typen `demo_*` (`tests.e2e_seed_types`) **nie in Produktion**.
 - **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core` im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren: `docker compose exec api python -c "import weasyprint"`. Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (ANNAHMEN A27).
 - **Gegenprobe nach dem Ausliefern:** `docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 50` (0 Fehler erwartet).

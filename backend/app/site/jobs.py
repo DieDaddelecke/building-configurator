@@ -17,7 +17,7 @@ from app.integrations import geoplateforme, georisques
 from app.integrations.etalab_cadastre import CadastreSource, EtalabCadastre
 from app.integrations.http import ExternalServiceError, new_client
 from app.integrations.ign_bdtopo import GeoplateformeRoads, RoadSource
-from app.platform.jobs import JobContext, job, periodic
+from app.platform.jobs import LONG, JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
 from app.site import cadastre_import
@@ -180,7 +180,7 @@ def _site_enrich(
     return results
 
 
-@job("cadastre_import", max_attempts=2, timeout_seconds=3600)
+@job("cadastre_import", queue=LONG, max_attempts=2, timeout_seconds=3600)
 def cadastre_import_job(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     """Alle Gemeinden des Einzugsgebiets. Ein Fehler bricht die übrigen nicht ab, der Job scheitert dann."""
     settings = get_settings()

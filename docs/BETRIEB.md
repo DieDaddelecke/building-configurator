@@ -8,7 +8,8 @@ Einrichten der Module, typische Störungen und Handgriffe (Plan 6.8). Befehle mi
 |---|---|---|
 | `web` | Frontend, Sicherheitsköpfe, Weiterleitung `/api` | `GET /` |
 | `api` | REST-API | `GET /api/health/live`, `/api/health/ready` |
-| `worker` | Hintergrundjobs, Zeitplan | `GET /api/health/jobs` |
+| `worker` | Hintergrundjobs der Warteschlange `default`, Zeitplan | `GET /api/health/jobs` |
+| `worker-long` (Unraid) | Warteschlange `long`: Auswertung, Lesen, Texterkennung, Importe | `GET /api/health/jobs` |
 | `migrate` | Einmaliger Job vor jeder Auslieferung: `alembic upgrade head` | Exit-Code |
 | Datenbank | PostgreSQL 16 + PostGIS 3, Rollen `migrator`, `app`, `readonly` | `/api/health/ready` |
 | Objektspeicher | Dateien, privat, versioniert | `GET /api/v1/admin/ops/status` → `storage_ok` |
@@ -53,6 +54,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 - Zustand: `GET /api/v1/admin/ops/status` (Rolle `ops`): Anzahl je Status, fehlgeschlagen in 24 h, ältester wartender Job.
 - Ein Job wird bis `max_attempts` mit wachsendem Abstand wiederholt (30 s, 60 s, 120 s … höchstens 1 h). Danach `failed` und Meldung an das Fehler-Tracking.
 - Stürzt ein Worker ab, stellt ein anderer den Job nach Zeitlimit + 60 s zurück.
+- **Zwei Warteschlangen** (seit 29.09.2026, Migration 0022, REFACTORING_PLAN S5): `long` für `rules_extract`, `rules_document_read`, `rules_document_ocr`, `plu_import` und `cadastre_import`, alles andere in `default`. Auf Unraid bedient `worker` nur `default` und `worker-long` nur `long` (`EMPRISE_WORKER_QUEUES`); lokal bedient ein Worker beide (Vorgabe). `/api/health/jobs` meldet je Warteschlange (`queues.default`, `queues.long`); die Schwelle von `long` ist `EMPRISE_JOB_WAITING_ALARM_MINUTES_LONG` (120 min), weil ein Job dort hinter einer Auswertung von bis zu 60 min wartet. Alarm nur in `long`: `worker-long` läuft nicht.
 - Fehlgeschlagene Jobs erneut einreihen (bis `POST /admin/jobs/{id}/retry` existiert):
   ```sql
   UPDATE job SET status = 'queued', attempts = 0, run_after = now(), finished_at = NULL WHERE id = '<id>';

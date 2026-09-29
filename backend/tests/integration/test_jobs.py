@@ -1,4 +1,5 @@
-"""Warteschlange in PostgreSQL: transaktionale Anlage, Wiederholung, Zeitlimit, verwaiste Jobs, Zeitplan."""
+"""Warteschlange in PostgreSQL: transaktionale Anlage, Wiederholung, Zeitlimit, verwaiste Jobs, Zeitplan,
+getrennte Warteschlangen für kurze und lange Jobs."""
 
 import time
 import uuid
@@ -8,8 +9,10 @@ from typing import Any
 import pytest
 from sqlalchemy import select, text
 
+import app.registry  # noqa: F401  alle Jobarten der Anwendung
 from app.platform.db import get_engine
-from app.platform.jobs import JobContext, enqueue, job
+from app.platform.jobs import LONG, JobContext, enqueue, job
+from app.platform.jobs.registry import get_job_spec
 from app.platform.jobs.worker import run_one, schedule_periodic
 from app.platform.models import Job, Project
 
@@ -30,6 +33,11 @@ def _boom(ctx: JobContext, payload: dict[str, Any]) -> None:
 @job("test_slow", timeout_seconds=1, max_attempts=1)
 def _slow(ctx: JobContext, payload: dict[str, Any]) -> None:
     time.sleep(3)
+
+
+@job("test_long", queue=LONG)
+def _long(ctx: JobContext, payload: dict[str, Any]) -> None:
+    return None
 
 
 def _job(db_session: Any, job_id: Any) -> Job:
@@ -179,4 +187,31 @@ def test_jobs_health_alarms_on_old_waiting_job(client: Any, db_session: Any) -> 
     db_session.commit()
     response = client.get("/api/health/jobs")
     assert response.status_code == 503
-    assert response.json()["oldest_waiting_seconds"] > 900
+    assert response.json()["queues"]["default"]["oldest_waiting_seconds"] > 900
+
+
+def test_long_jobs_wait_in_their_own_queue(client: Any, db_session: Any) -> None:
+    """Ein Worker für `default` nimmt keinen langen Job; eine Auswertung hält so keine Mail auf (B-10)."""
+    for kind in (
+        "rules_extract",
+        "rules_document_read",
+        "rules_document_ocr",
+        "plu_import",
+        "cadastre_import",
+    ):
+        assert get_job_spec(kind).queue == LONG
+    assert get_job_spec("mail_send").queue == "default"
+
+    job_id = enqueue(db_session, "test_long")
+    db_session.execute(
+        text("UPDATE job SET run_after = now() - :age WHERE id = :id"),
+        {"age": timedelta(minutes=30), "id": job_id},
+    )
+    db_session.commit()
+    # 30 Minuten sind in `long` normal (hinter einer Auswertung), in `default` wären sie ein Alarm
+    health = client.get("/api/health/jobs")
+    assert health.status_code == 200 and health.json()["queues"]["long"]["oldest_waiting_seconds"] > 1700
+    assert run_one("w-default", ["default"]) is False
+    assert _job(db_session, job_id).status == "queued"
+    assert run_one("w-long", [LONG]) is True
+    assert _job(db_session, job_id).status == "succeeded"

@@ -13,7 +13,8 @@ export interface paths {
         };
         /**
          * Jobs
-         * @description 503, wenn ein fälliger Job länger als der Schwellwert wartet: Worker steht oder ist überlastet.
+         * @description 503, wenn ein fälliger Job länger als die Schwelle seiner Warteschlange wartet: Worker steht oder ist
+         *     überlastet. `long` hat eine eigene, größere Schwelle (`job_waiting_alarm_minutes_long`).
          */
         get: operations["jobs_api_health_jobs_get"];
         put?: never;

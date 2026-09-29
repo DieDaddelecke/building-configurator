@@ -20,7 +20,7 @@ smoke_test() {
 activate() {
   docker tag "emprise-backend:$1" emprise-backend:current
   docker tag "emprise-web:$1" emprise-web:current
-  docker compose up -d --remove-orphans --force-recreate migrate api worker web
+  docker compose up -d --remove-orphans --force-recreate migrate api worker worker-long web
   docker compose up -d
   if smoke_test; then
     echo "$(date -Iseconds) $1" >> releases.log

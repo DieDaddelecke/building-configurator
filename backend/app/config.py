@@ -145,9 +145,13 @@ class Settings(BaseSettings):
     # Überwachung
     sentry_dsn: str | None = None
     job_waiting_alarm_minutes: int = 15
+    job_waiting_alarm_minutes_long: int = 120
+    """Schwelle der Warteschlange `long`: Ein Job wartet dort hinter einer Auswertung von bis zu 60 min."""
 
     # Worker
-    worker_queues: list[str] = Field(default_factory=lambda: ["default"])
+    worker_queues: list[str] = Field(default_factory=lambda: ["default", "long"])
+    """Ohne Angabe bedient ein Worker beide Warteschlangen (lokal); auf Unraid je ein Worker (`worker`,
+    `worker-long`), damit lange Jobs die kurzen nicht aufhalten."""
     worker_poll_seconds: float = 1.0
 
     @field_validator("openrouter_api_key", "georisques_token", mode="before")

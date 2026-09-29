@@ -113,9 +113,25 @@ services:
       timeout: 5s
       retries: 30
 
+  # Zwei Worker aus demselben Image: `worker` für kurze Jobs (Mails, Steckbriefe, Berichte), `worker-long` für
+  # Auswertung, Lesen, Texterkennung und Importe; sonst wartet eine Mail hinter einer Auswertung (B-10)
   worker:
     <<: *backend
     command: ["python", "-m", "app.cli", "worker"]
+    environment:
+      <<: *backend-env
+      EMPRISE_WORKER_QUEUES: '["default"]'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [intern]
+
+  worker-long:
+    <<: *backend
+    command: ["python", "-m", "app.cli", "worker"]
+    environment:
+      <<: *backend-env
+      EMPRISE_WORKER_QUEUES: '["long"]'
     depends_on:
       migrate:
         condition: service_completed_successfully

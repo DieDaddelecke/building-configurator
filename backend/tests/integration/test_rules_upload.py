@@ -183,7 +183,7 @@ def test_upload_reads_chapters_without_costs(
     # Gelesen wird im Job, nicht im Request; ausgewertet wird noch nichts
     assert [j.kind for j in db_session.execute(select(Job)).scalars()] == ["rules_document_read"]
 
-    assert run_one("w1", ["default"]) is True
+    assert run_one("w1", ["long"]) is True
     listed = client.get(f"/api/v1/projects/{upload_project}/regulations").json()[0]["document"]
     assert listed["status"] == "active" and listed["title"] == "PLUi Erdre et Gesvres"
     assert listed["du_type"] == "PLUi" and listed["page_count"] == 24
@@ -200,7 +200,7 @@ def run_ocr_jobs(db_session: Any) -> int:
     db_session.execute(delete(Job).where(Job.kind != "rules_document_ocr", Job.status == "queued"))
     db_session.commit()
     runs = 0
-    while run_one("w1", ["default"]):
+    while run_one("w1", ["long"]):
         runs += 1
     db_session.expire_all()
     return runs

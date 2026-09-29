@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -13,6 +14,7 @@ from app.config import get_settings
 from app.platform.auth.context import public
 from app.platform.db import get_engine
 from app.platform.jobs import queue
+from app.platform.jobs.registry import DEFAULT, LONG
 from app.platform.logging import get_logger
 
 router = APIRouter(tags=["health"], dependencies=[Depends(public)])
@@ -80,16 +82,24 @@ def ready() -> JSONResponse:
 
 @router.get("/health/jobs")
 def jobs() -> JSONResponse:
-    """503, wenn ein fälliger Job länger als der Schwellwert wartet: Worker steht oder ist überlastet."""
-    threshold = get_settings().job_waiting_alarm_minutes * 60
+    """503, wenn ein fälliger Job länger als die Schwelle seiner Warteschlange wartet: Worker steht oder ist
+    überlastet. `long` hat eine eigene, größere Schwelle (`job_waiting_alarm_minutes_long`)."""
+    settings = get_settings()
+    thresholds = {
+        DEFAULT: settings.job_waiting_alarm_minutes * 60,
+        LONG: settings.job_waiting_alarm_minutes_long * 60,
+    }
+    queues: dict[str, dict[str, Any]] = {}
     with get_engine().connect() as conn:
-        oldest = queue.oldest_waiting_seconds(conn)
-    healthy = oldest is None or oldest < threshold
+        for name, threshold in thresholds.items():
+            oldest = queue.oldest_waiting_seconds(conn, [name])
+            ok = oldest is None or oldest < threshold
+            queues[name] = {
+                "status": "ok" if ok else "fail",
+                "oldest_waiting_seconds": oldest,
+                "threshold_seconds": threshold,
+            }
+    healthy = all(q["status"] == "ok" for q in queues.values())
     return JSONResponse(
-        {
-            "status": "ok" if healthy else "fail",
-            "oldest_waiting_seconds": oldest,
-            "threshold_seconds": threshold,
-        },
-        status_code=200 if healthy else 503,
+        {"status": "ok" if healthy else "fail", "queues": queues}, status_code=200 if healthy else 503
     )

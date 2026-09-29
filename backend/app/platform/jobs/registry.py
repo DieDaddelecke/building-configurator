@@ -14,6 +14,13 @@ from sqlalchemy.orm import Session
 
 from app.platform.db import get_sessionmaker
 
+DEFAULT = "default"
+LONG = "long"
+"""Warteschlange für Jobs, die Minuten bis eine Stunde laufen (Auswertung, Lesen, Texterkennung, Importe).
+Ein eigener Worker bedient sie, damit Mails, Steckbriefe und Berichte nicht dahinter warten (REFACTORING_PLAN
+S5, Befund B-10)."""
+QUEUES = (DEFAULT, LONG)
+
 
 @dataclass(frozen=True)
 class JobContext:
@@ -55,9 +62,12 @@ _PERIODIC: dict[str, PeriodicSpec] = {}
 
 
 def job(
-    kind: str, *, queue: str = "default", max_attempts: int = 3, timeout_seconds: int = 60
+    kind: str, *, queue: str = DEFAULT, max_attempts: int = 3, timeout_seconds: int = 60
 ) -> Callable[[Handler], Handler]:
     """Handler MÜSSEN idempotent sein: Nach einem Absturz wird ein Job erneut ausgeführt (Spez. 7)."""
+
+    if queue not in QUEUES:
+        raise ValueError(f"Unbekannte Warteschlange {queue}")
 
     def register(handler: Handler) -> Handler:
         if kind in _JOBS and _JOBS[kind].handler is not handler:
