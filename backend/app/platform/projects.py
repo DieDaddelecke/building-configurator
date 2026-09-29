@@ -1,8 +1,9 @@
 """Projekt: anonym mit Zugangscookie (Kunde, Spez. 6.2) oder in einer Organisation (AN1, AN6).
 
 Vor der Kontaktaufnahme gibt es keine personenbezogenen Daten. Ein Kundenprojekt ohne Aktivität löscht
-`retention_cleanup` nach 90 Tagen; Projekte einer Organisation bleiben (UP06). Im Analyse-Produkt gibt es
-keine anonymen Projekte: Anlegen nur mit Konto oder API-Schlüssel (docs/PLAN_AN6_MANDANTEN.md 3.2).
+`retention_cleanup` nach 90 Tagen; Projekte einer Organisation bleiben (UP06). Kosten auslösende
+Analyse-Funktionen verlangen ein Projekt der eigenen Organisation (`require_owned_project`); das Cookie
+eines Kundenprojekts reicht dafür nicht.
 """
 
 import uuid
@@ -118,12 +119,11 @@ def create_project(
 ) -> ProjectOut:
     """Neues Projekt. Ein Architekt oder API-Schlüssel legt es in seiner Organisation an; der Architekt wird
     Eigentümer. Beide bekommen **kein** Cookie – sonst verdrängte jedes neue Projekt das vorige (AN1, UP05,
-    AN6). Im Analyse-Produkt ist das die einzige Art (3.2)."""
+    AN6). Ohne Anmeldung entsteht ein Kundenprojekt mit Cookie; die Analyse legt Projekte nur angemeldet
+    an."""
     settings = get_settings()
     rate_limit.check(request, "project_create", settings.project_create_limit_per_hour, 3600)
     principal = auth.principal
-    if principal is None and getattr(request.app.state, "product", settings.product) == "analyse":
-        raise Problem(401, "authentication_required")
     token = new_token()
     project = Project(
         access_token_hash=hash_token(token),

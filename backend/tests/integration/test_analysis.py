@@ -11,7 +11,6 @@ from typing import Any
 import pytest
 from sqlalchemy import func, select
 
-from app.config import get_settings
 from app.rules import documents, extract
 from app.rules.models import LandUsePlan, RegulationChapter, Rule, RuleSet, RuleSetVersion
 from tests.integration import test_rules_upload as an2
@@ -51,7 +50,7 @@ LOT_PAGES = [
 def app(clean_db: None) -> Any:
     from app.main import create_app
 
-    return create_app(get_settings().model_copy(update={"product": "analyse"}))
+    return create_app()
 
 
 def lot_output(sector: str = "Lot-12") -> dict[str, Any]:

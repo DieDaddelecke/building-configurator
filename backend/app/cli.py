@@ -49,9 +49,9 @@ def cmd_worker(args: argparse.Namespace) -> None:
 
 
 def cmd_openapi(args: argparse.Namespace) -> None:
-    from app.main import create_full_app
+    from app.main import create_app
 
-    spec = create_full_app().openapi()
+    spec = create_app().openapi()
     output = json.dumps(spec, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
     if args.file:
         Path(args.file).write_text(output, encoding="utf-8")

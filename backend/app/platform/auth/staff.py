@@ -25,7 +25,6 @@ from app.platform.db import get_db, utcnow
 from app.platform.logging import get_logger
 from app.platform.models import Organisation, StaffSession, StaffUser
 from app.platform.problems import Problem
-from app.products import spec_for
 
 log = get_logger(__name__)
 router = APIRouter(tags=["auth"])
@@ -54,14 +53,22 @@ def _oauth() -> OAuth:
     return oauth
 
 
-def safe_next(value: str | None, home: str = "/buero") -> str:
-    """Nur relative Ziele, keine offene Weiterleitung (kein Schema, kein Host, kein Backslash).
-
-    `home` ist die Startseite des Produkts: `/buero` im Hauskonfigurator, `/` in „Emprise Analyse“,
-    das keinen Büro-Bereich hat (AN1, app/products.py)."""
+def safe_next(value: str | None) -> str:
+    """Nur relative Ziele, keine offene Weiterleitung (kein Schema, kein Host, kein Backslash)."""
     if value and value.startswith("/") and not value.startswith("//") and "\\" not in value:
         return value
-    return home
+    return "/buero"
+
+
+ANALYSE_AREA = "/analyse"
+
+
+def denied_page(target: str) -> str:
+    """Seite für eine abgelehnte Anmeldung, im Bereich des Ziels: Die Analyse zeigt den Grund auf ihrer
+    Startseite (AN1), das Büro auf `/buero/kein-zugang`."""
+    if target == ANALYSE_AREA or target.startswith(ANALYSE_AREA + "/"):
+        return ANALYSE_AREA
+    return "/buero/kein-zugang"
 
 
 def resolve_staff_login(db: Session, claims: dict[str, Any], settings: Settings) -> StaffUser | LoginRefused:
@@ -120,7 +127,7 @@ def start_session(db: Session, user: StaffUser, amr: list[str], settings: Settin
 async def staff_login(request: Request, next: str | None = None) -> Response:
     settings = get_settings()
     client = _oauth().create_client("staff")
-    request.session["next"] = safe_next(next, spec_for(settings.product).staff_home)
+    request.session["next"] = safe_next(next)
     redirect_uri = settings.public_base_url.rstrip("/") + "/api/v1/auth/staff/callback"
     response: Response = await client.authorize_redirect(request, redirect_uri)
     return response
@@ -130,22 +137,20 @@ async def staff_login(request: Request, next: str | None = None) -> Response:
 async def staff_callback(request: Request, db: Session = Depends(get_db)) -> Response:
     settings = get_settings()
     client = _oauth().create_client("staff")
-    product = spec_for(settings.product)
-    target = safe_next(request.session.pop("next", None), product.staff_home)
+    target = safe_next(request.session.pop("next", None))
+    denied = denied_page(target)
     try:
         token = await client.authorize_access_token(request)
     except OAuthError as exc:
         log.warning("oidc_callback_failed", error=exc.error)
-        return RedirectResponse(product.staff_denied + "?" + urlencode({"grund": "fehler"}), status_code=303)
+        return RedirectResponse(denied + "?" + urlencode({"grund": "fehler"}), status_code=303)
 
     claims: dict[str, Any] = dict(token.get("userinfo") or {})
     result = resolve_staff_login(db, claims, settings)
     if isinstance(result, LoginRefused):
         db.commit()
         log.info("staff_login_refused", reason=result.reason)
-        return RedirectResponse(
-            product.staff_denied + "?" + urlencode({"grund": result.reason}), status_code=303
-        )
+        return RedirectResponse(denied + "?" + urlencode({"grund": result.reason}), status_code=303)
 
     session_token = start_session(db, result, [str(v) for v in claims.get("amr") or []], settings)
     db.commit()

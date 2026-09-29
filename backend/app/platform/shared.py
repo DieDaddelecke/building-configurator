@@ -98,8 +98,13 @@ class SharedAudit(SharedBase):
     after: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
 
+INSTANCE = "emprise"
+"""Kennung im gemeinsamen Audit, seit Konfigurator und Analyse eine Anwendung sind (bis zur Übernahme in
+`audit_log`, REFACTORING_PLAN S4)."""
+
+
 def actor(settings: Settings, actor_id: str) -> str:
-    return f"{settings.product}:{actor_id}"
+    return f"{INSTANCE}:{actor_id}"
 
 
 def record(
@@ -117,7 +122,7 @@ def record(
     """Eintrag im gemeinsamen Audit; der Aufrufer bestätigt die Sitzung."""
     session.add(
         SharedAudit(
-            product=settings.product,
+            product=INSTANCE,
             actor_id=actor(settings, actor_id),
             actor_name=actor_name,
             action=action,

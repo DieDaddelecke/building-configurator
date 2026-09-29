@@ -12,7 +12,6 @@ from typing import Any
 import pytest
 from sqlalchemy import select
 
-from app.config import get_settings
 from app.platform.models import AuditLog
 from tests.integration import test_rules_upload as an2
 from tests.integration.test_analysis import (
@@ -36,7 +35,7 @@ upload_project = an2.upload_project
 def app(clean_db: None) -> Any:
     from app.main import create_app
 
-    return create_app(get_settings().model_copy(update={"product": "analyse"}))
+    return create_app()
 
 
 def url(project: str, suffix: str = "") -> str:

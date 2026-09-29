@@ -14,7 +14,7 @@ from app.platform.auth.context import API_KEY_PATHS
 from app.platform.logging import configure_logging
 from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
 from app.platform.problems import install_problem_handlers
-from app.products import ALL_ROUTERS, spec_for
+from app.products import ROUTERS
 
 API_V1 = "/api/v1"
 
@@ -55,8 +55,7 @@ def document_api_keys(app: FastAPI) -> None:
     app.openapi = openapi  # type: ignore[method-assign]
 
 
-def create_app(settings: Settings | None = None, *, routers: tuple[str, ...] | None = None) -> FastAPI:
-    """App eines Produkts; `routers` ersetzt dessen Liste (nur für das volle Profil von `openapi.json`)."""
+def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, json=settings.env != "local")
     init_sentry(settings)
@@ -69,10 +68,9 @@ def create_app(settings: Settings | None = None, *, routers: tuple[str, ...] | N
         redoc_url=None,
     )
     install_problem_handlers(app)
-    app.state.product = settings.product
 
     v1 = APIRouter(prefix=API_V1)
-    for name in routers or spec_for(settings.product).routers:
+    for name in ROUTERS:
         v1.include_router(import_module(name).router)
     app.include_router(v1)
     app.include_router(health.router, prefix="/api")
@@ -91,10 +89,3 @@ def create_app(settings: Settings | None = None, *, routers: tuple[str, ...] | N
     app.add_middleware(RequestContextMiddleware)
     document_api_keys(app)
     return app
-
-
-def create_full_app() -> FastAPI:
-    """Vollständiges Profil für `openapi.json`: eine Datei mit allen Routen, unabhängig vom Produkt
-    dieser Instanz (PLAN_ANALYSE 8.1 Nr. 5). Sonst müsste das Frontend zwei Typdateien pflegen. Seit AN3
-    hat das Analyse-Produkt eigene Routen; sie stehen hinter denen des Konfigurators."""
-    return create_app(get_settings().model_copy(update={"product": "configurator"}), routers=ALL_ROUTERS)

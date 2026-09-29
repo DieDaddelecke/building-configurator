@@ -1,8 +1,7 @@
-"""Grenze zwischen Kern und Produktmodulen (AN0, docs/PLAN_ANALYSE.md 3).
+"""Grenze zwischen Kern und Fachmodulen (AN0, PLAN_ANALYSE 3); Vollständigkeit von `app/products.py`.
 
-Der Kern trägt beide Produkte und darf deshalb nichts aus dem Hauskonfigurator importieren. Die Prüfung
-läuft über den Syntaxbaum, damit auch Importe innerhalb von Funktionen auffallen. Dazu wird geprüft, dass
-die Listen in `app/products.py` vollständig und die Profile geschnitten sind.
+Der Kern (G1–G3, Plattform) trägt Konfigurator und Analyse und darf deshalb nichts aus deren Fachmodulen
+importieren. Die Prüfung läuft über den Syntaxbaum, damit auch Importe innerhalb von Funktionen auffallen.
 """
 
 import ast
@@ -12,11 +11,8 @@ from pathlib import Path
 
 from fastapi.routing import iter_route_contexts
 
-import app.registry  # noqa: F401  meldet die Jobarten des laufenden Produkts an
-from app.config import Settings
 from app.main import create_app
-from app.platform.jobs.registry import periodic_specs
-from app.products import PRODUCT_NAMES, PRODUCTS, Product, spec_for
+from app.products import JOB_MODULES, ROUTERS
 
 APP = Path(__file__).resolve().parents[2] / "app"
 CORE_PACKAGES = ("platform", "integrations", "site", "rules", "envelope", "plan")
@@ -50,38 +46,38 @@ def test_core_does_not_import_product_modules() -> None:
         for path in sorted((APP / package).rglob("*.py")):
             for module in _imports(path):
                 assert not module.startswith(forbidden), (
-                    f"{path.relative_to(APP.parent)} importiert {module}: Der Kern trägt beide Produkte "
-                    "und darf nichts aus dem Hauskonfigurator kennen (PLAN_ANALYSE 3)."
+                    f"{path.relative_to(APP.parent)} importiert {module}: Der Kern trägt Konfigurator und "
+                    "Analyse und darf nichts aus deren Fachmodulen kennen (PLAN_ANALYSE 3)."
                 )
 
 
-def test_every_product_module_is_importable() -> None:
-    for name in PRODUCT_NAMES:
-        spec = spec_for(name)
-        for module in spec.routers:
-            assert hasattr(import_module(module), "router"), f"{module} hat keinen router"
-        for module in spec.job_modules:
-            import_module(module)
+def test_every_listed_module_is_importable() -> None:
+    for module in ROUTERS:
+        assert hasattr(import_module(module), "router"), f"{module} hat keinen router"
+    for module in JOB_MODULES:
+        import_module(module)
 
 
-def test_periodic_tasks_are_assigned_to_a_product() -> None:
-    """Jede angemeldete periodische Aufgabe steht in mindestens einem Profil – und umgekehrt."""
-    registered = {spec.name for spec in periodic_specs()}
-    assigned = set[str]().union(*(spec.periodic for spec in PRODUCTS.values()))
-    assert registered == assigned, (
-        "app/products.py und die `periodic(...)`-Aufrufe passen nicht zusammen: "
-        f"nur angemeldet {sorted(registered - assigned)}, nur eingetragen {sorted(assigned - registered)}"
-    )
-
-
-def _served(product: Product) -> set[tuple[str, str]]:
-    """Methode und Pfad jeder Route, die eine Instanz dieses Produkts bedient."""
-    app = create_app(Settings(product=product))
-    return {
-        (method, str(ctx.path))
-        for ctx in iter_route_contexts(app.routes)
-        for method in getattr(ctx, "methods", None) or ()
-    }
+def test_every_module_with_a_router_or_jobs_is_listed() -> None:
+    """Ein Modul mit `router` oder `@job` außerhalb der Listen liefe nirgends."""
+    for path in sorted(APP.rglob("*.py")):
+        module = ".".join(path.relative_to(APP.parent).with_suffix("").parts)
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        has_router = any(
+            isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "router" for t in node.targets)
+            for node in tree.body
+        )
+        has_jobs = any(
+            isinstance(dec, ast.Call) and isinstance(dec.func, ast.Name) and dec.func.id == "job"
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
+            for dec in node.decorator_list
+        )
+        if has_router and module != "app.platform.health":
+            assert module in ROUTERS, f"{module} hat einen router, steht aber nicht in app/products.py"
+        if has_jobs:
+            assert module in JOB_MODULES, f"{module} meldet Jobs an, steht aber nicht in app/products.py"
 
 
 def _routes_of(module: str) -> set[tuple[str, str]]:
@@ -92,33 +88,11 @@ def _routes_of(module: str) -> set[tuple[str, str]]:
     }
 
 
-def test_analyse_profile_serves_no_configurator_routes() -> None:
-    served = _served("analyse")
-    only_configurator = set(spec_for("configurator").routers) - set(spec_for("analyse").routers)
-    assert only_configurator, "Ohne Unterschied prüft dieser Test nichts"
-    for module in only_configurator:
-        extra = sorted(_routes_of(module) & served)
-        assert not extra, f"{module} läuft im Analyse-Produkt mit: {extra}"
-
-
-def test_analyse_profile_serves_site_rules_and_envelope() -> None:
-    """Der Kern G1–G3 ist der Zweck des zweiten Produkts und muss vorhanden sein."""
-    served = _served("analyse")
-    assert ("GET", "/api/v1/projects/{project_id}/site") in served
-    assert ("GET", "/api/v1/projects/{project_id}/rules") in served
-    assert ("GET", "/api/v1/projects/{project_id}/envelope") in served
-
-
-def test_configurator_serves_no_analysis_routes_but_openapi_has_both() -> None:
-    """AN3: `analysis` läuft nur im Analyse-Produkt; `openapi.json` beschreibt trotzdem alle Routen."""
-    from app.main import create_full_app
-
-    served = _served("configurator")
-    analysis = _routes_of("app.analysis.api")
-    assert analysis and not analysis & served
-    full = {
+def test_app_serves_configurator_and_analysis() -> None:
+    served = {
         (method, str(ctx.path))
-        for ctx in iter_route_contexts(create_full_app().routes)
+        for ctx in iter_route_contexts(create_app().routes)
         for method in getattr(ctx, "methods", None) or ()
     }
-    assert analysis <= full and served <= full
+    for module in ROUTERS:
+        assert _routes_of(module) <= served, f"{module} fehlt in der Anwendung"

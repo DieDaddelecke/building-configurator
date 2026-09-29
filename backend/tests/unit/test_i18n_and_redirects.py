@@ -1,6 +1,6 @@
 import pytest
 
-from app.platform.auth.staff import safe_next
+from app.platform.auth.staff import denied_page, safe_next
 from app.platform.i18n import parse_accept_language, translate
 
 
@@ -44,8 +44,9 @@ def test_safe_next_prevents_open_redirect(value: str | None, expected: str) -> N
     assert safe_next(value) == expected
 
 
-def test_safe_next_falls_back_to_the_home_of_the_product() -> None:
-    """Im Analyse-Produkt gibt es kein `/buero`; die Startseite kommt aus `app/products.py` (UP11)."""
-    assert safe_next(None, "/") == "/"
-    assert safe_next("https://evil.example", "/") == "/"
-    assert safe_next("/projekt/1", "/") == "/projekt/1"
+def test_denied_login_stays_in_the_area_of_the_target() -> None:
+    """Eine abgelehnte Anmeldung aus der Analyse zeigt den Grund dort (UP11), sonst im Büro."""
+    assert denied_page("/analyse") == "/analyse"
+    assert denied_page("/analyse/projekt/1") == "/analyse"
+    assert denied_page("/analysen") == "/buero/kein-zugang"
+    assert denied_page("/buero/anfragen") == "/buero/kein-zugang"

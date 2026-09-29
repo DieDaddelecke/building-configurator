@@ -5,7 +5,7 @@ import signal
 import socket
 import time
 import traceback
-from collections.abc import Collection, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from types import FrameType
@@ -19,7 +19,6 @@ from app.platform.db import get_engine, get_sessionmaker
 from app.platform.jobs import queue
 from app.platform.jobs.registry import JobContext, get_job_spec, periodic_specs
 from app.platform.logging import get_logger
-from app.products import spec_for
 
 log = get_logger("worker")
 MAINTENANCE_INTERVAL_SECONDS = 30
@@ -48,13 +47,9 @@ def time_limit(seconds: int) -> Iterator[None]:
         signal.signal(signal.SIGALRM, previous)
 
 
-def schedule_periodic(active: Collection[str] | None = None) -> int:
-    """Legt fällige periodische Jobs genau einmal an, auch bei mehreren Workern.
-
-    `active` schränkt auf die Aufgaben des laufenden Produkts ein (app/products.py); ohne Angabe
-    werden alle angemeldeten eingeplant.
-    """
-    specs = {spec.name: spec for spec in periodic_specs() if active is None or spec.name in active}
+def schedule_periodic() -> int:
+    """Legt fällige periodische Jobs genau einmal an, auch bei mehreren Workern."""
+    specs = {spec.name: spec for spec in periodic_specs()}
     if not specs:
         return 0
     created = 0
@@ -140,8 +135,8 @@ def run_one(worker_name: str, queues: list[str]) -> bool:
     return True
 
 
-def maintenance(active: Collection[str] | None = None) -> None:
-    created = schedule_periodic(active)
+def maintenance() -> None:
+    created = schedule_periodic()
     with get_engine().begin() as conn:
         stale = queue.requeue_stale(conn)
     if created or stale:
@@ -159,19 +154,13 @@ def run_worker(settings: Settings) -> None:
 
     signal.signal(signal.SIGTERM, _stop)
     signal.signal(signal.SIGINT, _stop)
-    active = spec_for(settings.product).periodic
-    log.info(
-        "worker_started",
-        worker=worker_name,
-        queues=settings.worker_queues,
-        product=settings.product,
-    )
+    log.info("worker_started", worker=worker_name, queues=settings.worker_queues)
 
     next_maintenance = datetime.min
     while not stopping:
         try:
             if datetime.now() >= next_maintenance:
-                maintenance(active)
+                maintenance()
                 next_maintenance = datetime.now() + timedelta(seconds=MAINTENANCE_INTERVAL_SECONDS)
             if not run_one(worker_name, settings.worker_queues):
                 time.sleep(settings.worker_poll_seconds)

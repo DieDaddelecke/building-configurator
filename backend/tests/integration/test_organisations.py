@@ -2,8 +2,7 @@
 
 Zwei Organisationen: das eigene Büro (`operator`) und ein fremdes Büro (`customer`, im Test freigeschaltet).
 Geprüft werden die Trennung über **alle** Routen mit Projekt, die wirksamen Rollen, API-Schlüssel, Budget
-und Scan-Kontingent sowie das Erscheinungsbild in Bericht und DXF. Die App läuft als Produkt
-„Emprise Analyse“.
+und Scan-Kontingent sowie das Erscheinungsbild in Bericht und DXF.
 """
 
 import io
@@ -197,10 +196,20 @@ def test_external_organisations_need_the_switch(db_session: Any, monkeypatch: py
         get_settings.cache_clear()
 
 
-def test_analyse_has_no_anonymous_projects(client: Any) -> None:
+def test_anonymous_project_does_not_open_the_analysis(client: Any) -> None:
+    """Seit Konfigurator und Analyse eine Anwendung sind, entsteht ohne Anmeldung ein Kundenprojekt mit
+    Cookie; Analyse und Reglement-Upload verlangen weiter einen Architekten der Organisation (REFACTORING_PLAN
+    S1)."""
     response = client.post("/api/v1/projects")
-    assert response.status_code == 401
-    assert "emprise_project" not in response.cookies
+    assert response.status_code == 201
+    assert "emprise_project" in response.cookies
+    project = response.json()["id"]
+    assert client.get(f"/api/v1/projects/{project}/analysis").status_code == 404
+    upload = client.post(
+        f"/api/v1/projects/{project}/regulations",
+        files={"file": ("plu.pdf", b"%PDF-1.4", "application/pdf")},
+    )
+    assert upload.status_code == 404
 
 
 # ---------------------------------------------------------------------------

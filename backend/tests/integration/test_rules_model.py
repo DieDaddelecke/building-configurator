@@ -74,7 +74,7 @@ def test_operator_chooses_a_model_for_all_future_evaluations(
         select(SharedAudit).where(SharedAudit.action == "rules_model_changed")
     ).scalar_one()
     assert (audit.before, audit.after) == ({"model": DEFAULT}, {"model": "anthropic/claude-sonnet-5"})
-    assert audit.product == "configurator" and audit.actor_id.startswith("configurator:")
+    assert audit.product == "emprise" and audit.actor_id.startswith("emprise:")
     setting = db_session.get(SharedSetting, model_choice.SETTING_KEY)
     assert setting.updated_by_name and body["updated_by_name"] == setting.updated_by_name
 

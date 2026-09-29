@@ -1463,7 +1463,8 @@ export interface paths {
          * Create Project
          * @description Neues Projekt. Ein Architekt oder API-Schlüssel legt es in seiner Organisation an; der Architekt wird
          *     Eigentümer. Beide bekommen **kein** Cookie – sonst verdrängte jedes neue Projekt das vorige (AN1, UP05,
-         *     AN6). Im Analyse-Produkt ist das die einzige Art (3.2).
+         *     AN6). Ohne Anmeldung entsteht ein Kundenprojekt mit Cookie; die Analyse legt Projekte nur angemeldet
+         *     an.
          */
         post: operations["create_project_api_v1_projects_post"];
         delete?: never;

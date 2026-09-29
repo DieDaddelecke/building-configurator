@@ -6,8 +6,6 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.products import Product
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="EMPRISE_", env_file=".env", extra="ignore")
@@ -15,10 +13,6 @@ class Settings(BaseSettings):
     env: Literal["local", "test", "staging", "production"] = "local"
     release: str = "dev"
     log_level: str = "INFO"
-
-    # Produkt dieser Instanz (app/products.py, PLAN_ANALYSE 3): `analyse` lädt die Module des
-    # Hauskonfigurators nicht und plant seine Datenimporte nicht ein.
-    product: Product = "configurator"
 
     # Öffentliche Adresse, unter der Frontend und API gemeinsam erreichbar sind (Plan 6.2)
     public_base_url: str = "http://localhost:8080"
