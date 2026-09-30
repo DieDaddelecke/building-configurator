@@ -58,6 +58,7 @@ from app.configuration.schemas import (
 )
 from app.envelope import service as envelope_service
 from app.envelope.domain import ENGINE_VERSION as ENVELOPE_ENGINE_VERSION
+from app.envelope.domain.fingerprint import fingerprint_parts
 from app.platform.db import utcnow
 from app.platform.problems import Problem
 from app.site.domain.local import rings as local_rings
@@ -86,7 +87,7 @@ def _load(db: Session, project_id: uuid.UUID) -> Loaded:
         ctx=ctx,
         notices=list(dict.fromkeys(data.notices)),
         site_revision=data.site.revision,
-        input_parts=envelope_service.fingerprint_parts(data),
+        input_parts=fingerprint_parts(data),
     )
 
 

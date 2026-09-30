@@ -13,6 +13,7 @@ from sqlalchemy import select, text
 
 from app.config import get_settings
 from app.envelope import service as envelope_service
+from app.envelope.domain.fingerprint import fingerprint
 from app.envelope.models import EnvelopeSheet
 from app.integrations.etalab_cadastre import DirectoryCadastre
 from app.integrations.ign_bdtopo import DirectoryRoads
@@ -405,7 +406,7 @@ def test_sheet_job_uses_the_current_state(client: Any, project: str, db_session:
 def test_service_returns_input_and_envelope_for_later_modules(db_session: Any, project: str) -> None:
     """Modul A übernimmt Baurahmen und Prüfsumme in den Snapshot (Plan G3 7)."""
     envelope, data = envelope_service.build_envelope(db_session, uuid.UUID(project))
-    assert envelope.input_hash == envelope_service.fingerprint(data)
+    assert envelope.input_hash == fingerprint(data)
     assert data.site.parcels == [REGULAR]
     site = site_service.envelope_site(db_session, uuid.UUID(project))
     assert site.engine_version.startswith("g1-")

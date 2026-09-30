@@ -56,6 +56,7 @@ from app.analysis.schemas import (
 )
 from app.envelope import service as envelope_service
 from app.envelope.domain.derive import ZONE_WITHOUT_RULES, Envelope
+from app.envelope.domain.fingerprint import fingerprint
 from app.envelope.domain.inputs import Citation, EnvelopeInput, RuleInput
 from app.envelope.schemas import CitationOut, LimitOut
 from app.platform import audit
@@ -66,7 +67,7 @@ from app.platform.problems import Problem
 from app.rules import documents
 from app.rules import service as rules_service
 from app.rules.domain.kinds import params_equal
-from app.rules.schemas import RuleOut, VersionOut
+from app.rules.schemas import VersionOut
 from app.site import service as site_service
 from app.site.domain import local as local_coords
 from app.site.schemas import SiteOut
@@ -128,27 +129,6 @@ def reset_parameters(db: Session, project_id: uuid.UUID, actor: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _rule_input(rule: RuleOut) -> RuleInput:
-    return RuleInput(
-        kind=rule.kind,
-        building_kind=rule.building_kind,
-        status=rule.status,
-        reason=rule.reason,
-        params=dict(rule.params),
-        citation=Citation(
-            page=rule.page,
-            quote=rule.quote,
-            quote_verified=rule.quote_verified,
-            source_url=rule.source_url,
-            origin=rule.origin,
-            confidence=rule.confidence,
-            notes=rule.notes,
-            document_id=str(rule.source_document_id) if rule.source_document_id else None,
-            from_scan=rule.from_scan,
-        ),
-    )
-
-
 def _supplements(db: Session, project_id: uuid.UUID) -> tuple[list[SupplementInput], list[str]]:
     """Zusatzdokumente als Eingabe der Analyse und ihr Regelstand für die Prüfsumme."""
     items = rules_service.supplement_rules(db, project_id)
@@ -160,8 +140,8 @@ def _supplements(db: Session, project_id: uuid.UUID) -> tuple[list[SupplementInp
             lot=item.lot,
             status=item.status,
             reason=item.reason,
-            rules=[_rule_input(rule) for rule in item.rules],
-            hints=[_rule_input(rule) for rule in item.hints],
+            rules=[envelope_service.rule_input(rule) for rule in item.rules],
+            hints=[envelope_service.rule_input(rule) for rule in item.hints],
             updating=item.updating,
         )
         for item in items
@@ -192,7 +172,7 @@ def compute(db: Session, project_id: uuid.UUID) -> Computed:
     supplements, stamps = _supplements(db, project_id)
     result = analyse(data, envelope, params, supplements)
     raw = json.dumps(
-        [ENGINE_VERSION, envelope_service.fingerprint(data), params.as_json(), stamps, terrain_stamp(data)],
+        [ENGINE_VERSION, fingerprint(data), params.as_json(), stamps, terrain_stamp(data)],
         sort_keys=True,
     )
     out = _out(result, params, data, custom=_stored(db, project_id) is not None, input_hash=raw)
