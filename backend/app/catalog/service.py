@@ -2,18 +2,16 @@
 Ende die Lesefunktionen für den Konfigurator (Modul H2)."""
 
 import hashlib
-import math
 import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 
-from shapely.geometry import Polygon
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.catalog.domain.consistency import check_roof_pitch, check_room_area_share
+from app.catalog.domain.consistency import type_findings
 from app.catalog.domain.dxf import FootprintDxfInvalid, read_footprints
 from app.catalog.domain.offer import (
     BasePrice,
@@ -21,6 +19,9 @@ from app.catalog.domain.offer import (
     OptionOffer,
     PackageOffer,
     TypeOffer,
+    base_price,
+    latest_per_slug,
+    offered_options,
 )
 from app.catalog.domain.options import (
     GEOMETRY_MODE,
@@ -75,21 +76,6 @@ SLUG_RE = re.compile(r"^[a-z][a-z0-9_]{1,59}$")
 def _check_slug(slug: str) -> None:
     if not SLUG_RE.match(slug):
         raise Problem(422, "validation_error", detail="slug muss ^[a-z][a-z0-9_]{1,59}$ entsprechen")
-
-
-def _storey_count(storeys: str) -> int:
-    """Grobe Zählung aus der PLU-Notation (`R+1+C` → 3), für die Warnschwelle der Raumflächen (3.5)."""
-    return max(1, len([p for p in storeys.split("+") if p]))
-
-
-def _depth_m(facade: Polygon, ridge_direction: str | None) -> float:
-    """Lauf des Dachs quer zum First: kürzere Rechteckseite bei `laengs`/unbekannt, längere bei `quer`
-    (Plan H1 3.5; First liegt bei `laengs` auf der langen Seite, das Dach läuft über die kurze)."""
-    rect = facade.minimum_rotated_rectangle
-    xs, ys = rect.exterior.coords.xy
-    sides = sorted(math.dist((xs[i], ys[i]), (xs[i + 1], ys[i + 1])) for i in range(len(xs) - 1))
-    short_side, long_side = sides[0], sides[-1]
-    return long_side if ridge_direction == "quer" else short_side
 
 
 def _building_type(db: Session, slug: str) -> BuildingType:
@@ -208,18 +194,7 @@ def import_type_version(
     except FootprintDxfInvalid as exc:
         raise Problem(422, "footprint_dxf_invalid", detail=str(exc)) from None
 
-    depth_m = _depth_m(facade, sheet.ridge_direction)
-    pitch_finding = check_roof_pitch(
-        roof_form=sheet.roof_form,
-        declared_pitch_deg=sheet.pitch_deg,
-        ridge_height_m=sheet.ridge_height_m,
-        eave_height_m=sheet.eave_height_m,
-        depth_m=depth_m,
-    )
-    room_sum = sum(r.area_m2 for r in sheet.rooms)
-    storey_area = facade.area * _storey_count(sheet.storeys)
-    area_finding = check_room_area_share(room_area_sum_m2=room_sum, storey_footprint_m2=storey_area)
-    findings = [f for f in (pitch_finding, area_finding) if f is not None]
+    findings = type_findings(sheet, facade)
 
     building_type = db.execute(
         select(BuildingType).where(BuildingType.slug == slug).with_for_update()
@@ -1031,12 +1006,10 @@ def offer_for_type(
                 TypeBasePrice.building_type_id == building_type.id,
             )
         ).scalar_one_or_none()
-        if row is not None:
-            base = BasePrice(row.min_cents, row.max_cents, "catalog")
-        elif published.version.base_price_min_cents > 0:
-            base = BasePrice(
-                published.version.base_price_min_cents, published.version.base_price_max_cents, "type_version"
-            )
+        base = base_price(
+            (row.min_cents, row.max_cents) if row is not None else None,
+            (published.version.base_price_min_cents, published.version.base_price_max_cents),
+        )
         package_prices = {
             p.package_id: p.surcharge_cents
             for p in db.execute(
@@ -1056,11 +1029,13 @@ def offer_for_type(
             ).scalars()
         }
 
-    packages = _package_offers(db, package_version_id, package_prices, pcv is not None)
-    included = {
-        slug for p in packages if p.offered or p.version_id == str(package_version_id) for slug in p.included
-    }
-    options = _option_offers(db, module_version_ids, module_prices, included)
+    packages = latest_per_slug(_package_offers(db, package_version_id, package_prices, pcv is not None))
+    options = offered_options(
+        latest_per_slug(_option_offers(db, module_version_ids, module_prices)),
+        packages,
+        stored_package_id=str(package_version_id) if package_version_id else None,
+        stored_option_ids={str(i) for i in module_version_ids},
+    )
     findings = [
         EnergyFinding(
             package_slug=slug,
@@ -1100,12 +1075,15 @@ def _published_price_catalog(db: Session) -> PriceCatalogVersion | None:
 def _package_offers(
     db: Session, stored_id: uuid.UUID | None, prices: dict[uuid.UUID, int], has_catalog: bool
 ) -> list[PackageOffer]:
-    rows = db.execute(
-        select(Package, PackageVersion)
-        .join(PackageVersion, PackageVersion.id == Package.current_version_id)
-        .where(PackageVersion.status == "published")
-    ).all()
-    chosen: dict[str, tuple[Package, PackageVersion]] = {p.slug: (p, v) for p, v in rows}
+    """Jüngste veröffentlichte Linien, danach die gespeicherte Version (`latest_per_slug` wählt)."""
+    rows: list[tuple[Package, PackageVersion]] = [
+        (package, version)
+        for package, version in db.execute(
+            select(Package, PackageVersion)
+            .join(PackageVersion, PackageVersion.id == Package.current_version_id)
+            .where(PackageVersion.status == "published")
+        ).all()
+    ]
     if stored_id is not None:
         stored = db.execute(
             select(Package, PackageVersion)
@@ -1113,7 +1091,7 @@ def _package_offers(
             .where(PackageVersion.id == stored_id, PackageVersion.status.in_(("published", "retired")))
         ).first()
         if stored is not None:
-            chosen[stored[0].slug] = (stored[0], stored[1])
+            rows.append((stored[0], stored[1]))
     return [
         PackageOffer(
             slug=package.slug,
@@ -1127,26 +1105,33 @@ def _package_offers(
             regulatory=dict(version.regulatory),
             surcharge_cents=prices.get(package.id) if has_catalog else None,
         )
-        for package, version in sorted(chosen.values(), key=lambda pv: pv[0].slug)
+        for package, version in rows
     ]
 
 
 def _option_offers(
-    db: Session, stored_ids: Sequence[uuid.UUID], prices: dict[uuid.UUID, int], included: set[str]
+    db: Session, stored_ids: Sequence[uuid.UUID], prices: dict[uuid.UUID, int]
 ) -> list[OptionOffer]:
-    rows = db.execute(
-        select(Module, ModuleVersion)
-        .join(ModuleVersion, ModuleVersion.id == Module.current_version_id)
-        .where(ModuleVersion.status == "published")
-    ).all()
-    chosen: dict[str, tuple[Module, ModuleVersion]] = {m.slug: (m, v) for m, v in rows}
-    if stored_ids:
+    """Jüngste veröffentlichte Optionen, danach die gespeicherten Versionen (`latest_per_slug` wählt)."""
+    rows: list[tuple[Module, ModuleVersion]] = [
+        (module, version)
         for module, version in db.execute(
             select(Module, ModuleVersion)
-            .join(ModuleVersion, ModuleVersion.module_id == Module.id)
-            .where(ModuleVersion.id.in_(list(stored_ids)), ModuleVersion.status.in_(("published", "retired")))
-        ).all():
-            chosen[module.slug] = (module, version)
+            .join(ModuleVersion, ModuleVersion.id == Module.current_version_id)
+            .where(ModuleVersion.status == "published")
+        ).all()
+    ]
+    if stored_ids:
+        rows += [
+            (module, version)
+            for module, version in db.execute(
+                select(Module, ModuleVersion)
+                .join(ModuleVersion, ModuleVersion.module_id == Module.id)
+                .where(
+                    ModuleVersion.id.in_(list(stored_ids)), ModuleVersion.status.in_(("published", "retired"))
+                )
+            ).all()
+        ]
     return [
         OptionOffer(
             slug=module.slug,
@@ -1161,8 +1146,7 @@ def _option_offers(
             excludes=tuple(version.excludes_slugs),
             price_cents=prices.get(module.id),
         )
-        for module, version in sorted(chosen.values(), key=lambda mv: mv[0].slug)
-        if module.id in prices or module.slug in included or version.id in set(stored_ids)
+        for module, version in rows
     ]
 
 

@@ -5,11 +5,26 @@ import io
 import ezdxf
 import pytest
 from openpyxl import Workbook
+from shapely.geometry import Polygon
 
-from app.catalog.domain.consistency import check_roof_pitch, check_room_area_share
+from app.catalog.domain.consistency import (
+    check_roof_pitch,
+    check_room_area_share,
+    roof_depth_m,
+    storey_count,
+    type_findings,
+)
 from app.catalog.domain.dxf import FootprintDxfInvalid, read_footprints
+from app.catalog.domain.offer import (
+    BasePrice,
+    OptionOffer,
+    PackageOffer,
+    base_price,
+    latest_per_slug,
+    offered_options,
+)
 from app.catalog.domain.tolerances import FOOTPRINT_LAYER_FACADE, FOOTPRINT_LAYER_PROJECTION
-from app.catalog.domain.xlsx import TypeWorkbookInvalid, read_type_workbook
+from app.catalog.domain.xlsx import RoomEntry, TypeSheetData, TypeWorkbookInvalid, read_type_workbook
 
 
 def _workbook(kennwerte: dict[str, str], rooms: list[tuple], prices: list[tuple]) -> bytes:
@@ -190,3 +205,73 @@ def test_room_area_share_far_outside_bounds_warns() -> None:
     finding = check_room_area_share(room_area_sum_m2=40.0, storey_footprint_m2=96.0)
     assert finding is not None
     assert finding.level == "warning"
+
+
+def _sheet_data(**overrides: object) -> TypeSheetData:
+    values: dict[str, object] = {
+        "name": "Ligne",
+        "family": None,
+        "storeys": "R+1",
+        "roof_form": "gable",
+        "pitch_deg": 35.0,
+        "ridge_direction": "laengs",
+        "ridge_height_m": 8.4,
+        "eave_height_m": 5.6,
+        "living_area_m2": 150.0,
+        "rooms_text": "",
+        "base_price_min_eur": 0,
+        "base_price_max_eur": 0,
+        "rooms": [RoomEntry("Wohnen", "living", "RDC", 150.0)],
+        "prices": [],
+    }
+    return TypeSheetData(**{**values, **overrides})  # type: ignore[arg-type]
+
+
+def test_type_findings_measure_the_roof_across_the_ridge() -> None:
+    """Ligne 12 × 8 m, First längs: Lauf über die 8 m (Spez. 5.4.5); quer über die 12 m."""
+    facade = Polygon([(0, 0), (12, 0), (12, 8), (0, 8)])
+    assert roof_depth_m(facade, "laengs") == pytest.approx(8.0)
+    assert roof_depth_m(facade, "quer") == pytest.approx(12.0)
+    assert type_findings(_sheet_data(), facade) == []
+    assert [f.code for f in type_findings(_sheet_data(ridge_direction="quer"), facade)] == ["pitch_mismatch"]
+    rooms = [RoomEntry("Wohnen", "living", "RDC", 30.0)]
+    assert [f.code for f in type_findings(_sheet_data(rooms=rooms), facade)] == ["room_area_share_unusual"]
+    assert storey_count("R+1+C") == 3 and storey_count("") == 1
+
+
+def test_base_price_comes_from_the_catalog_else_from_the_type_version() -> None:
+    assert base_price((100, 200), (300, 400)) == BasePrice(100, 200, "catalog")
+    assert base_price(None, (300, 400)) == BasePrice(300, 400, "type_version")
+    assert base_price(None, (0, 0)) is None
+
+
+def _package(
+    slug: str, version_id: str, included: tuple[str, ...] = (), price: int | None = 0
+) -> PackageOffer:
+    return PackageOffer(
+        slug, version_id, 1, "published", slug, slug, included=included, surcharge_cents=price
+    )
+
+
+def _option(slug: str, version_id: str, price: int | None = None) -> OptionOffer:
+    return OptionOffer(slug, version_id, 1, "published", "plain", slug, slug, price_cents=price)
+
+
+def test_a_stored_version_replaces_the_latest_one() -> None:
+    latest = [_package("confort", "c2"), _package("base", "b2")]
+    merged = latest_per_slug([*latest, _package("confort", "c1")])
+    assert [(p.slug, p.version_id) for p in merged] == [("base", "b2"), ("confort", "c1")]
+
+
+def test_offered_options_have_a_price_are_included_or_stored() -> None:
+    options = [
+        _option("pv", "pv1", 1_000),
+        _option("ziegel", "z1"),
+        _option("keller", "k1"),
+        _option("alt", "a1"),
+    ]
+    packages = [_package("confort", "c1", ("ziegel",)), _package("signature", "s1", ("keller",), price=None)]
+    assert [o.slug for o in offered_options(options, packages)] == ["pv", "ziegel"]
+    # Eine gespeicherte Linie ohne Preiszeile bringt ihre Optionen mit; eine gespeicherte Option bleibt
+    kept = offered_options(options, packages, stored_package_id="s1", stored_option_ids={"a1"})
+    assert [o.slug for o in kept] == ["pv", "ziegel", "keller", "alt"]

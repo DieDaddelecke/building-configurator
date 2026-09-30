@@ -9,7 +9,10 @@ bekannt).
 import math
 from dataclasses import dataclass
 
+from shapely.geometry import Polygon
+
 from app.catalog.domain import tolerances as tol
+from app.catalog.domain.xlsx import TypeSheetData
 
 
 @dataclass(frozen=True)
@@ -66,3 +69,34 @@ def check_room_area_share(
             f"{tol.ROOM_AREA_SHARE_MIN:.0%}–{tol.ROOM_AREA_SHARE_MAX:.0%})",
         )
     return None
+
+
+def storey_count(storeys: str) -> int:
+    """Grobe Zählung aus der PLU-Notation (`R+1+C` → 3), für die Warnschwelle der Raumflächen (3.5)."""
+    return max(1, len([p for p in storeys.split("+") if p]))
+
+
+def roof_depth_m(facade: Polygon, ridge_direction: str | None) -> float:
+    """Lauf des Dachs quer zum First: kürzere Rechteckseite bei `laengs`/unbekannt, längere bei `quer`
+    (Plan H1 3.5; First liegt bei `laengs` auf der langen Seite, das Dach läuft über die kurze)."""
+    rect = facade.minimum_rotated_rectangle
+    xs, ys = rect.exterior.coords.xy
+    sides = sorted(math.dist((xs[i], ys[i]), (xs[i + 1], ys[i + 1])) for i in range(len(xs) - 1))
+    short_side, long_side = sides[0], sides[-1]
+    return long_side if ridge_direction == "quer" else short_side
+
+
+def type_findings(sheet: TypeSheetData, facade: Polygon) -> list[ConsistencyFinding]:
+    """Befunde zu einem neuen Entwurf aus Typdatenblatt und Fassadenumriss: Neigung, dann Raumflächen."""
+    pitch = check_roof_pitch(
+        roof_form=sheet.roof_form,
+        declared_pitch_deg=sheet.pitch_deg,
+        ridge_height_m=sheet.ridge_height_m,
+        eave_height_m=sheet.eave_height_m,
+        depth_m=roof_depth_m(facade, sheet.ridge_direction),
+    )
+    area = check_room_area_share(
+        room_area_sum_m2=sum(r.area_m2 for r in sheet.rooms),
+        storey_footprint_m2=facade.area * storey_count(sheet.storeys),
+    )
+    return [f for f in (pitch, area) if f is not None]

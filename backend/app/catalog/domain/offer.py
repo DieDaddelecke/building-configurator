@@ -6,8 +6,9 @@ ersetzt
 die jüngste veröffentlichte, damit eine Konfiguration ihren Stand behält.
 """
 
+from collections.abc import Collection, Iterable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 
 @dataclass(frozen=True)
@@ -96,3 +97,39 @@ class TypeOffer:
         return (
             next((e for e in self.energy if e.package_slug == package_slug), None) if package_slug else None
         )
+
+
+def base_price(catalog: tuple[int, int] | None, type_version: tuple[int, int]) -> BasePrice | None:
+    """Basispreis aus dem veröffentlichten Preiskatalog, sonst aus der Typversion, wenn sie einen hat."""
+    if catalog is not None:
+        return BasePrice(catalog[0], catalog[1], "catalog")
+    if type_version[0] > 0:
+        return BasePrice(type_version[0], type_version[1], "type_version")
+    return None
+
+
+class _Slugged(Protocol):
+    @property
+    def slug(self) -> str: ...
+
+
+def latest_per_slug[T: _Slugged](entries: Iterable[T]) -> list[T]:
+    """Je Slug der letzte Eintrag, nach Slug sortiert. Erst kommen die jüngsten veröffentlichten Versionen,
+    dann gespeicherte: Eine gespeicherte Version ersetzt die jüngste (L4)."""
+    by_slug = {entry.slug: entry for entry in entries}
+    return [by_slug[slug] for slug in sorted(by_slug)]
+
+
+def offered_options(
+    options: Iterable[OptionOffer],
+    packages: Iterable[PackageOffer],
+    *,
+    stored_package_id: str | None = None,
+    stored_option_ids: Collection[str] = (),
+) -> list[OptionOffer]:
+    """Optionen im Angebot: mit Preiszeile für den Typ, in einer angebotenen oder der gespeicherten Linie
+    enthalten (sie wirken, kosten aber nichts) oder selbst gespeichert (L4)."""
+    included = {
+        slug for p in packages if p.offered or p.version_id == stored_package_id for slug in p.included
+    }
+    return [o for o in options if o.offered or o.slug in included or o.version_id in stored_option_ids]
