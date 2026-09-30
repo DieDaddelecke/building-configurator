@@ -46,7 +46,7 @@ Für Oberfläche und Verhalten gilt das Frontend in `frontend/`; das Mockup im A
 - **Schichten:** `api.py` → `service.py` → `domain/` (rein). Genau eine Zugriffsregel je Route. Typen im Frontend aus OpenAPI (`pnpm run api:types`), keine handgeschriebenen DTOs. Datenbank nur über Alembic. Einzelheiten: README „Änderungen an der API“.
 - **Kosten:** Bezahlte Auswertungen über OpenRouter nur nach Freigabe des Nutzers je Lauf. Tests und lokale Stacks ohne `EMPRISE_OPENROUTER_API_KEY`.
 - **Git:** Commit und Push nur auf Anweisung, dann auf `main`, nach Thema getrennt.
-- **Dokumentation:** Neue Entscheidungen und Festlegungen in DECISIONS, Stolperstellen in README, Betrieb in `deploy/unraid/README.md`, Stand nur in ROADMAP. Verweise im Code auf archivierte IDs („Spez. 5.3.1“, „PLAN_AN5 7.4“, „ANNAHMEN PU12“) bleiben gültig; neue Verweise zeigen auf DECISIONS oder DOMAIN.
+- **Dokumentation:** Neue Entscheidungen und Festlegungen in DECISIONS, Stolperstellen in README, Betrieb in `deploy/unraid/README.md`, Stand nur in ROADMAP. Ein Plan für ein neues Modul oder einen größeren Umbau entsteht als `docs/PLAN_<Name>.md` mit Selbstprüfung; bei der Umsetzung gehen seine Entscheidungen nach DECISIONS, danach kommt er ins Archiv. Verweise im Code auf archivierte IDs („Spez. 5.3.1“, „PLAN_AN5 7.4“, „ANNAHMEN PU12“) bleiben gültig; neue Verweise zeigen auf DECISIONS oder DOMAIN.
 
 ## Sprache
 

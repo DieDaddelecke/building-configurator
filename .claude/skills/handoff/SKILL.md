@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Bereitet die Übergabe an eine neue Session vor – zieht betroffene Projektdokumente nach, schreibt AENDERUNGEN.md und HANDOFF.md fort und aktualisiert das Memory. Nur auf ausdrücklichen Aufruf mit /handoff.
+description: Bereitet die Übergabe an eine neue Session vor – zieht betroffene Dokumente nach, trägt Entscheidungen in DECISIONS.md ein, schreibt ROADMAP.md fort und aktualisiert das Memory. Nur auf ausdrücklichen Aufruf mit /handoff.
 disable-model-invocation: true
 ---
 
@@ -8,87 +8,67 @@ disable-model-invocation: true
 
 **Ziel:** Eine neue Session kann ohne diesen Gesprächsverlauf weiterarbeiten. Alles, was nur im Chat steht – Ergebnisse, Entscheidungen, offene Fragen, verworfene Wege – steht danach in Dateien oder im Memory.
 
-**Eine Quelle je Inhalt** (AGENTS.md unter der Dokumententabelle): HANDOFF.md ist nur Momentaufnahme und wird jedes Mal neu geschrieben. Dauerhaftes gehört an seinen festen Ort und steht in HANDOFF höchstens als Verweis: Stolperstellen → README.md, Betrieb je Modul → docs/BETRIEB.md, Festlegungen → docs/ANNAHMEN.md, offene Spezifikationskorrekturen → Spezifikation Anhang E.4, Entscheidungen → Plan 9 bzw. Spez. 16.
+**Eine Quelle je Inhalt** (AI_CONTEXT.md, Dokumententabelle): ROADMAP.md trägt Stand, offene Entscheidungen, Arbeitspunkte und nächsten Schritt und wird fortgeschrieben. Dauerhaftes gehört an seinen festen Ort und steht in ROADMAP höchstens als Verweis: Entscheidungen und Festlegungen → DECISIONS.md, Fachregeln → DOMAIN.md, Aufbau → ARCHITECTURE.md, Stolperstellen und Befehle → README.md, Betrieb → deploy/unraid/README.md. Das Archiv (`docs/archiv/`) wird nicht geändert. Ein Änderungsprotokoll gibt es nicht mehr; das ist das Git-Log.
 
-Sprache: Deutsch. Datum: heutiges Datum absolut (TT.MM.JJJJ). Nichts erfinden; Unklares als offene Frage in HANDOFF.md aufnehmen.
+Sprache: Deutsch. Datum: heutiges Datum absolut (TT.MM.JJJJ). Nichts erfinden; Unklares als offene Frage in ROADMAP.md 3 aufnehmen.
 
 ## 1. Bestandsaufnahme
 
 1. Gesprächsverlauf durchgehen und notieren:
    - geänderte, neue, gelöschte Dateien
-   - Entscheidungen des Nutzers (mit Nummer aus Spezifikation 16 oder Umsetzungsplan 9, falls vorhanden)
+   - Entscheidungen des Nutzers (mit vorhandener ID aus DECISIONS, sonst neue)
    - Ergebnisse, die nur im Chat stehen (Prüfungen, Erklärungen, Messungen)
    - offene Fragen an den Nutzer, abgebrochene oder verschobene Arbeiten
    - Rückmeldungen des Nutzers zur Arbeitsweise
-2. `HANDOFF.md`, neuesten Eintrag in `AENDERUNGEN.md` und `AGENTS.md` lesen.
-3. Dateistand prüfen: Dateien mit Änderungsdatum auflisten (ohne `node_modules`). Ist der Ordner ein Git-Repository: `git status` und `git diff --stat`.
+2. `ROADMAP.md` und die betroffenen Abschnitte von `DECISIONS.md` lesen.
+3. Dateistand prüfen: `git status`, `git diff --stat` und `git log --oneline` seit dem Stand in ROADMAP 1.
 
-## 2. Projektdokumente nachziehen
+## 2. Dokumente nachziehen
 
 Nur handeln, wenn der Fall eingetreten ist:
 
 | Wenn … | dann … |
 |---|---|
-| `Hauskonfigurator.jsx` geändert | `node tools/build-mockup.cjs` ausführen; prüfen, ob `Dokumentation.html` geänderte Zahlen oder Abläufe nennt, und nachziehen; die Artefakte laut `AGENTS.md` erst nach Zustimmung des Nutzers aktualisieren |
-| Entscheidung getroffen | In der Entscheidungstabelle (Spezifikation 16 bzw. Umsetzungsplan 9) als entschieden markieren: Datum, Ergebnis; betroffene Kapitel anpassen |
-| Umsetzungsplan freigegeben oder Abweichungen übernommen | Status im Kopf von `UMSETZUNGSPLAN.md`, Rangfolge und Stand in `AGENTS.md` anpassen |
-| Datei neu, umbenannt oder gelöscht | Dokumententabelle in `AGENTS.md` |
-| Code-Stand geändert | Stand in `HANDOFF.md`; `AGENTS.md` nur, wenn ein Modul fertig wird; neue Annahmen in `docs/ANNAHMEN.md` (Spezifikation 0, Ort nach Plan 4.1) |
-| Neue Stolperstelle, neuer Betriebsschritt, neue Spezifikationskorrektur | README „Stolperstellen“, BETRIEB (Modultabelle in Abschnitt 1), Spez. Anhang E.4 |
-| Arbeitsweise geändert | `CLAUDE.md` (Claude-spezifisch) bzw. `AGENTS.md` (für alle Agenten) |
-| Punkt aus `HANDOFF.md` 4 erledigt | Dort streichen, im Protokolleintrag nennen |
+| Entscheidung getroffen | In `DECISIONS.md`: offene Zeile als entschieden markieren (Datum, Ergebnis) oder neu eintragen – Architektur, Betrieb und Arbeitsweise als ADR in Abschnitt 1, Fachfestlegungen mit neuer ID `F01` ff. in Abschnitt 4. Überholtes mit „aufgehoben durch …“ kennzeichnen, nicht löschen |
+| Fachregel geändert | `DOMAIN.md` |
+| Aufbau, Dienste, Module oder Abläufe geändert | `ARCHITECTURE.md` |
+| Neue Stolperstelle, neuer Prüf- oder Startbefehl | `README.md` |
+| Neuer Betriebsschritt, neue Migration, neues Flag, neuer Job, neue Störung | `deploy/unraid/README.md` (Modultabelle in Abschnitt 10, Abschnitt des Moduls) |
+| Datei neu, umbenannt oder gelöscht | Dokumententabelle in `AI_CONTEXT.md`, Aufbau in `README.md` |
+| Arbeitsweise geändert | `AI_CONTEXT.md` (für alle Agenten) bzw. `CLAUDE.md` (nur Claude) |
+| Punkt aus ROADMAP 3 oder 4 erledigt | Dort streichen; Ergebnis an seinen dauerhaften Ort |
 
-Den Abschnitt „Stand“ in `AGENTS.md` auf höchstens drei Sätze halten; Details gehören in `HANDOFF.md`.
+## 3. `ROADMAP.md` fortschreiben
 
-## 3. `AENDERUNGEN.md` fortschreiben
+Gliederung und Nummern beibehalten (andere Dokumente verweisen auf „ROADMAP 3“ usw.). Kopf ohne Nummer: Stand-Datum und Thema der letzten Session. Danach:
 
-Neuen Eintrag **oben** unter der Einleitung einfügen, frühere Einträge nicht ändern:
+1. Stand (5–10 Punkte): Git-Stand, Bereiche, Tests, Kosten
+2. Nächster Schritt
+3. Offene Entscheidungen des Nutzers, priorisiert, mit Verweis
+4. Offene Arbeitspunkte, priorisiert, mit Datei und Abschnitt; offene Punkte der vorigen Fassung übernehmen
+5. Befunde, die nicht umgesetzt wurden
+6. Hinweise, die nur für die nächsten Sessions gelten; dauerhafte Stolperstellen in README
+7. Startprompt als Codeblock
 
-```
-## TT.MM.JJJJ – <Thema der Session>
+Ergebnisse der Session, die nur im Chat standen, kommen an ihren Ort (Stand, Arbeitspunkt, DECISIONS, README). Auf Dokumente und Abschnitte verweisen statt Inhalte zu kopieren; höchstens etwa 150 Zeilen.
 
-**Commits** – Kennungen (sobald vorhanden); die Dateiliste liefert `git show --stat`
-**Neu / Geändert / Gelöscht** – knapp, was und warum; Dateien nur nennen, wo es nicht aus dem Commit hervorgeht (Dokumente, Nicht-Committetes)
-**Entschieden** – Nr. – Ergebnis
-**Ohne Dateiänderung** – Ergebnisse nur aus dem Chat, mit Verweis, wo sie jetzt stehen
-**Unverändert** – nur, wenn es eine Aussage trägt (z. B. bewusst nicht angefasst)
-**Memory** – angelegt, geändert, gelöscht
-```
-
-Leere Rubriken weglassen.
-
-## 4. `HANDOFF.md` neu schreiben
-
-Vollständig ersetzen – Momentaufnahme, keine Historie. Feste Gliederung:
-
-1. Kopf: Stand-Datum, Thema der letzten Session, Hinweis auf `AENDERUNGEN.md`
-2. Aktueller Stand (5–10 Punkte, je Dokument oder Bereich)
-3. Ergebnisse der letzten Session, die nur im Chat standen
-4. Offene Entscheidungen des Nutzers, priorisiert, mit Verweis auf die Tabelle
-5. Offene Arbeitspunkte, priorisiert, mit Datei und Kapitel; noch offene Punkte aus der vorigen Fassung übernehmen
-6. Empfohlener nächster Schritt
-7. Hinweise nur zu dieser Session; dauerhafte Stolperstellen in README.md eintragen
-8. Startprompt für die neue Session als Codeblock
-
-Höchstens etwa 120 Zeilen. Auf Dokumente und Kapitel verweisen statt Inhalte zu kopieren.
-
-## 5. Memory aktualisieren
+## 4. Memory aktualisieren
 
 Memory-Verzeichnis und Dateiformat stehen im Systemprompt der Session (Abschnitt „Memory“); Index ist `MEMORY.md`.
 
 - **Ablegen**, was nicht aus den Projektdateien hervorgeht: Vorlieben und Rückmeldungen des Nutzers zur Arbeitsweise (mit **Why** und **How to apply**), Hintergründe von Entscheidungen, externe Verweise.
-- **Nicht ablegen:** Projektstand, Dateiinhalte, erledigte Aufgaben – das steht in `HANDOFF.md` und `AENDERUNGEN.md`.
+- **Nicht ablegen:** Projektstand, Dateiinhalte, erledigte Aufgaben – das steht in ROADMAP und im Git-Log.
 - Vorhandene Einträge prüfen: aktualisieren statt doppeln, überholte oder falsche löschen.
 - `MEMORY.md`: eine Zeile je Datei, keine Inhalte.
 
-## 6. Prüfen
+## 5. Prüfen
 
-1. Alle in `HANDOFF.md`, `AGENTS.md`, `CLAUDE.md` und im neuen Protokolleintrag genannten Dateien existieren.
-2. Kapitelverweise stimmen (Überschrift per Grep).
-3. Datum überall gleich; Stand in `AGENTS.md` widerspricht `HANDOFF.md` nicht.
-4. Keine offenen Punkte verloren: die Abschnitte 3 (Entscheidungen), 4 (Arbeitspunkte) und 6 (Hinweise) gegen `git show HEAD:HANDOFF.md` abgleichen. Jeder Punkt ist erledigt (im Protokoll), weiter offen oder an seinen dauerhaften Ort verschoben.
-5. Jeder Verweis auf eine Liste oder einen Inhalt in einer anderen Datei („siehe …“) zeigt auf eine Stelle, an der er wirklich steht.
+1. Alle in ROADMAP, AI_CONTEXT und CLAUDE.md genannten Dateien existieren; relative Links lösen auf.
+2. Abschnittsverweise stimmen (Überschrift per Grep).
+3. Datum überall gleich; ROADMAP widerspricht DECISIONS nicht.
+4. Keine offenen Punkte verloren: ROADMAP 3, 4 und 5 gegen `git show HEAD:ROADMAP.md` abgleichen. Jeder Punkt ist erledigt, weiter offen oder an seinen dauerhaften Ort verschoben.
+5. Jeder Verweis („siehe …“) zeigt auf eine Stelle, an der der Inhalt wirklich steht.
 
-## 7. Abschluss
+## 6. Abschluss
 
 Dem Nutzer kurz melden: aktualisierte Dateien, Memory-Änderungen, was bewusst offen blieb, Startprompt. Keine Commits, keine Veröffentlichungen und keine Löschungen außerhalb des Memory ohne Zustimmung.

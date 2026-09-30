@@ -1,6 +1,6 @@
 # Testdaten Modul G1
 
-Aufgezeichnet am 14.09.2026 von den öffentlichen Diensten (docs/ANNAHMEN.md G01–G21).
+Aufgezeichnet am 14.09.2026 von den öffentlichen Diensten (docs/archiv/ANNAHMEN.md G01–G21).
 
 | Datei | Quelle | Inhalt |
 |---|---|---|

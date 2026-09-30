@@ -1,6 +1,6 @@
 # Testdaten Modul G2
 
-Aufgezeichnet am 14.09.2026 von den öffentlichen Diensten (docs/ANNAHMEN.md RW01–RW18).
+Aufgezeichnet am 14.09.2026 von den öffentlichen Diensten (docs/archiv/ANNAHMEN.md RW01–RW18).
 
 | Datei | Quelle | Inhalt |
 |---|---|---|

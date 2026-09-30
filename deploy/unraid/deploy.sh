@@ -1,5 +1,5 @@
 #!/bin/sh
-# Ausliefern und Rückrollen auf Unraid (docs/BETRIEB.md Abschnitt 2).
+# Ausliefern und Rückrollen auf Unraid (deploy/unraid/README.md Abschnitt 5).
 #   ./deploy.sh                          Anwendung (Konfigurator, Büro, Analyse) bauen und ausliefern
 #   ./deploy.sh rollback REL             auf eine frühere Release zurück (releases.log)
 set -eu
