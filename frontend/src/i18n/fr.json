@@ -1370,7 +1370,6 @@
       "noCosts": "pas de fourchette de coût",
       "dossier": {
         "pending": "Dossier en cours de création …",
-        "ready": "Dossier",
         "failed": "Échec du dossier : {{error}}"
       },
       "regenerate": "Recréer le dossier",
@@ -1401,10 +1400,8 @@
     "backToLogin": "Retour à la connexion"
   },
   "sheet": {
-    "project": "Projet",
     "parcel": "Parcelle",
     "date": "Date",
-    "sheet": "Planche",
     "scale": "Échelle",
     "schematic": "schématique"
   },
@@ -1779,7 +1776,6 @@
         "living": "Surface habitable",
         "roof": "Toiture",
         "ridge": "Hauteur au faîtage",
-        "eave": "Hauteur à l'égout",
         "storeys": "Niveaux",
         "size": "Dimensions"
       },
@@ -1823,7 +1819,6 @@
       "valid": "Toutes les règles vérifiées sont respectées.",
       "violated": "Cette position ne respecte pas les règles :",
       "saving": "Enregistrement…",
-      "saved": "Position enregistrée.",
       "refused": "Position refusée.",
       "conflict": "La configuration a changé entre-temps ; elle a été rechargée.",
       "retired": "Ce type de maison a été retiré du catalogue ; votre choix reste enregistré.",
@@ -1965,7 +1960,6 @@
       "noOptions": "Aucune option choisie",
       "placement": "Implantation",
       "areas": "Surfaces",
-      "orientation": "Orientation",
       "checks": "Vérifications",
       "noChecks": "Aucune vérification disponible.",
       "convergenceNote": "Orientation géographique ; la convergence des méridiens de {{deg}}° est prise en compte.",
@@ -2014,11 +2008,6 @@
       "sw": "sud-ouest",
       "w": "ouest",
       "nw": "nord-ouest"
-    },
-    "plan_layers": {
-      "terrace": "Terrasse",
-      "carport": "Carport",
-      "driveway": "Accès"
     },
     "material": {
       "render": "enduit",

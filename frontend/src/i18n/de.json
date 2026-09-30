@@ -1370,7 +1370,6 @@
       "noCosts": "kein Kostenkorridor",
       "dossier": {
         "pending": "Dossier wird erstellt …",
-        "ready": "Dossier",
         "failed": "Dossier fehlgeschlagen: {{error}}"
       },
       "regenerate": "Dossier neu erzeugen",
@@ -1401,10 +1400,8 @@
     "backToLogin": "Zurück zur Anmeldung"
   },
   "sheet": {
-    "project": "Projekt",
     "parcel": "Parzelle",
     "date": "Stand",
-    "sheet": "Blatt",
     "scale": "Maßstab",
     "schematic": "schematisch"
   },
@@ -1779,7 +1776,6 @@
         "living": "Wohnfläche",
         "roof": "Dach",
         "ridge": "Firsthöhe",
-        "eave": "Traufhöhe",
         "storeys": "Geschosse",
         "size": "Abmessungen"
       },
@@ -1823,7 +1819,6 @@
       "valid": "Alle geprüften Regeln sind eingehalten.",
       "violated": "Diese Lage verletzt Regeln:",
       "saving": "Wird gespeichert …",
-      "saved": "Lage gespeichert.",
       "refused": "Lage abgelehnt.",
       "conflict": "Die Konfiguration hat sich inzwischen geändert und wurde neu geladen.",
       "retired": "Dieser Haustyp wurde aus dem Katalog genommen; Ihre Wahl bleibt gespeichert.",
@@ -1965,7 +1960,6 @@
       "noOptions": "Keine Optionen gewählt",
       "placement": "Implantation",
       "areas": "Flächen",
-      "orientation": "Himmelsrichtung",
       "checks": "Prüfungen",
       "noChecks": "Es liegen keine Prüfungen vor.",
       "convergenceNote": "Wahre Himmelsrichtung; die Meridiankonvergenz von {{deg}}° ist berücksichtigt.",
@@ -2014,11 +2008,6 @@
       "sw": "Südwesten",
       "w": "Westen",
       "nw": "Nordwesten"
-    },
-    "plan_layers": {
-      "terrace": "Terrasse",
-      "carport": "Carport",
-      "driveway": "Zufahrt"
     },
     "material": {
       "render": "Putz",

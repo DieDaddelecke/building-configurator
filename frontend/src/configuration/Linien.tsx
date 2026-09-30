@@ -17,11 +17,10 @@ interface LinienProps {
   failed?: boolean;
 }
 
-export function EnergieHinweis({ energy, vatRate }: { energy: EnergyStatusOut; vatRate?: number }) {
+export function EnergieHinweis({ energy }: { energy: EnergyStatusOut }) {
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
   const amount = energy.surcharge_cents != null ? money(energy.surcharge_cents, lng) : "";
-  void vatRate;
   const tone = energy.status === "action" ? "bg-warn" : "bg-sheet border bd";
   return (
     <div role="status" className={`${tone} px-5 py-4 flex flex-col gap-1`} data-testid="energie">
