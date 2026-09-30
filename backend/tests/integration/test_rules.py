@@ -20,7 +20,7 @@ from app.integrations.ign_bdtopo import DirectoryRoads
 from app.platform import storage
 from app.platform.db import get_sessionmaker
 from app.platform.models import AuditLog, FeatureFlag, Job
-from app.rules import extract, service
+from app.rules import extract, office, scheduling
 from app.rules.domain.extraction import ExtractionError, ExtractionRequest, ExtractionResponse
 from app.rules.models import (
     LandUsePlan,
@@ -473,7 +473,7 @@ def test_force_import_keeps_office_version_runs_and_evaluation(
 ) -> None:
     run_extraction(db_session, settings, FakeExtractor([uh_output()]))
     rule_set = db_session.execute(select(RuleSet)).scalar_one()
-    service.create_office_version(
+    office.create_office_version(
         db_session,
         rule_set.id,
         RuleSetVersionIn(
@@ -632,22 +632,22 @@ def test_housekeeping_restarts_recoverable_chapters(db_session: Any, plan: Any, 
         db_session.commit()
 
     state("failed", "not_configured")
-    assert service.housekeeping(db_session, settings) == {"configured": 1}
+    assert scheduling.housekeeping(db_session, settings) == {"configured": 1}
     assert db_session.get(RegulationChapter, chapter_id(db_session)).status == "pending"
-    assert service.housekeeping(db_session, settings) == {}  # Job wartet schon
+    assert scheduling.housekeeping(db_session, settings) == {}  # Job wartet schon
 
     state("failed", "refusal")
-    assert service.housekeeping(db_session, settings) == {}
+    assert scheduling.housekeeping(db_session, settings) == {}
 
     state("extracting")
     db_session.execute(text("UPDATE regulation_chapter SET updated_at = now() - interval '2 hours'"))
     db_session.commit()
-    assert service.housekeeping(db_session, settings) == {"stale": 1}
+    assert scheduling.housekeeping(db_session, settings) == {"stale": 1}
     db_session.expire_all()
     assert db_session.get(RegulationChapter, chapter_id(db_session)).error == "interrupted:stale"
 
     state("succeeded", None, engine_version="g2-0.9.0")
-    assert service.housekeeping(db_session, settings) == {"engine_changed": 1}
+    assert scheduling.housekeeping(db_session, settings) == {"engine_changed": 1}
 
 
 def test_partly_uncovered_site_is_flagged(

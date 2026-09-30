@@ -90,10 +90,10 @@ def run_dossier(db_session: Any, project: str, sequence: int = 1) -> Submission:
 
 
 def override(db_session: Any, project: str, kind: str, params: dict[str, Any]) -> None:
-    from app.rules import service as rules_service
+    from app.rules import overrides as rules_overrides
     from app.rules.schemas import ProjectOverrideIn
 
-    rules_service.set_override(
+    rules_overrides.set_override(
         db_session,
         uuid.UUID(project),
         ProjectOverrideIn(zone_code="Uh", kind=kind, status="effective", params=params, note="Test"),

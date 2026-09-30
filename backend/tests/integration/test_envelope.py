@@ -21,7 +21,7 @@ from app.platform import storage
 from app.platform.db import get_sessionmaker
 from app.platform.models import FeatureFlag, Job
 from app.rules import extract
-from app.rules import service as rules_service
+from app.rules import overrides as rules_overrides
 from app.rules.models import LandUsePlan, RegulationChapter
 from app.rules.plan_import import DirectoryGpu, import_commune
 from app.rules.schemas import ProjectOverrideIn
@@ -195,7 +195,7 @@ def test_hash_changes_when_terrain_arrives(client: Any, project: str, db_session
 
 def test_hash_changes_with_a_project_correction(client: Any, project: str, db_session: Any) -> None:
     before = get_envelope(client, project)
-    rules_service.set_override(
+    rules_overrides.set_override(
         db_session,
         uuid.UUID(project),
         ProjectOverrideIn(

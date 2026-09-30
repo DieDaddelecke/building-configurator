@@ -65,6 +65,7 @@ from app.platform.jobs import enqueue
 from app.platform.models import Project
 from app.platform.problems import Problem
 from app.rules import documents
+from app.rules import overrides as rules_overrides
 from app.rules import service as rules_service
 from app.rules.domain.kinds import params_equal
 from app.rules.schemas import VersionOut
@@ -210,7 +211,7 @@ def report_data(db: Session, project_id: uuid.UUID) -> ReportData:
         envelope=envelope_service.project_envelope(db, project_id),
         analysis=project_analysis(db, project_id),
         rules=rules_service.project_rules(db, project_id),
-        overrides=rules_service.list_overrides(db, project_id),
+        overrides=rules_overrides.list_overrides(db, project_id),
         regulations=documents.project_regulations(db, project_id),
     )
 
@@ -523,7 +524,7 @@ class _Offer:
 
 def _offer(db: Session, project_id: uuid.UUID) -> _Offer:
     """Ohne Korrekturen, wenn eine wirkt; je frühere Version eines Regelwerks einer Zone des Projekts."""
-    states = rules_service.rule_states(db, project_id)
+    states = rules_overrides.rule_states(db, project_id)
     bases = [ComparisonBaseOut(base=AUTOMATIC, kind="corrections")] if states.corrected else []
     bases += [
         ComparisonBaseOut(base=str(version.id), kind="versions", zone_code=zone, version=version)

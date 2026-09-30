@@ -1,29 +1,24 @@
-"""Anwendungsfälle des Moduls G2 (Plan 3.4). Andere Module rufen nur diese Funktionen auf (Plan 3.2).
+"""Regeln für ein Grundstück auflösen (Modul G2, Plan 3.4): Zonen, Regelwerke, Rückfall auf einen älteren
+Planstand, hochgeladenes PLU und Zusatzdokumente. Andere Module rufen nur die öffentlichen Funktionen auf
+(Plan 3.2).
 
 Kunden sehen die aktuelle Version jedes Regelwerks sofort als Simulation (D11). Korrekturen des Büros sind
-freiwillig: für die Zone (neue Version `office_reviewed`) oder nur für ein Projekt (`project_rule_override`).
+freiwillig: für die Zone (neue Version `office_reviewed`, `office.py`) oder nur für ein Projekt
+(`project_rule_override`, `overrides.py`). Einplanen und Wiederaufnahme: `scheduling.py`.
 """
 
 import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from datetime import timedelta
 from typing import Any, Literal
 
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.config import Settings
-from app.platform import audit
-from app.platform.db import utcnow
-from app.platform.jobs import enqueue
-from app.platform.logging import get_logger
 from app.platform.problems import Problem
-from app.rules import documents, model_choice
+from app.rules import documents
 from app.rules.domain import ENGINE_VERSION
-from app.rules.domain.assess import coverage as count_coverage
-from app.rules.domain.form import kind_forms
 from app.rules.domain.kinds import ParamProblem, validate_params
 from app.rules.domain.resolve import (
     RESULT_STATUSES,
@@ -34,48 +29,31 @@ from app.rules.domain.resolve import (
     use_older,
     zone_state,
 )
-from app.rules.domain.text import verify_quote
 from app.rules.models import (
     LandUsePlan,
     ProjectRegulation,
     ProjectRuleOverride,
     RegulationChapter,
     Rule,
-    RuleExtractionRun,
     RulesCommune,
     RuleSet,
     RuleSetVersion,
     SourceFile,
     SourcePage,
 )
-from app.rules.runs import RUNNING_STALE_AFTER, month_cost
 from app.rules.schemas import (
-    ChapterCoverageOut,
-    CommuneCoverageOut,
-    CoverageOut,
     IgnoredZoneOut,
     OverlayOut,
-    ParamFieldOut,
     PassageOut,
     PlanOut,
-    ProjectOverrideIn,
-    ProjectOverrideOut,
     ProjectRulesOut,
-    RuleDetailOut,
-    RuleKindFormOut,
     RuleOut,
-    RuleSetOut,
-    RuleSetVersionIn,
-    RulesModelOut,
-    RuleSourceIn,
-    RuleSourceOut,
     VersionOut,
     ZoneRulesOut,
 )
 from app.site import service as site_service
 from app.site.service import SiteFootprint
 
-log = get_logger("rules_service")
 FEATURE_FLAG = "rules_simulation"
 LINE_OVERLAY_DISTANCE_M = 1.0
 """Linienhafte Vorgaben (z. B. Baulinie) liegen oft genau auf der Grenze; bis 1 m gelten sie als betroffen."""
@@ -84,21 +62,12 @@ UPLOAD_NOTICES = ["notice.rules_simulation", "notice.rules_upload"]
 """Hochgeladenes Reglement (AN2): ausgewertet ist nur dieses Dokument – ohne Zonenplan, überlagernde
 Vorgaben, Servituden und Zusatzdokumente (docs/PLAN_AN2_PLU.md 3.4)."""
 
-# Wiederaufnahme (rules_housekeeping)
-PENDING_WITHOUT_JOB_AFTER = timedelta(minutes=30)
-RETRY_TRANSIENT_AFTER = timedelta(hours=24)
-RETRY_TRANSIENT_MAX_FAILED_RUNS_WEEK = 6
-TRANSIENT_ERRORS = ("rate_limited", "http_5", "transport:", "interrupted:")
-"""Gründe, die sich von selbst erledigen können. `refusal`, `max_tokens` eines einzelnen Sektors,
-`bad_request`, `auth`, `chapter_too_long` brauchen eine Änderung und bleiben für den Betrieb stehen."""
-
-
 # ---------------------------------------------------------------------------
 # Hilfen
 # ---------------------------------------------------------------------------
 
 
-def _plan_out(db: Session, plan: LandUsePlan) -> PlanOut:
+def plan_out(db: Session, plan: LandUsePlan) -> PlanOut:
     source = documents.latest_source(db, plan.id)
     return PlanOut(
         id=plan.id,
@@ -154,7 +123,7 @@ def scan_pages(db: Session, file_ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, se
     return pages
 
 
-def _rule_out(
+def rule_out(
     rule: Rule,
     urls: dict[uuid.UUID, str],
     plan_id: uuid.UUID | None = None,
@@ -202,13 +171,22 @@ def _override_out(override: ProjectRuleOverride, source: SourceFile | None = Non
     )
 
 
-def _validated(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]:
+def validated_params(kind: str, status: str, params: dict[str, Any]) -> dict[str, Any]:
     if status == "effective" or kind == "text_only":
         try:
             return validate_params(kind, params)
         except ParamProblem as problem:
             raise Problem(422, "rule_params_invalid", detail=problem.detail) from None
     return {}
+
+
+def override_source_files(
+    db: Session, overrides: Sequence[ProjectRuleOverride]
+) -> dict[uuid.UUID, SourceFile]:
+    ids = {o.source_file_id for o in overrides if o.source_file_id is not None}
+    if not ids:
+        return {}
+    return {f.id: f for f in db.execute(select(SourceFile).where(SourceFile.id.in_(ids))).scalars()}
 
 
 # ---------------------------------------------------------------------------
@@ -463,15 +441,15 @@ def _uploaded_rules(
     Kein Rückfall-Planstand, keine überlagernden Vorgaben, keine Gemeinde."""
     plan = db.get(LandUsePlan, link.land_use_plan_id)
     assert plan is not None
-    plan_out = _plan_out(db, plan)
+    document_plan = plan_out(db, plan)
     if plan.status == "importing":
         return _unavailable(
-            None, "document_reading", [], plan=plan_out, notices=UPLOAD_NOTICES, status="in_progress"
+            None, "document_reading", [], plan=document_plan, notices=UPLOAD_NOTICES, status="in_progress"
         )
     if plan.status != "active":
-        return _unavailable(None, _document_reason(plan), [], plan=plan_out, notices=UPLOAD_NOTICES)
+        return _unavailable(None, _document_reason(plan), [], plan=document_plan, notices=UPLOAD_NOTICES)
     if link.zone_code is None:
-        return _unavailable(None, "zone_not_chosen", [], plan=plan_out, notices=UPLOAD_NOTICES)
+        return _unavailable(None, "zone_not_chosen", [], plan=document_plan, notices=UPLOAD_NOTICES)
     chapter = db.execute(
         select(RegulationChapter).where(
             RegulationChapter.land_use_plan_id == plan.id, RegulationChapter.code == link.chapter_code
@@ -644,7 +622,7 @@ def _rules_for_zones(
             .order_by(ProjectRuleOverride.building_kind)
         ).scalars():
             overrides[override.zone_code].append(override)
-    override_sources = _override_sources(db, [o for items in overrides.values() for o in items])
+    override_sources = override_source_files(db, [o for items in overrides.values() for o in items])
     urls = {
         f.id: f.url
         for f in db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)).scalars()
@@ -667,7 +645,7 @@ def _rules_for_zones(
         )
         states.append(state)
         rules = (
-            [_rule_out(r, urls, plan.id, scanned) for r in rules_by_version.get(version.id, [])]
+            [rule_out(r, urls, plan.id, scanned) for r in rules_by_version.get(version.id, [])]
             if version
             else []
         )
@@ -708,7 +686,7 @@ def _rules_for_zones(
         status=overall,
         reason=overall_reason,
         commune_insee=commune,
-        plan=_plan_out(db, plan),
+        plan=plan_out(db, plan),
         zones=zones,
         ignored_zones=ignored,
         uncovered_share=uncovered_share,
@@ -735,656 +713,3 @@ def _rules_for_zones(
         rule_set_version_ids=sorted({v.id for v in versions.values()}),
         override_count=sum(len(items) for items in overrides.values()),
     )
-
-
-# ---------------------------------------------------------------------------
-# Büro
-# ---------------------------------------------------------------------------
-
-
-def coverage(db: Session, settings: Settings) -> CoverageOut:
-    communes: list[CommuneCoverageOut] = []
-    states = {s.commune_insee: s for s in db.execute(select(RulesCommune)).scalars()}
-    for insee in sorted(set(settings.cadastre_communes) | set(states)):
-        state = states.get(insee)
-        plan = db.get(LandUsePlan, state.land_use_plan_id) if state and state.land_use_plan_id else None
-        fallback = (
-            db.get(LandUsePlan, state.fallback_land_use_plan_id)
-            if state and state.fallback_land_use_plan_id
-            else None
-        )
-        chapters_out: list[ChapterCoverageOut] = []
-        if plan is not None:
-            chapters = list(
-                db.execute(
-                    select(RegulationChapter)
-                    .where(RegulationChapter.land_use_plan_id == plan.id)
-                    .order_by(RegulationChapter.first_page)
-                ).scalars()
-            )
-            run_stats = {
-                row.chapter_id: row
-                for row in db.execute(
-                    select(
-                        RuleExtractionRun.chapter_id,
-                        func.count().label("runs"),
-                        func.coalesce(func.sum(RuleExtractionRun.cost_usd), 0.0).label("cost"),
-                        func.max(RuleExtractionRun.model).label("model"),
-                    )
-                    .where(RuleExtractionRun.chapter_id.in_([c.id for c in chapters]))
-                    .group_by(RuleExtractionRun.chapter_id)
-                ).all()
-            }
-            sets = list(db.execute(select(RuleSet).where(RuleSet.land_use_plan_id == plan.id)).scalars())
-            current = {
-                v.id: v
-                for v in db.execute(
-                    select(RuleSetVersion).where(
-                        RuleSetVersion.id.in_([s.current_version_id for s in sets if s.current_version_id])
-                    )
-                ).scalars()
-            }
-            by_zone = {s.zone_code: s for s in sets}
-            for chapter in chapters:
-                stats = run_stats.get(chapter.id)
-                chapters_out.append(
-                    ChapterCoverageOut(
-                        id=chapter.id,
-                        code=chapter.code,
-                        title=chapter.title,
-                        first_page=chapter.first_page,
-                        last_page=chapter.last_page,
-                        sectors=chapter.sectors,
-                        status=chapter.status,
-                        error=chapter.error,
-                        updated_at=chapter.updated_at,
-                        runs=int(stats.runs) if stats else 0,
-                        cost_usd=round(float(stats.cost), 4) if stats else 0.0,
-                        last_model=stats.model if stats else None,
-                        rule_sets={
-                            sector: (
-                                version_out(current[version_id])
-                                if sector in by_zone
-                                and (version_id := by_zone[sector].current_version_id) is not None
-                                and version_id in current
-                                else None
-                            )
-                            for sector in chapter.sectors
-                        },
-                        rule_set_ids={s: by_zone[s].id for s in chapter.sectors if s in by_zone},
-                    )
-                )
-        communes.append(
-            CommuneCoverageOut(
-                commune_insee=insee,
-                status=state.status if state else "not_imported",
-                error=state.error if state else None,
-                checked_at=state.checked_at if state else None,
-                plan=_plan_out(db, plan) if plan else None,
-                fallback_plan=_plan_out(db, fallback) if fallback else None,
-                chapters=chapters_out,
-            )
-        )
-    return CoverageOut(
-        configured=settings.openrouter_api_key is not None,
-        model=model_choice.effective_settings(db, settings).rules_model,
-        month_cost_usd=round(month_cost(db), 2),
-        budget_month_usd=settings.rules_budget_month_usd,
-        communes=communes,
-    )
-
-
-def rules_model_out(db: Session, settings: Settings) -> RulesModelOut:
-    """Eingestelltes KI-Modell mit Preisen, Kosten des Monats und Budget (PLAN_AN2_PLU 8, VA09)."""
-    chosen = model_choice.current(db, settings)
-    return RulesModelOut(
-        model=chosen.model,
-        source=chosen.source,
-        default_model=chosen.default_model,
-        price_input_per_mtok=chosen.price_input_per_mtok,
-        price_output_per_mtok=chosen.price_output_per_mtok,
-        updated_at=chosen.updated_at,
-        input=chosen.input,
-        configured=settings.openrouter_api_key is not None,
-        month_cost_usd=round(month_cost(db), 2),
-        budget_month_usd=settings.rules_budget_month_usd,
-        updated_by_name=chosen.updated_by_name,
-    )
-
-
-def rule_kind_forms() -> list[RuleKindFormOut]:
-    """Formularbeschreibung aller Regelarten (AN4, docs/PLAN_AN4_KORREKTUR.md 3.1)."""
-    return [
-        RuleKindFormOut(
-            kind=form.kind,
-            building_specific=form.building_specific,
-            mandatory=form.mandatory,
-            params=[
-                ParamFieldOut(
-                    name=p.name,
-                    type=p.type,
-                    required=p.required,
-                    default=p.default,
-                    options=list(p.options),
-                    min=p.min,
-                    max=p.max,
-                    unit=p.unit,
-                )
-                for p in form.params
-            ],
-        )
-        for form in kind_forms()
-    ]
-
-
-def rule_set_detail(db: Session, rule_set_id: uuid.UUID) -> RuleSetOut:
-    rule_set = db.get(RuleSet, rule_set_id)
-    if rule_set is None:
-        raise Problem(404, "not_found")
-    plan = db.get(LandUsePlan, rule_set.land_use_plan_id)
-    assert plan is not None
-    versions = list(
-        db.execute(
-            select(RuleSetVersion)
-            .where(RuleSetVersion.rule_set_id == rule_set.id)
-            .order_by(RuleSetVersion.version.desc())
-        ).scalars()
-    )
-    current = next((v for v in versions if v.id == rule_set.current_version_id), None)
-    urls = {
-        f.id: f.url
-        for f in db.execute(select(SourceFile).where(SourceFile.land_use_plan_id == plan.id)).scalars()
-    }
-    scanned = scan_pages(db, urls)
-    rules = (
-        list(
-            db.execute(
-                select(Rule).where(Rule.rule_set_version_id == current.id).order_by(Rule.kind)
-            ).scalars()
-        )
-        if current
-        else []
-    )
-    return RuleSetOut(
-        id=rule_set.id,
-        zone_code=rule_set.zone_code,
-        plan=_plan_out(db, plan),
-        current=version_out(current) if current else None,
-        versions=[version_out(v) for v in versions],
-        rules=[
-            RuleDetailOut(
-                **_rule_out(r, urls, plan.id, scanned).model_dump(),
-                detail=r.detail,
-                alternatives=r.alternatives or [],
-                similarity=r.similarity,
-            )
-            for r in rules
-        ],
-    )
-
-
-def create_office_version(
-    db: Session, rule_set_id: uuid.UUID, body: RuleSetVersionIn, actor_id: str
-) -> RuleSetOut:
-    """Korrektur des Büros für die Zone: neue, vollständige Version; gilt für spätere Simulationen."""
-    rule_set = db.execute(
-        select(RuleSet).where(RuleSet.id == rule_set_id).with_for_update()
-    ).scalar_one_or_none()
-    if rule_set is None:
-        raise Problem(404, "not_found")
-    keys = [(r.kind, r.building_kind) for r in body.rules if r.status != "text_only"]
-    if len(keys) != len(set(keys)):
-        raise Problem(422, "rule_duplicate")
-    current = db.get(RuleSetVersion, rule_set.current_version_id) if rule_set.current_version_id else None
-    source = (
-        db.execute(
-            select(SourceFile)
-            .where(SourceFile.land_use_plan_id == rule_set.land_use_plan_id)
-            .order_by(SourceFile.created_at.desc())
-        )
-        .scalars()
-        .first()
-    )
-    number = (
-        db.execute(
-            select(func.coalesce(func.max(RuleSetVersion.version), 0)).where(
-                RuleSetVersion.rule_set_id == rule_set.id
-            )
-        ).scalar_one()
-        + 1
-    )
-    prepared = [(item, _validated(item.kind, item.status, item.params)) for item in body.rules]
-    version = RuleSetVersion(
-        rule_set_id=rule_set.id,
-        version=number,
-        status="office_reviewed",
-        origin="office",
-        based_on_id=current.id if current else None,
-        engine_version=ENGINE_VERSION,
-        note=body.note,
-        created_by=actor_id,
-    )
-    db.add(version)
-    db.flush()
-    stored: list[Rule] = []
-    for item, params in prepared:
-        rule = Rule(
-            rule_set_version_id=version.id,
-            kind=item.kind,
-            building_kind=item.building_kind,
-            status=item.status,
-            params=params if item.status == "effective" or item.kind == "text_only" else {},
-            source_file_id=source.id if source and item.page else None,
-            page=item.page,
-            quote=item.quote,
-            quote_verified=False,
-            confidence=1.0,
-            notes=item.notes,
-            origin="office",
-            created_by=actor_id,
-        )
-        db.add(rule)
-        stored.append(rule)
-    version.coverage = count_coverage(stored)
-    if current is not None:
-        current.status = "retired"
-    rule_set.current_version_id = version.id
-    rule_set.updated_at = utcnow()
-    audit.record(
-        db,
-        actor_type="staff",
-        actor_id=actor_id,
-        action="rule_set.office_version",
-        entity_type="rule_set",
-        entity_id=str(rule_set.id),
-        before={"version": current.version if current else None},
-        after={"version": number, "rules": len(stored), "note": body.note},
-    )
-    db.commit()
-    return rule_set_detail(db, rule_set.id)
-
-
-# ---------------------------------------------------------------------------
-# Korrekturen je Projekt (Büro, seit AN4 auch im Analyse-Produkt: docs/PLAN_AN4_KORREKTUR.md 3.2)
-# ---------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class RuleStates:
-    """Stände der Regeln eines Projekts für den Vergleich (AN4, 3.5)."""
-
-    corrected: bool
-    """Wirkt eine Korrektur (in einer Zone der aktuellen Regeln)?"""
-    earlier: list[tuple[str, VersionOut]]
-    """Frühere Versionen je Zone, neueste zuerst."""
-    current: dict[str, VersionOut]
-
-
-def rule_states(db: Session, project_id: uuid.UUID) -> RuleStates:
-    zones = {zone.code: zone for zone in resolve_rules(db, project_id).out.zones}
-    corrected = (
-        db.execute(
-            select(ProjectRuleOverride.id).where(
-                ProjectRuleOverride.project_id == project_id,
-                ProjectRuleOverride.zone_code.in_(list(zones)),
-            )
-        ).first()
-        is not None
-    )
-    earlier: list[tuple[str, VersionOut]] = []
-    for zone in zones.values():
-        if zone.rule_set_id is None:
-            continue
-        current = zone.version.id if zone.version else None
-        earlier.extend(
-            (zone.code, version_out(version))
-            for version in db.execute(
-                select(RuleSetVersion)
-                .where(RuleSetVersion.rule_set_id == zone.rule_set_id, RuleSetVersion.id != current)
-                .order_by(RuleSetVersion.version.desc())
-            ).scalars()
-        )
-    return RuleStates(
-        corrected=corrected,
-        earlier=earlier,
-        current={code: zone.version for code, zone in zones.items() if zone.version is not None},
-    )
-
-
-def _override_sources(db: Session, overrides: Sequence[ProjectRuleOverride]) -> dict[uuid.UUID, SourceFile]:
-    ids = {o.source_file_id for o in overrides if o.source_file_id is not None}
-    if not ids:
-        return {}
-    return {f.id: f for f in db.execute(select(SourceFile).where(SourceFile.id.in_(ids))).scalars()}
-
-
-@dataclass(frozen=True)
-class _ProjectState:
-    """Zonen der aktuellen Regeln und Dokumente, die am Projekt hängen – Maßstab für Zonenprüfung,
-    „wirksam“ und „Fundstelle am Projekt“."""
-
-    zones: frozenset[str]
-    documents: frozenset[uuid.UUID]
-
-
-def _project_state(db: Session, project_id: uuid.UUID) -> _ProjectState:
-    linked = {
-        link.land_use_plan_id
-        for link in db.execute(
-            select(ProjectRegulation).where(ProjectRegulation.project_id == project_id)
-        ).scalars()
-    }
-    if site_service.site_footprint(db, project_id) is None:
-        return _ProjectState(frozenset(), frozenset(linked))
-    out = resolve_rules(db, project_id).out
-    if out.plan is not None:
-        linked.add(out.plan.id)
-    return _ProjectState(frozenset(z.code for z in out.zones), frozenset(linked))
-
-
-def list_overrides(db: Session, project_id: uuid.UUID) -> list[ProjectOverrideOut]:
-    overrides = list(
-        db.execute(
-            select(ProjectRuleOverride)
-            .where(ProjectRuleOverride.project_id == project_id)
-            .order_by(ProjectRuleOverride.zone_code, ProjectRuleOverride.kind)
-        ).scalars()
-    )
-    if not overrides:
-        return []
-    state = _project_state(db, project_id)
-    sources = _override_sources(db, overrides)
-    titles = {
-        plan.id: plan.title
-        for plan in db.execute(
-            select(LandUsePlan).where(LandUsePlan.id.in_({f.land_use_plan_id for f in sources.values()}))
-        ).scalars()
-    }
-
-    def source_out(o: ProjectRuleOverride) -> RuleSourceOut | None:
-        if o.page is None:
-            return None
-        file = sources.get(o.source_file_id) if o.source_file_id else None
-        return RuleSourceOut(
-            document_id=file.land_use_plan_id if file else None,
-            document_title=titles.get(file.land_use_plan_id) if file else None,
-            page=o.page,
-            quote=o.quote,
-            quote_verified=o.quote_verified,
-            source_url=f"{file.url}#page={o.page}" if file else None,
-            attached=file is not None and file.land_use_plan_id in state.documents,
-        )
-
-    return [
-        ProjectOverrideOut(
-            id=o.id,
-            zone_code=o.zone_code,
-            kind=o.kind,
-            building_kind=o.building_kind,
-            status=o.status,
-            params=o.params or {},
-            note=o.note,
-            source=source_out(o),
-            active=o.zone_code in state.zones,
-            created_at=o.created_at,
-            created_by=o.created_by,
-            updated_at=o.updated_at,
-            updated_by=o.updated_by,
-        )
-        for o in overrides
-    ]
-
-
-@dataclass(frozen=True)
-class _Source:
-    file: SourceFile
-    page: int
-    quote: str | None
-    verified: bool
-
-
-def _checked_source(db: Session, source: RuleSourceIn, state: _ProjectState) -> _Source:
-    """Fundstelle prüfen: ein Dokument des Projekts, eine Seite darin; das Zitat wird wie bei der Auswertung
-    auf der Seite und den Nachbarseiten gesucht (`verify_quote`). Nicht gefunden bleibt es gespeichert und
-    erscheint als unbestätigt; gefunden berichtigt es die Seite."""
-    plan = db.get(LandUsePlan, source.document_id)
-    file = documents.latest_source(db, plan.id) if plan is not None else None
-    if file is None or source.document_id not in state.documents:
-        raise Problem(422, "source_document_unknown")
-    if source.page > file.page_count:
-        raise Problem(422, "source_page_invalid", detail=f"page_count={file.page_count}")
-    quote = (source.quote or "").strip() or None
-    if quote is None:
-        return _Source(file, source.page, None, False)
-    pages = {
-        row.page: row.text
-        for row in db.execute(
-            select(SourcePage).where(
-                SourcePage.source_file_id == file.id,
-                SourcePage.page.between(source.page - 1, source.page + 1),
-            )
-        ).scalars()
-    }
-    check = verify_quote(quote, pages, source.page)
-    page = check.page if check.verified and check.page is not None else source.page
-    return _Source(file, page, quote, check.verified)
-
-
-def set_override(
-    db: Session, project_id: uuid.UUID, body: ProjectOverrideIn, actor_id: str
-) -> list[ProjectOverrideOut]:
-    """Korrektur setzen oder ändern. Die Zone muss eine Zone der aktuellen Regeln sein: Sonst wirkte sie
-    nicht oder träfe ein Zusatzdokument mit gleichem Sektor (`Lot-12`, PLAN_AN4 7.1 Nr. 3)."""
-    if site_service.site_footprint(db, project_id) is None:
-        raise Problem(404, "site_not_found")
-    state = _project_state(db, project_id)
-    if body.zone_code not in state.zones:
-        raise Problem(422, "zone_unknown")
-    params = _validated(body.kind, body.status, body.params)
-    source = _checked_source(db, body.source, state) if body.source is not None else None
-    existing = db.execute(
-        select(ProjectRuleOverride)
-        .where(
-            ProjectRuleOverride.project_id == project_id,
-            ProjectRuleOverride.zone_code == body.zone_code,
-            ProjectRuleOverride.kind == body.kind,
-            ProjectRuleOverride.building_kind == body.building_kind,
-        )
-        .with_for_update()
-    ).scalar_one_or_none()
-    before = (
-        {"status": existing.status, "params": existing.params, "page": existing.page} if existing else None
-    )
-    if existing is None:
-        existing = ProjectRuleOverride(
-            project_id=project_id,
-            zone_code=body.zone_code,
-            kind=body.kind,
-            building_kind=body.building_kind,
-            status=body.status,
-            created_by=actor_id,
-        )
-        db.add(existing)
-    existing.status = body.status
-    existing.params = params
-    existing.note = body.note
-    existing.source_file_id = source.file.id if source else None
-    existing.page = source.page if source else None
-    existing.quote = source.quote if source else None
-    existing.quote_verified = source.verified if source else False
-    existing.updated_at = utcnow()
-    existing.updated_by = actor_id
-    db.flush()
-    audit.record(
-        db,
-        actor_type="staff",
-        actor_id=actor_id,
-        action="project_rule_override.put",
-        entity_type="project",
-        entity_id=str(project_id),
-        before=before,
-        after={
-            "zone": body.zone_code,
-            "kind": body.kind,
-            "building_kind": body.building_kind,
-            "status": body.status,
-            "params": params,
-            "source": (
-                {
-                    "document": str(source.file.land_use_plan_id),
-                    "page": source.page,
-                    "quote_verified": source.verified,
-                }
-                if source
-                else None
-            ),
-        },
-    )
-    db.commit()
-    return list_overrides(db, project_id)
-
-
-def delete_override(
-    db: Session, project_id: uuid.UUID, override_id: uuid.UUID, actor_id: str
-) -> list[ProjectOverrideOut]:
-    override = db.get(ProjectRuleOverride, override_id)
-    if override is None or override.project_id != project_id:
-        raise Problem(404, "not_found")
-    audit.record(
-        db,
-        actor_type="staff",
-        actor_id=actor_id,
-        action="project_rule_override.delete",
-        entity_type="project",
-        entity_id=str(project_id),
-        before={
-            "zone": override.zone_code,
-            "kind": override.kind,
-            "status": override.status,
-            "params": override.params,
-            "page": override.page,
-        },
-    )
-    db.delete(override)
-    db.commit()
-    return list_overrides(db, project_id)
-
-
-def enqueue_import(db: Session, communes: list[str] | None, force: bool, actor_id: str) -> uuid.UUID:
-    import app.rules.jobs  # noqa: F401  Jobarten anmelden (lokal, sonst Importzyklus)
-
-    job_id = enqueue(db, "plu_import", {"communes": communes, "force": force}, created_by=actor_id)
-    db.commit()
-    return job_id
-
-
-_ACTIVE_EXTRACT_JOB = text(
-    "SELECT id FROM job WHERE kind = 'rules_extract' AND status IN ('queued', 'running') "
-    "AND payload->>'chapter_id' = :chapter ORDER BY created_at LIMIT 1"
-)
-
-
-def _active_extract_job(db: Session, chapter_id: uuid.UUID) -> uuid.UUID | None:
-    return db.execute(_ACTIVE_EXTRACT_JOB, {"chapter": str(chapter_id)}).scalar()
-
-
-def enqueue_extract(db: Session, chapter_id: uuid.UUID, force: bool, actor_id: str) -> uuid.UUID:
-    """Kapitel auswerten. Wartet oder läuft schon ein Job für das Kapitel, bleibt es bei diesem: ein zweiter
-    Klick kostet nicht noch einmal."""
-    import app.rules.jobs  # noqa: F401
-
-    chapter = db.get(RegulationChapter, chapter_id)
-    if chapter is None:
-        raise Problem(404, "not_found")
-    active = _active_extract_job(db, chapter_id)
-    if active is not None:
-        return active
-    if chapter.status != "extracting":
-        chapter.status, chapter.updated_at = "pending", utcnow()
-    job_id = enqueue(
-        db, "rules_extract", {"chapter_id": str(chapter_id), "force": force}, created_by=actor_id
-    )
-    audit.record(
-        db,
-        actor_type="staff",
-        actor_id=actor_id,
-        action="regulation_chapter.extract",
-        entity_type="regulation_chapter",
-        entity_id=str(chapter_id),
-        after={"force": force},
-    )
-    db.commit()
-    return job_id
-
-
-def housekeeping(db: Session, settings: Settings) -> dict[str, Any]:
-    """Liegengebliebene und aus behebbarem Grund gescheiterte Kapitel wieder aufnehmen (stündlich, D11).
-
-    - `extracting` länger als das Zeitlimit: abgebrochen (`interrupted:stale`).
-    - `pending` ohne wartenden Job: neu einplanen.
-    - `not_configured`, sobald ein Schlüssel eingetragen ist; `budget_exceeded`, sobald das Budget wieder
-      reicht (neuer Monat, höheres Budget); vorübergehende Fehler nach 24 h, höchstens 6 gescheiterte Aufrufe
-      je Woche.
-    - Ausgewertet mit älterer Version der Schranken: neu bewerten (ohne Aufruf, wenn die Antworten vorliegen).
-    """
-    import app.rules.jobs  # noqa: F401
-
-    now = utcnow()
-    chapters = list(
-        db.execute(
-            select(RegulationChapter)
-            .join(LandUsePlan, LandUsePlan.id == RegulationChapter.land_use_plan_id)
-            .where(LandUsePlan.status == "active", func.cardinality(RegulationChapter.sectors) > 0)
-            .with_for_update(of=RegulationChapter, skip_locked=True)
-        ).scalars()
-    )
-    budget_left = month_cost(db) < settings.rules_budget_month_usd
-    counts: dict[str, int] = defaultdict(int)
-    for chapter in chapters:
-        if chapter.status == "extracting" and now - chapter.updated_at > RUNNING_STALE_AFTER:
-            chapter.status, chapter.error, chapter.updated_at = "failed", "interrupted:stale", now
-            counts["stale"] += 1
-        reason = _restart_reason(db, settings, chapter, now, budget_left)
-        if reason is None or _active_extract_job(db, chapter.id) is not None:
-            continue
-        chapter.status, chapter.updated_at = "pending", now
-        enqueue(
-            db,
-            "rules_extract",
-            {"chapter_id": str(chapter.id)},
-            idempotency_key=f"rules_housekeeping:{chapter.id}:{reason}:{now:%Y%m%d%H}",
-            created_by=f"system:rules_housekeeping:{reason}",
-        )
-        counts[reason] += 1
-    db.commit()
-    if counts:
-        log.info("rules_housekeeping", **counts)
-    return dict(counts)
-
-
-def _restart_reason(
-    db: Session, settings: Settings, chapter: RegulationChapter, now: Any, budget_left: bool
-) -> str | None:
-    if chapter.status == "pending":
-        return "pending" if now - chapter.updated_at > PENDING_WITHOUT_JOB_AFTER else None
-    if chapter.status == "succeeded":
-        stale_engine = chapter.engine_version is not None and chapter.engine_version != ENGINE_VERSION
-        return "engine_changed" if stale_engine else None
-    if chapter.status != "failed" or chapter.error is None:
-        return None
-    if chapter.error == "not_configured":
-        return "configured" if settings.openrouter_api_key is not None else None
-    if chapter.error == "budget_exceeded":
-        return "budget" if budget_left else None
-    if chapter.error.startswith(TRANSIENT_ERRORS) and now - chapter.updated_at > RETRY_TRANSIENT_AFTER:
-        failed_week = db.execute(
-            select(func.count())
-            .select_from(RuleExtractionRun)
-            .where(
-                RuleExtractionRun.chapter_id == chapter.id,
-                RuleExtractionRun.status == "failed",
-                RuleExtractionRun.created_at > now - timedelta(days=7),
-            )
-        ).scalar_one()
-        return "transient" if failed_week < RETRY_TRANSIENT_MAX_FAILED_RUNS_WEEK else None
-    return None

@@ -283,12 +283,12 @@ def test_saved_configuration_is_checked_again_with_the_site(
 ) -> None:
     """Regeln und Grundstück ändern sich nach dem Speichern: die Prüfung entsteht bei jedem Abruf neu."""
 
-    from app.rules import service as rules_service
+    from app.rules import overrides as rules_overrides
     from app.rules.schemas import ProjectOverrideIn
 
     saved = patch(client, project, {"type_slug": "klein"}).json()
     assert saved["evaluation"]["valid"] is True
-    rules_service.set_override(
+    rules_overrides.set_override(
         db_session,
         uuid.UUID(project),
         ProjectOverrideIn(

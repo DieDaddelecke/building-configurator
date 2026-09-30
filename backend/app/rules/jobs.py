@@ -27,7 +27,7 @@ from app.platform.db import get_sessionmaker
 from app.platform.jobs import LONG, JobContext, job, periodic
 from app.platform.jobs.registry import get_job_spec
 from app.platform.logging import get_logger
-from app.rules import documents, extract, model_choice, ocr, plan_import, service
+from app.rules import documents, extract, model_choice, ocr, plan_import, scheduling
 from app.rules.domain.extraction import RuleExtractor
 from app.rules.extract import RetryableExtractionError
 
@@ -167,7 +167,7 @@ def rules_document_ocr(ctx: JobContext, payload: dict[str, Any]) -> dict[str, An
 @job("rules_housekeeping", max_attempts=1, timeout_seconds=300)
 def rules_housekeeping(ctx: JobContext, payload: dict[str, Any]) -> dict[str, Any]:
     with ctx.session() as session:
-        return service.housekeeping(session, get_settings())
+        return scheduling.housekeeping(session, get_settings())
 
 
 periodic("rules_housekeeping", kind="rules_housekeeping", every=timedelta(hours=1))
