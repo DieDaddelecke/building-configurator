@@ -15,7 +15,7 @@ import { Nordpfeil, Schraffur, strich, txt } from "../components/plan/Masskette"
 import { PlanSvg, boundsOf, polygonPath, toSvg, type LocalPoint } from "../components/plan/PlanSvg";
 import { formatNumber } from "../site/geo";
 
-type Reading = "lenient" | "strict";
+type Reading = SectionOut["prospects"][number]["reading"];
 type Key = SectionOut["key"];
 
 const rings = (value: unknown) => (value ?? []) as unknown as LocalPoint[][];

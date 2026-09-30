@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { api, unwrap } from "./client";
-import type { components } from "./schema";
+import type { components, paths } from "./schema";
 
 export type ProjectRegulationOut = components["schemas"]["ProjectRegulationOut"];
 export type RegulationDocumentOut = components["schemas"]["RegulationDocumentOut"];
@@ -12,9 +12,12 @@ export type DocumentChapterOut = components["schemas"]["DocumentChapterOut"];
 export type OcrOut = components["schemas"]["OcrOut"];
 export type ZoneChoiceIn = components["schemas"]["ZoneChoiceIn"];
 export type LotChoiceIn = components["schemas"]["LotChoiceIn"];
-export type PluDuType = "PLU" | "PLUi" | "PSMV";
-export type SupplementDuType = "lotissement" | "cahier_des_charges";
-export type UploadDuType = PluDuType | SupplementDuType;
+/** Dokumentarten, die der Upload annimmt (Formular von `POST …/regulations`). */
+export type UploadDuType = NonNullable<
+  paths["/api/v1/projects/{project_id}/regulations"]["post"]["requestBody"]
+>["content"]["multipart/form-data"]["du_type"];
+export type SupplementDuType = Extract<UploadDuType, "lotissement" | "cahier_des_charges">;
+export type PluDuType = Exclude<UploadDuType, SupplementDuType>;
 
 /** Höchstens so viele Zusatzdokumente je Projekt (AN3, E-AN3-6; `documents.MAX_SUPPLEMENTS`). */
 export const MAX_SUPPLEMENTS = 3;
