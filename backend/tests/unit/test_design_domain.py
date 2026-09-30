@@ -12,7 +12,7 @@ from hypothesis import strategies as st
 
 from app.catalog.domain.offer import EnergyFinding
 from app.catalog.domain.options import OptionParamsInvalid, normalize_params, normalize_regulatory
-from app.configuration.domain.costs import compute_costs, round_thousand
+from app.configuration.domain.costs import compute_costs, gross_cents, round_thousand
 from app.configuration.domain.design import evaluate_design
 from app.configuration.domain.energy import energy_status
 from app.configuration.domain.geometry import place
@@ -680,3 +680,11 @@ def test_property_carport_and_driveway_avoid_house_and_terrace(x: float, y: floa
     assert design.carport.polygon.intersection(body).area < 1e-6
     for drive in design.driveways:
         assert drive.polygon.intersection(body).area < 1e-6
+
+
+def test_gross_rounds_items_and_total_separately() -> None:
+    """Festgehalten (REFACTORING_PLAN S14): Positionen werden einzeln, die Summe aus dem Netto-Gesamt
+    gerundet; die angezeigten Positionen können deshalb um einen Cent von der Summe abweichen (D10)."""
+    assert gross_cents(1_252, 0.2) == 1_502
+    assert gross_cents(1_252 + 1_252, 0.2) == 3_005
+    assert 2 * gross_cents(1_252, 0.2) == 3_004

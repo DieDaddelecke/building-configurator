@@ -10,7 +10,7 @@ from shapely.geometry.base import BaseGeometry
 from app.catalog.domain.offer import OptionOffer, PackageOffer, TypeOffer
 from app.configuration.domain.areas import Areas
 from app.configuration.domain.checks import Check
-from app.configuration.domain.costs import Costs, Range
+from app.configuration.domain.costs import Costs, Range, gross_cents
 from app.configuration.domain.design import Design
 from app.configuration.domain.energy import EnergyStatus
 from app.configuration.domain.geometry import polygons
@@ -77,10 +77,6 @@ def _ring(geometry: BaseGeometry | None) -> list[list[float]] | None:
         return None
     polygon: Polygon = parts[0]
     return [[round(float(x), 3), round(float(y), 3)] for x, y, *_ in polygon.exterior.coords]
-
-
-def _gross(cents: int, vat_rate: float) -> int:
-    return round(cents * (1 + vat_rate))
 
 
 def selection_out(design: Design, offer: TypeOffer, dropped: list[str]) -> SelectionOut:
@@ -181,7 +177,7 @@ def energy_out(energy: EnergyStatus, vat_rate: float) -> EnergyStatusOut:
         climate_zone=energy.climate_zone,
         verdict=energy.verdict,
         measures=energy.measures,
-        surcharge_cents=_gross(energy.surcharge_cents, vat_rate) if energy.surcharge_cents else None,
+        surcharge_cents=gross_cents(energy.surcharge_cents, vat_rate) if energy.surcharge_cents else None,
     )
 
 
@@ -209,12 +205,12 @@ def costs_out(costs: Costs, offer: TypeOffer, type_name: str) -> CostsOut:
                 slug=item.slug,
                 label_de=de,
                 label_fr=fr,
-                min_cents=_gross(item.min_cents, costs.vat_rate),
-                max_cents=_gross(item.max_cents, costs.vat_rate),
+                min_cents=gross_cents(item.min_cents, costs.vat_rate),
+                max_cents=gross_cents(item.max_cents, costs.vat_rate),
                 included=item.included,
                 quantity=item.quantity,
                 unit=item.unit,
-                unit_price_cents=_gross(item.unit_price_cents, costs.vat_rate)
+                unit_price_cents=gross_cents(item.unit_price_cents, costs.vat_rate)
                 if item.unit_price_cents
                 else None,
                 source=item.source,
@@ -242,14 +238,14 @@ def orientation_out(orientation: Orientation | None) -> OrientationOut | None:
 
 
 def package_price(package: PackageOffer, vat_rate: float) -> PriceOut:
-    cents = _gross(package.surcharge_cents or 0, vat_rate)
+    cents = gross_cents(package.surcharge_cents or 0, vat_rate)
     return PriceOut(basis="fixed", min_cents=cents, max_cents=cents)
 
 
 def option_price(option: OptionOffer, vat_rate: float, area_m2: float | None) -> PriceOut | None:
     if option.price_cents is None:
         return None
-    unit = _gross(option.price_cents, vat_rate)
+    unit = gross_cents(option.price_cents, vat_rate)
     if option.per_m2:
         total = round(unit * (area_m2 or 0.0))
         return PriceOut(

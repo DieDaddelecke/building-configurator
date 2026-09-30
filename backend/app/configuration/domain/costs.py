@@ -57,6 +57,12 @@ class Costs:
     items: tuple[CostItem, ...]
 
 
+def gross_cents(cents: int, vat_rate: float) -> int:
+    """Brutto auf den Cent (D10). Positionen werden einzeln gerundet, die Summe aus dem Netto-Gesamt: Die
+    Summe der angezeigten Positionen kann deshalb um wenige Cent von der Gesamtsumme abweichen."""
+    return round(cents * (1 + vat_rate))
+
+
 def round_thousand(cents: int) -> int:
     """Kaufmännisch auf 1.000 € (337.500 € → 338.000 €, wie das Mockup)."""
     return (cents + ROUND_CENTS // 2) // ROUND_CENTS * ROUND_CENTS
@@ -124,7 +130,7 @@ def compute_costs(
         )
 
     net = Range(sum(i.min_cents for i in items), sum(i.max_cents for i in items))
-    gross = Range(round(net.min_cents * (1 + offer.vat_rate)), round(net.max_cents * (1 + offer.vat_rate)))
+    gross = Range(gross_cents(net.min_cents, offer.vat_rate), gross_cents(net.max_cents, offer.vat_rate))
     display = Range(round_thousand(gross.min_cents), round_thousand(gross.max_cents))
     return Costs(
         True,

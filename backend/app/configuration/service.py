@@ -14,23 +14,30 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.catalog import service as catalog_service
-from app.catalog.domain.offer import OptionOffer, TypeOffer
+from app.catalog.domain.offer import TypeOffer
 from app.catalog.service import PublishedType
 from app.configuration import outputs, review
 from app.configuration.domain import ENGINE_VERSION
 from app.configuration.domain import presets as preset_rules
-from app.configuration.domain.checks import Check, type_checks
-from app.configuration.domain.context import PartContext, SiteContext, build_context
-from app.configuration.domain.design import Design, evaluate_design
+from app.configuration.domain.change import (
+    Change,
+    ChangeRejected,
+    Stored,
+    decide_change,
+    evaluate,
+    option_states,
+)
+from app.configuration.domain.checks import Check
+from app.configuration.domain.context import SiteContext, build_context
+from app.configuration.domain.design import Design
 from app.configuration.domain.energy import energy_status
-from app.configuration.domain.fit import TypeFit, evaluate_type, with_suggestions
+from app.configuration.domain.fit import TypeFit, eligible_parts, evaluate_type, with_suggestions
 from app.configuration.domain.geometry import polygons
 from app.configuration.domain.house import HouseType, make_polygon
-from app.configuration.domain.options import Reason, Selection, resolve
-from app.configuration.domain.outbuildings import carport_spec, terrace_spec
-from app.configuration.domain.placement import Placement, PlacementResult, check_placement
-from app.configuration.domain.rotations import allowed_rotations, is_allowed_rotation
-from app.configuration.domain.surface import BoundaryOptions, requirements, surface_by_rotation
+from app.configuration.domain.options import Selection, resolve
+from app.configuration.domain.placement import Placement, PlacementResult
+from app.configuration.domain.rotations import site_rotations
+from app.configuration.domain.surface import BoundaryOptions, surface_by_rotation
 from app.configuration.models import Configuration
 from app.configuration.outputs import check_out as _check_out
 from app.configuration.schemas import (
@@ -38,9 +45,7 @@ from app.configuration.schemas import (
     ConfigurationPatch,
     EdgeMeasureOut,
     LocalPointModel,
-    OptionChoiceOut,
     OptionsOut,
-    OptionState,
     PlacementAreaOut,
     PlacementEvaluationOut,
     PlacementOut,
@@ -141,20 +146,6 @@ def _placement(row: Configuration | None, ctx: SiteContext) -> Placement | None:
     )
 
 
-def _rotations(house: HouseType, ctx: SiteContext) -> list[float]:
-    found: list[float] = []
-    for part in ctx.parts:
-        for rotation in allowed_rotations(house, part, ctx):
-            if rotation not in found:
-                found.append(rotation)
-    return sorted(found)
-
-
-def _eligible_parts(house: HouseType, ctx: SiteContext) -> list[PartContext]:
-    """Teilflächen, in denen der Typ nicht schon aus anderem Grund als der Lage scheitert."""
-    return [p for p in ctx.parts if not any(c.blocks for c in type_checks(house, p, ctx))]
-
-
 # ---------------------------------------------------------------------------
 # Auswahl und Auswertung (H3)
 # ---------------------------------------------------------------------------
@@ -191,29 +182,6 @@ def _selection_ids(offer: TypeOffer, selection: Selection) -> tuple[uuid.UUID | 
         uuid.UUID(package.version_id) if package else None,
         [{"module_version_id": o.version_id} for o in modules],
     )
-
-
-def _evaluate(
-    house: HouseType,
-    placement: Placement | None,
-    boundary: BoundaryOptions,
-    ctx: SiteContext,
-    offer: TypeOffer,
-    selection: Selection,
-) -> tuple[PlacementResult | None, Design]:
-    result = check_placement(house, placement, ctx, boundary) if placement else None
-    return result, evaluate_design(house, placement, ctx, result, offer, selection)
-
-
-def _key(check: Check) -> tuple[str, str | None, int | None, str | None]:
-    subject = check.params.get("subject")
-    return check.code, check.zone_code, check.edge_seq, str(subject) if subject is not None else None
-
-
-def _new_blockers(
-    design: Design, allowed: set[tuple[str, str | None, int | None, str | None]]
-) -> list[Check]:
-    return [c for c in design.blocking if _key(c) not in allowed]
 
 
 def _design_fields(design: Design, offer: TypeOffer, house: HouseType, dropped: list[str]) -> dict[str, Any]:
@@ -435,7 +403,7 @@ def _configuration(db: Session, project_id: uuid.UUID, *, dropped: list[str] | N
     placement = _placement(row, ctx)
     offer = _offer(db, published, row)
     selection = _selection(offer, row)
-    result, design = _evaluate(house, placement, options, ctx, offer, selection)
+    result, design = evaluate(house, placement, options, ctx, offer, selection)
     evaluation = _evaluation_out(result) if result else None
     out = empty.model_copy(
         update={
@@ -447,7 +415,7 @@ def _configuration(db: Session, project_id: uuid.UUID, *, dropped: list[str] | N
             ),
             "placement": _placement_out(placement) if placement else None,
             "boundary_options": {str(k): True for k in options},
-            "rotations": _rotations(house, ctx),
+            "rotations": site_rotations(house, ctx),
             "fit": _fit_out(fit, published),
             "evaluation": evaluation,
             **_design_fields(design, offer, house, dropped or []),
@@ -488,8 +456,6 @@ def options_catalog(db: Session, project_id: uuid.UUID) -> OptionsOut:
     boundary, placement = _options(row), _placement(row, ctx)
     selection = _selection(offer, row)
     resolved = resolve(offer, selection)
-    known = set(resolved.invalid)
-    allowed = _allowed_blockers(house, placement, boundary, ctx, offer, (placement, boundary, selection))
 
     packages = [
         outputs.package_choice(
@@ -501,37 +467,17 @@ def options_catalog(db: Session, project_id: uuid.UUID) -> OptionsOut:
         for p in offer.packages
         if p.offered
     ]
-    choices: list[OptionChoiceOut] = []
-    for option in offer.options:
-        included = option.slug in resolved.included_slugs
-        if not (option.offered or included):
-            continue
-        area = _option_area(option, house)
-        state: OptionState
-        reasons: list[Reason]
-        blockers: list[Check]
-        if included:
-            state, reasons, blockers = "included", [], []
-        elif option.slug in selection.option_slugs:
-            state, reasons, blockers = "selected", [], []
-        else:
-            trial = replace(selection, option_slugs=(*selection.option_slugs, option.slug))
-            reasons = [r for r in resolve(offer, trial).invalid if r not in known]
-            blockers = []
-            if not reasons:
-                _, design = _evaluate(house, placement, boundary, ctx, offer, trial)
-                blockers = _new_blockers(design, allowed)
-            state = "blocked" if reasons or blockers else "available"
-        choices.append(
-            outputs.option_choice(
-                option,
-                state,
-                offer.vat_rate,
-                area_m2=area,
-                reasons=reasons,
-                checks=blockers,
-            )
+    choices = [
+        outputs.option_choice(
+            state.option,
+            state.state,
+            offer.vat_rate,
+            area_m2=state.area_m2,
+            reasons=state.reasons,
+            checks=state.blockers,
         )
+        for state in option_states(house, placement, boundary, ctx, offer, selection)
+    ]
     return OptionsOut(
         type_slug=published.slug,
         catalog_available=offer.catalog_available,
@@ -539,14 +485,6 @@ def options_catalog(db: Session, project_id: uuid.UUID) -> OptionsOut:
         packages=packages,
         options=choices,
     )
-
-
-def _option_area(option: OptionOffer, house: HouseType) -> float | None:
-    if option.kind == "terrace":
-        return terrace_spec(option, house).area_m2
-    if option.kind == "carport":
-        return carport_spec(option).area_m2
-    return None
 
 
 def _chosen_type(
@@ -571,8 +509,8 @@ def placement_area(db: Session, project_id: uuid.UUID, type_slug: str | None) ->
     ctx = _load(db, project_id).ctx
     house = _house(published)
     options = _options(row) if type_slug is None or _same_type(row, published) else {}
-    parts = _eligible_parts(house, ctx)
-    rotations = _rotations(house, ctx)
+    parts = eligible_parts(house, ctx)
+    rotations = site_rotations(house, ctx)
     # Der Browser rastet an der Fläche ein: mit den Abständen selbst, damit die Lage nicht 1 cm zu nah
     # liegt; passt das Haus nur mit der Toleranz von 0,01 m, gilt diese Fläche
     exact = surface_by_rotation(house, parts, rotations, ctx, options, exact=True)
@@ -604,7 +542,7 @@ def presets(db: Session, project_id: uuid.UUID, type_slug: str | None) -> Preset
     ctx = _load(db, project_id).ctx
     house = _house(published)
     options = _options(row) if _same_type(row, published) else {}
-    computed = preset_rules.all_presets(house, ctx, options, _eligible_parts(house, ctx))
+    computed = preset_rules.all_presets(house, ctx, options, eligible_parts(house, ctx))
     return PresetsOut(
         type_slug=published.slug,
         presets={name: _placement_out(place) if place else None for name, place in computed.items()},
@@ -614,37 +552,6 @@ def presets(db: Session, project_id: uuid.UUID, type_slug: str | None) -> Preset
 # ---------------------------------------------------------------------------
 # Ändern
 # ---------------------------------------------------------------------------
-
-
-def _drop_unoffered(offer: TypeOffer, selection: Selection) -> tuple[Selection, list[str]]:
-    """Beim Typwechsel entfällt, was der neue Typ nicht anbietet (Plan H3 3.1)."""
-    unoffered = {"not_offered", "unknown_option", "unknown_package", "catalog_unavailable"}
-    bad = {r.slug for r in resolve(offer, selection).invalid if r.code in unoffered and r.slug}
-    kept = Selection(
-        None if selection.package_slug in bad else selection.package_slug,
-        tuple(s for s in selection.option_slugs if s not in bad),
-    )
-    return kept, sorted(s for s in bad if s)
-
-
-def _allowed_blockers(
-    house: HouseType,
-    placement: Placement | None,
-    boundary: BoundaryOptions,
-    ctx: SiteContext,
-    offer: TypeOffer,
-    stored: tuple[Placement | None, BoundaryOptions, Selection] | None,
-) -> set[tuple[str, str | None, int | None, str | None]]:
-    """Verstöße, die schon ohne die neue Wahl bestanden: der Stand ohne Optionen (was H2 angenommen hat) und
-    der gespeicherte Stand. Nur **neue** bindende Verstöße lehnt H3 ab (Plan H3 3.9), damit niemand in einem
-    Zustand festhängt, den erst ein Katalog- oder Regelwechsel ungültig gemacht hat."""
-    _, base = _evaluate(house, placement, boundary, ctx, offer, Selection())
-    allowed = {_key(c) for c in base.blocking}
-    if stored is not None:
-        old_placement, old_boundary, old_selection = stored
-        _, old = _evaluate(house, old_placement, old_boundary, ctx, offer, old_selection)
-        allowed |= {_key(c) for c in old.blocking}
-    return allowed
 
 
 def patch_configuration(
@@ -706,50 +613,27 @@ def patch_configuration(
     else:
         house = _house(published)
         offer = _offer(db, published, row)
-        _check_boundary_options(house, ctx, boundary)
-        fit = evaluate_type(house, ctx, boundary)
-        if not fit.allowed and (new_type or "boundary_options" in fields or "type_slug" in fields):
-            raise Problem(422, "type_blocked", reasons=_dump(fit.reasons))
-        if new_type:
-            selection, dropped = _drop_unoffered(offer, selection)
-        elif "package_slug" in fields or "option_slugs" in fields:
-            known = set(resolve(offer, stored_selection).invalid)
-            fresh = [r for r in resolve(offer, selection).invalid if r not in known]
-            if fresh:
-                raise Problem(
-                    422,
-                    "invalid_selection",
-                    reasons=[outputs.reason_out(r).model_dump(mode="json") for r in fresh],
-                )
-        if "placement" in fields:
-            placement = _requested_placement(house, ctx, body)
-        elif placement is None:
-            placement = preset_rules.compute(house, ctx, "street_near", boundary, _eligible_parts(house, ctx))
-        result, design = _evaluate(house, placement, boundary, ctx, offer, selection)
-        if result is not None and result.blocking:
-            raise Problem(
-                422,
-                "placement_violation",
-                checks=_dump(result.checks),
-                edges=[e.model_dump(mode="json") for e in _evaluation_out(result).edges],
+        change = Change(
+            boundary=boundary,
+            selection=selection,
+            placement=_requested(body) if "placement" in fields else placement,
+            place="placement" in fields,
+            new_type=new_type,
+            type_or_boundary="type_slug" in fields or "boundary_options" in fields,
+            selection_changed="package_slug" in fields or "option_slugs" in fields,
+        )
+        try:
+            decision = decide_change(
+                house, ctx, offer, change, Stored(stored_placement, _options(row), stored_selection)
             )
-        if design.blocking:
-            stored = None if new_type else (stored_placement, _options(row), stored_selection)
-            allowed = _allowed_blockers(house, placement, boundary, ctx, offer, stored)
-            fresh_blockers = _new_blockers(design, allowed)
-            if fresh_blockers and new_type:
-                # Optionen, die auf dem neuen Typ nicht aufgehen (Terrasse ohne Garten), fallen weg
-                subjects = {str(c.params["subject"]) for c in fresh_blockers if "subject" in c.params}
-                gone = subjects & set(selection.option_slugs)
-                if gone:
-                    dropped = sorted({*dropped, *gone})
-                    selection = replace(
-                        selection, option_slugs=tuple(s for s in selection.option_slugs if s not in gone)
-                    )
-                    _, design = _evaluate(house, placement, boundary, ctx, offer, selection)
-                    fresh_blockers = _new_blockers(design, allowed)
-            if fresh_blockers:
-                raise Problem(422, "selection_blocked", checks=_dump(fresh_blockers))
+        except ChangeRejected as rejected:
+            raise Problem(422, rejected.code, **_rejection_fields(rejected)) from None
+        placement, boundary, selection, dropped = (
+            decision.placement,
+            decision.boundary,
+            decision.selection,
+            decision.dropped,
+        )
 
     if row is None:
         row = Configuration(project_id=project_id, revision=1, created_by=actor)
@@ -774,28 +658,35 @@ def patch_configuration(
     return get_configuration(db, project_id, dropped=dropped)
 
 
-def _requested_placement(house: HouseType, ctx: SiteContext, body: ConfigurationPatch) -> Placement | None:
+def _requested(body: ConfigurationPatch) -> Placement | None:
+    """Verlangte Lage in lokalen Metern; die Drehung prüft `decide_change`."""
     if body.placement is None:
         return None
-    allowed = _rotations(house, ctx)
-    matched = is_allowed_rotation(body.placement.rotation_deg, allowed)
-    if matched is None:
-        raise Problem(422, "rotation_not_allowed", allowed=allowed)
-    return Placement(origin=(body.placement.origin.e, body.placement.origin.n), rotation_deg=matched)
+    return Placement(
+        origin=(body.placement.origin.e, body.placement.origin.n), rotation_deg=body.placement.rotation_deg
+    )
 
 
-def _check_boundary_options(house: HouseType, ctx: SiteContext, options: BoundaryOptions) -> None:
-    """Der Schalter gilt nur an Kanten, deren Regel Bauen auf der Grenze erlaubt (Plan H2 3.4)."""
-    if not options:
-        return
-    permitted: set[int] = set()
-    for part in ctx.parts:
-        for seq, req in requirements(house, part, ctx, {}).items():
-            if req.on_boundary_allowed:
-                permitted.add(seq)
-    invalid = sorted(seq for seq in options if seq not in permitted)
-    if invalid:
-        raise Problem(422, "boundary_not_allowed", edges=invalid)
+def _rejection_fields(rejected: ChangeRejected) -> dict[str, Any]:
+    """Nutzlast der Ablehnung in der Form der API."""
+    match rejected.code:
+        case "type_blocked":
+            return {"reasons": _dump(rejected.checks)}
+        case "invalid_selection":
+            return {"reasons": [outputs.reason_out(r).model_dump(mode="json") for r in rejected.reasons]}
+        case "placement_violation":
+            assert rejected.result is not None
+            return {
+                "checks": _dump(rejected.result.checks),
+                "edges": [e.model_dump(mode="json") for e in _evaluation_out(rejected.result).edges],
+            }
+        case "selection_blocked":
+            return {"checks": _dump(rejected.checks)}
+        case "boundary_not_allowed":
+            return {"edges": rejected.edges}
+        case "rotation_not_allowed":
+            return {"allowed": rejected.allowed}
+    return {}
 
 
 def _dump(checks: list[Check]) -> list[dict[str, object]]:

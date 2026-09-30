@@ -61,3 +61,13 @@ def is_allowed_rotation(rotation_deg: float, rotations: list[float]) -> float | 
         if min(diff, 360.0 - diff) <= tol.ROTATION_TOLERANCE_DEG:
             return candidate
     return None
+
+
+def site_rotations(house: HouseType, ctx: SiteContext) -> list[float]:
+    """Erlaubte Drehungen über alle Teilflächen des Grundstücks, aufsteigend."""
+    found: list[float] = []
+    for part in ctx.parts:
+        for rotation in allowed_rotations(house, part, ctx):
+            if rotation not in found:
+                found.append(rotation)
+    return sorted(found)

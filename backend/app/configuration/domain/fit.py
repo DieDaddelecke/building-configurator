@@ -99,3 +99,8 @@ def with_suggestions(fits: list[TypeFit]) -> list[TypeFit]:
         chosen.extend(h.slug for h in family)
         result.append(TypeFit(house, fit.allowed, fit.reasons, fit.hints, fit.rotations, suggestions=chosen))
     return result
+
+
+def eligible_parts(house: HouseType, ctx: SiteContext) -> list[PartContext]:
+    """Teilflächen, in denen der Typ nicht schon aus anderem Grund als der Lage scheitert."""
+    return [p for p in ctx.parts if not any(c.blocks for c in type_checks(house, p, ctx))]
