@@ -19,8 +19,8 @@ const tab = ({ isActive }: { isActive: boolean }) =>
 
 /**
  * Verwaltung für Konfigurator und Analyse (docs/PLAN_G2_VOLLSTAENDIGKEIT.md 3.9–3.10): KI-Modell der Auswertung
- * und Referenzlisten. Dieselben Seiten unter `/verwaltung` (eigener Rahmen) und `/analyse/verwaltung` (im Rahmen
- * der Analyse); die Daten gehören keinem Büro.
+ * und Referenzlisten, unter `/analyse/verwaltung` im Rahmen der Analyse; die Daten gehören keinem Büro. Das Büro
+ * verlinkt dorthin, `/verwaltung` leitet weiter (REFACTORING_PLAN S21).
  */
 export function Verwaltung({ darf }: { darf: boolean }) {
   const { t } = useTranslation();

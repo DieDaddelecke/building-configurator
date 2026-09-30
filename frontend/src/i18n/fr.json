@@ -2110,7 +2110,6 @@
     "title": "Administration",
     "intro": "Réglages et listes de référence communs au configurateur et à Emprise Analyse – sans lien avec un bureau.",
     "noAccess": "L’administration est réservée à l’exploitation (rôles ops et rules_admin).",
-    "loginIntro": "Se connecter avec un compte de l’exploitation.",
     "nav": {
       "model": "Modèle d’IA",
       "reference": "Listes de référence"

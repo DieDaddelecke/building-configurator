@@ -160,4 +160,4 @@ Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in [docs/BETRIEB
 
 KI-Modell der Auswertung und Referenzlisten gelten für Konfigurator und Analyse und liegen in der Datenbank `emprise` (seit 29.09.2026, Migration 0021; BETRIEB 16). Ein eigener Stack `emprise-shared`, `.env.shared` und die Einträge `SHARED_*` in `.env` entfallen; die Sicherung ist die von Abschnitt 6.
 
-**Prüfen:** `/verwaltung` und `/analyse/verwaltung` zeigen dasselbe KI-Modell und dieselben Referenzlisten.
+**Prüfen:** `/analyse/verwaltung` zeigt KI-Modell und Referenzlisten; `/verwaltung` leitet dorthin weiter.

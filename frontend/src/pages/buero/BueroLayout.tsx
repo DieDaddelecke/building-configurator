@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
 
 import { staffLoginUrl, useLogout, useSession } from "../../api/session";
 import { Kopf } from "../../components/Kopf";
@@ -91,10 +91,10 @@ export function BueroLayout() {
               </li>
               {darfVerwalten(staff.roles) && (
                 <li>
-                  {/* Gemeinsame Verwaltung beider Produkte, außerhalb des Büros (PLAN_G2_VOLLSTAENDIGKEIT 3.9) */}
-                  <Link to="/verwaltung" className="block px-3 py-2 border-l-2 border-transparent t-mute">
+                  {/* Verwaltung liegt im Bereich Analyse, nicht an ein Büro gebunden (PLAN_G2_VOLLSTAENDIGKEIT 3.9) */}
+                  <a href="/analyse/verwaltung" className="block px-3 py-2 border-l-2 border-transparent t-mute">
                     {t("verwaltung.title")}
-                  </Link>
+                  </a>
                 </li>
               )}
             </ul>

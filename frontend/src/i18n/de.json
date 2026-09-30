@@ -2110,7 +2110,6 @@
     "title": "Verwaltung",
     "intro": "Einstellungen und Referenzlisten für Hauskonfigurator und Emprise Analyse gemeinsam – nicht an ein Büro gebunden.",
     "noAccess": "Die Verwaltung ist dem Betrieb vorbehalten (Rollen ops und rules_admin).",
-    "loginIntro": "Anmelden mit einem Konto des Betriebs.",
     "nav": {
       "model": "KI-Modell",
       "reference": "Referenzlisten"

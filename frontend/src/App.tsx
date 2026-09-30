@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
 
 import { NichtGefunden } from "./components/NichtGefunden";
@@ -20,9 +20,16 @@ import { KonfiguratorSeite } from "./pages/konfigurator/KonfiguratorSeite";
 import { Start } from "./pages/Start";
 import { VorgangSeite } from "./pages/vorgang/VorgangSeite";
 import { ZugangSeite } from "./pages/vorgang/ZugangSeite";
-import { VerwaltungRahmen } from "./verwaltung/VerwaltungRahmen";
 
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
+
+/** Weiter nach `/analyse/verwaltung…`: anderer Router, also mit Neuladen. */
+function ZurVerwaltung() {
+  useEffect(() => {
+    window.location.replace(`/analyse${window.location.pathname}${window.location.search}`);
+  }, []);
+  return null;
+}
 
 export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },
@@ -31,8 +38,8 @@ export const routes: RouteObject[] = [
   { path: "/vorgang", element: <VorgangSeite /> },
   { path: "/zugang", element: <ZugangSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
-  // Gemeinsame Verwaltung beider Produkte, nicht an das Büro gebunden (PLAN_G2_VOLLSTAENDIGKEIT 3.9)
-  { path: "/verwaltung/*", element: <VerwaltungRahmen /> },
+  // Frühere Adresse der Verwaltung; sie liegt nur noch im Bereich Analyse (REFACTORING_PLAN S21)
+  { path: "/verwaltung/*", element: <ZurVerwaltung /> },
   {
     path: "/buero",
     element: <BueroLayout />,
