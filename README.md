@@ -82,7 +82,7 @@ Frontend:
 cd frontend && corepack pnpm run typecheck && corepack pnpm run lint && corepack pnpm run test
 ```
 
-Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann; für G2 zusätzlich `docker compose cp backend/tests api:/tmp/tests` und `docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules`). Unter Windows läuft lokal nur der Kundenpfad (Stolperstellen, Frontend):
+Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann; für G2 zusätzlich `docker compose cp backend/tests api:/tmp/tests` und `docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules`). Wie in der CI ohne Aufrufe an Behördendienste: vorher `docker compose -f compose.yaml -f compose.e2e.yaml up -d`, danach wieder `docker compose up -d` (Stolperstellen, Frontend):
 
 ```bash
 cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e2e
@@ -155,7 +155,7 @@ Gesammelt aus allen Fassungen des Hand-offs; neue dauerhafte Stolperstellen hier
 - Datei-Uploads: `openapi-fetch` mit `bodySerializer: () => formData` und Platzhalter-Rumpf (`frontend/src/api/catalog.ts`); Content-Type nicht setzen.
 - React-Hooks-Lint (Version 7): keine Ref-Zugriffe beim Rendern, keine `setState`-Effekte; `Implantation` baut deshalb mit `key={revision}` neu auf.
 - Telefonbreite: Ein Rasterfeld (`grid`) wächst auf die Mindestbreite seines Inhalts, auch wenn eine Tabelle darin in `overflow-x-auto` steht – Rasterkinder brauchen `min-w-0` (`[&>*]:min-w-0` am Raster). Und `sr-only`-Beschriftungen in einer verschiebbaren Tabelle sind absolut positioniert: Ist der Rahmen nicht `relative`, beschneidet er sie nicht, und die ganze Seite wird breiter (`KantenListe`, 28.09.2026). Prüfen mit `document.documentElement.scrollWidth` gegen `clientWidth`.
-- E2E unter Windows: Chromium von Playwright löst `oidc.localhost` nicht auf; Tests mit Büro-Anmeldung laufen nur in der CI. Lokal nur der Kundenpfad: Flags per `flag-set … --all`, `corepack pnpm exec playwright test -g Kunde`, danach wieder `--role architect`.
+- E2E unter Windows: Früher löste Chromium von Playwright `oidc.localhost` nicht auf; am 30.09.2026 liefen alle 7 Tests lokal, auch die mit Büro-Anmeldung. Die Tests laufen parallel; die Kundentests verlassen sich nicht darauf, dass die ops-Tests vorher die Flags setzen. Deshalb vorher `flag-set … --all` für die sechs Modul-Flags und danach wieder `--role architect` (die ops-Tests lassen `site_selection`, `rules_simulation` und `envelope_simulation` für alle offen).
 
 **Browserprüfung**
 - Geometrie von Nebenbauten und Lage immer am echten, schiefen Grundstück AD 65 ansehen (Konfigurator, Schritt Vorentwurf): Die Rechteck-Tests (20 × 31 m) fanden weder den Carport hinter dem Haus mit Zufahrt durch das Haus noch die Überlappung von Carport und Terrasse (Plan H3 10.1a).

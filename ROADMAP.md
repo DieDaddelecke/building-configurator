@@ -4,20 +4,25 @@
 
 ## 1. Stand
 
-- **Git:** `main` lokal, nicht gepusht; alle Commits seit `6eb1cd2` (CI-Behebung, Refactoring S1–S23, Dokumentation). Push nur auf Anweisung.
+- **Git:** `main` lokal, nicht gepusht: 31 Commits seit `6eb1cd2` (CI-Behebung, Refactoring S1–S26 mit Dokumentation, Schlussprüfung). Push nur auf Anweisung.
 - **Hauskonfigurator:** R0 (ohne Unraid), G1–G3, A, H1–H3 und V fachlich vollständig.
 - **Emprise Analyse:** AN0–AN7 umgesetzt, seit dem 29.09.2026 in derselben Anwendung unter `/analyse` (ADR-02). AN6 auf Organisationen und Mitglieder zurückgebaut (ADR-07); fremde Büros gesperrt bis E-A5.
 - **Refactoring:** eine Anwendung, eine Datenbank, Dateiverzeichnis statt SeaweedFS, zwei Warteschlangen, AN6-Zusätze entfernt, reine Funktionen aus den großen Diensten gelöst, große Dienstmodule geteilt, Dokumentation auf sechs Dateien plus Archiv (ADR-01 bis ADR-10). Lokal 7 Dienste statt 14, auf Unraid 10 Container statt 19.
 - **G2:** Modell Opus 5.5 (RW28, PU11), `g2-prompt-5` mit Nachsuche, etwa 1,46 $ je Kapitel. Im Modellvergleich (PLAN_G2_VOLLSTAENDIGKEIT 7.7) bleibt Opus 5.5 vorn; GPT-6 Sol mit Flex ist die günstige Alternative. „Offen“ in der Messung heißt `named_gap` (`rules/domain/reference.py`): eine Regel „nicht ermittelt“ mit Grund, ein Hinweis statt eines Werts oder eine offene Stelle.
 - **Lokal:** Stack `emprise` auf Migration 0023, ohne OpenRouter-Schlüssel gestartet. Die lokalen Analyse-Daten wurden nicht übernommen; die Referenzliste „PLU Beyenes UC“ (25 Einträge, Entwurf) liegt in `emprise`, das Dokument dazu nicht (4.1).
-- **Tests:** Backend 833, Frontend 241; ruff, Format, mypy, Typprüfung, Lint und Build grün. Die Schlussprüfung des Refactorings (Browser, Playwright) steht in 2.
+- **Tests:** Backend 833, Frontend 241; ruff, Format, mypy, Typprüfung, Lint und Build grün; `openapi.json` und `schema.d.ts` unverändert, `alembic check` ohne Abweichung.
+- **Schlussprüfung des Refactorings (30.09.2026), bestanden:** frischer Start ohne Schlüssel. Playwright 7 von 7 lokal, auch mit Büro-Anmeldung. Browser-Rundgang:
+  - Kundenpfad `/` → `/grundstueck` (AD 65, Regeln, Baurahmen) → `/konfigurator`
+  - `/buero` über den OIDC-Testdienst; `/verwaltung/…` leitet auf `/analyse/verwaltung/…`
+  - `/analyse`: Projekt, GeoJSON-Parzelle, DXF, GeoJSON, Bericht-PDF im Dateiverzeichnis
+  - Mailcode kam in Mailpit an, während ein `long`-Job wartete; Worker nur für `default` wie auf Unraid. `/api/health/jobs` meldet beide Warteschlangen getrennt.
+  - Die Flags stehen wieder auf `architect`.
 - **OpenRouter:** Anzeige zuletzt 4,38 $ von 10 $ (29.09.2026, hinkt nach). Der Schlüssel stand am 28.09. im Chat und ist zu erneuern (4.3).
 
 ## 2. Nächster Schritt
 
-1. Schlussprüfung des Refactorings: voller Backend- und Frontend-Lauf, Browser-Rundgang (`/`, `/grundstueck`, `/buero`, `/analyse` mit Upload, Bericht und DXF, Mailcode bei wartendem langem Job), `corepack pnpm e2e`.
-2. Auf Anweisung pushen und prüfen, dass die CI grün ist.
-3. Danach nach Wahl des Nutzers: Referenzliste Beyenes UC prüfen und neu auswerten (4.1), G2-Befunde aus PLAN_G2 7.7 (4.1) oder Auslieferung auf Unraid (4.5).
+1. Auf Anweisung pushen und prüfen, dass die CI grün ist.
+2. Danach nach Wahl des Nutzers: Referenzliste Beyenes UC prüfen und neu auswerten (4.1), G2-Befunde aus PLAN_G2 7.7 (4.1) oder Auslieferung auf Unraid (4.5).
 
 ## 3. Offene Entscheidungen des Nutzers
 
@@ -96,7 +101,7 @@
 
 - Datenbanken `emprise_analyse`, `emprise_shared`, `emprise_probe` (`DROP DATABASE`, vorher `pg_dump`).
 - Volumes `emprise_storage-data` (SeaweedFS, darin auch der Bucket der Analyse mit dem Beyenes-PDF) und `emprise_minio-data` (MinIO; 29 Dateien, auf die die Datenbank noch verweist, fehlen seit der MinIO-Zeit; Dossiers lassen sich im Büro neu erzeugen).
-- 240 Projekte mit `created_by = 'envelope-check'` vom 16.09.2026 in der lokalen Datenbank.
+- 240 Projekte mit `created_by = 'envelope-check'` vom 16.09.2026 in der lokalen Datenbank; dazu zwei Projekte aus der Schlussprüfung vom 30.09.2026: Analyse-Projekt „Smoke Treillières“ und ein Kundenprojekt AD 65 mit angefordertem Code an `smoke-30-09@example.com`.
 - Test-Stack `emprise-g1`.
 
 ## 5. Befunde des Refactorings, nicht umgesetzt
