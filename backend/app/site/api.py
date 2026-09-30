@@ -36,7 +36,7 @@ from app.platform.auth.tokens import keyed_digest
 from app.platform.db import get_db, utcnow
 from app.platform.jobs import enqueue
 from app.platform.problems import Problem
-from app.site import service
+from app.site import corrections, manual, position, search, service
 from app.site.domain.edges import OverrideKind
 from app.site.domain.manual import ManualEdgeInput
 from app.site.domain.upload import MAX_SELECTED
@@ -152,7 +152,7 @@ def geocode(
             raise Problem(503, "geocoding_unavailable") from None
         raw = [asdict(c) for c in candidates]
         cache.put(key, raw)
-    served = service.communes_in_service_area(db, {item["citycode"] for item in raw})
+    served = search.communes_in_service_area(db, {item["citycode"] for item in raw})
     return [
         AddressOut(
             label=item["label"],
@@ -173,7 +173,7 @@ def geocode(
 )
 def cadastre_service_area(db: Session = Depends(get_db)) -> list[CommuneOut]:
     """Gemeinden mit importiertem Kataster; außerhalb gibt es keine Parzellenwahl (Plan 3.3)."""
-    return service.service_area(db)
+    return search.service_area(db)
 
 
 @router.get("/cadastre/parcels", dependencies=[Depends(public), Feature])
@@ -188,7 +188,7 @@ def cadastre_parcels(
     """Parzellen im Kartenausschnitt als GeoJSON (WGS84), höchstens 4000."""
     rate_limit.check(request, "cadastre_parcels", get_settings().cadastre_limit_per_minute, 60)
     x0, y0, x1, y1 = (float(v) for v in bbox.split(","))
-    return service.parcels_in_bbox(db, (x0, y0, x1, y1))
+    return search.parcels_in_bbox(db, (x0, y0, x1, y1))
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +204,7 @@ def lookup_parcels(
     db: Session = Depends(get_db),
 ) -> LookupOut:
     rate_limit.check(request, "cadastre_parcels", get_settings().cadastre_limit_per_minute, 60)
-    return service.lookup(db, body)
+    return search.lookup(db, body)
 
 
 @router.put("/projects/{project_id}/site", response_model=SiteOut, dependencies=[Feature])
@@ -222,7 +222,7 @@ def put_site(
         edges = [ManualEdgeInput(length_m=e.length_m, angle_deg=e.angle_deg) for e in body.edges]
         assert body.address_label is not None  # von SiteIn erzwungen
         trace = body.trace.model_dump(exclude_none=True) if body.trace is not None else None
-        return service.form_manual_site(db, project_id, edges, body.address_label, actor=actor, trace=trace)
+        return manual.form_manual_site(db, project_id, edges, body.address_label, actor=actor, trace=trace)
     assert body.parcel_idus is not None  # von SiteIn erzwungen
     return service.form_site(db, project_id, body.parcel_idus, actor=actor)
 
@@ -243,7 +243,7 @@ async def scan_site_preview(
         raise Problem(422, "upload_invalid", detail="Die Datei ist leer")
     if len(data) > get_settings().site_upload_max_bytes:
         raise Problem(413, "upload_too_large")
-    return await run_in_threadpool(service.scan_preview, data, page)
+    return await run_in_threadpool(manual.scan_preview, data, page)
 
 
 @router.post("/projects/{project_id}/site/upload", response_model=UploadResultOut, dependencies=[Feature])
@@ -269,7 +269,7 @@ async def upload_site(
         raise Problem(422, "upload_invalid", detail="Die Datei ist leer")
     if len(data) > get_settings().site_upload_max_bytes:
         raise Problem(413, "upload_too_large")
-    return service.form_uploaded_site(
+    return manual.form_uploaded_site(
         db,
         project_id,
         file_name=file.filename or "",
@@ -298,7 +298,7 @@ def put_site_position(
     """Gezeichnetes oder hochgeladenes Grundstück auf der Karte verorten oder die Lage korrigieren (AN5,
     docs/PLAN_AN5_AUSGABE.md 3.2). Nur der Architekt und nur eigene Projekte: Ein Kunde des Konfigurators
     kann seine Zeichnung damit nicht verorten (G27). Danach werden Gelände und Risiken abgefragt."""
-    return service.position_site(db, project_id, body, staff.actor_id)
+    return position.position_site(db, project_id, body, staff.actor_id)
 
 
 @router.patch("/projects/{project_id}/site/edges/{seq}", response_model=SiteOut, dependencies=[Feature])
@@ -315,8 +315,8 @@ def patch_edge_customer(
     kind: OverrideKind | None = None
     if body.kind is not None:
         kind = "street" if body.kind == "street" else "not_street"
-    actor = service.Actor(type="customer", id=f"project:{project_id}", role="customer")
-    return service.correct_edge(db, project_id, seq, kind, actor, _if_match(if_match))
+    actor = corrections.Actor(type="customer", id=f"project:{project_id}", role="customer")
+    return corrections.correct_edge(db, project_id, seq, kind, actor, _if_match(if_match))
 
 
 # ---------------------------------------------------------------------------
@@ -333,7 +333,7 @@ def site_review_queue(
     db: Session = Depends(get_db),
 ) -> list[SiteReviewItem]:
     """Unbestätigte Kundenkorrekturen; mit `scope=all` zusätzlich unsichere Einordnungen und Sonderfälle."""
-    return service.review_queue(db, only_corrections=scope == "corrections")
+    return corrections.review_queue(db, only_corrections=scope == "corrections")
 
 
 @router.get("/admin/projects/{project_id}/site", response_model=SiteOut)
@@ -352,8 +352,8 @@ def patch_edge_architect(
     staff: StaffPrincipal = Architect,
     db: Session = Depends(get_db),
 ) -> SiteOut:
-    actor = service.Actor(type="staff", id=staff.actor_id, role="architect")
-    return service.correct_edge(db, project_id, seq, body.kind, actor, _if_match(if_match))
+    actor = corrections.Actor(type="staff", id=staff.actor_id, role="architect")
+    return corrections.correct_edge(db, project_id, seq, body.kind, actor, _if_match(if_match))
 
 
 @router.post("/admin/projects/{project_id}/site/edges/confirm", response_model=SiteOut)
@@ -363,8 +363,8 @@ def confirm_edges(
     staff: StaffPrincipal = Architect,
     db: Session = Depends(get_db),
 ) -> SiteOut:
-    actor = service.Actor(type="staff", id=staff.actor_id, role="architect")
-    return service.confirm_customer_edges(db, project_id, actor, _if_match(if_match))
+    actor = corrections.Actor(type="staff", id=staff.actor_id, role="architect")
+    return corrections.confirm_customer_edges(db, project_id, actor, _if_match(if_match))
 
 
 @router.get("/admin/cadastre/imports", response_model=list[ImportStatusOut])
@@ -418,4 +418,4 @@ def retry_site_enrichment(
     staff: StaffPrincipal = Depends(require_roles(Role.ops)), db: Session = Depends(get_db)
 ) -> dict[str, int]:
     """Nach einem Ausfall von Höhendienst oder Géorisques: nicht abgefragte Grundstücke erneut anstoßen."""
-    return {"sites": service.retry_enrichment(db, staff.actor_id)}
+    return {"sites": corrections.retry_enrichment(db, staff.actor_id)}
