@@ -267,12 +267,12 @@ Festlegungen, die über ein Modul hinaus wirken. Alle übrigen IDs: Abschnitt 5.
 
 ## 5. Wo die übrigen IDs stehen
 
-Die folgenden Dateien liegen unverändert im Archiv; Verweise im Code (z. B. „Spez. 5.3.1“, „Plan H3 3.8“, „PLAN_AN5 7.4“, „ANNAHMEN PU12“) lassen sich dort nachschlagen.
+Die folgenden Dateien liegen unverändert in `docs/archiv/` ([Übersicht](docs/archiv/README.md)); Verweise im Code (z. B. „Spez. 5.3.1“, „Plan H3 3.8“, „PLAN_AN5 7.4“, „ANNAHMEN PU12“) lassen sich dort nachschlagen.
 
 | Präfix oder Verweis | Datei |
 |---|---|
-| „Spez.“, L1–L8, E1–E12, S1–S17, M… | [BACKEND_SPEZIFIKATION.md](BACKEND_SPEZIFIKATION.md) |
-| „Plan“, D1–D18, X… | [UMSETZUNGSPLAN.md](UMSETZUNGSPLAN.md) |
-| „Plan G3/H1/H2/H3/A/V“, „PLAN_AN…“, „PLAN_G2…“, E-… | `docs/PLAN_<Modul>.md` |
-| A (R0), G (G1), RW (G2), BR (G3), H (H1), AF (A), HP (H2), HK (H3), VU (V), PS (AN0), UP (AN1), PU (AN2), EA (AN3), KR (AN4), VA (G2-Vollständigkeit), AU (AN5), SC (AN7), MA (AN6) | [docs/ANNAHMEN.md](docs/ANNAHMEN.md), je Modul ein Abschnitt |
-| B-…, R-…, REF-…, S1–S26 des Refactorings | `REFACTORING_ANALYSIS.md`, `REFACTORING_RISKS.md`, `REFACTORING_PLAN.md` |
+| „Spez.“, L1–L8, E1–E12, S1–S17, M… | [BACKEND_SPEZIFIKATION.md](docs/archiv/BACKEND_SPEZIFIKATION.md) |
+| „Plan“, D1–D18, X… | [UMSETZUNGSPLAN.md](docs/archiv/UMSETZUNGSPLAN.md) |
+| „Plan G3/H1/H2/H3/A/V“, „PLAN_AN…“, „PLAN_G2…“, E-… | `docs/archiv/PLAN_<Modul>.md` |
+| A (R0), G (G1), RW (G2), BR (G3), H (H1), AF (A), HP (H2), HK (H3), VU (V), PS (AN0), UP (AN1), PU (AN2), EA (AN3), KR (AN4), VA (G2-Vollständigkeit), AU (AN5), SC (AN7), MA (AN6) | [ANNAHMEN.md](docs/archiv/ANNAHMEN.md), je Modul ein Abschnitt |
+| B-…, R-…, REF-…, S1–S26 des Refactorings | `docs/archiv/REFACTORING_*.md` |

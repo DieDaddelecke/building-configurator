@@ -20,7 +20,7 @@ Hauskonfigurator für Bauinteressenten in Frankreich und „Emprise Analyse“ f
 | `infra/local/` | Lokale Datenbankrollen, OIDC-Testdienst |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
 | `tools/` | Textabgleich Frontend → Backend (`sync-check-texts.cjs`) |
-| `docs/` | [BETRIEB.md](docs/BETRIEB.md), [ANNAHMEN.md](docs/ANNAHMEN.md), Modulpläne `PLAN_<Modul>.md` |
+| `docs/archiv/` | Frühere Dokumente, unverändert: Spezifikation, Umsetzungsplan, Modulpläne, ANNAHMEN, Hand-off, Änderungsprotokoll, Mockup ([Übersicht](docs/archiv/README.md)) |
 
 ## Lokal starten
 
@@ -36,7 +36,7 @@ docker compose exec api python -m app.cli staff-add ops@emprise.local ops archit
 
 Der Worker importiert beim ersten Start selbst das Kataster von Treillières (G1) und den Planstand aus dem Géoportail de l’Urbanisme (G2); Internetzugang nötig, von Hand `cadastre-import` bzw. `plu-import`. Ausgewertet werden die Zonenkapitel nur mit Schlüssel von OpenRouter (`EMPRISE_OPENROUTER_API_KEY` in der Shell oder in einer `.env` neben `compose.yaml`; Budget `EMPRISE_RULES_BUDGET_MONTH_USD`, lokal standardmäßig 20 $).
 
-Module intern für Architekten freischalten (Flags je Modul: [BETRIEB.md](docs/BETRIEB.md) Abschnitt 1), vorläufige Rechtstexte für die Anfrage veröffentlichen und erfundene Demo-Daten für den Konfigurator anlegen (Typen `demo_*`, Linien, Optionen, Preise und veröffentlichter Preiskatalog; nie in Produktion):
+Module intern für Architekten freischalten (Flags je Modul: [Betrieb](deploy/unraid/README.md) Abschnitt 10), vorläufige Rechtstexte für die Anfrage veröffentlichen und erfundene Demo-Daten für den Konfigurator anlegen (Typen `demo_*`, Linien, Optionen, Preise und veröffentlichter Preiskatalog; nie in Produktion):
 
 ```bash
 for f in site_selection rules_simulation envelope_simulation inquiry configurator; do docker compose exec api python -m app.cli flag-set $f --role architect; done
@@ -166,4 +166,3 @@ Gesammelt aus allen Fassungen des Hand-offs; neue dauerhafte Stolperstellen hier
 - Modul V: Der Bestätigungscode steht in Mailpit (`curl -s "http://localhost:8025/api/v1/search?query=to:<adresse>"`, dann `/api/v1/message/<id>`); der Zugangslink der Kundenmail endet auf `/zugang#t=<Token>`. Dateien einer Fassung liegen im Dateiverzeichnis: `docker compose exec api python -c "…storage.get_bytes(f['storage_key'])…"` und `docker cp`; PDFs lassen sich mit dem Lesewerkzeug ansehen, DXF mit `ezdxf` (matplotlib fehlt im Image).
 - Hochgeladene Reglements (AN2): Das Browserwerkzeug zeigt PDFs nicht an, es öffnet beim Nutzer einen Speichern-Dialog – nicht dorthin navigieren. Kopfzeilen per `fetch(url, {cache: 'no-store'})` prüfen; die Planunterlagen tragen `Cache-Control: private, max-age=3600`, ohne `no-store` kommt die alte Antwort. Ein Kapitel ohne API-Schlüssel auswerten: `docker cp backend/tests <api-Container>:/tmp/tests`, dann `extract_chapter` mit `FakeExtractor([uh_output()])` wie in `tests/e2e_seed_rules.py` (`-w /app`, `PYTHONPATH=/app:/tmp`, `EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf`); der Scheinlauf zählt 0,16 $ in die Monatskosten dieser Datenbank. Nach `up --force-recreate` eines Web-Containers sind per `docker cp` abgelegte Testdateien weg. Zusatzdokumente (AN3) ebenso: Test-PDF mit `tests.rules_support.text_pdf` im API-Container erzeugen, über den Web-Container hochladen, Lot wählen, dann `extract_chapter` für das Kapitel `DOC` mit einer Antwort wie `lot_output()` in `tests/integration/test_analysis.py` (Sektor `Lot-12`, `force=True`, weil der Worker es ohne Schlüssel schon als `not_configured` abgeschlossen hat).
 - Analyse-Produkt mit anderen Regeln ansehen (z. B. höhenabhängiger Abstand für Gabarit und Schnitt, AN3): seit AN4 in der Oberfläche unter „Regeln und Korrekturen“ korrigieren und danach „Zurücknehmen“; ohne Oberfläche im angemeldeten Browser `fetch('/api/v1/projects/<id>/rule-overrides', {method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': <Cookie emprise_csrf>}, body: …})` mit `zone_code` (eine Zone der aktuellen Regeln), `kind`, `status`, `params`, `note`, optional `source`; danach mit `DELETE …/rule-overrides/<override_id>` wieder entfernen (beides bleibt im Audit-Log). Ohne Schlüssel gibt es sonst nur die Regeln der aufgezeichneten Antwort.
-- Mockup `emprise.html` (`file:///…`): Bedienung und Auslesen per `find` und `javascript_tool`; Typkarten sind keine `<button>`, sondern Elemente mit `role=button`; die Kontaktprüfung meldet Fehler erst beim Klick auf „Vorentwurf zur Prüfung übergeben“.
