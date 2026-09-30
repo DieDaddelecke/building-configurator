@@ -131,10 +131,10 @@ def finish(db: Session, source_id: uuid.UUID) -> dict[str, Any]:
         .tuples()
         .all()
     )
-    empty = sum(1 for text in pages.values() if len(text.strip()) < pdf.EMPTY_PAGE_CHARS)
+    empty = len(pdf.empty_pages(pages))
     source.ocr_finished_at = utcnow()
     result: dict[str, Any]
-    if plan.status == "scan" and documents.is_scan(len(pages), empty):
+    if plan.status == "scan" and pdf.is_scan(pages):
         source.ocr_state, source.ocr_error = "failed", "ocr_no_text"
         plan.status, plan.error = "failed", "ocr_no_text"
         result = {"status": "failed", "error": "ocr_no_text"}

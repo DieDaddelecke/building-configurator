@@ -52,9 +52,6 @@ from app.rules.sources import ChapterValues, ensure_chapter, store_source
 log = get_logger("rules_documents")
 READ_ACTOR = "system:rules_document_read"
 UPLOAD_PREFIX = "rules/uploads"
-NO_TEXT_SHARE = 0.5
-"""Mehr als die Hälfte der Seiten ohne Text: gescanntes Reglement, erst nach der Texterkennung nutzbar (RW03,
-seit AN7 kein Fehler mehr)."""
 FILE_URL = "/api/v1/regulation-files/{id}"
 SUPPLEMENT_CHAPTER = "DOC"
 """Einziges Kapitel eines Zusatzdokuments: das ganze Dokument oder ein Seitenbereich (AN3, 3.7)."""
@@ -427,7 +424,7 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
         actor=READ_ACTOR,
         source_id=source_id,
     )
-    if is_scan(len(reader.pages), len(reader.empty_pages)):
+    if pdf.is_scan(reader.pages):
         source.ocr_state = "offered"
         plan.status, plan.error = "scan", None
         db.commit()
@@ -449,11 +446,6 @@ def read_document(db: Session, plan_id: uuid.UUID, file_name: str) -> dict[str, 
         chapters=chapters,
     )
     return {"status": "active", "pages": len(reader.pages), "chapters": chapters}
-
-
-def is_scan(pages: int, empty_pages: int) -> bool:
-    """Mehr als die Hälfte der Seiten ohne Text: gescanntes Dokument, erst nach der Texterkennung nutzbar."""
-    return pages == 0 or empty_pages > NO_TEXT_SHARE * pages
 
 
 def index_document(db: Session, plan: LandUsePlan, source: SourceFile, pages: dict[int, str]) -> int:

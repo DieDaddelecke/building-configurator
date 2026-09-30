@@ -18,6 +18,9 @@ from pypdf.errors import PdfReadError
 MAX_PDF_BYTES = 100 * 1024 * 1024
 MAX_PAGES = 1500
 EMPTY_PAGE_CHARS = 40
+NO_TEXT_SHARE = 0.5
+"""Mehr als die Hälfte der Seiten ohne Text: gescanntes Reglement, erst nach der Texterkennung nutzbar (RW03,
+seit AN7 kein Fehler mehr, SC01)."""
 
 logging.getLogger("pypdf").setLevel(logging.ERROR)
 
@@ -74,8 +77,18 @@ def read_text(data: bytes) -> PdfText:
                 pages[index] = ""
     except PdfReadError as exc:
         raise PdfProblem("pdf_unreadable") from exc
-    empty = [n for n, text in pages.items() if len(text.strip()) < EMPTY_PAGE_CHARS]
-    return PdfText(pages, empty)
+    return PdfText(pages, empty_pages(pages))
+
+
+def empty_pages(pages: dict[int, str]) -> list[int]:
+    """Seiten ohne verwertbaren Text: ohne Textschicht oder mit weniger als `EMPTY_PAGE_CHARS` Zeichen."""
+    return [n for n, text in pages.items() if len(text.strip()) < EMPTY_PAGE_CHARS]
+
+
+def is_scan(pages: dict[int, str]) -> bool:
+    """Gescanntes Dokument: keine Seiten oder mehr als die Hälfte ohne Text. Gilt beim Lesen und nach der
+    Texterkennung (dann mit den erkannten Texten, AN7)."""
+    return not pages or len(empty_pages(pages)) > NO_TEXT_SHARE * len(pages)
 
 
 def extract_pages(data: bytes, pages: list[int]) -> bytes:
