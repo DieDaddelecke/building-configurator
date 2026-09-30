@@ -136,6 +136,9 @@ class _Calls:
     settings: Settings
     chapter_id: uuid.UUID
     digest: str
+    text_digest: str
+    """Kennung der Aufrufe, die im PDF-Modus als Text gingen (`input_hash(as_text=True)`); im Textmodus
+    gleich `digest`."""
     source_sha256: str
     extractor_factory: Callable[[], RuleExtractor]
     final_attempt: bool
@@ -144,7 +147,8 @@ class _Calls:
     chapter_code: str
     chapter_pages: list[int]
     general_pages: list[int]
-    reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any]]]
+    reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any], bool]]
+    """Gespeicherte Antworten je Aufruf: Lauf, Antwort und ob die Eingabe als Text ging."""
     split: set[tuple[int, str]]
     page_texts: dict[int, str] = field(default_factory=dict)
     """Textschicht je Seite (`source_page`); dieselbe, gegen die die Zitate geprüft werden."""
@@ -159,6 +163,8 @@ class _Calls:
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
+    text_used: bool = False
+    """Mindestens ein Aufruf ging als Text: Das Kapitel trägt dann `text_digest`."""
     in_flight: tuple[int, str] | None = None
     _data: bytes | None = None
     _pdfs: tuple[bytes, bytes | None] | None = None
@@ -215,13 +221,13 @@ class _Calls:
             self._set_chapter("pending")
             raise RetryableExtractionError("time_budget")
 
-    def _record(self, run_no: int, part: str, **values: Any) -> uuid.UUID:
+    def _record(self, run_no: int, part: str, *, as_text: bool = False, **values: Any) -> uuid.UUID:
         with self.sessions() as session:
             run = RuleExtractionRun(
                 chapter_id=self.chapter_id,
                 run_no=run_no,
                 part=part[:200],
-                input_hash=self.digest,
+                input_hash=self.text_digest if as_text else self.digest,
                 prompt_version=PROMPT_VERSION,
                 created_by=ACTOR,
                 **values,
@@ -249,7 +255,8 @@ class _Calls:
         """Antwort eines Teils; `None`, wenn der Teil für eine Antwort zu groß ist (`max_tokens`)."""
         key = (run_no, part)
         if key in self.reusable:
-            run_id, output = self.reusable[key]
+            run_id, output, as_text = self.reusable[key]
+            self.text_used |= as_text
             self.run_ids.append(run_id)
             return output
         if key in self.split:
@@ -260,7 +267,8 @@ class _Calls:
         extra_text: str | None = None
         extra_pdf: bytes | None = None
         extra = extra_pages or []
-        if self.settings.rules_input == "text":
+        as_text = self.settings.rules_input == "text"
+        if as_text:
             chapter_text, general_text = self._texts()
             chapter_pdf, general_pdf = b"", None
             extra_text = self._pages_text(extra) if extra else None
@@ -273,6 +281,7 @@ class _Calls:
                 chapter_text, general_text = self._texts()
                 chapter_pdf, general_pdf, extra_pdf = b"", None, None
                 extra_text = self._pages_text(extra) if extra else None
+                as_text = True
         request = ExtractionRequest(
             chapter_code=self.chapter_code,
             sectors=sectors,
@@ -298,6 +307,7 @@ class _Calls:
             self._record(
                 run_no,
                 part,
+                as_text=as_text,
                 model=self.settings.rules_model,
                 status="failed",
                 error=exc.reason[:300],
@@ -314,9 +324,11 @@ class _Calls:
         self.in_flight = None
         self.cost += response.cost_usd
         self.model = response.model
+        self.text_used |= as_text
         run_id = self._record(
             run_no,
             part,
+            as_text=as_text,
             model=response.model,
             status="succeeded",
             stop_reason=response.stop_reason,
@@ -327,7 +339,7 @@ class _Calls:
             request_id=response.request_id,
             output=response.output,
         )
-        self.reusable[key] = (run_id, response.output)
+        self.reusable[key] = (run_id, response.output, as_text)
         self.run_ids.append(run_id)
         return response.output
 
@@ -607,10 +619,12 @@ def extract_chapter(
         kind = document_kind(plan.du_type)
         stamp = ocr_stamp(source)
         digest = input_hash(settings, source.sha256, chapter, kind, stamp)
+        # Ging ein Auszug als Text, trägt das Kapitel diese Kennung; sie folgt der Texterkennung (SC06)
+        text_digest = input_hash(settings, source.sha256, chapter, kind, stamp, as_text=True)
         if (
             not force
             and chapter.status == "succeeded"
-            and chapter.input_hash == digest
+            and chapter.input_hash in (digest, text_digest)
             and chapter.engine_version == ENGINE_VERSION
         ):
             return ChapterOutcome("skipped", "unchanged")
@@ -655,16 +669,19 @@ def extract_chapter(
             excluded = set(chapter_pages) | set(general_pages)
             excluded |= {page for first, last in zones for page in range(first, last + 1)}
             extra_candidates = sorted(set(document_texts) - excluded)
-        reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any]]] = {}
+        reusable: dict[tuple[int, str], tuple[uuid.UUID, dict[str, Any], bool]] = {}
         split: set[tuple[int, str]] = set()
         if not force:
             for run in session.execute(
                 select(RuleExtractionRun)
-                .where(RuleExtractionRun.chapter_id == chapter.id, RuleExtractionRun.input_hash == digest)
+                .where(
+                    RuleExtractionRun.chapter_id == chapter.id,
+                    RuleExtractionRun.input_hash.in_((digest, text_digest)),
+                )
                 .order_by(RuleExtractionRun.created_at)
             ).scalars():
                 if run.status == "succeeded" and run.output is not None:
-                    reusable[(run.run_no, run.part)] = (run.id, run.output)
+                    reusable[(run.run_no, run.part)] = (run.id, run.output, run.input_hash == text_digest)
                 elif run.error == "max_tokens":
                     split.add((run.run_no, run.part))
         chapter.status, chapter.error, chapter.updated_at = "extracting", None, utcnow()
@@ -675,6 +692,7 @@ def extract_chapter(
             settings=settings,
             chapter_id=chapter_id,
             digest=digest,
+            text_digest=text_digest,
             source_sha256=source.sha256,
             extractor_factory=extractor_factory,
             final_attempt=final_attempt,
@@ -759,6 +777,7 @@ def _evaluate(
         current_digest = input_hash(
             calls.settings, calls.source_sha256, chapter, calls.document_kind, calls.ocr
         )
+        stored_digest = calls.text_digest if calls.text_used else calls.digest
         by_sector: dict[str, list[AssessedRule]] = defaultdict(list)
         for assessed_rule in final:
             by_sector[assessed_rule.sector].append(assessed_rule)
@@ -775,14 +794,14 @@ def _evaluate(
                 counts | {"dropped": dropped} | outcome.counts(),
                 file_id,
                 calls.run_ids,
-                calls.digest,
+                stored_digest,
                 calls.model,
                 outcome,
             )
         changed_meanwhile = current_digest != calls.digest
         chapter.status, chapter.input_hash, chapter.engine_version, chapter.error, chapter.updated_at = (
             "pending" if changed_meanwhile else "succeeded",
-            calls.digest,
+            stored_digest,
             ENGINE_VERSION,
             None,
             utcnow(),

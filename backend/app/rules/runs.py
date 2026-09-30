@@ -28,11 +28,14 @@ def input_hash(
     chapter: RegulationChapter,
     kind: DocumentKind = "plu",
     ocr: str | None = None,
+    *,
+    as_text: bool = False,
 ) -> str:
     """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung. Der
     Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3). `ocr` (`ocr_stamp`) zählt nur im
     Textmodus: Dort ändert die Texterkennung die Eingabe, im PDF-Modus sieht das Modell dieselben Seitenbilder
-    (AN7, PLAN_AN7_SCAN 3.4)."""
+    (AN7, PLAN_AN7_SCAN 3.4). `as_text`: Im PDF-Modus ging ein Auszug über der Grenze der Anbieter als Text
+    (SC06); dann zählt die Texterkennung wie im Textmodus, unter eigener Kennung (REFACTORING_PLAN S18)."""
     payload = {
         "source": source_sha256,
         "chapter": [chapter.code, chapter.first_page, chapter.last_page],
@@ -44,9 +47,10 @@ def input_hash(
         "gap_search": [settings.rules_gap_search, settings.rules_gap_extra_pages_max],
         "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
     }
-    if settings.rules_input == "text":
+    text_input = "text" if settings.rules_input == "text" else "pdf_as_text" if as_text else None
+    if text_input:
         # Nur dann: Der Hash der PDF-Auswertungen bleibt, gespeicherte Teilantworten bleiben verwendbar (PU12)
-        payload["input"] = ["text", hashlib.sha256(TEXT_INPUT_NOTE.encode()).hexdigest()[:16]]
+        payload["input"] = [text_input, hashlib.sha256(TEXT_INPUT_NOTE.encode()).hexdigest()[:16]]
         if ocr:
             payload["ocr"] = ocr
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()

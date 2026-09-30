@@ -161,9 +161,11 @@ def enqueue_extraction(
 ) -> None:
     import app.rules.jobs  # noqa: F401  Jobart anmelden (lokal, sonst Importzyklus)
 
-    # Schlüssel über die Eingabe: geänderte Seiten oder Sektoren ergeben einen neuen Job, gleiche keinen
+    # Schlüssel über die Eingabe: geänderte Seiten oder Sektoren ergeben einen neuen Job, gleiche keinen.
+    # Im PDF-Modus ändert die Texterkennung nur Auszüge, die als Text gingen (SC06); ob das so war, weiß erst
+    # der Lauf. Ein neuer Stand der Erkennung ergibt daher einen neuen Job, der sonst `unchanged` endet (S18)
     stamp = ocr_stamp(session.get(SourceFile, chapter.source_file_id)) if chapter.source_file_id else None
-    digest = input_hash(settings, source_sha256, chapter, kind, stamp)
+    digest = input_hash(settings, source_sha256, chapter, kind, stamp, as_text=stamp is not None)
     enqueue(
         session,
         "rules_extract",

@@ -319,6 +319,41 @@ def test_single_scanned_pages_are_read_on_request(client: Any, upload_project: s
     assert refused.status_code == 409 and refused.json()["code"] == "ocr_not_needed"
 
 
+@pytest.mark.parametrize("as_text", [False, True])
+def test_later_ocr_counts_only_where_text_went_to_the_model(
+    client: Any,
+    upload_project: str,
+    db_session: Any,
+    settings: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    as_text: bool,
+) -> None:
+    """SC06: Im PDF-Modus sieht das Modell die Scan-Seiten als Bild, eine spätere Texterkennung ändert die
+    Eingabe nicht. Ging ein Auszug über der Grenze als Text, hat sie ihn geändert: Dann gilt die alte
+    Antwort nicht mehr (REFACTORING_PLAN S18)."""
+    if as_text:
+        monkeypatch.setattr(extract, "PDF_REQUEST_MAX_BYTES", 0)
+    pdf, _pages = regulation_fixture()
+    response = upload_regulation(client, upload_project, with_scanned_pages(pdf, [10, 11]))
+    document_id = response.json()["document"]["id"]
+    assert read_document(document_id)["status"] == "active"
+    choose(client, upload_project, document_id, zone_code="Uh", chapter_code="Uh")
+    chapter_id = upload_chapter(db_session)
+    first = FakeExtractor([uh_output()])
+    assert extract.extract_chapter(sessions, settings, chapter_id, first.factory()).status == "succeeded"
+    assert first.requests and all((r.chapter_pdf == b"") == as_text for r in first.requests)
+
+    assert request_ocr(client, upload_project, document_id).status_code == 202
+    run_ocr_jobs(db_session)
+    second = FakeExtractor([uh_output()])
+    outcome = extract.extract_chapter(sessions, settings, chapter_id, second.factory())
+    if as_text:
+        assert outcome.status == "succeeded" and len(second.requests) == len(first.requests)
+        assert second.requests[0].chapter_text != first.requests[0].chapter_text
+    else:
+        assert (outcome.status, outcome.detail, second.requests) == ("skipped", "unchanged", [])
+
+
 def test_scanned_chapter_gives_the_same_rules_as_the_text_layer(
     client: Any, upload_project: str, db_session: Any, settings: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
