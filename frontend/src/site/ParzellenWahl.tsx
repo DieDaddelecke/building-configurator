@@ -17,11 +17,20 @@ import {
   type LookupOut,
 } from "../api/site";
 import type { Basemap, KartenFokus } from "../components/karte/Katasterkarte";
-import { firstPosition } from "./geo";
+import { firstPosition, unionBbox } from "./geo";
 import { useDebounced } from "./useDebounced";
 
 const Katasterkarte = lazy(() => import("../components/karte/Katasterkarte"));
 const MAX_PARCELS = 10;
+
+function KarteLaedt() {
+  const { t } = useTranslation();
+  return (
+    <div className="karte flex items-center justify-center" style={{ height: "min(70vh, 34rem)" }}>
+      <span className="eyebrow">{t("loading")}</span>
+    </div>
+  );
+}
 
 function kurz(idu: string): string {
   return `${idu.slice(8, 10).replace(/^0/, "")} ${Number(idu.slice(10))}`;
@@ -49,6 +58,8 @@ export function ParzellenWahl({ ensureProject, initial, initialFocus = null, onF
   const [basemap, setBasemap] = useState<Basemap>("plan");
   const [reference, setReference] = useState({ section: "", number: "" });
   const [lookupError, setLookupError] = useState<string | null>(null);
+  /** Gemeinde der Parzellennummer, von Hand gewählt; sonst die der Adresse oder die erste des Einzugsgebiets. */
+  const [chosenCommune, setChosenCommune] = useState<string | null>(null);
 
   const serviceArea = useServiceArea(true);
   const suggestions = useGeocode(address ? "" : deferred);
@@ -77,13 +88,14 @@ export function ParzellenWahl({ ensureProject, initial, initialFocus = null, onF
 
   const chooseAddress = (candidate: AddressOut) => {
     setAddress(candidate);
+    setChosenCommune(null);
     setQuery(candidate.label);
     setFocus({ lon: candidate.lon, lat: candidate.lat, key: `${candidate.lon},${candidate.lat}` });
     void runLookup({ lon: candidate.lon, lat: candidate.lat });
   };
 
   const outside = (address && !address.in_service_area) || (lookup && !lookup.in_service_area);
-  const commune = address?.in_service_area ? address.citycode : firstCommune?.insee;
+  const commune = chosenCommune ?? (address?.in_service_area ? address.citycode : firstCommune?.insee);
 
   return (
     <div className="flex flex-col gap-8">
@@ -142,9 +154,22 @@ export function ParzellenWahl({ ensureProject, initial, initialFocus = null, onF
                 }
               }}
             >
-              <p className="m-0 t-mute">
-                {t("site.reference.commune", { commune: communes.find((c) => c.insee === commune)?.name ?? commune ?? "–" })}
-              </p>
+              {communes.length > 1 ? (
+                <label className="flex flex-col gap-1">
+                  <span>{t("site.reference.communeLabel")}</span>
+                  <select className="field" value={commune ?? ""} onChange={(e) => setChosenCommune(e.target.value)}>
+                    {communes.map((c) => (
+                      <option key={c.insee} value={c.insee}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <p className="m-0 t-mute">
+                  {t("site.reference.commune", { commune: communes.find((c) => c.insee === commune)?.name ?? commune ?? "–" })}
+                </p>
+              )}
               <div className="flex gap-2">
                 <label className="flex-1 flex flex-col gap-1">
                   <span>{t("site.reference.section")}</span>
@@ -201,16 +226,21 @@ export function ParzellenWahl({ ensureProject, initial, initialFocus = null, onF
               </button>
             ))}
           </div>
-          <Suspense fallback={<div className="karte flex items-center justify-center" style={{ height: "min(70vh, 34rem)" }}><span className="eyebrow">{t("loading")}</span></div>}>
-            <Katasterkarte
-              selected={selected}
-              candidates={lookup?.candidates.map((c) => c.idu) ?? []}
-              onToggle={toggle}
-              focus={focus}
-              initialBounds={firstCommune ? (firstCommune.bbox as [number, number, number, number]) : null}
-              basemap={basemap}
-            />
-          </Suspense>
+          {/* Die Karte übernimmt den Ausschnitt nur beim Anlegen, daher erst mit den Gemeinden */}
+          {serviceArea.isPending ? (
+            <KarteLaedt />
+          ) : (
+            <Suspense fallback={<KarteLaedt />}>
+              <Katasterkarte
+                selected={selected}
+                candidates={lookup?.candidates.map((c) => c.idu) ?? []}
+                onToggle={toggle}
+                focus={focus}
+                initialBounds={unionBbox(communes.map((c) => c.bbox))}
+                basemap={basemap}
+              />
+            </Suspense>
+          )}
         </div>
       </div>
 

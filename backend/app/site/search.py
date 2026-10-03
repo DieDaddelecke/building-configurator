@@ -24,11 +24,14 @@ MAX_BBOX_FEATURES = 4000
 
 
 def service_area(db: Session) -> list[CommuneOut]:
+    # Nur das Rechteck umrechnen, nicht den ganzen Umriss: bei 1 286 Gemeinden 0,04 statt 1,3 s. Das Ergebnis
+    # umschließt die Gemeinde, ist aber bis rund 400 m größer – genug für Kartenausschnitte.
     rows = db.execute(
         text(
             "SELECT insee, name, release, imported_at, ST_XMin(b) AS x0, ST_YMin(b) AS y0, "
             "ST_XMax(b) AS x1, ST_YMax(b) AS y1 "
-            "FROM (SELECT *, Box2D(ST_Transform(geometry, 4326)) AS b FROM ref_commune) AS c ORDER BY name"
+            "FROM (SELECT insee, name, release, imported_at, "
+            "Box2D(ST_Transform(ST_Envelope(geometry), 4326)) AS b FROM ref_commune) AS c ORDER BY name"
         )
     ).all()
     return [

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { centerOf, compass, firstPosition, midpoint, siteBounds } from "./geo";
+import { centerOf, compass, firstPosition, midpoint, siteBounds, unionBbox } from "./geo";
 
 describe("Himmelsrichtung", () => {
   it("ordnet 45°-Sektoren um die Hauptrichtungen zu", () => {
@@ -32,5 +32,17 @@ describe("Kartenausschnitt", () => {
     expect(centerOf({ type: "MultiPolygon", coordinates: [[ring]] })).toEqual([1, 2]);
     expect(firstPosition({ type: "Polygon", coordinates: [ring] })).toEqual([0, 0]);
     expect(centerOf(null)).toBeNull();
+  });
+});
+
+describe("Gemeinsame Ausdehnung", () => {
+  it("umfasst alle Gemeinden und ist ohne Gemeinde leer", () => {
+    expect(unionBbox([])).toBeNull();
+    expect(
+      unionBbox([
+        [-1.7, 47.3, -1.6, 47.4],
+        [2.29, 48.84, 2.33, 48.86],
+      ]),
+    ).toEqual([-1.7, 47.3, 2.33, 48.86]);
   });
 });

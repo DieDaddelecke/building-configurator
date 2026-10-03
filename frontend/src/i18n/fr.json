@@ -713,6 +713,7 @@
     "reference": {
       "toggle": "Saisir la référence cadastrale",
       "commune": "Commune : {{commune}}",
+      "communeLabel": "Commune",
       "section": "Section",
       "number": "Numéro",
       "submit": "Rechercher la parcelle"

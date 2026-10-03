@@ -713,6 +713,7 @@
     "reference": {
       "toggle": "Parzellennummer eingeben",
       "commune": "Gemeinde: {{commune}}",
+      "communeLabel": "Gemeinde",
       "section": "Sektion",
       "number": "Nummer",
       "submit": "Parzelle suchen"

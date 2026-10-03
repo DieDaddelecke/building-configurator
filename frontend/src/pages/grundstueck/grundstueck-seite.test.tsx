@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { act } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +11,9 @@ const state = vi.hoisted(() => ({
   flags: {} as Record<string, boolean>,
   site: null as unknown,
   queue: [] as unknown[],
+  communes: [] as unknown[],
+  areaPending: false,
+  lookup: vi.fn(),
   session: { staff: null as unknown, project_id: "00000000-0000-4000-8000-000000000065" },
 }));
 
@@ -28,9 +31,10 @@ vi.mock("../../api/site", async (importOriginal) => {
     ...original,
     useFlags: () => ({ isPending: false, isError: false, data: state.flags }),
     useSite: () => ({ isPending: false, isError: false, data: state.site }),
-    useEnsureProject: () => mutation,
+    useEnsureProject: () => ({ ...mutation, mutateAsync: () => Promise.resolve("p-1") }),
     useCorrectEdgeCustomer: () => mutation,
-    useServiceArea: () => ({ data: [] }),
+    useServiceArea: () => ({ isPending: state.areaPending, data: state.areaPending ? undefined : state.communes }),
+    lookupParcels: (...args: unknown[]) => state.lookup(...args),
     useGeocode: () => ({ data: undefined, isError: false }),
     useFormSite: () => mutation,
     useReviewQueue: () => ({ isPending: false, isError: false, data: state.queue }),
@@ -55,6 +59,9 @@ describe("Grundstücksseite", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("[]", { headers: { "content-type": "application/json" } }));
     state.flags = {};
     state.site = null;
+    state.communes = [];
+    state.areaPending = false;
+    state.lookup.mockReset();
     await act(() => i18n.changeLanguage("de"));
   });
 
@@ -72,12 +79,36 @@ describe("Grundstücksseite", () => {
     expect(screen.getByRole("button", { name: "Grundstück übernehmen" })).toBeDisabled();
   });
 
+  it("legt die Karte erst an, wenn die Gemeinden geladen sind", () => {
+    state.flags = { site_selection: true };
+    state.areaPending = true;
+    renderAt("/grundstueck");
+    expect(screen.queryByTestId("karte")).not.toBeInTheDocument();
+  });
+
   it("zeigt ein gebildetes Grundstück zur Prüfung", () => {
     state.flags = { site_selection: true };
     state.site = fixture;
     renderAt("/grundstueck");
     expect(screen.getByRole("heading", { name: "Ihr Grundstück" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Andere Parzellen wählen" })).toBeInTheDocument();
+  });
+
+  it("lässt bei mehreren Gemeinden die Gemeinde der Parzellennummer wählen", async () => {
+    state.flags = { site_selection: true };
+    state.communes = [
+      { insee: "75107", name: "PARIS 07", bbox: [2.29, 48.84, 2.33, 48.86], release: "2026-06-01", imported_at: null },
+      { insee: "44209", name: "TREILLIERES", bbox: [-1.7, 47.3, -1.6, 47.4], release: "2026-06-01", imported_at: null },
+    ];
+    state.lookup.mockResolvedValue({ in_service_area: true, contained_idu: null, candidates: [] });
+    renderAt("/grundstueck");
+    const gemeinde = screen.getByRole("combobox", { name: "Gemeinde" });
+    expect(gemeinde).toHaveValue("75107");
+    fireEvent.change(gemeinde, { target: { value: "44209" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Sektion" }), { target: { value: "ad" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Nummer" }), { target: { value: "65" } });
+    await act(() => screen.getByRole("button", { name: "Parzelle suchen" }).click());
+    expect(state.lookup).toHaveBeenCalledWith("p-1", { commune_insee: "44209", section: "AD", number: "65" });
   });
 
   it("bietet den Weg zum freien Zeichnen an und wechselt dorthin (Plan 3.3, Weg E)", async () => {

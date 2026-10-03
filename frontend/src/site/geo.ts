@@ -81,3 +81,14 @@ export function centerOf(geometry: unknown): [number, number] | null {
   const lats = points.map((p) => p[1]);
   return [(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2];
 }
+
+/** Gemeinsame Ausdehnung mehrerer Rechtecke `[west, süd, ost, nord]`, z. B. aller Gemeinden des Einzugsgebiets. */
+export function unionBbox(boxes: readonly (readonly number[])[]): [number, number, number, number] | null {
+  if (boxes.length === 0) return null;
+  return [
+    Math.min(...boxes.map((b) => b[0]!)),
+    Math.min(...boxes.map((b) => b[1]!)),
+    Math.max(...boxes.map((b) => b[2]!)),
+    Math.max(...boxes.map((b) => b[3]!)),
+  ];
+}
