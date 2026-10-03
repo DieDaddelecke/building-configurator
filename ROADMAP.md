@@ -1,13 +1,17 @@
 # Roadmap
 
-> **Stand:** 30.09.2026, nach dem Refactoring „Komplexität reduzieren“ (29./30.09.2026). Diese Datei ersetzt HANDOFF.md: Stand, offene Entscheidungen, offene Arbeitspunkte, nächster Schritt. `/handoff` schreibt sie am Ende jeder Session fort. Dauerhaftes steht nicht hier, sondern in [DECISIONS.md](DECISIONS.md) (Entscheidungen), [README.md](README.md) (Stolperstellen) und [deploy/unraid/README.md](deploy/unraid/README.md) (Betrieb).
+> **Stand:** 30.09.2026, nach dem Refactoring „Komplexität reduzieren“ (29./30.09.2026); letzte Session: Arbeitsweise auf die neue Doku umgestellt, Schlussprüfung, Push. Diese Datei ersetzt HANDOFF.md: Stand, offene Entscheidungen, offene Arbeitspunkte, nächster Schritt. `/handoff` schreibt sie am Ende jeder Session fort. Dauerhaftes steht nicht hier, sondern in [DECISIONS.md](DECISIONS.md) (Entscheidungen), [README.md](README.md) (Stolperstellen) und [deploy/unraid/README.md](deploy/unraid/README.md) (Betrieb).
 
 ## 1. Stand
 
-- **Git:** `main` lokal, nicht gepusht: 31 Commits seit `6eb1cd2` (CI-Behebung, Refactoring S1–S26 mit Dokumentation, Schlussprüfung). Push nur auf Anweisung.
+- **Git:** `main` am 30.09.2026 gepusht bis `b37fa20`: 31 Commits seit `6eb1cd2` (CI-Behebung, Refactoring S1–S26 mit Dokumentation, Schlussprüfung). CI grün (Lauf 36679249953: security, backend, frontend, e2e); die beiden vorigen Läufe auf `main` waren rot, `dd62960` hat das behoben.
 - **Hauskonfigurator:** R0 (ohne Unraid), G1–G3, A, H1–H3 und V fachlich vollständig.
 - **Emprise Analyse:** AN0–AN7 umgesetzt, seit dem 29.09.2026 in derselben Anwendung unter `/analyse` (ADR-02). AN6 auf Organisationen und Mitglieder zurückgebaut (ADR-07); fremde Büros gesperrt bis E-A5.
-- **Refactoring:** eine Anwendung, eine Datenbank, Dateiverzeichnis statt SeaweedFS, zwei Warteschlangen, AN6-Zusätze entfernt, reine Funktionen aus den großen Diensten gelöst, große Dienstmodule geteilt, Dokumentation auf sechs Dateien plus Archiv (ADR-01 bis ADR-10). Lokal 7 Dienste statt 14, auf Unraid 10 Container statt 19.
+- **Refactoring:** eine Anwendung, eine Datenbank, Dateiverzeichnis statt SeaweedFS, zwei Warteschlangen, AN6-Zusätze entfernt, reine Funktionen aus den großen Diensten gelöst, große Dienstmodule geteilt, Dokumentation auf sechs Dateien plus Archiv (ADR-01 bis ADR-10). Kennzahlen vorher → nachher:
+  - Dienste lokal 14 → 7, Container auf Unraid 19 → 10, PostgreSQL-Server auf Unraid 4 → 2
+  - Compose-Dateien 7 → 4, `EMPRISE_`-Variablen in Compose und Beispielen 44 → 33, Laufzeit-Abhängigkeiten 25 → 24 (ohne `boto3`)
+  - Alembic-Stränge 2 → 1, Frontend-Einstiege 2 → 1, Markdown außerhalb des Archivs 33 → 10
+  - Zeilen: `backend/app` 38 155 → 37 424, `rules/service.py` 1450 → 715, `site/service.py` 1438 → 554
 - **G2:** Modell Opus 5.5 (RW28, PU11), `g2-prompt-5` mit Nachsuche, etwa 1,46 $ je Kapitel. Im Modellvergleich (PLAN_G2_VOLLSTAENDIGKEIT 7.7) bleibt Opus 5.5 vorn; GPT-6 Sol mit Flex ist die günstige Alternative. „Offen“ in der Messung heißt `named_gap` (`rules/domain/reference.py`): eine Regel „nicht ermittelt“ mit Grund, ein Hinweis statt eines Werts oder eine offene Stelle.
 - **Lokal:** Stack `emprise` auf Migration 0023, ohne OpenRouter-Schlüssel gestartet. Die lokalen Analyse-Daten wurden nicht übernommen; die Referenzliste „PLU Beyenes UC“ (25 Einträge, Entwurf) liegt in `emprise`, das Dokument dazu nicht (4.1).
 - **Tests:** Backend 833, Frontend 241; ruff, Format, mypy, Typprüfung, Lint und Build grün; `openapi.json` und `schema.d.ts` unverändert, `alembic check` ohne Abweichung.
@@ -21,15 +25,17 @@
 
 ## 2. Nächster Schritt
 
-1. Auf Anweisung pushen und prüfen, dass die CI grün ist.
-2. Danach nach Wahl des Nutzers: Referenzliste Beyenes UC prüfen und neu auswerten (4.1), G2-Befunde aus PLAN_G2 7.7 (4.1) oder Auslieferung auf Unraid (4.5).
+Das Refactoring ist abgeschlossen, gepusht und in der CI grün. Nach Wahl des Nutzers:
+
+1. Aufräumen freigeben (3, 4.7), vorher das Beyenes-PDF sichern.
+2. Referenzliste Beyenes UC prüfen und neu auswerten (4.1), G2-Befunde aus PLAN_G2 7.7 (4.1).
+3. Auslieferung auf Unraid (4.5).
 
 ## 3. Offene Entscheidungen des Nutzers
 
 | Priorität | Nr. | Frage | Wo |
 |---|---|---|---|
-| 1 | – | **Push** der lokalen Commits | 1 |
-| 1 | – | **Alte Datenbanken und Volumes löschen?** `emprise_analyse`, `emprise_shared`, `emprise_probe`, Volumes `emprise_storage-data` (SeaweedFS) und `emprise_minio-data`; Empfehlung: nach der Schlussprüfung, `pg_dump` vorher | 4.7 |
+| 1 | – | **Alte Datenbanken und Volumes löschen?** `emprise_analyse`, `emprise_shared`, `emprise_probe`, Volumes `emprise_storage-data` (SeaweedFS) und `emprise_minio-data`. Empfehlung: jetzt (Schlussprüfung bestanden), vorher `pg_dump`; das Beyenes-PDF vorher aus dem Bucket der Analyse sichern (4.1) | 4.7 |
 | 1 | – | **Referenzliste Beyenes UC prüfen**, dann auf „geprüft“ setzen; die Frage zu kleinen Nebengebäuden gehört zu E-VA-5 | `/analyse/verwaltung` → Referenzlisten, PLAN_G2 6, 7.5, 7.7 |
 | 1 | – | **Beyenes UC neu auswerten** (etwa 1,46 $)? Empfehlung: nach der Prüfung der Liste; sonst die Grundfläche per Korrektur setzen | 4.1 |
 | 1 | E2 | Mailanbieter (Empfehlung Scaleway TEM, sonst Brevo) | DECISIONS 3 |
@@ -52,7 +58,7 @@
 ### 4.1 G2-Vollständigkeit (PLAN_G2_VOLLSTAENDIGKEIT)
 
 1. **Befunde aus 7.7:** Ein Zitat verschluckt eine Vorschrift (S. 14 und S. 17 fehlen still); der Weg folgt aus der Entscheidung in 3. Den Widerspruch im Dach (`flat_roof` zugelassen, `flat` fehlt in `allowed_forms`) in `Roof._consistent` als ungültig werten.
-2. **Beyenes UC:** Das PLU liegt nicht mehr in der lokalen Datenbank (Analyse-Daten nicht übernommen). Zum Neuauswerten unter `/analyse` ein Projekt anlegen und das PDF erneut hochladen; die Referenzliste findet es über die Prüfsumme. Danach messen und in PLAN_G2 7.5 nachtragen. Weitere Referenzlisten: Zonen von Treillières (Spez. 11.4), andere Gemeinden.
+2. **Beyenes UC:** Das PLU liegt nicht mehr in der lokalen Datenbank (Analyse-Daten nicht übernommen). Zum Neuauswerten unter `/analyse` ein Projekt anlegen und das PDF erneut hochladen (eine Kopie liegt noch im Volume `emprise_storage-data`, 4.7); die Referenzliste findet es über die Prüfsumme. Danach messen und in PLAN_G2 7.5 nachtragen. Weitere Referenzlisten: Zonen von Treillières (Spez. 11.4), andere Gemeinden.
 3. **Staffel der Grundflächenzahl** in Schema und Berechnung (E-VA-4, eigener Plan).
 4. **Sperre oder Bestätigung** vor bezahlten Neuauswertungen durch `rules_housekeeping` bei neuer `ENGINE_VERSION`.
 5. Denkaufwand `xhigh`/`max` an OpenRouter durchreichen; bei Flex `service_tier` und Wiederholung. Später E-VA-1 und E-VA-2.
