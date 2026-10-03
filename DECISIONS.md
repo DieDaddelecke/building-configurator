@@ -72,7 +72,7 @@
 
 | Nr. | Frage | Stand |
 |---|---|---|
-| D1 | Einzugsgebiet | Entschieden 14.09.2026: bis zur Beta nur Treillières (44209); weitere Gemeinden vor der Beta neu entscheiden (G03) |
+| D1 | Einzugsgebiet | Entschieden 14.09.2026: bis zur Beta nur Treillières (44209); weitere Gemeinden vor der Beta neu entscheiden (G03). Erweitert 03.10.2026 (Nutzer): auf Unraid zusätzlich das Kataster der Île-de-France (Paris als Arrondissements 75101–75120, dazu alle Gemeinden der Départements 77, 78, 91–95), einmalig von Hand importiert, ohne Planstand und Regeln; nicht in `CADASTRE_COMMUNES`, damit der Worker dafür keinen Planstand lädt und nichts auswertet |
 | D2 | R1 öffentlich oder intern | Erst intern, dann Beta, dann öffentlich. Entschieden 14.09.2026: G1 intern für `architect`; Beta und öffentlich offen |
 | D3 | Hosting | Entschieden 14.09.2026: bis zur Beta selbst betrieben auf Unraid (A21); vor dem öffentlichen Start neu entscheiden |
 | D4 | Anmeldung für Büro und Team | Entschieden 14.09.2026: eigener Dienst, kein Microsoft oder Google; Authentik auf Unraid (A23) |
