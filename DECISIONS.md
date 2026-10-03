@@ -61,6 +61,13 @@
 
 - **Entscheidung:** Die Modul-Flags `site_selection`, `rules_simulation`, `envelope_simulation`, `inquiry`, `configurator`, `submission` sind der Freischaltweg (intern → Beta → alle, D2) und gelten für die ganze Anwendung. `EMPRISE_EXTERNAL_ORGANISATIONS` ist eine Sicherheitssperre, kein Flag. Wann die Flag-Prüfungen entfallen: ROADMAP 4.5.
 
+### ADR-11 – Cloudflare-Proxy vor Emprise und Authentik (03.10.2026, Nutzer)
+
+- **Kontext:** `aslani.work` liegt bei Cloudflare; die übrigen Dienste des Nutzers laufen über den Cloudflare-Proxy (orange Wolke) zum Nginx Proxy Manager auf Unraid.
+- **Entscheidung:** `building-configurator.aslani.work` und `auth.aslani.work` bleiben „proxied“ (CNAME auf `aslani.work`); TLS zusätzlich am Nginx Proxy Manager (Let's Encrypt).
+- **Hebt auf:** die Festlegung vom 25.09.2026 „nur DNS, graue Wolke“ ([Betrieb](deploy/unraid/README.md) Abschnitt 2).
+- **Folgen:** Cloudflare sieht den Verkehr im Klartext, auch Anmeldedaten und Kundendaten – bewusste Ausnahme von L8 und Plan 6.9 (kein US-Anbieter im Datenweg) für den Datenweg; vor dem öffentlichen Start mit D3 neu bewerten. SSL-Modus „Full (strict)“. Die echte Client-IP kommt als `CF-Connecting-IP`; ohne Übernahme teilen sich Nutzer Rate-Limits und das Audit sieht Cloudflare-Adressen (vor dem öffentlichen Start einrichten). Anfragen sind bei Cloudflare Free auf 100 MB begrenzt (Reglement-Upload bis 100 MB). Bot- und Angriffsschutz von Cloudflare darf den Aufruf der API an Authentik (Token-Abruf) nicht blockieren.
+
 ## 2. Entscheidungen des Umsetzungsplans (D1–D19)
 
 | Nr. | Frage | Stand |

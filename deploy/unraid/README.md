@@ -31,7 +31,9 @@ Einträge im Reverse Proxy, alle mit TLS-Zertifikat:
 | `auth.aslani.work` | `http://<Unraid-IP>:9000` | Websockets erlauben |
 | `emprise-analyse.aslani.work` | Weiterleitung (301) auf `https://building-configurator.aslani.work/analyse` | nur falls der Name schon verteilt ist; die Analyse läuft in derselben Anwendung (Abschnitt 22) |
 
-**Cloudflare:** `aslani.work` liegt bei Cloudflare. Ist ein Eintrag „proxied“ (orange Wolke) oder läuft ein Tunnel, sieht Cloudflare den gesamten Verkehr im Klartext, auch Anmeldedaten und später Kundendaten. Das widerspricht Leitplanke L8 und Plan 6.9 (keine US-Anbieter im Datenweg). Für die Beta: Einträge nur als DNS („DNS only“, graue Wolke) und TLS am eigenen Reverse Proxy – **entschieden am 25.09.2026** für alle Einträge von Emprise und Authentik. Bliebe der Cloudflare-Proxy, müsste der Reverse Proxy die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
+**Cloudflare:** `aslani.work` liegt bei Cloudflare. Seit dem 03.10.2026 laufen beide Einträge „proxied“ (orange Wolke, CNAME auf `aslani.work`) zum Nginx Proxy Manager (DECISIONS ADR-11; hebt „DNS only“ vom 25.09.2026 auf). Cloudflare sieht damit den Verkehr im Klartext. Einstellungen: SSL-Modus „Full (strict)“; Bot- und Angriffsschutz dürfen den Token-Abruf der API bei Authentik nicht blockieren (scheitert die Anmeldung nach der Rückkehr von Authentik, zuerst Cloudflare → Security → Events prüfen); Anfragen höchstens 100 MB. Vor dem öffentlichen Start die echte Client-IP aus `CF-Connecting-IP` übernehmen, sonst teilen sich alle Nutzer ein Rate-Limit.
+
+**Port von Authentik:** Ist 9000 auf Unraid belegt (z. B. von MinIO), in `authentik/.env` `AUTHENTIK_PORT` ändern (auf `tower` am 03.10.2026: 9010) und im Reverse Proxy dasselbe Ziel eintragen.
 
 **Erreichbarkeit aus dem Container:** Die API ruft Authentik über die öffentliche Adresse auf (`OIDC_ISSUER`). Unterstützt der Router keinen Zugriff von innen auf die eigene öffentliche Adresse, Datei `compose.override.yaml` neben `compose.yaml` anlegen:
 
