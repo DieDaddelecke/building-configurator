@@ -12,7 +12,16 @@
     "intro": "Emprise macht die Vorgaben des Bebauungsplans für Ihr Grundstück zu klaren Grenzen und erstellt einen unverbindlichen Vorentwurf, den ein Architekturbüro prüft.",
     "notices": "Wichtige Hinweise",
     "noNotices": "Die rechtlichen Hinweise werden vor dem Start veröffentlicht.",
-    "cta": "Grundstück wählen"
+    "cta": "Grundstück wählen",
+    "login": "Anmeldung für Fachleute",
+    "areas": "Ihre Bereiche",
+    "areasIntro": "Angemeldet als {{email}}. Jeder Bereich öffnet sich mit den Rechten Ihres Kontos.",
+    "configurator": "Konfigurator",
+    "configuratorText": "Parzelle wählen, Regeln und Baurahmen ansehen, Haus konfigurieren und die Anfrage senden.",
+    "analysis": "Emprise Analyse",
+    "analysisText": "Parzelle hochladen oder zeichnen, règlement écrit hochladen, Baurahmen, Nutzfläche, Bericht und DXF erhalten.",
+    "office": "Büro",
+    "officeText": "Grundstücke prüfen, Regelwerke, Anfragen der Kunden, Katalog und Preise."
   },
   "analyse": {
     "tagline": "Analyse",

@@ -12,7 +12,16 @@
     "intro": "Emprise traduit les règles d'urbanisme de votre parcelle en limites claires et prépare un avant-projet non contractuel, vérifié par un cabinet d'architecture.",
     "notices": "Informations importantes",
     "noNotices": "Les mentions légales seront publiées avant l'ouverture.",
-    "cta": "Choisir mon terrain"
+    "cta": "Choisir mon terrain",
+    "login": "Connexion professionnelle",
+    "areas": "Vos espaces",
+    "areasIntro": "Connecté en tant que {{email}}. Chaque espace s'ouvre avec les droits de votre compte.",
+    "configurator": "Configurateur",
+    "configuratorText": "Choisir une parcelle, voir les règles et l'emprise constructible, configurer la maison et transmettre la demande.",
+    "analysis": "Emprise Analyse",
+    "analysisText": "Importer ou dessiner une parcelle, téléverser le règlement écrit, obtenir gabarit, surface de plancher, rapport et DXF.",
+    "office": "Espace bureau",
+    "officeText": "Terrains à vérifier, règlements, demandes des clients, catalogue et prix."
   },
   "analyse": {
     "tagline": "Analyse",
