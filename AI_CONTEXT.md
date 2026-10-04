@@ -26,6 +26,7 @@ Stand und nächster Schritt: [ROADMAP.md](ROADMAP.md).
 | [DECISIONS.md](DECISIONS.md) | Entscheidungen mit ursprünglichen IDs (D, E, E-…, ANNAHMEN-Auswahl), ADRs; Karte der Archiv-IDs | eine Entscheidung fällt oder eine Festlegung entsteht |
 | [ROADMAP.md](ROADMAP.md) | Stand, offene Entscheidungen, Arbeitspunkte, Befunde, Startprompt | am Ende jeder Session (`/handoff`) |
 | [deploy/unraid/README.md](deploy/unraid/README.md) | Betrieb: Einrichtung, Module, Jobs, Störungen, Sicherung, Rückrollen | sich der Betrieb ändert |
+| [docs/IFC_IMPORTVERTRAG.md](docs/IFC_IMPORTVERTRAG.md) | Modellieren und Exportieren eines Haustyps in Archicad; Leser ist das Büro (Ausnahme E-HM-17) | sich der IFC-Import ändert |
 | `docs/archiv/` | Spezifikation, Umsetzungsplan, Modulpläne, ANNAHMEN, Hand-off, Änderungsprotokoll, Mockup, Refactoring-Analyse – unverändert, historisch | nie; nur lesen |
 
 Jeder Inhalt steht an genau einer Stelle; andere Dokumente verweisen darauf. Das Änderungsprotokoll ist das Git-Log.

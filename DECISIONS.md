@@ -1,6 +1,6 @@
 # Entscheidungen
 
-> Stand 30.09.2026. Maßgebliche Liste der Entscheidungen mit ihren ursprünglichen IDs, auf die der Code verweist. Offene Fragen stehen in [ROADMAP.md](ROADMAP.md) 3, die Fachregeln in [DOMAIN.md](DOMAIN.md).
+> Stand 03.10.2026. Maßgebliche Liste der Entscheidungen mit ihren ursprünglichen IDs, auf die der Code verweist. Offene Fragen stehen in [ROADMAP.md](ROADMAP.md) 3, die Fachregeln in [DOMAIN.md](DOMAIN.md).
 
 **So wird diese Datei gepflegt:** Neue Entscheidungen und Festlegungen kommen hierher, als ADR in Abschnitt 1 (Architektur, Betrieb, Arbeitsweise) oder als Zeile in Abschnitt 4 (Fachfestlegung mit neuer ID `F01` ff.). Eine überholte Entscheidung bleibt stehen und bekommt „aufgehoben durch …“. Die vollständigen Texte der älteren IDs stehen unverändert im Archiv (Abschnitt 5).
 
@@ -266,11 +266,65 @@ Festlegungen, die über ein Modul hinaus wirken. Alle übrigen IDs: Abschnitt 5.
 | PU12 | Modelle ohne PDF-Eingabe bekommen die Textschicht |
 | SC06 | PDF-Modus mit Text-Rückfall über 20 MB; der OCR-Stand zählt im Eingabe-Hash, wo Text an das Modell ging (seit 30.09.2026) |
 | BR01 | Zwei Konturen `lenient` und `strict` statt `B(0)`/`B(H_max)` |
-| HP01 | D12 umgesetzt: nur `effective` bindet, Lage außerhalb → `422 placement_violation` |
+| HP01 | D12 umgesetzt: nur `effective` bindet, Lage außerhalb → `422 placement_violation`. Im Hausmodell aufgehoben durch E-HM-6 (gilt im heutigen Konfigurator bis zur Ablösung) |
 | HP02 | D13 umgesetzt: freier Modus im Umriss |
 | HK10 | Kosten netto gerechnet, brutto angezeigt, auf 1.000 € gerundet mit „ca.“ |
 | KR01 | `GET /admin/rule-kinds` beschreibt die Formulare aus den Pydantic-Modellen |
 | VA03 | Referenzlisten messen die Vollständigkeit je Vorschrift |
+
+### 4.11 Hausmodell (E-HM)
+
+Plan: [docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) (Prompt v3.1, Phasen HM0–HM6); Begründungen und Abschnittsverweise dort. Mit der Beauftragung der Umsetzung (03.10.2026) gelten die Empfehlungen des Plans als entschieden; HM0, HM1 und HM3 sind umgesetzt, HM3 auf Anweisung vor HM2 (04.10.2026).
+
+| Nr. | Entscheidung |
+|---|---|
+| E-HM-1 | **Nutzer (1a):** Rechenkern `packages/domain` in TypeScript im Browser und im Dienst `engine` (Node 24); FastAPI bleibt; IFC-Import in Python mit IfcOpenShell |
+| E-HM-2 | **Nutzer (2a):** Kunde sieht Gesamtpreis auf 1.000 € und Aufpreise auf 100 € gerundet mit „ca.“, ohne Positionen; exakte Beträge nur in Snapshot und Dossier (L1) |
+| E-HM-3 | **Nutzer (3a):** alle klassischen Dachformen und R+1 vor der Ablösung; der heutige Konfigurator läuft bis dahin parallel (Fahne `configurator`) |
+| E-HM-4 | Grenze TS ↔ Python ist die Hausbeschreibung (`HouseFacts`); Lage, Fläche zulässiger Ursprünge und PLU-Prüfung bleiben in `configuration/domain` |
+| E-HM-5 | Typen an der Grenze als Pydantic-Modelle (`backend/app/house/contract.py`), nach TypeScript generiert; die API prüft jede Antwort von `engine` |
+| E-HM-6 | Ergebnisarten `info`/`warning`/`block` und `deviation` (verletzte wirksame PLU-Regel, Übergabe mit Bestätigung); Status abgeleitet; unzulässige Auswahl oder Lage wird gespeichert. Hebt HP01 und HK08 im Hausmodell auf; D12 und D14 bleiben |
+| E-HM-7 | Template- und Katalogversion werden mit der Konfiguration festgehalten; Grundstück und Regeln gelten aktuell, Änderungen zeigt der Prüfstempel |
+| E-HM-8 | Katalogversion: ein Dokument je Markt mit Preisen |
+| E-HM-9 | Template-Entwurf ist ein Status der Templateversion |
+| E-HM-10 | **Nutzer:** jede Dachform für jeden Haustyp wählbar, voreingestellt die Form aus dem IFC; Dachaufbau eigener Slot; Neigung innerhalb der Katalogspanne einstellbar, Firstrichtung drehbar, nicht erzeugbare Formen gesperrt mit Begründung |
+| E-HM-11 | Template trägt die Höhe des Erdgeschosses über Gelände, Standard 0,20 m |
+| E-HM-12 | Fassaden- und Projektionsumriss wie heute; welcher für eine Regel gilt, entscheidet die Python-Prüfung |
+| E-HM-13 | Fassadenrollen, Eingang und Garagentor werden im Entwurf bestätigt; Vorschlag aus dem IFC (Außentür in Entrée bzw. Garage) |
+| E-HM-14 | Ausstattungslinie als Voreinstellung mehrerer Slots ohne eigenen Aufpreis; Terrasse und Carport als Slots `site`, Lage und Prüfung in Python |
+| E-HM-15 | Keine Kundenkonten |
+| E-HM-16 | Feld `market`, nur FR, eine Region |
+| E-HM-17 | `docs/IFC_IMPORTVERTRAG.md` als einzige Ausnahme zu ADR-08: Leser ist das Büro beim Modellieren |
+| E-HM-18 | Bilder im Dossier als SVG aus dem Kern, kein Rendering auf dem Server |
+| E-HM-19 | IfcOpenShell läuft in einem Kindprozess mit Speicher- und Zeitgrenze; Datei nur über die API, Audit. Anfangswerte nach Spike HM0: 1 GB Adressraum, 120 s (Probedatei: 81 MB, 1,1 s; unter 160 MB scheitert schon der Start) |
+| E-HM-20 | Einheitspreise des Katalogs gehen an den Browser (Richtpreise sind ohnehin öffentlich) |
+| E-HM-21 | Neue Fahne `house_model`, entfällt mit der Ablösung |
+| E-HM-22 | Keine Übernahme alter Konfigurationen bei der Ablösung; vorher auf Unraid prüfen, ob echte Vorgänge bestehen |
+| E-HM-23 | **Nutzer:** Zonen immer richtig finden, Nummerierung ignorieren: Quellen in fester Reihenfolge (zuerst `IfcSpaceType`), Normalisierung, Aliasse im Katalog, Raumumriss aus den Wänden, Zone liefert nur den Typ |
+| E-HM-24 | Innenseite der Platzhalter-Außenwand = Innenkante der innersten Profilschicht; Wände und Dach im IFC sind Platzhalter, ihr Aufbau kommt aus dem Katalog |
+| E-HM-25 | **Nutzer:** alle klassischen Dachformen (Flach, Pult, Sattel, Walm/Zelt, Krüppelwalm, Mansarde) über Kantenprofile und ein gewichtetes Skelett mit Profilwechseln |
+| E-HM-26 | Clipper2-Port `clipper2-ts` (ganzzahlig, richtig, 17 kB gzip, ohne Abhängigkeiten). `clipper2-js` rechnet den Offset falsch; `clipper2-wasm` ist der Rückfall (asynchron, Speicher von Hand, CSP bräuchte `'wasm-unsafe-eval'`) |
+| E-HM-27 | Jeder Ring geht erst nach `polygonDefect` an Clipper2 (ganzzahlig, höchstens 1 km, einfach, kein Rücklauf); `clipper2-ts` läuft bei Rückläufen sonst endlos. `engine` antwortet mit 422 |
+| E-HM-28 | Dach-Skelett als eigene Umsetzung im Kern: keine gewichtete Bibliothek in JS/TS; die CGAL-Pakete als WebAssembly sind ungewichtet und stehen unter GPL |
+| E-HM-29 | Vertrag ohne Route: `main.py` nimmt die Wurzelmodelle aus `app/house/contract.py` in `components.schemas` auf und nennt sie in `x-house-contract`; `pnpm run contract:types` erzeugt daraus `packages/domain/src/contract.gen.ts`. Kein Feld mit Standardwert (Ein- und Ausgabeschema gleich). Die CI prüft `openapi.json`, `contract.gen.ts` und `schema.d.ts` |
+| E-HM-30 | Rollladenkasten über dem Fenster: Sturz in der Wand = `head_height` + Kasten, Wandabzug und Laibung mit Höhe + Kasten; Fensterfläche für die Energie ohne Kasten |
+| E-HM-31 | Jedes Hüllensegment, jede Öffnung und das Dach erhält seinen Typ aus genau einem Slot (sonst `type_slot_missing`/`type_slot_ambiguous` in der Kompatibilitätsprüfung). Bis HM5 ein Wandprofil je Geschosshülle (`mixed_wall_profiles`) |
+| E-HM-32 | Raumüberschreibung an Bauteilen zwischen Räumen: Es zählen nur Räume mit Überschreibung; die höchste `override_priority` gilt. Bei Gleichstand greift die Stufe nicht, die Notiz `room_override_tie` nennt die Werte |
+| E-HM-33 | Notizen und Geometrieprüfungen tragen Codes; Text nur aus dem Katalog (`unavailable_reason`, Regeltexte), sonst übersetzt die Oberfläche den Code |
+| E-HM-34 | Ausdrücke ohne ausführbaren Code mit festem Verhalten: fehlender Pfad null, Pfad über Listen eine Liste ohne null; Größenvergleiche nur zwischen Zahlen, sonst false; Rechnen nur mit Zahlen, Division durch 0 null; nur true ist wahr. Listen in Ausdrücken enthalten nur Werte (sonst wäre der Typ über Listen rekursiv) |
+| E-HM-35 | Höhen über ±0,00 = Oberkante Bodenplatte EG. Template: `bearing_height` (Oberkante Außenwand = Unterkante Dachdecke = Decke des Geschosses), Dachdecke als Platte `roof`, Attika über Oberkante Dachdecke; Fassadenhöhe = Bodenplatte + `bearing_height` + Dachdecke + Attika. Demohaus 0,20 + 2,50 + 0,10 + 0,40 = 3,20 m; die lichte Höhe 2,70 m aus P 19.1 passt nicht dazu (PLAN_HAUSMODELL 11.1 Nr. 29) |
+| E-HM-36 | `engine` prüft nur die Hülle der Anfrage (Dokumente vorhanden, `schema_version` 1); den Inhalt prüft die API mit Pydantic vor dem Aufruf und die Antwort danach. Fehler des Kerns antworten mit 422 `{code, detail}`; Anfragen bis 4 MB |
+| E-HM-37 | Typ jeder Öffnung aus dem Katalog über die Maße (Fenster: Breite, Höhe, Sturz, Rollladenkasten; Türen: Breite, Höhe; je ±1 mm). Kein oder mehrere Treffer: offener Punkt, das Büro wählt den Wert im Entwurf. Standard je Slot: Angabe des Büros, sonst der häufigste erkannte Wert, sonst der erste des Slots. Abweichende Bauteile stehen im Template unter `element_defaults` (Element → Slot → Wert); Auflösung Element → Raum → global → Standard des Bauteils → Standard des Slots |
+| E-HM-38 | Umfang des Imports in HM3: Erdgeschoss mit geraden Wänden und Flachdach (Auflagerhöhe, Dachdecke, Attika, Überstand). Mehrere Geschosse mit Wänden oder Zonen, geneigte Dachflächen und ein fehlendes Dach sind Fehler, bis HM5 sie liest |
+| E-HM-39 | Entwurf = gelesenes Modell (`raw`) + Angaben des Büros (`decisions`). Template und Importbericht entstehen bei jeder Änderung neu mit der zuletzt veröffentlichten Katalogversion des Markts, ohne die Datei erneut zu lesen; eine geänderte geprüfte Version fällt auf `draft` zurück, ihr Prüfbefund verfällt |
+| E-HM-40 | Ablauf `draft` → Prüfen (`engine /compatibility`; kompatibel → `reviewed`) → Freigeben (bestätigt den Befund, nur gegen die aktuelle Katalogversion, sonst `409 house_catalog_changed`) → `published` und aktuelle Version des Haustyps → `retired` (aktuell wird die neueste andere veröffentlichte); `rejected` verwirft einen Entwurf. Hochladen, Bearbeiten, Prüfen und Freigeben nur `catalog_admin`, `architect` und `ops` lesen mit (3.6) |
+| E-HM-41 | Tabellen `house_template` (Slug, aktuelle Version), `house_template_version` (E-HM-9), `house_catalog`, `house_catalog_version`, `house_catalog_compatibility` (ein Befund je Paar aus Template- und Katalogversion). Trigger: veröffentlichte Versionen nur noch `published` → `retired`, kein Löschen; ein freigegebener Befund ist unveränderlich (L4). Datei unter `house/ifc/<sha256>.ifc` |
+| E-HM-42 | Upload: Endung `.ifc` und STEP-Kopf, höchstens 100 MB (`EMPRISE_HOUSE_IFC_MAX_BYTES`), nur mit veröffentlichter Katalogversion (`409 house_catalog_missing`). Dieselbe Datei für einen offenen Entwurf ergibt keine neue Version; war ihr Lesen gescheitert, wird sie neu gelesen. Kennung wie bei den Haustypen des H1-Katalogs `^[a-z][a-z0-9_]{1,59}$`, damit ein Haustyp unter demselben Slug weiterlebt |
+| E-HM-43 | Kindprozess `python -m app.house.ifc_process`: setzt zuerst `RLIMIT_AS` und lädt dann IfcOpenShell, die Zeitgrenze hält der Elternprozess; kein `preexec_fn`, weil der Worker Threads hat. Eine unlesbare Datei ist ein Ergebnis (Bericht mit Fehler), kein Fehlschlag des Jobs; erst nach dem letzten Versuch `import_failed` |
+| E-HM-44 | Zonentabelle im Katalog: Aliasse und `exterior_door_role` (Vorschlag für Eingang und Garagentor) je Raumtyp, dazu `ignored_zone_categories`; eindeutig nach der Normalisierung, geprüft bei jedem Laden der Katalogversion. Katalogversionen bis HM6 nur per CLI (`house-catalog-import`); dasselbe Dokument (Prüfsumme über sortierte Schlüssel) ergibt keine neue Version |
+| E-HM-45 | Lehnt `engine` die Dokumente ab (422), ist die Version nicht kompatibel und der Code des Kerns wird zum Befund; Ausfall, Zeitüberschreitung, 5xx oder eine Antwort außerhalb des Vertrags ergeben `503 engine_unavailable` ohne Befund |
+| E-HM-46 | Befundcodes des Imports als feste Liste `FINDING_CODES` (`domain/draft.py`), in der OpenAPI unter `x-codes`; Tests halten Liste, gemeldete Codes und die Texte in FR und DE gleich (E-HM-33). Die Version nennt zu ihren `…_by`-Feldern die Personen (`people`: Konto-ID → Anzeigename oder E-Mail) |
+| E-HM-47 | Codes des Kerns als geschlossene Listen in `packages/domain/src/codes.ts` (`MODEL_ERROR_CODES`, `GEOMETRY_ERROR_CODES`, `RULE_CODES`, `COMPATIBILITY_CODES`); `ModelError`, `GeometryError` und die Befunde der Kompatibilitätsprüfung sind darauf typisiert, ein neuer Code kompiliert nur mit Eintrag. Ein Test im Frontend verlangt für jeden Code der Kompatibilitätsprüfung einen Text in FR und DE (`house.check.issue.<code>`, E-HM-33); einen unbekannten Code zeigt die Oberfläche roh |
 
 ## 5. Wo die übrigen IDs stehen
 

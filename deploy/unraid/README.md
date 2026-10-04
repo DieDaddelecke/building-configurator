@@ -101,13 +101,13 @@ cd /mnt/user/appdata/emprise-src && git pull
 deploy/unraid/deploy.sh
 ```
 
-`deploy.sh` baut die Images mit der Commit-Kennung, führt die Migration aus, startet neu und prüft `/api/health/ready`. Frühere Releases stehen in `releases.log`; die Images bleiben erhalten.
+`deploy.sh` baut die Images `emprise-backend`, `emprise-web` und `emprise-engine` mit der Commit-Kennung, führt die Migration aus, startet neu und prüft `/api/health/ready` und die Gesundheit von `engine`. Frühere Releases stehen in `releases.log`; die Images bleiben erhalten. Releases vor dem 03.10.2026 haben kein `engine`-Image; beim Rückrollen auf sie bleibt das aktuelle `engine` stehen (es wird von diesen Ständen nicht aufgerufen).
 
 ```bash
 deploy/unraid/deploy.sh rollback <release>
 ```
 
-Migrationen werden dabei **nicht** zurückgedreht: Sie sind abwärtskompatibel (erst erweitern, später aufräumen). `/api/health/ready` meldet dann `"migration_state": "ahead"` und bleibt bereit (200). Nur `"pending"` (Image neuer als Datenbank, Migrationsjob fehlt) ergibt 503. Eine getrennte Staging-Umgebung gibt es nicht; neue Funktionen laufen hinter Feature-Flags (Abschnitt 10). Alte Images gelegentlich aufräumen: `docker image ls emprise-backend`.
+Migrationen werden dabei **nicht** zurückgedreht: Sie sind abwärtskompatibel (erst erweitern, später aufräumen). `/api/health/ready` meldet dann `"migration_state": "ahead"` und bleibt bereit (200). Nur `"pending"` (Image neuer als Datenbank, Migrationsjob fehlt) ergibt 503. Eine getrennte Staging-Umgebung gibt es nicht; neue Funktionen laufen hinter Feature-Flags (Abschnitt 10). Alte Images gelegentlich aufräumen: `docker image ls 'emprise-*'`.
 
 **Emprise Analyse** läuft seit dem 29.09.2026 in derselben Anwendung unter `/analyse` (Abschnitt 22); es gibt keinen zweiten Stack und keine zweite Authentik-Anwendung mehr.
 
@@ -166,6 +166,7 @@ Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in Abschnitt 10;
 - **Géorisques-Token** nur, falls die Schnittstelle v1 abgeschaltet wird: in `compose.override.yaml` bei `api`, `worker` und `worker-long` `EMPRISE_GEORISQUES_TOKEN` setzen, nicht leer übergeben.
 - **Nach dem ersten Ausliefern:** `docker compose exec api python -m app.cli cadastre-import` (danach wöchentlich durch den Worker); Planstände sofort mit `plu-import` statt nach einer Woche. Ohne Schlüssel stehen die Kapitel auf „gescheitert: not_configured“ und werden nach dem Eintragen innerhalb einer Stunde ausgewertet (`rules_housekeeping`), sofort mit `rules-extract --pending` (kostet Token, Größenordnung in Abschnitt 16). Vor `inquiry`: `legal-seed` (Abschnitt 18). `staff-add` auch für die Katalogpflege (`catalog_admin` oder `architect`). Die Demo-Typen `demo_*` (`tests.e2e_seed_types`) **nie in Produktion**.
 - **Image:** Der Steckbrief braucht WeasyPrint mit `libpango-1.0-0`, `libpangoft2-1.0-0`, `libharfbuzz0b`, `libfribidi0` und `fonts-dejavu-core` im Backend-Image (rund 80 MB mehr). Nach dem Aktualisieren: `docker compose exec api python -c "import weasyprint"`. Caddy-Ersetzungen beim nächsten Caddy-Release prüfen (ANNAHMEN A27).
+- **Rechendienst `engine`** (Hausmodell, seit 03.10.2026, docs/PLAN_HAUSMODELL.md 3.3): eigenes Image `emprise-engine` (Node 24, nur das Bündel, rund 340 MB), gebaut aus dem Wurzelordner des Repos wie `emprise-web`; ohne Port, ohne Zustand, nur im Netz `intern`. Die API ruft ihn bei der Prüfung eines Haustyps aus IFC (Abschnitt 24), ab dem Kundenweg des Hausmodells auch für jede Konfiguration. Prüfen: `docker compose exec engine node -e "fetch('http://127.0.0.1:8090/health').then((r) => r.text()).then(console.log)"` → `{"status":"ok",…,"release":"<Commit>"}`.
 - **Gegenprobe nach dem Ausliefern:** `docker compose exec api python -m app.cli envelope-check --commune 44209 --sample 50` (0 Fehler erwartet).
 - **Speicher:** Kataster grob 10–20 MB in PostGIS je Gemeinde in der Größe von Treillières (≈ 8.800 Parzellen); das règlement écrit im Dateiverzeichnis (PLUi Erdre et Gesvres 6,8 MB), Seitentexte und Vorgaben wenige MB je Planstand in PostGIS; Steckbriefe unter `envelope-sheets/`, mit dem Projekt gelöscht und in der Sicherung des Dateiverzeichnisses enthalten.
 
@@ -180,6 +181,7 @@ Migrationen, Flags, Jobs und ausgehender Zugang je Modul stehen in Abschnitt 10;
 | `worker` | Hintergrundjobs der Warteschlange `default`, Zeitplan | `GET /api/health/jobs` |
 | `worker-long` (Unraid) | Warteschlange `long`: Auswertung, Lesen, Texterkennung, Importe | `GET /api/health/jobs` |
 | `migrate` | Einmaliger Job vor jeder Auslieferung: `alembic upgrade head` | Exit-Code |
+| `engine` | Rechendienst des Hausmodells (Node), nur im Netz `intern`; Aufrufer ist die API (Prüfung im Hausmodell, 24) | Healthcheck des Containers (`docker compose ps`), `GET /health` |
 | Datenbank | PostgreSQL 16 + PostGIS 3, Rollen `migrator`, `app`, `readonly` | `/api/health/ready` |
 | Dateiverzeichnis | Dateien, privat, unter `EMPRISE_FILES_DIR` (`/data/files`, seit 29.09.2026 statt SeaweedFS) | `GET /api/v1/admin/ops/status` → `storage_ok` |
 | Mail | Transaktionsmails über SMTP | `POST /api/v1/admin/ops/test-mail` |
@@ -199,6 +201,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | H2 | 0009 | `configurator` | – | – | ein veröffentlichter Typ (19) |
 | H3 | 0010 | `configurator` (dasselbe Flag) | – | – | veröffentlichter Preiskatalog mit Linien, Optionen und Preisen netto (20) |
 | V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (21) |
+| Hausmodell (HM3) | 0024 | – (nur Rollen: bearbeiten `catalog_admin`; lesen `architect`, `ops`) | `house_ifc_import` | – (`engine` im Netz `intern`) | veröffentlichte Katalogversion per CLI, Konto mit `catalog_admin` (24) |
 
 „Emprise Analyse“ läuft in derselben Anwendung unter `/analyse`: Abschnitt 22.
 
@@ -214,7 +217,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 - Zustand: `GET /api/v1/admin/ops/status` (Rolle `ops`): Anzahl je Status, fehlgeschlagen in 24 h, ältester wartender Job.
 - Ein Job wird bis `max_attempts` mit wachsendem Abstand wiederholt (30 s, 60 s, 120 s … höchstens 1 h). Danach `failed` und Meldung an das Fehler-Tracking.
 - Stürzt ein Worker ab, stellt ein anderer den Job nach Zeitlimit + 60 s zurück.
-- **Zwei Warteschlangen** (seit 29.09.2026, Migration 0022, REFACTORING_PLAN S5): `long` für `rules_extract`, `rules_document_read`, `rules_document_ocr`, `plu_import` und `cadastre_import`, alles andere in `default`. Auf Unraid bedient `worker` nur `default` und `worker-long` nur `long` (`EMPRISE_WORKER_QUEUES`); lokal bedient ein Worker beide (Vorgabe). `/api/health/jobs` meldet je Warteschlange (`queues.default`, `queues.long`); die Schwelle von `long` ist `EMPRISE_JOB_WAITING_ALARM_MINUTES_LONG` (120 min), weil ein Job dort hinter einer Auswertung von bis zu 60 min wartet. Alarm nur in `long`: `worker-long` läuft nicht.
+- **Zwei Warteschlangen** (seit 29.09.2026, Migration 0022, REFACTORING_PLAN S5): `long` für `rules_extract`, `rules_document_read`, `rules_document_ocr`, `plu_import`, `cadastre_import` und `house_ifc_import`, alles andere in `default`. Auf Unraid bedient `worker` nur `default` und `worker-long` nur `long` (`EMPRISE_WORKER_QUEUES`); lokal bedient ein Worker beide (Vorgabe). `/api/health/jobs` meldet je Warteschlange (`queues.default`, `queues.long`); die Schwelle von `long` ist `EMPRISE_JOB_WAITING_ALARM_MINUTES_LONG` (120 min), weil ein Job dort hinter einer Auswertung von bis zu 60 min wartet. Alarm nur in `long`: `worker-long` läuft nicht.
 - Fehlgeschlagene Jobs erneut einreihen (bis `POST /admin/jobs/{id}/retry` existiert):
   ```sql
   UPDATE job SET status = 'queued', attempts = 0, run_after = now(), finished_at = NULL WHERE id = '<id>';
@@ -570,3 +573,30 @@ KI-Modell der Auswertung (`app_setting`) und Referenzlisten (`reference_list`, `
 - `409 reference_list_exists`: Für Dokument und Sektor gibt es schon eine Liste; beim Import „vorhandene Liste ersetzen“ wählen.
 
 **Prüfen:** `/analyse/verwaltung` zeigt KI-Modell und Referenzlisten; `/verwaltung` leitet dorthin weiter.
+
+## 24. Hausmodell: Haustypen aus IFC (HM3)
+
+Das Büro lädt unter `/buero/katalog/hausmodell` eine IFC-Datei aus Archicad hoch; der Job `house_ifc_import` (Warteschlange `long`) liest sie in einem Kindprozess, das Büro ergänzt den Entwurf, `engine` prüft ihn gegen den Katalog, und ein Mensch gibt frei ([docs/PLAN_HAUSMODELL.md](../../docs/PLAN_HAUSMODELL.md) 3.6, DECISIONS E-HM-37 bis E-HM-46). Kunden sehen davon noch nichts; der Kundenweg kommt mit HM4 hinter der Fahne `house_model`. Wie das Büro modelliert: [docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md).
+
+**Einrichten**
+
+1. Wer hochlädt und freigibt, braucht die Rolle `catalog_admin`: `docker compose exec api python -m app.cli staff-add VORNAME.NAME@BUERO.FR catalog_admin` (weitere Rollen der Person in derselben Zeile mit angeben, der Befehl setzt die Rollen neu). `architect` und `ops` sehen die Seite nur lesend.
+2. Hochladen geht erst mit einer veröffentlichten Katalogversion des Hausmodells. Bis die echten Katalogwerte kommen (HM6), gibt es nur den Demo-Katalog mit erfundenen Werten. Eine veröffentlichte Version bleibt in der Historie; die nächste ersetzt sie als aktuelle. Im Ordner `deploy/unraid`:
+
+   ```bash
+   docker compose exec -T api python -m app.cli house-catalog-import - --publish < ../../packages/domain/seed/demo-house/catalog.json
+   ```
+
+   Erwartet: `Katalog 1 (published, created, published)` mit Prüfsumme; ein zweiter Aufruf meldet `unverändert`.
+
+**Grenzen:** Datei bis 100 MB (`EMPRISE_HOUSE_IFC_MAX_BYTES` bei `api`; Cloudflare lässt ohnehin höchstens 100 MB durch, Abschnitt 2). Der Kindprozess bekommt 1 GB Adressraum (`EMPRISE_HOUSE_IFC_MAX_MEMORY_MB`) und 120 s (`EMPRISE_HOUSE_IFC_TIMEOUT_SECONDS`), beides bei `worker-long`; die Probedateien des Büros (0,2 MB) brauchen rund 1 s. Die Datei liegt unter `house/ifc/<sha256>.ifc` im Dateiverzeichnis und ist in dessen Sicherung enthalten. Veröffentlichte Versionen und ihre Freigabe sind unveränderlich (Trigger, Migration 0024); „Zurückziehen“ nimmt eine Version aus dem Angebot, ohne sie zu löschen.
+
+**Störungen**
+
+- `409 house_catalog_missing` beim Hochladen: keine veröffentlichte Katalogversion (Einrichten, Schritt 2).
+- „Wird gelesen“ bleibt stehen: `worker-long` läuft nicht oder ist belegt (Abschnitt 12; `SELECT status, attempts, last_error FROM job WHERE kind = 'house_ifc_import' ORDER BY created_at DESC LIMIT 5`).
+- Bericht „überschritt die Speichergrenze“ oder „dauerte zu lange“: Grenzen bei `worker-long` erhöhen, dann dieselbe Datei noch einmal hochladen; eine gescheiterte Datei wird dabei neu gelesen.
+- `503 engine_unavailable` bei „Gegen den Katalog prüfen“: `engine` prüfen (Abschnitt 9). Das Log der API nennt den Grund (`engine_unavailable reason=…`): `timeout`, `transport:…` (Container aus) oder `http_404` (veraltetes Image, `deploy.sh` erneut).
+- „Nicht kompatibel“ mit einem Befund wie „Preise: Ein Preiseintrag fehlt …“ und darunter `price_entry_missing · template:<Kennung>`: Haustyp und Katalog passen nicht zusammen. Die Kennung beim Hochladen muss die sein, unter der der Katalog den Typ führt (Demo-Katalog: `demo_house`).
+
+**Prüfen:** Seite `/buero/katalog/hausmodell` zeigt die Katalogversion als „veröffentlicht · aktuell“; eine hochgeladene Datei steht nach wenigen Sekunden mit Vorschau und Befunden da.

@@ -1,6 +1,6 @@
 # Fachdomäne
 
-> Stand 30.09.2026. Was die Anwendung fachlich tut, welche Leitplanken gelten und wie die Begriffe im Code heißen. Technik: [ARCHITECTURE.md](ARCHITECTURE.md). Begründungen und IDs: [DECISIONS.md](DECISIONS.md).
+> Stand 04.10.2026 (Hausmodell bis HM3). Was die Anwendung fachlich tut, welche Leitplanken gelten und wie die Begriffe im Code heißen. Technik: [ARCHITECTURE.md](ARCHITECTURE.md). Begründungen und IDs: [DECISIONS.md](DECISIONS.md).
 
 ## 1. Zweck
 
@@ -64,6 +64,14 @@ Arbeitsprinzip der Regelkette: **Das Sprachmodell liest, Python rechnet, der Men
 | Übergabe, Vorentwurf | transmission, esquisse | `submission` je Fassung, Dossier-PDF |
 | Energiebewertung | étude thermique RE2020 | `energy_assessment` |
 | Organisation, Mitglied | – | `organisation` (Art `operator` oder `customer`), `organisation_member` |
+| Haustyp des Hausmodells, Template | modèle | `house_template` (Kennung `slug`), `house_template_version` (Entwurf bis Veröffentlichung), Dokument `HouseTemplate` |
+| Katalogversion des Hausmodells | version du catalogue | `house_catalog`, `house_catalog_version`: Bauteile, Slots, Werte, Regeln und Preise je Markt in einem Dokument |
+| Slot, Wert | – | `HouseSlot`, `HouseOptionValue`: eine Wahl (z. B. Außenwand) und ihre Werte (Standard, Ziegelfassade) |
+| Bezugskontur | contour de référence | Innenseite der Außenwände = Innenkante der innersten Profilschicht (`inner_polygon`, E-HM-24) |
+| Raumtyp, Zonenkategorie | type de pièce, catégorie de zone | `HouseRoomType` mit Aliassen; die Zone ist ein `IfcSpace` aus Archicad |
+| Fassadenrolle | rôle de façade | `street`, `garden`, `side_left`, `side_right` je Kante der Bezugskontur |
+| Importbericht, Befund | rapport d'import, constat | `HouseImportReport`, `HouseImportFinding` mit Schweregrad `error`, `open`, `warning`, `info` |
+| Kompatibilitätsprüfung, Freigabe | vérification, validation | `house_catalog_compatibility`: Befund aus `engine`, bestätigt beim Veröffentlichen |
 
 ## 4. Fachregeln
 
@@ -110,3 +118,9 @@ Arbeitsprinzip der Regelkette: **Das Sprachmodell liest, Python rechnet, der Men
 - Übergabe je Fassung (`submission`); vor dem Absenden wird die Konfiguration neu geprüft. Das Dossier entsteht auf Französisch und Deutsch.
 - Die Anfrage ohne Konfiguration bleibt dauerhaft möglich (D14).
 - Entwürfe ohne Anfrage werden 90 Tage nach der letzten Aktivität gelöscht (`retention_cleanup`); nach einer Anfrage löscht nur das Büro (`409 deletion_requires_office`, D6 offen).
+
+### 4.7 Hausmodell: Haustyp aus IFC (HM3)
+
+- Der Import deutet nur: Außen ist, was auf dem äußeren Rand der vereinigten Wände liegt; Räume sind die Flächen zwischen den Wänden; eine Zone liefert nur den Raumtyp (Zuordnung über „mehr als die Hälfte“). Keine Zone und kein Bauteil geht still verloren (E-HM-23).
+- Fehler behebt nur eine neue Datei, offene Punkte klärt das Büro im Entwurf; beide verhindern das Veröffentlichen. Veröffentlicht wird nur nach Prüfung gegen die aktuelle Katalogversion und Freigabe durch einen Menschen (E-HM-40).
+- Veröffentlichte Versionen und ihre Freigabe sind unveränderlich (L4); eine Änderung ist eine neue Datei und damit eine neue Version. Modellieren für den Import: [docs/IFC_IMPORTVERTRAG.md](docs/IFC_IMPORTVERTRAG.md).
