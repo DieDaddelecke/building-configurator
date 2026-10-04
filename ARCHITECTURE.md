@@ -218,9 +218,10 @@ quantities.ts  Mengen mit Herkunft → pricing.ts Preis mit Positionen je Preise
 rules.ts       Prüfung der Öffnungen und Katalogregeln (expr.ts) → Status
 energy.ts      U-Werte, Fensteranteile · facts.ts Hausbeschreibung für die Prüfung in Python (E-HM-4)
 compatibility.ts  Template ↔ Katalog vor dem Veröffentlichen
+codes.ts       Codes des Kerns als geschlossene Listen; die Oberfläche übersetzt sie (E-HM-47)
 ```
 
-Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn ab HM2 ein; `spike/roof` enthält den Dach-Prototyp (gewichtetes Skelett, nicht exportiert).
+Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn ab HM2 ein (bis dahin liest ein Frontend-Test nur `codes.ts`, ohne Paketabhängigkeit); `spike/roof` enthält den Dach-Prototyp (gewichtetes Skelett, nicht exportiert).
 
 ## 6. Anmeldung und Zugriff
 
