@@ -61,7 +61,7 @@ docker compose up -d
 2. Admin-Oberfläche → Anwendungen: „Emprise“ muss vorhanden sein (Blueprint `blueprints/emprise.yaml`). Unter System → Blueprints steht „Emprise – Anmeldung Büro“ auf `successful`.
 3. System → Einstellungen: **„Benutzer dürfen E-Mail ändern“ ausschalten** (Bezeichnung in der Oberfläche prüfen). Emprise ordnet Konten bei der ersten Anmeldung über die E-Mail-Adresse zu.
 4. Keine Selbstregistrierung einrichten. Konten legt nur die Administration an (Verzeichnis → Benutzer) mit der dienstlichen E-Mail-Adresse.
-5. Bei der ersten Anmeldung richtet jede Person den zweiten Faktor ein (Authenticator-App oder Sicherheitsschlüssel). **Danach einmal neu anmelden:** Authentik meldet den zweiten Faktor erst bei einer Anmeldung mit bereits eingerichtetem Gerät, Emprise zeigt beim ersten Mal „Kein Zugang“ mit diesem Hinweis.
+5. Bei der ersten Anmeldung richtet jede Person den zweiten Faktor ein (Authenticator-App oder Sicherheitsschlüssel). **Danach einmal neu anmelden:** Authentik meldet den zweiten Faktor erst bei einer Anmeldung mit bereits eingerichtetem Gerät, Emprise zeigt beim ersten Mal „Kein Zugang“ mit diesem Hinweis. „Retour à la connexion“ allein hilft nicht, weil Authentik die laufende Anmeldung weiterverwendet: erst bei Authentik abmelden (`https://auth.aslani.work/flows/-/default/invalidation/`) oder ein privates Fenster nehmen. Ein Passkey im Passwort-Manager des Browsers steht im privaten Fenster nicht zur Verfügung. Neben einem Passkey eine Authenticator-App (TOTP) und Notfallcodes (Static tokens) einrichten, sonst sperrt ein verlorenes Gerät aus.
 
 Nicht verwenden: reine Passkey-Anmeldung ohne Passwort. Authentik meldet sie als `user`, nicht als zweiten Faktor; Emprise lehnt sie ab.
 
@@ -243,6 +243,15 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 1. Einzugsgebiet setzen: `EMPRISE_CADASTRE_COMMUNES='["44209"]'` (INSEE-Codes; Entscheidung D1).
 2. Erstimport: `python -m app.cli cadastre-import` (ohne Internet: `--from-dir <ordner> --release <stand>`). Danach prüft der Worker wöchentlich auf neue Stände.
 3. Flag und ausgehender Zugang: Tabelle in Abschnitt 10.
+
+**Kataster ohne Regeln (D1, Île-de-France):** Gemeinden außerhalb von `CADASTRE_COMMUNES` werden nur von Hand importiert und nicht wöchentlich aktualisiert; Parzellenwahl ja, Regeln und Baurahmen nein (Konfigurator im freien Modus). Paris nur als Arrondissements 75101–75120. Für viele Gemeinden im Ordner `deploy/unraid` im Hintergrund, in Paketen von 50, mit zweitem Durchlauf für Gescheitertes (`cadastre-import` bricht bei einer Ausnahme ab, fertige Stände überspringt er):
+
+```bash
+docker compose exec -T api python -c "import json,urllib.request as u; [print(c['code']) for d in ('77','78','91','92','93','94','95') for c in json.load(u.urlopen(f'https://geo.api.gouv.fr/departements/{d}/communes?fields=code'))]" > /mnt/user/appdata/emprise/idf_communes.txt
+nohup sh -c 'cd /mnt/user/appdata/emprise-src/deploy/unraid; for pass in 1 2; do sed "s/^/--commune /" /mnt/user/appdata/emprise/idf_communes.txt | xargs -n 100 docker compose exec -T api python -m app.cli cadastre-import; done; echo IDF FERTIG' > /mnt/user/appdata/emprise/idf_import.log 2>&1 &
+```
+
+Lokal gemessen (03.10.2026): 1 265 Gemeinden in 51 Minuten; mit Treillières und Paris 3,7 Mio. Parzellen, Datenbank 3,2 GB, eine Sicherung (`pg_dump --format=custom`) 945 MB, bei 14 Tagen Aufbewahrung rund 13 GB im Sicherungsordner. Gescheitert: `grep ": failed" idf_import.log`.
 
 **Stand prüfen:** `GET /api/v1/admin/cadastre/imports` (Rolle `ops`): letzter Import je Gemeinde mit Stand, Anzahl Parzellen, Gebäude, Straßenachsen (`roads = -1`: Achsen fehlen, siehe unten) und Fehler.
 
