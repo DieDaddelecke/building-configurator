@@ -26,7 +26,7 @@ from app.house.domain.draft import (
     HouseImportReport,
 )
 from app.house.domain.raw import RawModel
-from app.house.ifc_process import READ_ERRORS, IfcReadError, read_ifc
+from app.house.ifc_process import READ_ERRORS, IfcReadError, read_failure, read_ifc
 from tests.house_support import PROBES, DemoHouse, Opening, canonical, fixture, write_ifc
 
 LIMITS: dict[str, Any] = {"timeout_seconds": 120, "max_memory_bytes": 1024**3}
@@ -193,9 +193,27 @@ def test_reader_limits_end_only_the_child(tmp_path: Path) -> None:
     with pytest.raises(IfcReadError) as slow:
         read_ifc(path, timeout_seconds=0.2, max_memory_bytes=1024**3)
     assert slow.value.code == "reader_timeout"
+    # Weit unter dem Bedarf (IfcOpenShell mit numpy: lokal 200 bis 300 MB); wo es scheitert, ist Zufall
     with pytest.raises(IfcReadError) as small:
-        read_ifc(path, timeout_seconds=120, max_memory_bytes=150 * 1024**2)
-    assert small.value.code == "reader_limit"
+        read_ifc(path, timeout_seconds=120, max_memory_bytes=100 * 1024**2)
+    assert small.value.code == "reader_limit", small.value.detail
+
+
+@pytest.mark.parametrize(
+    ("returncode", "stderr", "code"),
+    [
+        (-6, "", "reader_limit"),  # Abbruch per Signal, z. B. nach std::bad_alloc
+        (1, "MemoryError", "reader_limit"),
+        (1, "OpenBLAS error: Memory allocation still failed after 10 retries, giving up.", "reader_limit"),
+        (1, "ImportError: libTKFillet.so.7.8: failed to map segment from shared object", "reader_limit"),
+        (1, "Traceback …\nValueError: kaputt", "reader_failed"),
+        (1, "", "reader_failed"),
+    ],
+)
+def test_reader_failure_tells_the_memory_limit_apart(returncode: int, stderr: str, code: str) -> None:
+    failure = read_failure(returncode, stderr)
+    assert failure.code == code
+    assert failure.detail == (stderr.splitlines()[-1] if stderr else f"Rückgabewert {returncode}")
 
 
 def test_cut_file_reports_failed_geometry(tmp_path: Path) -> None:

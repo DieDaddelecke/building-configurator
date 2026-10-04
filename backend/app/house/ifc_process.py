@@ -21,7 +21,16 @@ EXIT_UNREADABLE = 3
 """Rückgabewert des Lesers, wenn sich die Datei nicht öffnen lässt; stdout trägt dann `{"error": …}`."""
 APP_ROOT = Path(__file__).resolve().parents[2]
 READ_ERRORS = ("file_unreadable", "schema_unsupported", "reader_timeout", "reader_limit", "reader_failed")
-MEMORY_MARKERS = ("MemoryError", "bad_alloc", "Memory allocation", "Cannot allocate memory")
+MEMORY_MARKERS = (
+    "MemoryError",
+    "bad_alloc",
+    "Memory allocation",
+    "Cannot allocate memory",
+    "failed to map segment",
+)
+"""Speichergrenze: MemoryError in Python, Meldung von OpenBLAS, std::bad_alloc oder eine Bibliothek, die
+sich nicht mehr in den Adressraum laden lässt (`failed to map segment from shared object`; je nach Lage im
+Adressraum schon beim Import von IfcOpenShell)."""
 
 
 class IfcReadError(Exception):
@@ -60,15 +69,19 @@ def read_ifc(path: Path, *, timeout_seconds: float, max_memory_bytes: int) -> Ra
         except (ValueError, KeyError, TypeError):
             raise IfcReadError("file_unreadable") from None
     if done.returncode != 0:
-        stderr = done.stderr.decode("utf-8", errors="replace").strip()
-        last = stderr.splitlines()[-1][:300] if stderr else f"Rückgabewert {done.returncode}"
-        # Speichergrenze: MemoryError in Python, Meldung von OpenBLAS, std::bad_alloc (Abbruch per Signal)
-        limit = done.returncode < 0 or any(marker in stderr for marker in MEMORY_MARKERS)
-        raise IfcReadError("reader_limit" if limit else "reader_failed", last)
+        raise read_failure(done.returncode, done.stderr.decode("utf-8", errors="replace").strip())
     try:
         return RawModel.model_validate_json(done.stdout)
     except ValidationError as exc:
         raise IfcReadError("reader_failed", str(exc)[:300]) from exc
+
+
+def read_failure(returncode: int, stderr: str) -> IfcReadError:
+    """Kind ohne Ergebnis beendet: Speichergrenze (Abbruch per Signal oder Meldung aus `MEMORY_MARKERS`)
+    oder ein anderer Fehler; der Text ist die letzte Zeile von stderr."""
+    last = stderr.splitlines()[-1][:300] if stderr else f"Rückgabewert {returncode}"
+    limit = returncode < 0 or any(marker in stderr for marker in MEMORY_MARKERS)
+    return IfcReadError("reader_limit" if limit else "reader_failed", last)
 
 
 def _child(argv: list[str]) -> int:
