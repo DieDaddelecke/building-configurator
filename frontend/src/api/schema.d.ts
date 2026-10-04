@@ -455,6 +455,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/house/catalogs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Catalog Versions */
+        get: operations["list_catalog_versions_api_v1_admin_house_catalogs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_api_v1_admin_house_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Ifc
+         * @description Neue Version eines Haustyps aus einer IFC-Datei (Importvertrag); der Import läuft im Hintergrund.
+         *     Dieselbe Datei für einen offenen Entwurf liefert diesen mit 200.
+         */
+        post: operations["upload_ifc_api_v1_admin_house_templates__slug__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Version */
+        get: operations["get_version_api_v1_admin_house_templates__slug__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Version
+         * @description Kompatibilität mit der Katalogversion über `engine` prüfen; kompatibel → `reviewed`.
+         */
+        post: operations["check_version_api_v1_admin_house_templates__slug__versions__version__check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Decisions
+         * @description Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards).
+         */
+        put: operations["set_decisions_api_v1_admin_house_templates__slug__versions__version__decisions_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish Version
+         * @description Freigabe des Prüfbefunds und Veröffentlichung; danach unveränderlich (L4).
+         */
+        post: operations["publish_version_api_v1_admin_house_templates__slug__versions__version__publish_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Version */
+        post: operations["reject_version_api_v1_admin_house_templates__slug__versions__version__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire Version */
+        post: operations["retire_version_api_v1_admin_house_templates__slug__versions__version__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/inquiries": {
         parameters: {
             query?: never;
@@ -2525,6 +2691,11 @@ export interface components {
              */
             page: number;
         };
+        /** Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post */
+        Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post */
         Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post: {
             /** File */
@@ -3543,6 +3714,1302 @@ export interface components {
             ridge_m?: number | null;
             /** Storeys */
             storeys?: string | null;
+        };
+        /** HouseBearing */
+        HouseBearing: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "foundation_ledge" | "brackets";
+            /** Supported Layer Ids */
+            supported_layer_ids: string[];
+        };
+        /** HouseBinaryExpr */
+        HouseBinaryExpr: {
+            left: components["schemas"]["HouseExpr"];
+            /**
+             * Op
+             * @enum {string}
+             */
+            op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "not_in" | "contains" | "add" | "sub" | "mul" | "div";
+            right: components["schemas"]["HouseExpr"];
+        };
+        /**
+         * HouseCandidate
+         * @description Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`).
+         */
+        HouseCandidate: {
+            /** Available Count */
+            available_count: number;
+            /** Option Value Id */
+            option_value_id: string;
+            /** Price Delta */
+            price_delta: number;
+            /** Rule Results */
+            rule_results: components["schemas"]["HouseRuleResult"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "valid" | "valid_with_warnings" | "with_deviations" | "blocked";
+            /** Target Count */
+            target_count: number;
+            unavailable_reason: components["schemas"]["HouseText"] | null;
+        };
+        /** HouseCandidatesRequest */
+        HouseCandidatesRequest: {
+            /** Element Id */
+            element_id: string | null;
+            /** Slot Id */
+            slot_id: string;
+        };
+        /**
+         * HouseCatalog
+         * @description Katalogversion eines Markts: Bauteile, Slots, Werte, Regeln und Preise in einem Dokument (E-HM-8).
+         */
+        HouseCatalog: {
+            /**
+             * Currency
+             * @constant
+             */
+            currency: "EUR";
+            /** Door Types */
+            door_types: components["schemas"]["HouseDoorType"][];
+            /** Ignored Zone Categories */
+            ignored_zone_categories: string[];
+            /**
+             * Market
+             * @constant
+             */
+            market: "FR";
+            /** Materials */
+            materials: components["schemas"]["HouseMaterial"][];
+            /** Option Values */
+            option_values: components["schemas"]["HouseOptionValue"][];
+            parameters: components["schemas"]["HouseCatalogParameters"];
+            /** Price Entries */
+            price_entries: components["schemas"]["HousePriceEntry"][];
+            /** Pricing Rules */
+            pricing_rules: components["schemas"]["HousePricingRule"][];
+            /** Roof Types */
+            roof_types: components["schemas"]["HouseRoofType"][];
+            /** Room Types */
+            room_types: components["schemas"]["HouseRoomType"][];
+            /** Rules */
+            rules: components["schemas"]["HouseRule"][];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: 1;
+            /** Slots */
+            slots: components["schemas"]["HouseSlot"][];
+            /** Vat Rate */
+            vat_rate: number;
+            /** Wall Layers */
+            wall_layers: components["schemas"]["HouseWallLayer"][];
+            /** Wall Profiles */
+            wall_profiles: components["schemas"]["HouseWallProfile"][];
+            /** Window Types */
+            window_types: components["schemas"]["HouseWindowType"][];
+        };
+        /**
+         * HouseCatalogChoicesOut
+         * @description Was der Entwurf zur Wahl stellt: Raumtypen, Slots und Werte der Katalogversion des Entwurfs.
+         */
+        HouseCatalogChoicesOut: {
+            /** Current */
+            current: boolean;
+            /** Room Types */
+            room_types: components["schemas"]["HouseChoiceOut"][];
+            /** Slots */
+            slots: components["schemas"]["HouseSlotChoiceOut"][];
+            /** Version */
+            version: number;
+        };
+        /** HouseCatalogParameters */
+        HouseCatalogParameters: {
+            /** Opening Deduction Threshold */
+            opening_deduction_threshold: number;
+            /** Parapet Min Upstand */
+            parapet_min_upstand: number;
+            /** Surface Resistance Inside */
+            surface_resistance_inside: number;
+            /** Surface Resistance Outside */
+            surface_resistance_outside: number;
+        };
+        /** HouseCatalogVersionOut */
+        HouseCatalogVersionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Current */
+            current: boolean;
+            /**
+             * Market
+             * @constant
+             */
+            market: "FR";
+            /** Option Values */
+            option_values: number;
+            /** Published At */
+            published_at: string | null;
+            /** Published By */
+            published_by: string | null;
+            /** Room Types */
+            room_types: number;
+            /** Sha256 */
+            sha256: string;
+            /** Slots */
+            slots: number;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "published" | "retired";
+            /** Version */
+            version: number;
+        };
+        /** HouseChoiceOut */
+        HouseChoiceOut: {
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+        };
+        /**
+         * HouseCompatibility
+         * @description Prüfung Template ↔ Katalog (P 2.1 Nr. 5); die Freigabe trifft danach ein Mensch.
+         */
+        HouseCompatibility: {
+            /** Domain Version */
+            domain_version: string;
+            /** Issues */
+            issues: components["schemas"]["HouseCompatibilityIssue"][];
+            /** Supported */
+            supported: boolean;
+        };
+        /** HouseCompatibilityIssue */
+        HouseCompatibilityIssue: {
+            /** Code */
+            code: string;
+            /** Element Id */
+            element_id: string | null;
+            /** Ref Id */
+            ref_id: string | null;
+            /** Slot Id */
+            slot_id: string | null;
+        };
+        /**
+         * HouseCompatibilityOut
+         * @description Prüfbefund aus `engine` für die Katalogversion des Entwurfs.
+         */
+        HouseCompatibilityOut: {
+            /** Approved At */
+            approved_at: string | null;
+            /** Approved By */
+            approved_by: string | null;
+            /** Catalog Version */
+            catalog_version: number;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Checked By */
+            checked_by: string | null;
+            /** Domain Version */
+            domain_version: string;
+            /** Issues */
+            issues: components["schemas"]["HouseCompatibilityIssue"][];
+            /** Supported */
+            supported: boolean;
+        };
+        /** HouseCompatibilityRequest */
+        HouseCompatibilityRequest: {
+            catalog: components["schemas"]["HouseCatalog"];
+            template: components["schemas"]["HouseTemplate"];
+        };
+        /**
+         * HouseConfiguration
+         * @description Nur Auswahl: keine Geometrie, keine Mengen, keine Preise (P 2 Nr. 2).
+         */
+        HouseConfiguration: {
+            /** Selections */
+            selections: {
+                [key: string]: components["schemas"]["HouseSlotSelection"];
+            };
+        };
+        /**
+         * HouseDoorChoice
+         * @description Vom Büro gesetzt; `opening_id` null heißt ausdrücklich keine.
+         */
+        HouseDoorChoice: {
+            /** Opening Id */
+            opening_id: string | null;
+        };
+        /** HouseDoorType */
+        HouseDoorType: {
+            /** Height */
+            height: number;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+            /** Width */
+            width: number;
+        };
+        /**
+         * HouseDraftDecisions
+         * @description Was das Büro im Entwurf bestätigt oder ergänzt; ohne Angabe gilt der Vorschlag des Imports.
+         */
+        HouseDraftDecisions: {
+            /** Confirmed Splits */
+            confirmed_splits: string[];
+            /** Defaults */
+            defaults: {
+                [key: string]: string;
+            };
+            /** Element Defaults */
+            element_defaults: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            entrance: components["schemas"]["HouseDoorChoice"] | null;
+            /** Facade Roles */
+            facade_roles: {
+                [key: string]: "street" | "garden" | "side_left" | "side_right";
+            };
+            garage_door: components["schemas"]["HouseDoorChoice"] | null;
+            /** Ground Floor Offset */
+            ground_floor_offset: number | null;
+            name: components["schemas"]["HouseText"] | null;
+            /** Room Types */
+            room_types: {
+                [key: string]: string;
+            };
+            /** Zone Types */
+            zone_types: {
+                [key: string]: string;
+            };
+        };
+        /** HouseEdgePosition */
+        HouseEdgePosition: {
+            /** Edge */
+            edge: number;
+            /** Position */
+            position: number;
+        };
+        /** HouseEdgeRole */
+        HouseEdgeRole: {
+            /** Edge */
+            edge: number;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "street" | "garden" | "side_left" | "side_right";
+        };
+        /** HouseEnergy */
+        HouseEnergy: {
+            /** Wall U Values */
+            wall_u_values: components["schemas"]["HouseProfileUValue"][];
+            /** Window Shares */
+            window_shares: components["schemas"]["HouseWindowShare"][];
+        };
+        /** HouseEnvelopeLoop */
+        HouseEnvelopeLoop: {
+            /** Inner Polygon */
+            inner_polygon: components["schemas"]["HousePoint"][];
+            /** Level Id */
+            level_id: string;
+            /** Segments */
+            segments: components["schemas"]["HouseEnvelopeSegment"][];
+        };
+        /**
+         * HouseEnvelopeSegment
+         * @description Kante `i` der Bezugskontur, von Punkt `i` zu Punkt `i + 1`.
+         */
+        HouseEnvelopeSegment: {
+            /** Facade Role */
+            facade_role: ("street" | "garden" | "side_left" | "side_right") | null;
+            /** Id */
+            id: string;
+            /** Source Ifc Guid */
+            source_ifc_guid: string | null;
+        };
+        /** HouseEvaluateRequest */
+        HouseEvaluateRequest: {
+            candidates: components["schemas"]["HouseCandidatesRequest"] | null;
+            catalog: components["schemas"]["HouseCatalog"];
+            configuration: components["schemas"]["HouseConfiguration"];
+            template: components["schemas"]["HouseTemplate"];
+        };
+        /** HouseEvaluation */
+        HouseEvaluation: {
+            /** Candidates */
+            candidates: components["schemas"]["HouseCandidate"][] | null;
+            /** Domain Version */
+            domain_version: string;
+            energy: components["schemas"]["HouseEnergy"];
+            facts: components["schemas"]["HouseFacts"];
+            /** Notes */
+            notes: components["schemas"]["HouseResolutionNote"][];
+            price: components["schemas"]["HousePrice"];
+            /** Quantities */
+            quantities: components["schemas"]["HouseQuantity"][];
+            /** Resolved */
+            resolved: components["schemas"]["HouseResolvedValue"][];
+            /** Rule Results */
+            rule_results: components["schemas"]["HouseRuleResult"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "valid" | "valid_with_warnings" | "with_deviations" | "blocked";
+        };
+        HouseExpr: components["schemas"]["HousePathExpr"] | components["schemas"]["HouseBinaryExpr"] | components["schemas"]["HouseLogicExpr"] | components["schemas"]["HouseLiteral"] | components["schemas"]["HouseLiteral"][];
+        /**
+         * HouseFacts
+         * @description Hausbeschreibung für die Prüfung auf dem Grundstück in Python (3.1, E-HM-4); ersetzt `HouseType`.
+         */
+        HouseFacts: {
+            /** Eave Height */
+            eave_height: number;
+            entrance: components["schemas"]["HouseEdgePosition"] | null;
+            /**
+             * Facade Material Class
+             * @enum {string}
+             */
+            facade_material_class: "render" | "wood" | "brick" | "stone" | "concrete" | "metal" | "glass" | "slate" | "clay_tile" | "zinc" | "composite" | "vegetation" | "other";
+            /** Facade Outline */
+            facade_outline: components["schemas"]["HousePoint"][];
+            /** Facade Roles */
+            facade_roles: components["schemas"]["HouseEdgeRole"][];
+            /** Floor Area */
+            floor_area: number;
+            garage_door: components["schemas"]["HouseEdgePosition"] | null;
+            /** Ground Floor Offset */
+            ground_floor_offset: number;
+            /** Projection Outline */
+            projection_outline: components["schemas"]["HousePoint"][];
+            /** Ridge Direction */
+            ridge_direction: ("x" | "y") | null;
+            /**
+             * Roof Form
+             * @enum {string}
+             */
+            roof_form: "gable" | "hip" | "mono_pitch" | "flat" | "mansard" | "other";
+            /**
+             * Roof Material Class
+             * @enum {string}
+             */
+            roof_material_class: "render" | "wood" | "brick" | "stone" | "concrete" | "metal" | "glass" | "slate" | "clay_tile" | "zinc" | "composite" | "vegetation" | "other";
+            /** Roof Slopes Deg */
+            roof_slopes_deg: number[];
+            /** Storeys */
+            storeys: number;
+            /** Top Height */
+            top_height: number;
+        };
+        /** HouseImportFinding */
+        HouseImportFinding: {
+            /** Code */
+            code: string;
+            /** Element Id */
+            element_id: string | null;
+            /** Ifc Guid */
+            ifc_guid: string | null;
+            /** Params */
+            params: {
+                [key: string]: string | number | null;
+            };
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "error" | "open" | "warning" | "info";
+        };
+        /**
+         * HouseImportOpening
+         * @description Maße aus dem IFC und der Typ, den der Import im Katalog dafür gefunden hat.
+         */
+        HouseImportOpening: {
+            /** Element Id */
+            element_id: string;
+            /** Head Height */
+            head_height: number | null;
+            /** Height */
+            height: number | null;
+            /** Ifc Guid */
+            ifc_guid: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "window" | "door";
+            /** Option Value Id */
+            option_value_id: string | null;
+            /** Shutter Box Height */
+            shutter_box_height: number;
+            /** Slot Id */
+            slot_id: string | null;
+            /** Source */
+            source: ("catalog" | "office") | null;
+            /** Width */
+            width: number | null;
+        };
+        /** HouseImportReport */
+        HouseImportReport: {
+            /** Findings */
+            findings: components["schemas"]["HouseImportFinding"][];
+            /** Openings */
+            openings: components["schemas"]["HouseImportOpening"][];
+            /** Publishable */
+            publishable: boolean;
+            summary: components["schemas"]["HouseImportSummary"];
+            /** Zones */
+            zones: components["schemas"]["HouseImportZone"][];
+        };
+        /** HouseImportSummary */
+        HouseImportSummary: {
+            /** Doors */
+            doors: number;
+            /** Exterior Walls */
+            exterior_walls: number;
+            /** Inner Area */
+            inner_area: number | null;
+            /** Inner Depth */
+            inner_depth: number | null;
+            /** Inner Width */
+            inner_width: number | null;
+            /** Interior Walls */
+            interior_walls: number;
+            /** Roof Levels */
+            roof_levels: number;
+            /** Rooms */
+            rooms: number;
+            /** Storeys */
+            storeys: number;
+            /** Windows */
+            windows: number;
+            /** Zones */
+            zones: number;
+        };
+        /**
+         * HouseImportZone
+         * @description Je Zone Quelle, Rohwert und Ergebnis (3.6); keine geht still verloren.
+         */
+        HouseImportZone: {
+            /** Ifc Guid */
+            ifc_guid: string;
+            /** Raw */
+            raw: string | null;
+            /**
+             * Result
+             * @enum {string}
+             */
+            result: "room" | "ignored" | "unrecognized";
+            /** Room Id */
+            room_id: string | null;
+            /** Room Type Id */
+            room_type_id: string | null;
+            /** Share */
+            share: number | null;
+            /** Source */
+            source: ("type" | "category" | "object_type" | "long_name" | "name" | "classification") | "office" | null;
+            /** Values */
+            values: components["schemas"]["HouseImportZoneSource"][];
+        };
+        /** HouseImportZoneSource */
+        HouseImportZoneSource: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "type" | "category" | "object_type" | "long_name" | "name" | "classification";
+            /** Raw */
+            raw: string;
+        };
+        /** HouseInteriorWall */
+        HouseInteriorWall: {
+            /** Adjacent Room Ids */
+            adjacent_room_ids: string[];
+            /** Axis */
+            axis: [
+                components["schemas"]["HousePoint"],
+                components["schemas"]["HousePoint"]
+            ];
+            /** Id */
+            id: string;
+            /** Level Id */
+            level_id: string;
+            /** Source Ifc Guid */
+            source_ifc_guid: string | null;
+            /** Thickness */
+            thickness: number;
+        };
+        /** HouseJobOut */
+        HouseJobOut: {
+            /** Attempts */
+            attempts: number;
+            /** Max Attempts */
+            max_attempts: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed";
+        };
+        /** HouseLevel */
+        HouseLevel: {
+            /** Elevation */
+            elevation: number;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        HouseLiteral: string | number | boolean | null;
+        /** HouseLogicExpr */
+        HouseLogicExpr: {
+            /** Args */
+            args: components["schemas"]["HouseExpr"][];
+            /**
+             * Op
+             * @enum {string}
+             */
+            op: "and" | "or" | "not" | "exists";
+        };
+        /** HouseMaterial */
+        HouseMaterial: {
+            /** Carbon Per M3 */
+            carbon_per_m3: number | null;
+            /** Conductivity */
+            conductivity: number | null;
+            /** Density */
+            density: number | null;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+        };
+        /** HouseOpening */
+        HouseOpening: {
+            /** Adjacent Room Ids */
+            adjacent_room_ids: string[];
+            /** Host Id */
+            host_id: string;
+            /**
+             * Host Kind
+             * @enum {string}
+             */
+            host_kind: "envelope_segment" | "interior_wall";
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "window" | "door";
+            /** Offset Along Host */
+            offset_along_host: number;
+            /** Source Ifc Guid */
+            source_ifc_guid: string | null;
+        };
+        /**
+         * HouseOptionAssigns
+         * @description Ein Wert weist immer einen vollständigen Typ zu, nie eine Ergänzung (P 8.1).
+         */
+        HouseOptionAssigns: {
+            /** Door Type Id */
+            door_type_id: string | null;
+            /** Roof Type Id */
+            roof_type_id: string | null;
+            /** Wall Profile Id */
+            wall_profile_id: string | null;
+            /** Window Type Id */
+            window_type_id: string | null;
+        };
+        /** HouseOptionCondition */
+        HouseOptionCondition: {
+            /** Option Value Id */
+            option_value_id: string;
+            /** Slot Id */
+            slot_id: string;
+        };
+        /** HouseOptionValue */
+        HouseOptionValue: {
+            assigns: components["schemas"]["HouseOptionAssigns"];
+            available_when: components["schemas"]["HouseExpr"];
+            description: components["schemas"]["HouseText"] | null;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Slot Id */
+            slot_id: string;
+            /** Sort Order */
+            sort_order: number;
+            unavailable_reason: components["schemas"]["HouseText"] | null;
+        };
+        /** HousePathExpr */
+        HousePathExpr: {
+            /** Path */
+            path: string;
+        };
+        /** HousePoint */
+        HousePoint: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
+        /**
+         * HousePrice
+         * @description Exakte Richtpreise für Snapshot und Dossier; der Kunde sieht nur gerundete Beträge (E-HM-2, L1).
+         */
+        HousePrice: {
+            /** Base Amount */
+            base_amount: number;
+            /**
+             * Currency
+             * @constant
+             */
+            currency: "EUR";
+            /** Deltas */
+            deltas: {
+                [key: string]: number;
+            };
+            /** Gross Amount */
+            gross_amount: number;
+            /**
+             * Is Estimate
+             * @constant
+             */
+            is_estimate: true;
+            /** Items */
+            items: components["schemas"]["HousePriceItem"][];
+            /**
+             * Market
+             * @constant
+             */
+            market: "FR";
+            /** Net Amount */
+            net_amount: number;
+            /** Vat Amount */
+            vat_amount: number;
+            /** Vat Rate */
+            vat_rate: number;
+        };
+        /**
+         * HousePriceEntry
+         * @description Sagt nur, was wie viel kostet (P 5.2); jeder Betrag stammt aus genau einem Eintrag (P 2.1 Nr. 11).
+         */
+        HousePriceEntry: {
+            /** Id */
+            id: string;
+            /** Target Id */
+            target_id: string;
+            /**
+             * Target Kind
+             * @enum {string}
+             */
+            target_kind: "wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service";
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "m" | "m2" | "m3" | "pcs" | "lump_sum" | "percent";
+            /** Value */
+            value: number;
+        };
+        /** HousePriceItem */
+        HousePriceItem: {
+            /** Amount */
+            amount: number;
+            /** Element Ids */
+            element_ids: string[];
+            label: components["schemas"]["HouseText"];
+            /** Price Entry Id */
+            price_entry_id: string;
+            /** Pricing Rule Id */
+            pricing_rule_id: string;
+            /** Quantity */
+            quantity: number;
+            /** Quantity Key */
+            quantity_key: string | null;
+            /** Ref Id */
+            ref_id: string | null;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "m" | "m2" | "m3" | "pcs" | "lump_sum" | "percent";
+            /** Unit Price */
+            unit_price: number;
+        };
+        /**
+         * HousePricingRule
+         * @description Sagt nur, welche Menge mit welchem Eintrag verrechnet wird (P 9.2); enthält keine Beträge.
+         */
+        HousePricingRule: {
+            applies_to: components["schemas"]["HouseOptionCondition"] | null;
+            /** By Target */
+            by_target: ("wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service") | null;
+            /** Entry Id */
+            entry_id: string | null;
+            /** Id */
+            id: string;
+            label: components["schemas"]["HouseText"];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "per_unit" | "lump_sum" | "percent";
+            /** Order */
+            order: number;
+            /** Percent Base */
+            percent_base: string | null;
+            /** Quantity Key */
+            quantity_key: string | null;
+        };
+        /** HouseProfileUValue */
+        HouseProfileUValue: {
+            /** U Value */
+            u_value: number;
+            /** Wall Profile Id */
+            wall_profile_id: string;
+        };
+        /** HouseQuantity */
+        HouseQuantity: {
+            /** Element Ids */
+            element_ids: string[];
+            /** Key */
+            key: string;
+            /** Ref Id */
+            ref_id: string | null;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "m" | "m2" | "m3" | "pcs";
+            /** Value */
+            value: number;
+        };
+        /**
+         * HouseResolutionNote
+         * @description Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert.
+         */
+        HouseResolutionNote: {
+            /** Applied Value Id */
+            applied_value_id: string;
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "unavailable" | "room_override_tie";
+            /** Element Id */
+            element_id: string;
+            reason: components["schemas"]["HouseText"] | null;
+            /**
+             * Skipped Level
+             * @enum {string}
+             */
+            skipped_level: "element" | "room" | "global";
+            /** Skipped Value Ids */
+            skipped_value_ids: string[];
+            /** Slot Id */
+            slot_id: string;
+        };
+        /** HouseResolvedValue */
+        HouseResolvedValue: {
+            /** Available */
+            available: boolean;
+            /** Element Id */
+            element_id: string;
+            /** Option Value Id */
+            option_value_id: string;
+            /** Slot Id */
+            slot_id: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "element" | "room" | "global" | "default";
+        };
+        /** HouseRevealFinish */
+        HouseRevealFinish: {
+            /** Material Id */
+            material_id: string;
+        };
+        /** HouseRoofLayer */
+        HouseRoofLayer: {
+            /** Material Id */
+            material_id: string;
+            /** Thickness */
+            thickness: number;
+        };
+        /**
+         * HouseRoofPlacement
+         * @description Platzhalter-Dach (3.6): nur Lage und Maße, Form und Aufbau wählt der Konfigurator (E-HM-10).
+         */
+        HouseRoofPlacement: {
+            /** Bearing Height */
+            bearing_height: number;
+            /** Eave Overhang */
+            eave_overhang: number;
+            /** Parapet Height */
+            parapet_height: number;
+            /** Verge Overhang */
+            verge_overhang: number;
+        };
+        /**
+         * HouseRoofType
+         * @description Dachaufbau (E-HM-10); `kind` sagt, zu welchen Dachformen er passt.
+         */
+        HouseRoofType: {
+            /** Build Up */
+            build_up: components["schemas"]["HouseRoofLayer"][];
+            /** Green */
+            green: boolean;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "flat" | "pitched";
+            /**
+             * Material Class
+             * @enum {string}
+             */
+            material_class: "render" | "wood" | "brick" | "stone" | "concrete" | "metal" | "glass" | "slate" | "clay_tile" | "zinc" | "composite" | "vegetation" | "other";
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+        };
+        /**
+         * HouseRoom
+         * @description Raum; Fläche nur aus dem Umriss, Name aus dem Raumtyp (E-HM-23).
+         */
+        HouseRoom: {
+            /** Id */
+            id: string;
+            /** Level Id */
+            level_id: string;
+            /** Polygon */
+            polygon: components["schemas"]["HousePoint"][];
+            /** Room Type Id */
+            room_type_id: string;
+            /** Source Ifc Guid */
+            source_ifc_guid: string | null;
+        };
+        /** HouseRoomType */
+        HouseRoomType: {
+            /** Aliases */
+            aliases: string[];
+            description: components["schemas"]["HouseText"] | null;
+            /** Display Key */
+            display_key: string;
+            /** Exterior Door Role */
+            exterior_door_role: ("entrance" | "garage_door") | null;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Override Priority */
+            override_priority: number;
+        };
+        /**
+         * HouseRule
+         * @description Technische Regel des Katalogs (P 8.3); `when` wahr heißt: trifft zu.
+         */
+        HouseRule: {
+            /** Id */
+            id: string;
+            message: components["schemas"]["HouseText"];
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "info" | "warning" | "block";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "selection" | "element" | "building";
+            source: components["schemas"]["HouseRuleSource"] | null;
+            suggestion: components["schemas"]["HouseSuggestion"] | null;
+            target: components["schemas"]["HouseSelector"] | null;
+            when: components["schemas"]["HouseExpr"];
+        };
+        /** HouseRuleResult */
+        HouseRuleResult: {
+            /** Code */
+            code: string;
+            /** Element Ids */
+            element_ids: string[];
+            message: components["schemas"]["HouseText"] | null;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "info" | "warning" | "block" | "deviation";
+            /** Params */
+            params: {
+                [key: string]: number | string;
+            };
+            /** Rule Id */
+            rule_id: string | null;
+            source: components["schemas"]["HouseRuleSource"] | null;
+            suggestion: components["schemas"]["HouseSuggestion"] | null;
+        };
+        /** HouseRuleSource */
+        HouseRuleSource: {
+            /** Document */
+            document: string | null;
+            /** Jurisdiction */
+            jurisdiction: string | null;
+            /** Reference */
+            reference: string | null;
+            /** Retrieved At */
+            retrieved_at: string | null;
+            /** Section */
+            section: string | null;
+        };
+        /** HouseSelector */
+        HouseSelector: {
+            /**
+             * Element Kind
+             * @enum {string}
+             */
+            element_kind: "envelope_segment" | "interior_wall" | "opening" | "roof" | "room" | "building";
+            where: components["schemas"]["HouseExpr"];
+        };
+        /** HouseSlab */
+        HouseSlab: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ground" | "floor" | "roof";
+            /** Level Id */
+            level_id: string;
+            /** Source Ifc Guid */
+            source_ifc_guid: string | null;
+            /** Thickness */
+            thickness: number;
+        };
+        /** HouseSlot */
+        HouseSlot: {
+            /** Category */
+            category: string;
+            description: components["schemas"]["HouseText"] | null;
+            effects: components["schemas"]["HouseSlotEffects"];
+            /**
+             * Granularity
+             * @enum {string}
+             */
+            granularity: "global" | "per_element" | "per_room";
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Parent Slot Id */
+            parent_slot_id: string | null;
+            /** Sort Order */
+            sort_order: number;
+            target: components["schemas"]["HouseSelector"];
+            /**
+             * Value Type
+             * @constant
+             */
+            value_type: "single";
+        };
+        /** HouseSlotChoiceOut */
+        HouseSlotChoiceOut: {
+            /** Category */
+            category: string;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Values */
+            values: components["schemas"]["HouseChoiceOut"][];
+        };
+        /**
+         * HouseSlotEffects
+         * @description Nur Hinweis für Neuberechnung; die Korrektheit hängt nie davon ab (P 8.1).
+         */
+        HouseSlotEffects: {
+            /** Appearance */
+            appearance: boolean;
+            /** Geometry */
+            geometry: boolean;
+            /** Pricing */
+            pricing: boolean;
+            /** Quantity */
+            quantity: boolean;
+            /** Rules */
+            rules: boolean;
+        };
+        /** HouseSlotSelection */
+        HouseSlotSelection: {
+            /** Element Overrides */
+            element_overrides: {
+                [key: string]: components["schemas"]["HouseSlotValue"];
+            };
+            /** Room Overrides */
+            room_overrides: {
+                [key: string]: components["schemas"]["HouseSlotValue"];
+            };
+            value: components["schemas"]["HouseSlotValue"] | null;
+        };
+        /** HouseSlotValue */
+        HouseSlotValue: {
+            /** Option Value Id */
+            option_value_id: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "option";
+        };
+        /** HouseSourceIfc */
+        HouseSourceIfc: {
+            /** File Name */
+            file_name: string;
+            /** Ifc Schema */
+            ifc_schema: string;
+            /**
+             * Imported At
+             * Format: date-time
+             */
+            imported_at: string;
+            /** Sha256 */
+            sha256: string;
+        };
+        /** HouseSuggestion */
+        HouseSuggestion: {
+            /** Element Ids */
+            element_ids: string[];
+            label: components["schemas"]["HouseText"];
+            /** Option Value Id */
+            option_value_id: string;
+            /** Slot Id */
+            slot_id: string;
+        };
+        /**
+         * HouseTemplate
+         * @description Haustyp in einer Version, unveränderlich nach der Veröffentlichung (P 5.1, L4). Keine Preise.
+         */
+        HouseTemplate: {
+            /** Defaults */
+            defaults: {
+                [key: string]: string;
+            };
+            /** Element Defaults */
+            element_defaults: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            /** Entrance Opening Id */
+            entrance_opening_id: string | null;
+            /** Envelope */
+            envelope: components["schemas"]["HouseEnvelopeLoop"][];
+            /** Garage Door Opening Id */
+            garage_door_opening_id: string | null;
+            /** Ground Floor Offset */
+            ground_floor_offset: number;
+            /** Interior Walls */
+            interior_walls: components["schemas"]["HouseInteriorWall"][];
+            /** Levels */
+            levels: components["schemas"]["HouseLevel"][];
+            name: components["schemas"]["HouseText"];
+            /** Openings */
+            openings: components["schemas"]["HouseOpening"][];
+            roof: components["schemas"]["HouseRoofPlacement"];
+            /** Rooms */
+            rooms: components["schemas"]["HouseRoom"][];
+            /**
+             * Schema Version
+             * @constant
+             */
+            schema_version: 1;
+            /** Slabs */
+            slabs: components["schemas"]["HouseSlab"][];
+            /** Slug */
+            slug: string;
+            source_ifc: components["schemas"]["HouseSourceIfc"] | null;
+        };
+        /** HouseTemplateSummaryOut */
+        HouseTemplateSummaryOut: {
+            /** Current Version */
+            current_version: number | null;
+            name: components["schemas"]["HouseText"] | null;
+            /** Slug */
+            slug: string;
+            /** Versions */
+            versions: components["schemas"]["HouseTemplateVersionSummaryOut"][];
+        };
+        /** HouseTemplateVersionOut */
+        HouseTemplateVersionOut: {
+            catalog: components["schemas"]["HouseCatalogChoicesOut"];
+            compatibility: components["schemas"]["HouseCompatibilityOut"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Current */
+            current: boolean;
+            decisions: components["schemas"]["HouseDraftDecisions"];
+            /** Ifc File Name */
+            ifc_file_name: string;
+            /** Ifc Sha256 */
+            ifc_sha256: string;
+            /** Ifc Size Bytes */
+            ifc_size_bytes: number;
+            job: components["schemas"]["HouseJobOut"] | null;
+            /** People */
+            people: {
+                [key: string]: string;
+            };
+            /** Published At */
+            published_at: string | null;
+            /** Published By */
+            published_by: string | null;
+            /** Rejected At */
+            rejected_at: string | null;
+            /** Rejected By */
+            rejected_by: string | null;
+            report: components["schemas"]["HouseImportReport"] | null;
+            /** Retired At */
+            retired_at: string | null;
+            /** Retired By */
+            retired_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "reviewed" | "published" | "rejected" | "retired";
+            template: components["schemas"]["HouseTemplate"] | null;
+            /** Version */
+            version: number;
+        };
+        /** HouseTemplateVersionSummaryOut */
+        HouseTemplateVersionSummaryOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Ifc File Name */
+            ifc_file_name: string;
+            /** Importing */
+            importing: boolean;
+            /** Publishable */
+            publishable: boolean | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "reviewed" | "published" | "rejected" | "retired";
+            /** Version */
+            version: number;
+        };
+        /**
+         * HouseText
+         * @description Text in den Sprachen der Oberfläche (D7: Französisch führend, Deutsch zusätzlich).
+         */
+        HouseText: {
+            /** De */
+            de: string;
+            /** Fr */
+            fr: string;
+        };
+        /** HouseWallLayer */
+        HouseWallLayer: {
+            /** Id */
+            id: string;
+            /** Material Id */
+            material_id: string;
+            /** Structural */
+            structural: boolean;
+            /** Thermal */
+            thermal: boolean;
+            /** Thickness */
+            thickness: number;
+        };
+        /** HouseWallProfile */
+        HouseWallProfile: {
+            bearing: components["schemas"]["HouseBearing"] | null;
+            /** Id */
+            id: string;
+            /** Layer Ids */
+            layer_ids: string[];
+            /**
+             * Material Class
+             * @enum {string}
+             */
+            material_class: "render" | "wood" | "brick" | "stone" | "concrete" | "metal" | "glass" | "slate" | "clay_tile" | "zinc" | "composite" | "vegetation" | "other";
+            name: components["schemas"]["HouseText"];
+            /** Opening Anchor Layer Id */
+            opening_anchor_layer_id: string;
+            reveal_finish: components["schemas"]["HouseRevealFinish"] | null;
+        };
+        /** HouseWindowShare */
+        HouseWindowShare: {
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "n" | "e" | "s" | "w";
+            /** Facade Area */
+            facade_area: number;
+            /** Ratio */
+            ratio: number;
+            /** Window Area */
+            window_area: number;
+        };
+        /** HouseWindowType */
+        HouseWindowType: {
+            /** G */
+            g: number | null;
+            /** Head Height */
+            head_height: number;
+            /** Height */
+            height: number;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+            /** Shutter Box Height */
+            shutter_box_height: number;
+            /** Uw */
+            uw: number | null;
+            /** Width */
+            width: number;
         };
         /** IgnoredZoneOut */
         IgnoredZoneOut: {
@@ -7045,6 +8512,277 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FlagOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_catalog_versions_api_v1_admin_house_catalogs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseCatalogVersionOut"][];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_admin_house_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateSummaryOut"][];
+                };
+            };
+        };
+    };
+    upload_ifc_api_v1_admin_house_templates__slug__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_version_api_v1_admin_house_templates__slug__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_version_api_v1_admin_house_templates__slug__versions__version__check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_decisions_api_v1_admin_house_templates__slug__versions__version__decisions_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HouseDraftDecisions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_version_api_v1_admin_house_templates__slug__versions__version__publish_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_version_api_v1_admin_house_templates__slug__versions__version__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_version_api_v1_admin_house_templates__slug__versions__version__retire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseTemplateVersionOut"];
                 };
             };
             /** @description Validation Error */

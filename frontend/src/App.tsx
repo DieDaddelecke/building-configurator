@@ -8,6 +8,8 @@ import { Anfragen } from "./pages/buero/Anfragen";
 import { BueroLayout } from "./pages/buero/BueroLayout";
 import { BueroStart } from "./pages/buero/BueroStart";
 import { GrundstueckBuero, Grundstuecke } from "./pages/buero/Grundstuecke";
+import { Hausmodell } from "./pages/buero/katalog/Hausmodell";
+import { HausmodellVersion } from "./pages/buero/katalog/HausmodellVersion";
 import { KatalogLayout } from "./pages/buero/katalog/KatalogLayout";
 import { KatalogLinienOptionen } from "./pages/buero/katalog/KatalogLinienOptionen";
 import { KatalogPreise } from "./pages/buero/katalog/KatalogPreise";
@@ -59,6 +61,8 @@ export const routes: RouteObject[] = [
           { path: "typen/:slug/:version", element: <KatalogTyp /> },
           { path: "linien-optionen", element: <KatalogLinienOptionen /> },
           { path: "preise", element: <KatalogPreise /> },
+          { path: "hausmodell", element: <Hausmodell /> },
+          { path: "hausmodell/:slug/:version", element: <HausmodellVersion /> },
         ],
       },
     ],

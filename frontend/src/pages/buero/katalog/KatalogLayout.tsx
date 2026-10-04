@@ -1,4 +1,5 @@
-/** Büro: Rahmen der Katalogpflege (Modul H1, Plan H1 4.4) mit Unterreitern für Typen, Linien/Optionen und Preise. */
+/** Büro: Rahmen der Katalogpflege (Modul H1, Plan H1 4.4) mit Unterreitern für Typen, Linien/Optionen, Preise
+ * und das Hausmodell aus IFC (docs/PLAN_HAUSMODELL.md 3.6). */
 
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useOutletContext } from "react-router";
@@ -12,6 +13,7 @@ const TABS = [
   { to: "/buero/katalog", key: "types", end: true },
   { to: "/buero/katalog/linien-optionen", key: "linesOptions", end: false },
   { to: "/buero/katalog/preise", key: "prices", end: false },
+  { to: "/buero/katalog/hausmodell", key: "houseModel", end: false },
 ] as const;
 
 export function KatalogLayout() {
