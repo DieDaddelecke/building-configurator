@@ -52,16 +52,13 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+      # pnpm-Version aus packageManager der Wurzel-package.json; Lockfile des Workspace im Wurzelordner
       - uses: pnpm/action-setup@v4
-        with:
-          # Version aus packageManager; package.json liegt nicht im Wurzelordner
-          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --filter emprise-frontend...
       - name: API-Typen aktuell
         run: pnpm run api:types && git diff --exit-code -- src/api/schema.d.ts
       - run: pnpm run lint
@@ -69,9 +66,41 @@ jobs:
       - run: pnpm run test
       - run: pnpm run build
 
+  # Rechenkern und Rechendienst des Hausmodells (docs/PLAN_HAUSMODELL.md 3.2, 3.3)
+  domain:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm-Version aus packageManager der Wurzel-package.json; Lockfile des Workspace im Wurzelordner
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @emprise/engine...
+      # openapi.json selbst prüft der Backend-Job (test_openapi_contract.py)
+      - name: Vertragstypen aktuell
+        working-directory: packages/domain
+        run: pnpm run contract:types && git diff --exit-code -- src/contract.gen.ts
+      - name: Rechenkern
+        working-directory: packages/domain
+        run: pnpm run lint && pnpm run typecheck && pnpm run test
+      - name: Szenarien (P 19.7)
+        working-directory: packages/domain
+        run: pnpm run scenarios
+      - name: Rechendienst
+        working-directory: engine
+        run: pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build
+      - name: Bündel startet
+        working-directory: engine
+        run: |
+          PORT=8090 node dist/server.mjs &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:8090/health && exit 0; sleep 0.5; done
+          exit 1
+
   e2e:
     runs-on: ubuntu-24.04
-    needs: [backend, frontend]
+    needs: [backend, frontend, domain]
     # compose.e2e.yaml kappt den Zugang zu fremden Diensten (A28); gilt für alle Schritte des Jobs
     env:
       COMPOSE_FILE: compose.yaml:compose.e2e.yaml
@@ -92,18 +121,15 @@ jobs:
         run: |
           docker compose cp backend/tests api:/tmp/tests
           docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
+      # pnpm-Version aus packageManager der Wurzel-package.json; Lockfile des Workspace im Wurzelordner
       - uses: pnpm/action-setup@v4
-        with:
-          # Version aus packageManager; package.json liegt nicht im Wurzelordner
-          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
       - working-directory: frontend
         run: |
-          pnpm install --frozen-lockfile
+          pnpm install --frozen-lockfile --filter emprise-frontend...
           pnpm exec playwright install --with-deps chromium
           pnpm run e2e
         env:
@@ -131,7 +157,8 @@ jobs:
       - name: Images bauen
         run: |
           docker build -t emprise-backend:ci --target runtime backend
-          docker build -t emprise-web:ci frontend
+          docker build -f frontend/Dockerfile -t emprise-web:ci .
+          docker build -f engine/Dockerfile -t emprise-engine:ci .
       - name: Image-Scan Backend
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -143,6 +170,13 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: emprise-web:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Image-Scan Rechendienst
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: emprise-engine:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"

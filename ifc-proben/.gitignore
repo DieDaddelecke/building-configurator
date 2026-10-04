@@ -1,0 +1,4 @@
+# Probe- und Referenzdateien aus Archicad (docs/PLAN_HAUSMODELL.md, HM0 und HM3).
+# Büro-Modelle bleiben lokal: alles in diesem Ordner außer dieser Datei ist von Git ausgenommen.
+*
+!.gitignore

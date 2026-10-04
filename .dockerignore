@@ -1,0 +1,13 @@
+# Build-Kontext der Images web und engine ist der Wurzelordner (pnpm-Workspace, docs/PLAN_HAUSMODELL.md 3.2).
+# Positivliste: Neue Workspace-Pakete hier eintragen. Das Backend baut aus backend/ mit eigener .dockerignore.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!frontend
+!packages
+!engine
+**/node_modules
+**/dist
+frontend/test-results
+frontend/playwright-report

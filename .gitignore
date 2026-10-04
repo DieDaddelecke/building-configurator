@@ -30,7 +30,4 @@ frontend/dist/
 frontend/test-results/
 frontend/playwright-report/
 frontend/blob-report/
-
-# Werkzeuge des Mockups (esbuild wird mit --no-save installiert)
-/package.json
-/package-lock.json
+engine/dist/

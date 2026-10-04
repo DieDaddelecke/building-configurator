@@ -101,7 +101,8 @@ services:
 
   web:
     build:
-      context: frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     image: emprise-web:local
     environment:
       API_UPSTREAM: api:8000
@@ -110,6 +111,18 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+  # Rechendienst des Hausmodells (docs/PLAN_HAUSMODELL.md 3.3); ohne Port, nur im Compose-Netz
+  engine:
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+    image: emprise-engine:local
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8090/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   # Tests und Werkzeuge mit Dev-Abhängigkeiten: docker compose run --rm backend-dev pytest
   backend-dev:
@@ -121,6 +134,10 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
+      # Testdaten des Rechenkerns für den Vertragstest (tests/unit/test_house_contract.py)
+      - ./packages/domain:/packages/domain:ro
+      # Probedateien des Büros, nur lokal (ifc-proben/.gitignore); ohne sie überspringt pytest die Tests
+      - ./ifc-proben:/ifc-proben:ro
     environment:
       <<: *backend-env
       EMPRISE_ENV: test

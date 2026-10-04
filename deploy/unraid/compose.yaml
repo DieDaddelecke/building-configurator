@@ -116,7 +116,8 @@ services:
   web:
     image: emprise-web:${EMPRISE_RELEASE:-current}
     build:
-      context: ../../frontend
+      context: ../..
+      dockerfile: frontend/Dockerfile
     restart: unless-stopped
     environment:
       API_UPSTREAM: api:8000
@@ -128,6 +129,24 @@ services:
       api:
         condition: service_healthy
     networks: [intern, extern]
+
+  # Rechendienst des Hausmodells (docs/PLAN_HAUSMODELL.md 3.3): ohne Zustand, nur im internen Netz
+  engine:
+    image: emprise-engine:${EMPRISE_RELEASE:-current}
+    build:
+      context: ../..
+      dockerfile: engine/Dockerfile
+      args:
+        RELEASE: ${EMPRISE_RELEASE:-current}
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    networks: [intern]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8090/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   backup:
     image: postgis/postgis:16-3.5

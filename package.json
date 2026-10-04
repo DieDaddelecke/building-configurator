@@ -1,0 +1,6 @@
+{
+  "name": "emprise-workspace",
+  "private": true,
+  "description": "pnpm-Workspace: frontend, packages/domain (Rechenkern), engine (Rechendienst); docs/PLAN_HAUSMODELL.md 3.2",
+  "packageManager": "pnpm@10.34.5"
+}

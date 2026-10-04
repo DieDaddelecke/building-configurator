@@ -1,0 +1,9 @@
+# Ein Workspace für Oberfläche, Rechenkern und Rechendienst (docs/PLAN_HAUSMODELL.md 3.2)
+packages:
+  - frontend
+  - packages/*
+  - engine
+
+# Installationsskripte nur für diese Pakete (pnpm 10 sperrt sie sonst); esbuild bündelt engine
+onlyBuiltDependencies:
+  - esbuild
