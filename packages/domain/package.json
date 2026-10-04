@@ -1,0 +1,30 @@
+{
+  "name": "@emprise/domain",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Rechenkern des Hausmodells, im Browser und im Dienst engine (docs/PLAN_HAUSMODELL.md 3.2)",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "contract:types": "node scripts/contract-types.ts",
+    "scenarios": "node scripts/scenarios.ts"
+  },
+  "dependencies": {
+    "clipper2-ts": "2.0.1-18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.1",
+    "eslint": "^10.10.0",
+    "fast-check": "^4.10.2",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  }
+}

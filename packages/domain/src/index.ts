@@ -1,0 +1,34 @@
+// Rechenkern des Hausmodells (docs/PLAN_HAUSMODELL.md 3.2): ohne React, DOM, Three.js oder Datenbank.
+export {
+  COMPATIBILITY_CODES,
+  GEOMETRY_ERROR_CODES,
+  MODEL_ERROR_CODES,
+  POLYGON_DEFECTS,
+  RULE_CODES,
+  type CompatibilityCode,
+  type GeometryErrorCode,
+  type ModelErrorCode,
+  type RuleCode,
+} from "./codes.ts";
+export { checkCompatibility } from "./compatibility.ts";
+export type * from "./contract.gen.ts";
+export { wallUValue } from "./energy.ts";
+export { ModelError } from "./errors.ts";
+export { evaluateExpr } from "./expr.ts";
+export type { DerivedModel, LayerGeometry, LoopGeometry, OpeningGeometry, RoofGeometry, RoomGeometry, SegmentGeometry } from "./derive.ts";
+export { deriveModel, DOMAIN_VERSION, evaluate, type EvaluateInput } from "./evaluate.ts";
+export { GeometryError, offsetPolygon, unionPolygons } from "./geometry/offset.ts";
+export {
+  areaSquareMetres,
+  counterClockwise,
+  MAX_COORDINATE,
+  perimeterMetres,
+  polygonDefect,
+  signedArea,
+  toMetres,
+  toUnits,
+  UNITS_PER_METRE,
+  type Point,
+  type Polygon,
+  type PolygonDefect,
+} from "./geometry/polygon.ts";

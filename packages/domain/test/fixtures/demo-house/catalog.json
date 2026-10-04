@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "market": "FR",
+  "currency": "EUR",
+  "vat_rate": 0.2,
+  "parameters": {
+    "parapet_min_upstand": 0.1,
+    "opening_deduction_threshold": 0.0,
+    "surface_resistance_inside": 0.13,
+    "surface_resistance_outside": 0.04
+  },
+  "materials": [
+    { "id": "concrete", "name": { "fr": "Béton", "de": "Beton" }, "conductivity": 2.1, "density": 2400.0, "carbon_per_m3": null, "render_key": "concrete" },
+    { "id": "mineral_wool", "name": { "fr": "Laine minérale", "de": "Mineralwolle" }, "conductivity": 0.035, "density": 40.0, "carbon_per_m3": null, "render_key": "insulation" },
+    { "id": "timber_battens", "name": { "fr": "Tasseaux bois", "de": "Holzlattung" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "battens" },
+    { "id": "brick_slips", "name": { "fr": "Parement brique", "de": "Ziegelvorsatzschale" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "brick" },
+    { "id": "wood_cladding", "name": { "fr": "Bardage bois", "de": "Holzverkleidung" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "wood" },
+    { "id": "roof_insulation", "name": { "fr": "Isolant de toiture", "de": "Dachdämmung" }, "conductivity": 0.035, "density": null, "carbon_per_m3": null, "render_key": "insulation" },
+    { "id": "roof_membrane", "name": { "fr": "Étanchéité", "de": "Abdichtung" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "membrane" },
+    { "id": "green_substrate", "name": { "fr": "Substrat et végétation", "de": "Substrat und Vegetation" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "vegetation" }
+  ],
+  "wall_layers": [
+    { "id": "layer.concrete_20", "material_id": "concrete", "thickness": 0.2, "structural": true, "thermal": true },
+    { "id": "layer.insulation_16", "material_id": "mineral_wool", "thickness": 0.16, "structural": false, "thermal": true },
+    { "id": "layer.battens_4", "material_id": "timber_battens", "thickness": 0.04, "structural": false, "thermal": false },
+    { "id": "layer.brick_8", "material_id": "brick_slips", "thickness": 0.08, "structural": false, "thermal": false },
+    { "id": "layer.wood_4", "material_id": "wood_cladding", "thickness": 0.04, "structural": false, "thermal": false }
+  ],
+  "wall_profiles": [
+    {
+      "id": "profile.standard",
+      "name": { "fr": "Standard", "de": "Standard" },
+      "layer_ids": ["layer.concrete_20", "layer.insulation_16"],
+      "opening_anchor_layer_id": "layer.insulation_16",
+      "bearing": null,
+      "reveal_finish": null,
+      "material_class": "render"
+    },
+    {
+      "id": "profile.brick",
+      "name": { "fr": "Parement brique ventilé", "de": "Vorgehängte Ziegelfassade" },
+      "layer_ids": ["layer.concrete_20", "layer.insulation_16", "layer.battens_4", "layer.brick_8"],
+      "opening_anchor_layer_id": "layer.insulation_16",
+      "bearing": { "supported_layer_ids": ["layer.brick_8"], "kind": "foundation_ledge" },
+      "reveal_finish": { "material_id": "brick_slips" },
+      "material_class": "brick"
+    },
+    {
+      "id": "profile.wood",
+      "name": { "fr": "Bardage bois", "de": "Holzfassade" },
+      "layer_ids": ["layer.concrete_20", "layer.insulation_16", "layer.battens_4", "layer.wood_4"],
+      "opening_anchor_layer_id": "layer.insulation_16",
+      "bearing": null,
+      "reveal_finish": { "material_id": "wood_cladding" },
+      "material_class": "wood"
+    }
+  ],
+  "window_types": [
+    { "id": "window.standard", "name": { "fr": "Fenêtre standard", "de": "Standardfenster" }, "width": 1.2, "height": 1.6, "head_height": 2.5, "shutter_box_height": 0.0, "uw": 1.3, "g": 0.6, "render_key": "window" },
+    { "id": "window.floor_length", "name": { "fr": "Porte-fenêtre", "de": "Bodentiefes Fenster" }, "width": 1.2, "height": 2.5, "head_height": 2.5, "shutter_box_height": 0.0, "uw": 1.3, "g": 0.6, "render_key": "window" }
+  ],
+  "door_types": [
+    { "id": "door.entrance", "name": { "fr": "Porte d'entrée", "de": "Haustür" }, "width": 1.0, "height": 2.1, "render_key": "entrance_door" },
+    { "id": "door.interior", "name": { "fr": "Porte intérieure", "de": "Innentür" }, "width": 0.8, "height": 2.1, "render_key": "interior_door" },
+    { "id": "door.interior_wide", "name": { "fr": "Porte intérieure large", "de": "Breite Innentür" }, "width": 0.9, "height": 2.1, "render_key": "interior_door" }
+  ],
+  "roof_types": [
+    {
+      "id": "roof.flat",
+      "name": { "fr": "Toiture-terrasse", "de": "Flachdach" },
+      "kind": "flat",
+      "build_up": [
+        { "material_id": "roof_insulation", "thickness": 0.15 },
+        { "material_id": "roof_membrane", "thickness": 0.01 }
+      ],
+      "green": false,
+      "material_class": "other",
+      "render_key": "flat_roof"
+    },
+    {
+      "id": "roof.green",
+      "name": { "fr": "Toiture végétalisée extensive", "de": "Gründach (extensiv)" },
+      "kind": "flat",
+      "build_up": [
+        { "material_id": "roof_insulation", "thickness": 0.15 },
+        { "material_id": "roof_membrane", "thickness": 0.01 },
+        { "material_id": "green_substrate", "thickness": 0.12 }
+      ],
+      "green": true,
+      "material_class": "vegetation",
+      "render_key": "green_roof"
+    }
+  ],
+  "room_types": [
+    { "id": "living", "name": { "fr": "Séjour", "de": "Wohnen/Essen" }, "description": null, "override_priority": 20, "display_key": "living", "aliases": ["SEJOUR", "SALON", "SALLE A MANGER", "SEJOUR/CUISINE", "PIECE DE VIE"], "exterior_door_role": null },
+    { "id": "kitchen", "name": { "fr": "Cuisine", "de": "Küche" }, "description": null, "override_priority": 20, "display_key": "kitchen", "aliases": ["CUISINE"], "exterior_door_role": null },
+    { "id": "bedroom", "name": { "fr": "Chambre", "de": "Schlafzimmer" }, "description": null, "override_priority": 10, "display_key": "bedroom", "aliases": ["CHAMBRE", "SUITE PARENTALE"], "exterior_door_role": null },
+    { "id": "bathroom", "name": { "fr": "Salle de bain", "de": "Bad" }, "description": null, "override_priority": 30, "display_key": "bathroom", "aliases": ["SALLE DE BAIN", "SALLE D'EAU", "SALLE DE BAIN/WC", "SALLE D'EAU/WC", "WC"], "exterior_door_role": null },
+    { "id": "corridor", "name": { "fr": "Dégagement", "de": "Flur" }, "description": null, "override_priority": 10, "display_key": "corridor", "aliases": ["DEGAGEMENT", "COULOIR", "ENTREE", "HALL"], "exterior_door_role": "entrance" }
+  ],
+  "slots": [
+    {
+      "id": "wall_profile",
+      "category": "envelope",
+      "name": { "fr": "Mur extérieur", "de": "Außenwand" },
+      "description": null,
+      "target": { "element_kind": "envelope_segment", "where": null },
+      "granularity": "global",
+      "value_type": "single",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 10
+    },
+    {
+      "id": "window_type",
+      "category": "openings",
+      "name": { "fr": "Fenêtres", "de": "Fenster" },
+      "description": null,
+      "target": { "element_kind": "opening", "where": { "op": "eq", "left": { "path": "element.kind" }, "right": "window" } },
+      "granularity": "per_element",
+      "value_type": "single",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 20
+    },
+    {
+      "id": "entrance_door",
+      "category": "openings",
+      "name": { "fr": "Porte d'entrée", "de": "Haustür" },
+      "description": null,
+      "target": {
+        "element_kind": "opening",
+        "where": {
+          "op": "and",
+          "args": [
+            { "op": "eq", "left": { "path": "element.kind" }, "right": "door" },
+            { "op": "eq", "left": { "path": "element.host_kind" }, "right": "envelope_segment" }
+          ]
+        }
+      },
+      "granularity": "global",
+      "value_type": "single",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 30
+    },
+    {
+      "id": "interior_door",
+      "category": "interior",
+      "name": { "fr": "Portes intérieures", "de": "Innentüren" },
+      "description": null,
+      "target": {
+        "element_kind": "opening",
+        "where": {
+          "op": "and",
+          "args": [
+            { "op": "eq", "left": { "path": "element.kind" }, "right": "door" },
+            { "op": "eq", "left": { "path": "element.host_kind" }, "right": "interior_wall" }
+          ]
+        }
+      },
+      "granularity": "per_element",
+      "value_type": "single",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 40
+    },
+    {
+      "id": "roof_type",
+      "category": "roof",
+      "name": { "fr": "Toiture", "de": "Dach" },
+      "description": null,
+      "target": { "element_kind": "roof", "where": null },
+      "granularity": "global",
+      "value_type": "single",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 50
+    }
+  ],
+  "option_values": [
+    { "id": "wall.standard", "slot_id": "wall_profile", "name": { "fr": "Enduit sur isolant", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": "profile.standard", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "wall.brick", "slot_id": "wall_profile", "name": { "fr": "Parement brique ventilé", "de": "Vorgehängte Ziegelfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.brick", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "wall.wood", "slot_id": "wall_profile", "name": { "fr": "Bardage bois", "de": "Holzfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.wood", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
+    { "id": "window.standard", "slot_id": "window_type", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": "window.standard", "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    {
+      "id": "window.floor_length",
+      "slot_id": "window_type",
+      "name": { "fr": "Porte-fenêtre", "de": "Bodentief" },
+      "description": null,
+      "assigns": { "wall_profile_id": null, "window_type_id": "window.floor_length", "door_type_id": null, "roof_type_id": null },
+      "available_when": { "op": "not", "args": [{ "op": "contains", "left": { "path": "element.adjacent_rooms.room_type_id" }, "right": "bathroom" }] },
+      "unavailable_reason": { "fr": "Les portes-fenêtres ne sont pas disponibles dans la salle de bain.", "de": "Bodentiefe Fenster sind im Bad nicht verfügbar." },
+      "sort_order": 20
+    },
+    { "id": "door.entrance", "slot_id": "entrance_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.entrance", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "door.interior", "slot_id": "interior_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "door.interior_wide", "slot_id": "interior_door", "name": { "fr": "Large", "de": "Breit" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior_wide", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "roof.flat", "slot_id": "roof_type", "name": { "fr": "Toiture-terrasse", "de": "Flachdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.flat" }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "roof.green", "slot_id": "roof_type", "name": { "fr": "Toiture végétalisée", "de": "Gründach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.green" }, "available_when": null, "unavailable_reason": null, "sort_order": 20 }
+  ],
+  "rules": [
+    {
+      "id": "parapet_upstand",
+      "scope": "building",
+      "target": null,
+      "when": { "op": "lt", "left": { "path": "building.parapet_upstand" }, "right": { "path": "parameter.parapet_min_upstand" } },
+      "outcome": "block",
+      "message": { "fr": "L'acrotère doit dépasser la toiture d'au moins 10 cm.", "de": "Die Attika muss den Dachaufbau um mindestens 10 cm überragen." },
+      "suggestion": { "slot_id": "roof_type", "option_value_id": "roof.flat", "element_ids": [], "label": { "fr": "Choisir la toiture-terrasse", "de": "Flachdach wählen" } },
+      "source": null
+    }
+  ],
+  "pricing_rules": [
+    { "id": "base", "label": { "fr": "Prestation de base", "de": "Basisleistung" }, "applies_to": null, "method": "lump_sum", "quantity_key": null, "entry_id": null, "by_target": "template", "percent_base": null, "order": 10 },
+    { "id": "wall_layers", "label": { "fr": "Couches de mur", "de": "Wandschichten" }, "applies_to": null, "method": "per_unit", "quantity_key": "wall.layer.area", "entry_id": null, "by_target": "wall_layer", "percent_base": null, "order": 20 },
+    { "id": "windows", "label": { "fr": "Fenêtres", "de": "Fenster" }, "applies_to": null, "method": "per_unit", "quantity_key": "window.count", "entry_id": null, "by_target": "window_type", "percent_base": null, "order": 30 },
+    { "id": "roof", "label": { "fr": "Toiture", "de": "Dach" }, "applies_to": null, "method": "per_unit", "quantity_key": "roof.area", "entry_id": null, "by_target": "roof_type", "percent_base": null, "order": 40 },
+    { "id": "bearing", "label": { "fr": "Appui du parement", "de": "Auflager" }, "applies_to": null, "method": "per_unit", "quantity_key": "bearing.length", "entry_id": "price.bearing.foundation_ledge", "by_target": null, "percent_base": null, "order": 50 }
+  ],
+  "price_entries": [
+    { "id": "price.template.demo_house", "target_kind": "template", "target_id": "demo_house", "unit": "lump_sum", "value": 390000.0 },
+    { "id": "price.layer.concrete_20", "target_kind": "wall_layer", "target_id": "layer.concrete_20", "unit": "m2", "value": 70.0 },
+    { "id": "price.layer.insulation_16", "target_kind": "wall_layer", "target_id": "layer.insulation_16", "unit": "m2", "value": 50.0 },
+    { "id": "price.layer.battens_4", "target_kind": "wall_layer", "target_id": "layer.battens_4", "unit": "m2", "value": 15.0 },
+    { "id": "price.layer.brick_8", "target_kind": "wall_layer", "target_id": "layer.brick_8", "unit": "m2", "value": 25.0 },
+    { "id": "price.layer.wood_4", "target_kind": "wall_layer", "target_id": "layer.wood_4", "unit": "m2", "value": 50.0 },
+    { "id": "price.window.standard", "target_kind": "window_type", "target_id": "window.standard", "unit": "pcs", "value": 850.0 },
+    { "id": "price.window.floor_length", "target_kind": "window_type", "target_id": "window.floor_length", "unit": "pcs", "value": 1250.0 },
+    { "id": "price.roof.flat", "target_kind": "roof_type", "target_id": "roof.flat", "unit": "m2", "value": 180.0 },
+    { "id": "price.roof.green", "target_kind": "roof_type", "target_id": "roof.green", "unit": "m2", "value": 260.0 },
+    { "id": "price.bearing.foundation_ledge", "target_kind": "service", "target_id": "bearing.foundation_ledge", "unit": "m", "value": 45.0 }
+  ],
+  "ignored_zone_categories": ["SDP", "SHAB", "Surface de plancher", "Emprise au sol"]
+}

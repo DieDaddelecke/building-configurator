@@ -1,0 +1,27 @@
+{
+  "name": "@emprise/engine",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Rechendienst des Hausmodells: maßgebliche Berechnung mit @emprise/domain (docs/PLAN_HAUSMODELL.md 3.3)",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "build": "esbuild src/server.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/server.mjs",
+    "start": "node dist/server.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@emprise/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.5.1",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.10.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
+  }
+}
