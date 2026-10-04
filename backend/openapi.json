@@ -949,6 +949,20 @@
         "title": "Body_scan_site_preview_api_v1_projects__project_id__site_scan_post",
         "type": "object"
       },
+      "Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post",
+        "type": "object"
+      },
       "Body_upload_plan_document_api_v1_admin_catalog_types__slug__plan_document_post": {
         "properties": {
           "file": {
@@ -4201,6 +4215,4443 @@
           "assumptions"
         ],
         "title": "HeightsOut",
+        "type": "object"
+      },
+      "HouseBearing": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "foundation_ledge",
+              "brackets"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "supported_layer_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Supported Layer Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "supported_layer_ids",
+          "kind"
+        ],
+        "title": "HouseBearing",
+        "type": "object"
+      },
+      "HouseBinaryExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "$ref": "#/components/schemas/HouseExpr"
+          },
+          "op": {
+            "enum": [
+              "eq",
+              "neq",
+              "gt",
+              "gte",
+              "lt",
+              "lte",
+              "in",
+              "not_in",
+              "contains",
+              "add",
+              "sub",
+              "mul",
+              "div"
+            ],
+            "title": "Op",
+            "type": "string"
+          },
+          "right": {
+            "$ref": "#/components/schemas/HouseExpr"
+          }
+        },
+        "required": [
+          "op",
+          "left",
+          "right"
+        ],
+        "title": "HouseBinaryExpr",
+        "type": "object"
+      },
+      "HouseCandidate": {
+        "additionalProperties": false,
+        "description": "Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`).",
+        "properties": {
+          "available_count": {
+            "title": "Available Count",
+            "type": "integer"
+          },
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "price_delta": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Price Delta",
+            "type": "number"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRuleResult"
+            },
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "valid_with_warnings",
+              "with_deviations",
+              "blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_count": {
+            "title": "Target Count",
+            "type": "integer"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "option_value_id",
+          "available_count",
+          "target_count",
+          "unavailable_reason",
+          "status",
+          "rule_results",
+          "price_delta"
+        ],
+        "title": "HouseCandidate",
+        "type": "object"
+      },
+      "HouseCandidatesRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "element_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element Id"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_id",
+          "element_id"
+        ],
+        "title": "HouseCandidatesRequest",
+        "type": "object"
+      },
+      "HouseCatalog": {
+        "additionalProperties": false,
+        "description": "Katalogversion eines Markts: Bauteile, Slots, Werte, Regeln und Preise in einem Dokument (E-HM-8).",
+        "properties": {
+          "currency": {
+            "const": "EUR",
+            "title": "Currency",
+            "type": "string"
+          },
+          "door_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseDoorType"
+            },
+            "title": "Door Types",
+            "type": "array"
+          },
+          "ignored_zone_categories": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Ignored Zone Categories",
+            "type": "array"
+          },
+          "market": {
+            "const": "FR",
+            "title": "Market",
+            "type": "string"
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/HouseMaterial"
+            },
+            "title": "Materials",
+            "type": "array"
+          },
+          "option_values": {
+            "items": {
+              "$ref": "#/components/schemas/HouseOptionValue"
+            },
+            "title": "Option Values",
+            "type": "array"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/HouseCatalogParameters"
+          },
+          "price_entries": {
+            "items": {
+              "$ref": "#/components/schemas/HousePriceEntry"
+            },
+            "title": "Price Entries",
+            "type": "array"
+          },
+          "pricing_rules": {
+            "items": {
+              "$ref": "#/components/schemas/HousePricingRule"
+            },
+            "title": "Pricing Rules",
+            "type": "array"
+          },
+          "roof_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoofType"
+            },
+            "title": "Roof Types",
+            "type": "array"
+          },
+          "room_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoomType"
+            },
+            "title": "Room Types",
+            "type": "array"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRule"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/HouseSlot"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "vat_rate": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Vat Rate",
+            "type": "number"
+          },
+          "wall_layers": {
+            "items": {
+              "$ref": "#/components/schemas/HouseWallLayer"
+            },
+            "title": "Wall Layers",
+            "type": "array"
+          },
+          "wall_profiles": {
+            "items": {
+              "$ref": "#/components/schemas/HouseWallProfile"
+            },
+            "title": "Wall Profiles",
+            "type": "array"
+          },
+          "window_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseWindowType"
+            },
+            "title": "Window Types",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schema_version",
+          "market",
+          "currency",
+          "vat_rate",
+          "parameters",
+          "materials",
+          "wall_layers",
+          "wall_profiles",
+          "window_types",
+          "door_types",
+          "roof_types",
+          "room_types",
+          "slots",
+          "option_values",
+          "rules",
+          "pricing_rules",
+          "price_entries",
+          "ignored_zone_categories"
+        ],
+        "title": "HouseCatalog",
+        "type": "object"
+      },
+      "HouseCatalogChoicesOut": {
+        "description": "Was der Entwurf zur Wahl stellt: Raumtypen, Slots und Werte der Katalogversion des Entwurfs.",
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "room_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseChoiceOut"
+            },
+            "title": "Room Types",
+            "type": "array"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/HouseSlotChoiceOut"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "current",
+          "room_types",
+          "slots"
+        ],
+        "title": "HouseCatalogChoicesOut",
+        "type": "object"
+      },
+      "HouseCatalogParameters": {
+        "additionalProperties": false,
+        "properties": {
+          "opening_deduction_threshold": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Opening Deduction Threshold",
+            "type": "number"
+          },
+          "parapet_min_upstand": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Parapet Min Upstand",
+            "type": "number"
+          },
+          "surface_resistance_inside": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "title": "Surface Resistance Inside",
+            "type": "number"
+          },
+          "surface_resistance_outside": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Surface Resistance Outside",
+            "type": "number"
+          }
+        },
+        "required": [
+          "parapet_min_upstand",
+          "opening_deduction_threshold",
+          "surface_resistance_inside",
+          "surface_resistance_outside"
+        ],
+        "title": "HouseCatalogParameters",
+        "type": "object"
+      },
+      "HouseCatalogVersionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "market": {
+            "const": "FR",
+            "title": "Market",
+            "type": "string"
+          },
+          "option_values": {
+            "title": "Option Values",
+            "type": "integer"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          },
+          "room_types": {
+            "title": "Room Types",
+            "type": "integer"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "slots": {
+            "title": "Slots",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "market",
+          "version",
+          "status",
+          "current",
+          "sha256",
+          "source",
+          "created_at",
+          "created_by",
+          "published_at",
+          "published_by",
+          "room_types",
+          "slots",
+          "option_values"
+        ],
+        "title": "HouseCatalogVersionOut",
+        "type": "object"
+      },
+      "HouseChoiceOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "HouseChoiceOut",
+        "type": "object"
+      },
+      "HouseCompatibility": {
+        "additionalProperties": false,
+        "description": "Prüfung Template ↔ Katalog (P 2.1 Nr. 5); die Freigabe trifft danach ein Mensch.",
+        "properties": {
+          "domain_version": {
+            "title": "Domain Version",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/HouseCompatibilityIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "supported": {
+            "title": "Supported",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain_version",
+          "supported",
+          "issues"
+        ],
+        "title": "HouseCompatibility",
+        "type": "object"
+      },
+      "HouseCompatibilityIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "element_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element Id"
+          },
+          "ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Id"
+          },
+          "slot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot Id"
+          }
+        },
+        "required": [
+          "code",
+          "slot_id",
+          "element_id",
+          "ref_id"
+        ],
+        "title": "HouseCompatibilityIssue",
+        "type": "object"
+      },
+      "HouseCompatibilityOut": {
+        "description": "Prüfbefund aus `engine` für die Katalogversion des Entwurfs.",
+        "properties": {
+          "approved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "catalog_version": {
+            "title": "Catalog Version",
+            "type": "integer"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checked_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked By"
+          },
+          "domain_version": {
+            "title": "Domain Version",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/HouseCompatibilityIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "supported": {
+            "title": "Supported",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "catalog_version",
+          "domain_version",
+          "supported",
+          "issues",
+          "checked_at",
+          "checked_by",
+          "approved_at",
+          "approved_by"
+        ],
+        "title": "HouseCompatibilityOut",
+        "type": "object"
+      },
+      "HouseCompatibilityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog": {
+            "$ref": "#/components/schemas/HouseCatalog"
+          },
+          "template": {
+            "$ref": "#/components/schemas/HouseTemplate"
+          }
+        },
+        "required": [
+          "template",
+          "catalog"
+        ],
+        "title": "HouseCompatibilityRequest",
+        "type": "object"
+      },
+      "HouseConfiguration": {
+        "additionalProperties": false,
+        "description": "Nur Auswahl: keine Geometrie, keine Mengen, keine Preise (P 2 Nr. 2).",
+        "properties": {
+          "selections": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "$ref": "#/components/schemas/HouseSlotSelection"
+              }
+            },
+            "title": "Selections",
+            "type": "object"
+          }
+        },
+        "required": [
+          "selections"
+        ],
+        "title": "HouseConfiguration",
+        "type": "object"
+      },
+      "HouseDoorChoice": {
+        "additionalProperties": false,
+        "description": "Vom Büro gesetzt; `opening_id` null heißt ausdrücklich keine.",
+        "properties": {
+          "opening_id": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Id"
+          }
+        },
+        "required": [
+          "opening_id"
+        ],
+        "title": "HouseDoorChoice",
+        "type": "object"
+      },
+      "HouseDoorType": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Height",
+            "type": "number"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          },
+          "width": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Width",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "width",
+          "height",
+          "render_key"
+        ],
+        "title": "HouseDoorType",
+        "type": "object"
+      },
+      "HouseDraftDecisions": {
+        "additionalProperties": false,
+        "description": "Was das Büro im Entwurf bestätigt oder ergänzt; ohne Angabe gilt der Vorschlag des Imports.",
+        "properties": {
+          "confirmed_splits": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Confirmed Splits",
+            "type": "array"
+          },
+          "defaults": {
+            "additionalProperties": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "title": "Defaults",
+            "type": "object"
+          },
+          "element_defaults": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "propertyNames": {
+                "maxLength": 80,
+                "minLength": 1
+              },
+              "type": "object"
+            },
+            "propertyNames": {
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "title": "Element Defaults",
+            "type": "object"
+          },
+          "entrance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseDoorChoice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "facade_roles": {
+            "additionalProperties": {
+              "enum": [
+                "street",
+                "garden",
+                "side_left",
+                "side_right"
+              ],
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "title": "Facade Roles",
+            "type": "object"
+          },
+          "garage_door": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseDoorChoice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ground_floor_offset": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": -5.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ground Floor Offset"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "room_types": {
+            "additionalProperties": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "title": "Room Types",
+            "type": "object"
+          },
+          "zone_types": {
+            "additionalProperties": {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "maxLength": 80,
+              "minLength": 1
+            },
+            "title": "Zone Types",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "ground_floor_offset",
+          "zone_types",
+          "room_types",
+          "confirmed_splits",
+          "facade_roles",
+          "entrance",
+          "garage_door",
+          "defaults",
+          "element_defaults"
+        ],
+        "title": "HouseDraftDecisions",
+        "type": "object"
+      },
+      "HouseEdgePosition": {
+        "additionalProperties": false,
+        "properties": {
+          "edge": {
+            "minimum": 0,
+            "title": "Edge",
+            "type": "integer"
+          },
+          "position": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Position",
+            "type": "number"
+          }
+        },
+        "required": [
+          "edge",
+          "position"
+        ],
+        "title": "HouseEdgePosition",
+        "type": "object"
+      },
+      "HouseEdgeRole": {
+        "additionalProperties": false,
+        "properties": {
+          "edge": {
+            "minimum": 0,
+            "title": "Edge",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "street",
+              "garden",
+              "side_left",
+              "side_right"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edge",
+          "role"
+        ],
+        "title": "HouseEdgeRole",
+        "type": "object"
+      },
+      "HouseEnergy": {
+        "additionalProperties": false,
+        "properties": {
+          "wall_u_values": {
+            "items": {
+              "$ref": "#/components/schemas/HouseProfileUValue"
+            },
+            "title": "Wall U Values",
+            "type": "array"
+          },
+          "window_shares": {
+            "items": {
+              "$ref": "#/components/schemas/HouseWindowShare"
+            },
+            "title": "Window Shares",
+            "type": "array"
+          }
+        },
+        "required": [
+          "wall_u_values",
+          "window_shares"
+        ],
+        "title": "HouseEnergy",
+        "type": "object"
+      },
+      "HouseEnvelopeLoop": {
+        "additionalProperties": false,
+        "properties": {
+          "inner_polygon": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Inner Polygon",
+            "type": "array"
+          },
+          "level_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/HouseEnvelopeSegment"
+            },
+            "title": "Segments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "level_id",
+          "inner_polygon",
+          "segments"
+        ],
+        "title": "HouseEnvelopeLoop",
+        "type": "object"
+      },
+      "HouseEnvelopeSegment": {
+        "additionalProperties": false,
+        "description": "Kante `i` der Bezugskontur, von Punkt `i` zu Punkt `i + 1`.",
+        "properties": {
+          "facade_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "street",
+                  "garden",
+                  "side_left",
+                  "side_right"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Facade Role"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "source_ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ifc Guid"
+          }
+        },
+        "required": [
+          "id",
+          "source_ifc_guid",
+          "facade_role"
+        ],
+        "title": "HouseEnvelopeSegment",
+        "type": "object"
+      },
+      "HouseEvaluateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseCandidatesRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "catalog": {
+            "$ref": "#/components/schemas/HouseCatalog"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/HouseConfiguration"
+          },
+          "template": {
+            "$ref": "#/components/schemas/HouseTemplate"
+          }
+        },
+        "required": [
+          "template",
+          "catalog",
+          "configuration",
+          "candidates"
+        ],
+        "title": "HouseEvaluateRequest",
+        "type": "object"
+      },
+      "HouseEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/HouseCandidate"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidates"
+          },
+          "domain_version": {
+            "title": "Domain Version",
+            "type": "string"
+          },
+          "energy": {
+            "$ref": "#/components/schemas/HouseEnergy"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/HouseFacts"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/HouseResolutionNote"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "price": {
+            "$ref": "#/components/schemas/HousePrice"
+          },
+          "quantities": {
+            "items": {
+              "$ref": "#/components/schemas/HouseQuantity"
+            },
+            "title": "Quantities",
+            "type": "array"
+          },
+          "resolved": {
+            "items": {
+              "$ref": "#/components/schemas/HouseResolvedValue"
+            },
+            "title": "Resolved",
+            "type": "array"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRuleResult"
+            },
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "valid_with_warnings",
+              "with_deviations",
+              "blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain_version",
+          "status",
+          "resolved",
+          "notes",
+          "quantities",
+          "price",
+          "rule_results",
+          "energy",
+          "facts",
+          "candidates"
+        ],
+        "title": "HouseEvaluation",
+        "type": "object"
+      },
+      "HouseExpr": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/HousePathExpr"
+          },
+          {
+            "$ref": "#/components/schemas/HouseBinaryExpr"
+          },
+          {
+            "$ref": "#/components/schemas/HouseLogicExpr"
+          },
+          {
+            "$ref": "#/components/schemas/HouseLiteral"
+          },
+          {
+            "items": {
+              "$ref": "#/components/schemas/HouseLiteral"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "HouseFacts": {
+        "additionalProperties": false,
+        "description": "Hausbeschreibung für die Prüfung auf dem Grundstück in Python (3.1, E-HM-4); ersetzt `HouseType`.",
+        "properties": {
+          "eave_height": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Eave Height",
+            "type": "number"
+          },
+          "entrance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseEdgePosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "facade_material_class": {
+            "enum": [
+              "render",
+              "wood",
+              "brick",
+              "stone",
+              "concrete",
+              "metal",
+              "glass",
+              "slate",
+              "clay_tile",
+              "zinc",
+              "composite",
+              "vegetation",
+              "other"
+            ],
+            "title": "Facade Material Class",
+            "type": "string"
+          },
+          "facade_outline": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Facade Outline",
+            "type": "array"
+          },
+          "facade_roles": {
+            "items": {
+              "$ref": "#/components/schemas/HouseEdgeRole"
+            },
+            "title": "Facade Roles",
+            "type": "array"
+          },
+          "floor_area": {
+            "title": "Floor Area",
+            "type": "number"
+          },
+          "garage_door": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseEdgePosition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ground_floor_offset": {
+            "title": "Ground Floor Offset",
+            "type": "number"
+          },
+          "projection_outline": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Projection Outline",
+            "type": "array"
+          },
+          "ridge_direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "x",
+                  "y"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge Direction"
+          },
+          "roof_form": {
+            "enum": [
+              "gable",
+              "hip",
+              "mono_pitch",
+              "flat",
+              "mansard",
+              "other"
+            ],
+            "title": "Roof Form",
+            "type": "string"
+          },
+          "roof_material_class": {
+            "enum": [
+              "render",
+              "wood",
+              "brick",
+              "stone",
+              "concrete",
+              "metal",
+              "glass",
+              "slate",
+              "clay_tile",
+              "zinc",
+              "composite",
+              "vegetation",
+              "other"
+            ],
+            "title": "Roof Material Class",
+            "type": "string"
+          },
+          "roof_slopes_deg": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Roof Slopes Deg",
+            "type": "array"
+          },
+          "storeys": {
+            "maximum": 10,
+            "minimum": 1,
+            "title": "Storeys",
+            "type": "integer"
+          },
+          "top_height": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Top Height",
+            "type": "number"
+          }
+        },
+        "required": [
+          "facade_outline",
+          "projection_outline",
+          "storeys",
+          "roof_form",
+          "roof_slopes_deg",
+          "ridge_direction",
+          "eave_height",
+          "top_height",
+          "ground_floor_offset",
+          "floor_area",
+          "facade_roles",
+          "entrance",
+          "garage_door",
+          "facade_material_class",
+          "roof_material_class"
+        ],
+        "title": "HouseFacts",
+        "type": "object"
+      },
+      "HouseImportFinding": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string",
+            "x-codes": [
+              "file_unreadable",
+              "schema_unsupported",
+              "reader_timeout",
+              "reader_limit",
+              "reader_failed",
+              "import_failed",
+              "no_storey",
+              "storeys_multiple",
+              "roof_level",
+              "element_without_storey",
+              "geometry_failed",
+              "elements_not_read",
+              "envelope_not_closed",
+              "wall_disconnected",
+              "wall_not_straight",
+              "is_external_mismatch",
+              "small_area_ignored",
+              "zone_type_conflict",
+              "zone_without_geometry",
+              "zone_outside_rooms",
+              "zone_outdated",
+              "zone_unrecognized",
+              "room_ignored",
+              "room_without_zone",
+              "room_split_failed",
+              "room_split_unconfirmed",
+              "opening_without_host",
+              "opening_host_by_geometry",
+              "opening_in_ignored_room",
+              "opening_without_room",
+              "opening_outside_host",
+              "opening_type_unmatched",
+              "opening_type_ambiguous",
+              "entrance_missing",
+              "entrance_ambiguous",
+              "garage_door_ambiguous",
+              "ground_slab_missing",
+              "ground_slab_offset",
+              "ground_slab_area_mismatch",
+              "roof_missing",
+              "roof_multiple",
+              "roof_form_not_recognized",
+              "roof_incomplete",
+              "decision_invalid",
+              "ground_floor_offset_invalid",
+              "ground_floor_offset_default",
+              "facade_roles_missing",
+              "template_not_built",
+              "template_invalid"
+            ]
+          },
+          "element_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element Id"
+          },
+          "ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ifc Guid"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "open",
+              "warning",
+              "info"
+            ],
+            "title": "Severity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "element_id",
+          "ifc_guid",
+          "params"
+        ],
+        "title": "HouseImportFinding",
+        "type": "object"
+      },
+      "HouseImportOpening": {
+        "description": "Maße aus dem IFC und der Typ, den der Import im Katalog dafür gefunden hat.",
+        "properties": {
+          "element_id": {
+            "title": "Element Id",
+            "type": "string"
+          },
+          "head_height": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head Height"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "ifc_guid": {
+            "title": "Ifc Guid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "window",
+              "door"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "option_value_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Value Id"
+          },
+          "shutter_box_height": {
+            "title": "Shutter Box Height",
+            "type": "number"
+          },
+          "slot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slot Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "catalog",
+                  "office"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "element_id",
+          "ifc_guid",
+          "kind",
+          "width",
+          "height",
+          "head_height",
+          "shutter_box_height",
+          "slot_id",
+          "option_value_id",
+          "source"
+        ],
+        "title": "HouseImportOpening",
+        "type": "object"
+      },
+      "HouseImportReport": {
+        "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/HouseImportFinding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "openings": {
+            "items": {
+              "$ref": "#/components/schemas/HouseImportOpening"
+            },
+            "title": "Openings",
+            "type": "array"
+          },
+          "publishable": {
+            "title": "Publishable",
+            "type": "boolean"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/HouseImportSummary"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/HouseImportZone"
+            },
+            "title": "Zones",
+            "type": "array"
+          }
+        },
+        "required": [
+          "findings",
+          "zones",
+          "openings",
+          "summary",
+          "publishable"
+        ],
+        "title": "HouseImportReport",
+        "type": "object"
+      },
+      "HouseImportSummary": {
+        "properties": {
+          "doors": {
+            "title": "Doors",
+            "type": "integer"
+          },
+          "exterior_walls": {
+            "title": "Exterior Walls",
+            "type": "integer"
+          },
+          "inner_area": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inner Area"
+          },
+          "inner_depth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inner Depth"
+          },
+          "inner_width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inner Width"
+          },
+          "interior_walls": {
+            "title": "Interior Walls",
+            "type": "integer"
+          },
+          "roof_levels": {
+            "title": "Roof Levels",
+            "type": "integer"
+          },
+          "rooms": {
+            "title": "Rooms",
+            "type": "integer"
+          },
+          "storeys": {
+            "title": "Storeys",
+            "type": "integer"
+          },
+          "windows": {
+            "title": "Windows",
+            "type": "integer"
+          },
+          "zones": {
+            "title": "Zones",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "storeys",
+          "roof_levels",
+          "exterior_walls",
+          "interior_walls",
+          "windows",
+          "doors",
+          "rooms",
+          "zones",
+          "inner_width",
+          "inner_depth",
+          "inner_area"
+        ],
+        "title": "HouseImportSummary",
+        "type": "object"
+      },
+      "HouseImportZone": {
+        "description": "Je Zone Quelle, Rohwert und Ergebnis (3.6); keine geht still verloren.",
+        "properties": {
+          "ifc_guid": {
+            "title": "Ifc Guid",
+            "type": "string"
+          },
+          "raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw"
+          },
+          "result": {
+            "enum": [
+              "room",
+              "ignored",
+              "unrecognized"
+            ],
+            "title": "Result",
+            "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "room_type_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Type Id"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "type",
+                  "category",
+                  "object_type",
+                  "long_name",
+                  "name",
+                  "classification"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "office",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/HouseImportZoneSource"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ifc_guid",
+          "result",
+          "room_type_id",
+          "source",
+          "raw",
+          "values",
+          "room_id",
+          "share"
+        ],
+        "title": "HouseImportZone",
+        "type": "object"
+      },
+      "HouseImportZoneSource": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "type",
+              "category",
+              "object_type",
+              "long_name",
+              "name",
+              "classification"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "raw": {
+            "title": "Raw",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "raw"
+        ],
+        "title": "HouseImportZoneSource",
+        "type": "object"
+      },
+      "HouseInteriorWall": {
+        "additionalProperties": false,
+        "properties": {
+          "adjacent_room_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Adjacent Room Ids",
+            "type": "array"
+          },
+          "axis": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "$ref": "#/components/schemas/HousePoint"
+              },
+              {
+                "$ref": "#/components/schemas/HousePoint"
+              }
+            ],
+            "title": "Axis",
+            "type": "array"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "level_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "source_ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ifc Guid"
+          },
+          "thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Thickness",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "source_ifc_guid",
+          "level_id",
+          "axis",
+          "thickness",
+          "adjacent_room_ids"
+        ],
+        "title": "HouseInteriorWall",
+        "type": "object"
+      },
+      "HouseJobOut": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "max_attempts": {
+            "title": "Max Attempts",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "attempts",
+          "max_attempts"
+        ],
+        "title": "HouseJobOut",
+        "type": "object"
+      },
+      "HouseLevel": {
+        "additionalProperties": false,
+        "properties": {
+          "elevation": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Elevation",
+            "type": "number"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "elevation"
+        ],
+        "title": "HouseLevel",
+        "type": "object"
+      },
+      "HouseLiteral": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "HouseLogicExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "args": {
+            "items": {
+              "$ref": "#/components/schemas/HouseExpr"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Args",
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "and",
+              "or",
+              "not",
+              "exists"
+            ],
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "args"
+        ],
+        "title": "HouseLogicExpr",
+        "type": "object"
+      },
+      "HouseMaterial": {
+        "additionalProperties": false,
+        "properties": {
+          "carbon_per_m3": {
+            "anyOf": [
+              {
+                "maximum": 100000,
+                "minimum": -10000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carbon Per M3"
+          },
+          "conductivity": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 500,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conductivity"
+          },
+          "density": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 30000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Density"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "conductivity",
+          "density",
+          "carbon_per_m3",
+          "render_key"
+        ],
+        "title": "HouseMaterial",
+        "type": "object"
+      },
+      "HouseOpening": {
+        "additionalProperties": false,
+        "properties": {
+          "adjacent_room_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Adjacent Room Ids",
+            "type": "array"
+          },
+          "host_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Host Id",
+            "type": "string"
+          },
+          "host_kind": {
+            "enum": [
+              "envelope_segment",
+              "interior_wall"
+            ],
+            "title": "Host Kind",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "window",
+              "door"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "offset_along_host": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Offset Along Host",
+            "type": "number"
+          },
+          "source_ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ifc Guid"
+          }
+        },
+        "required": [
+          "id",
+          "source_ifc_guid",
+          "kind",
+          "host_kind",
+          "host_id",
+          "offset_along_host",
+          "adjacent_room_ids"
+        ],
+        "title": "HouseOpening",
+        "type": "object"
+      },
+      "HouseOptionAssigns": {
+        "additionalProperties": false,
+        "description": "Ein Wert weist immer einen vollständigen Typ zu, nie eine Ergänzung (P 8.1).",
+        "properties": {
+          "door_type_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Door Type Id"
+          },
+          "roof_type_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roof Type Id"
+          },
+          "wall_profile_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wall Profile Id"
+          },
+          "window_type_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Type Id"
+          }
+        },
+        "required": [
+          "wall_profile_id",
+          "window_type_id",
+          "door_type_id",
+          "roof_type_id"
+        ],
+        "title": "HouseOptionAssigns",
+        "type": "object"
+      },
+      "HouseOptionCondition": {
+        "additionalProperties": false,
+        "properties": {
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_id",
+          "option_value_id"
+        ],
+        "title": "HouseOptionCondition",
+        "type": "object"
+      },
+      "HouseOptionValue": {
+        "additionalProperties": false,
+        "properties": {
+          "assigns": {
+            "$ref": "#/components/schemas/HouseOptionAssigns"
+          },
+          "available_when": {
+            "$ref": "#/components/schemas/HouseExpr"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "unavailable_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slot_id",
+          "name",
+          "description",
+          "assigns",
+          "available_when",
+          "unavailable_reason",
+          "sort_order"
+        ],
+        "title": "HouseOptionValue",
+        "type": "object"
+      },
+      "HousePathExpr": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "maxLength": 200,
+            "pattern": "^[a-z_][a-z0-9_]*(\\.[a-z_][a-z0-9_]*)*$",
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "HousePathExpr",
+        "type": "object"
+      },
+      "HousePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "maximum": 1000,
+            "minimum": -1000,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 1000,
+            "minimum": -1000,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "HousePoint",
+        "type": "object"
+      },
+      "HousePrice": {
+        "additionalProperties": false,
+        "description": "Exakte Richtpreise für Snapshot und Dossier; der Kunde sieht nur gerundete Beträge (E-HM-2, L1).",
+        "properties": {
+          "base_amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Base Amount",
+            "type": "number"
+          },
+          "currency": {
+            "const": "EUR",
+            "title": "Currency",
+            "type": "string"
+          },
+          "deltas": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "maximum": 1000000000.0,
+                "minimum": -1000000000.0,
+                "type": "number"
+              }
+            },
+            "title": "Deltas",
+            "type": "object"
+          },
+          "gross_amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Gross Amount",
+            "type": "number"
+          },
+          "is_estimate": {
+            "const": true,
+            "title": "Is Estimate",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HousePriceItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "market": {
+            "const": "FR",
+            "title": "Market",
+            "type": "string"
+          },
+          "net_amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Net Amount",
+            "type": "number"
+          },
+          "vat_amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Vat Amount",
+            "type": "number"
+          },
+          "vat_rate": {
+            "title": "Vat Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "market",
+          "currency",
+          "base_amount",
+          "items",
+          "net_amount",
+          "vat_rate",
+          "vat_amount",
+          "gross_amount",
+          "deltas",
+          "is_estimate"
+        ],
+        "title": "HousePrice",
+        "type": "object"
+      },
+      "HousePriceEntry": {
+        "additionalProperties": false,
+        "description": "Sagt nur, was wie viel kostet (P 5.2); jeder Betrag stammt aus genau einem Eintrag (P 2.1 Nr. 11).",
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "target_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_kind": {
+            "enum": [
+              "wall_layer",
+              "window_type",
+              "door_type",
+              "roof_type",
+              "template",
+              "slot_option",
+              "service"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "m",
+              "m2",
+              "m3",
+              "pcs",
+              "lump_sum",
+              "percent"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "target_kind",
+          "target_id",
+          "unit",
+          "value"
+        ],
+        "title": "HousePriceEntry",
+        "type": "object"
+      },
+      "HousePriceItem": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Amount",
+            "type": "number"
+          },
+          "element_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "title": "Element Ids",
+            "type": "array"
+          },
+          "label": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "price_entry_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Price Entry Id",
+            "type": "string"
+          },
+          "pricing_rule_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Pricing Rule Id",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "quantity_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Key"
+          },
+          "ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Id"
+          },
+          "unit": {
+            "enum": [
+              "m",
+              "m2",
+              "m3",
+              "pcs",
+              "lump_sum",
+              "percent"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "unit_price": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Unit Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "pricing_rule_id",
+          "price_entry_id",
+          "label",
+          "quantity_key",
+          "ref_id",
+          "quantity",
+          "unit",
+          "unit_price",
+          "amount",
+          "element_ids"
+        ],
+        "title": "HousePriceItem",
+        "type": "object"
+      },
+      "HousePricingRule": {
+        "additionalProperties": false,
+        "description": "Sagt nur, welche Menge mit welchem Eintrag verrechnet wird (P 9.2); enthält keine Beträge.",
+        "properties": {
+          "applies_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseOptionCondition"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "by_target": {
+            "anyOf": [
+              {
+                "enum": [
+                  "wall_layer",
+                  "window_type",
+                  "door_type",
+                  "roof_type",
+                  "template",
+                  "slot_option",
+                  "service"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By Target"
+          },
+          "entry_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Id"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "method": {
+            "enum": [
+              "per_unit",
+              "lump_sum",
+              "percent"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "order": {
+            "title": "Order",
+            "type": "integer"
+          },
+          "percent_base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percent Base"
+          },
+          "quantity_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Key"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "applies_to",
+          "method",
+          "quantity_key",
+          "entry_id",
+          "by_target",
+          "percent_base",
+          "order"
+        ],
+        "title": "HousePricingRule",
+        "type": "object"
+      },
+      "HouseProfileUValue": {
+        "additionalProperties": false,
+        "properties": {
+          "u_value": {
+            "title": "U Value",
+            "type": "number"
+          },
+          "wall_profile_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Wall Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "wall_profile_id",
+          "u_value"
+        ],
+        "title": "HouseProfileUValue",
+        "type": "object"
+      },
+      "HouseQuantity": {
+        "additionalProperties": false,
+        "properties": {
+          "element_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "title": "Element Ids",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "ref_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Id"
+          },
+          "unit": {
+            "enum": [
+              "m",
+              "m2",
+              "m3",
+              "pcs"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "ref_id",
+          "value",
+          "unit",
+          "element_ids"
+        ],
+        "title": "HouseQuantity",
+        "type": "object"
+      },
+      "HouseResolutionNote": {
+        "additionalProperties": false,
+        "description": "Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert.",
+        "properties": {
+          "applied_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Applied Value Id",
+            "type": "string"
+          },
+          "code": {
+            "enum": [
+              "unavailable",
+              "room_override_tie"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "element_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Element Id",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skipped_level": {
+            "enum": [
+              "element",
+              "room",
+              "global"
+            ],
+            "title": "Skipped Level",
+            "type": "string"
+          },
+          "skipped_value_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "title": "Skipped Value Ids",
+            "type": "array"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_id",
+          "element_id",
+          "skipped_level",
+          "skipped_value_ids",
+          "applied_value_id",
+          "code",
+          "reason"
+        ],
+        "title": "HouseResolutionNote",
+        "type": "object"
+      },
+      "HouseResolvedValue": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "element_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Element Id",
+            "type": "string"
+          },
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "element",
+              "room",
+              "global",
+              "default"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_id",
+          "element_id",
+          "option_value_id",
+          "source",
+          "available"
+        ],
+        "title": "HouseResolvedValue",
+        "type": "object"
+      },
+      "HouseRevealFinish": {
+        "additionalProperties": false,
+        "properties": {
+          "material_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Material Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id"
+        ],
+        "title": "HouseRevealFinish",
+        "type": "object"
+      },
+      "HouseRoofLayer": {
+        "additionalProperties": false,
+        "properties": {
+          "material_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Thickness",
+            "type": "number"
+          }
+        },
+        "required": [
+          "material_id",
+          "thickness"
+        ],
+        "title": "HouseRoofLayer",
+        "type": "object"
+      },
+      "HouseRoofPlacement": {
+        "additionalProperties": false,
+        "description": "Platzhalter-Dach (3.6): nur Lage und Maße, Form und Aufbau wählt der Konfigurator (E-HM-10).",
+        "properties": {
+          "bearing_height": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Bearing Height",
+            "type": "number"
+          },
+          "eave_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Eave Overhang",
+            "type": "number"
+          },
+          "parapet_height": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Parapet Height",
+            "type": "number"
+          },
+          "verge_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Verge Overhang",
+            "type": "number"
+          }
+        },
+        "required": [
+          "bearing_height",
+          "parapet_height",
+          "eave_overhang",
+          "verge_overhang"
+        ],
+        "title": "HouseRoofPlacement",
+        "type": "object"
+      },
+      "HouseRoofType": {
+        "additionalProperties": false,
+        "description": "Dachaufbau (E-HM-10); `kind` sagt, zu welchen Dachformen er passt.",
+        "properties": {
+          "build_up": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoofLayer"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Build Up",
+            "type": "array"
+          },
+          "green": {
+            "title": "Green",
+            "type": "boolean"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "flat",
+              "pitched"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "material_class": {
+            "enum": [
+              "render",
+              "wood",
+              "brick",
+              "stone",
+              "concrete",
+              "metal",
+              "glass",
+              "slate",
+              "clay_tile",
+              "zinc",
+              "composite",
+              "vegetation",
+              "other"
+            ],
+            "title": "Material Class",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "build_up",
+          "green",
+          "material_class",
+          "render_key"
+        ],
+        "title": "HouseRoofType",
+        "type": "object"
+      },
+      "HouseRoom": {
+        "additionalProperties": false,
+        "description": "Raum; Fläche nur aus dem Umriss, Name aus dem Raumtyp (E-HM-23).",
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "level_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "polygon": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Polygon",
+            "type": "array"
+          },
+          "room_type_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Room Type Id",
+            "type": "string"
+          },
+          "source_ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ifc Guid"
+          }
+        },
+        "required": [
+          "id",
+          "source_ifc_guid",
+          "level_id",
+          "room_type_id",
+          "polygon"
+        ],
+        "title": "HouseRoom",
+        "type": "object"
+      },
+      "HouseRoomType": {
+        "additionalProperties": false,
+        "properties": {
+          "aliases": {
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Aliases",
+            "type": "array"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "display_key": {
+            "maxLength": 100,
+            "title": "Display Key",
+            "type": "string"
+          },
+          "exterior_door_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "entrance",
+                  "garage_door"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exterior Door Role"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "override_priority": {
+            "maximum": 1000,
+            "minimum": 0,
+            "title": "Override Priority",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "override_priority",
+          "display_key",
+          "aliases",
+          "exterior_door_role"
+        ],
+        "title": "HouseRoomType",
+        "type": "object"
+      },
+      "HouseRule": {
+        "additionalProperties": false,
+        "description": "Technische Regel des Katalogs (P 8.3); `when` wahr heißt: trifft zu.",
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "outcome": {
+            "enum": [
+              "info",
+              "warning",
+              "block"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "selection",
+              "element",
+              "building"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseRuleSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseSelector"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "when": {
+            "$ref": "#/components/schemas/HouseExpr"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "target",
+          "when",
+          "outcome",
+          "message",
+          "suggestion",
+          "source"
+        ],
+        "title": "HouseRule",
+        "type": "object"
+      },
+      "HouseRuleResult": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "element_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "title": "Element Ids",
+            "type": "array"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "info",
+              "warning",
+              "block",
+              "deviation"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Params",
+            "type": "object"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseRuleSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "rule_id",
+          "outcome",
+          "message",
+          "element_ids",
+          "suggestion",
+          "source",
+          "params"
+        ],
+        "title": "HouseRuleResult",
+        "type": "object"
+      },
+      "HouseRuleSource": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "required": [
+          "jurisdiction",
+          "document",
+          "section",
+          "reference",
+          "retrieved_at"
+        ],
+        "title": "HouseRuleSource",
+        "type": "object"
+      },
+      "HouseSelector": {
+        "additionalProperties": false,
+        "properties": {
+          "element_kind": {
+            "enum": [
+              "envelope_segment",
+              "interior_wall",
+              "opening",
+              "roof",
+              "room",
+              "building"
+            ],
+            "title": "Element Kind",
+            "type": "string"
+          },
+          "where": {
+            "$ref": "#/components/schemas/HouseExpr"
+          }
+        },
+        "required": [
+          "element_kind",
+          "where"
+        ],
+        "title": "HouseSelector",
+        "type": "object"
+      },
+      "HouseSlab": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ground",
+              "floor",
+              "roof"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "level_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Level Id",
+            "type": "string"
+          },
+          "source_ifc_guid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ifc Guid"
+          },
+          "thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Thickness",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "source_ifc_guid",
+          "level_id",
+          "kind",
+          "thickness"
+        ],
+        "title": "HouseSlab",
+        "type": "object"
+      },
+      "HouseSlot": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "maxLength": 100,
+            "title": "Category",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "effects": {
+            "$ref": "#/components/schemas/HouseSlotEffects"
+          },
+          "granularity": {
+            "enum": [
+              "global",
+              "per_element",
+              "per_room"
+            ],
+            "title": "Granularity",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "parent_slot_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Slot Id"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "target": {
+            "$ref": "#/components/schemas/HouseSelector"
+          },
+          "value_type": {
+            "const": "single",
+            "title": "Value Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "name",
+          "description",
+          "target",
+          "granularity",
+          "value_type",
+          "parent_slot_id",
+          "effects",
+          "sort_order"
+        ],
+        "title": "HouseSlot",
+        "type": "object"
+      },
+      "HouseSlotChoiceOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/HouseChoiceOut"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "name",
+          "values"
+        ],
+        "title": "HouseSlotChoiceOut",
+        "type": "object"
+      },
+      "HouseSlotEffects": {
+        "additionalProperties": false,
+        "description": "Nur Hinweis für Neuberechnung; die Korrektheit hängt nie davon ab (P 8.1).",
+        "properties": {
+          "appearance": {
+            "title": "Appearance",
+            "type": "boolean"
+          },
+          "geometry": {
+            "title": "Geometry",
+            "type": "boolean"
+          },
+          "pricing": {
+            "title": "Pricing",
+            "type": "boolean"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "boolean"
+          },
+          "rules": {
+            "title": "Rules",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "geometry",
+          "quantity",
+          "pricing",
+          "rules",
+          "appearance"
+        ],
+        "title": "HouseSlotEffects",
+        "type": "object"
+      },
+      "HouseSlotSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "element_overrides": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "$ref": "#/components/schemas/HouseSlotValue"
+              }
+            },
+            "title": "Element Overrides",
+            "type": "object"
+          },
+          "room_overrides": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "$ref": "#/components/schemas/HouseSlotValue"
+              }
+            },
+            "title": "Room Overrides",
+            "type": "object"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseSlotValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "room_overrides",
+          "element_overrides"
+        ],
+        "title": "HouseSlotSelection",
+        "type": "object"
+      },
+      "HouseSlotValue": {
+        "additionalProperties": false,
+        "properties": {
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "option",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "option_value_id"
+        ],
+        "title": "HouseSlotValue",
+        "type": "object"
+      },
+      "HouseSourceIfc": {
+        "additionalProperties": false,
+        "properties": {
+          "file_name": {
+            "maxLength": 255,
+            "title": "File Name",
+            "type": "string"
+          },
+          "ifc_schema": {
+            "maxLength": 20,
+            "title": "Ifc Schema",
+            "type": "string"
+          },
+          "imported_at": {
+            "format": "date-time",
+            "title": "Imported At",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_name",
+          "sha256",
+          "ifc_schema",
+          "imported_at"
+        ],
+        "title": "HouseSourceIfc",
+        "type": "object"
+      },
+      "HouseSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "element_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "title": "Element Ids",
+            "type": "array"
+          },
+          "label": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "slot_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot_id",
+          "option_value_id",
+          "element_ids",
+          "label"
+        ],
+        "title": "HouseSuggestion",
+        "type": "object"
+      },
+      "HouseTemplate": {
+        "additionalProperties": false,
+        "description": "Haustyp in einer Version, unveränderlich nach der Veröffentlichung (P 5.1, L4). Keine Preise.",
+        "properties": {
+          "defaults": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              }
+            },
+            "title": "Defaults",
+            "type": "object"
+          },
+          "element_defaults": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "patternProperties": {
+                  "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                    "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "title": "Element Defaults",
+            "type": "object"
+          },
+          "entrance_opening_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrance Opening Id"
+          },
+          "envelope": {
+            "items": {
+              "$ref": "#/components/schemas/HouseEnvelopeLoop"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Envelope",
+            "type": "array"
+          },
+          "garage_door_opening_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Garage Door Opening Id"
+          },
+          "ground_floor_offset": {
+            "maximum": 5,
+            "minimum": -5,
+            "title": "Ground Floor Offset",
+            "type": "number"
+          },
+          "interior_walls": {
+            "items": {
+              "$ref": "#/components/schemas/HouseInteriorWall"
+            },
+            "maxItems": 500,
+            "title": "Interior Walls",
+            "type": "array"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/HouseLevel"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Levels",
+            "type": "array"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "openings": {
+            "items": {
+              "$ref": "#/components/schemas/HouseOpening"
+            },
+            "maxItems": 500,
+            "title": "Openings",
+            "type": "array"
+          },
+          "roof": {
+            "$ref": "#/components/schemas/HouseRoofPlacement"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoom"
+            },
+            "maxItems": 200,
+            "title": "Rooms",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "slabs": {
+            "items": {
+              "$ref": "#/components/schemas/HouseSlab"
+            },
+            "maxItems": 50,
+            "title": "Slabs",
+            "type": "array"
+          },
+          "slug": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Slug",
+            "type": "string"
+          },
+          "source_ifc": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseSourceIfc"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "slug",
+          "name",
+          "source_ifc",
+          "ground_floor_offset",
+          "levels",
+          "envelope",
+          "interior_walls",
+          "openings",
+          "slabs",
+          "roof",
+          "rooms",
+          "entrance_opening_id",
+          "garage_door_opening_id",
+          "defaults",
+          "element_defaults"
+        ],
+        "title": "HouseTemplate",
+        "type": "object"
+      },
+      "HouseTemplateSummaryOut": {
+        "properties": {
+          "current_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Version"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/HouseTemplateVersionSummaryOut"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "current_version",
+          "versions"
+        ],
+        "title": "HouseTemplateSummaryOut",
+        "type": "object"
+      },
+      "HouseTemplateVersionOut": {
+        "properties": {
+          "catalog": {
+            "$ref": "#/components/schemas/HouseCatalogChoicesOut"
+          },
+          "compatibility": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseCompatibilityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/HouseDraftDecisions"
+          },
+          "ifc_file_name": {
+            "title": "Ifc File Name",
+            "type": "string"
+          },
+          "ifc_sha256": {
+            "title": "Ifc Sha256",
+            "type": "string"
+          },
+          "ifc_size_bytes": {
+            "title": "Ifc Size Bytes",
+            "type": "integer"
+          },
+          "job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseJobOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "people": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "People",
+            "type": "object"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          },
+          "rejected_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected At"
+          },
+          "rejected_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected By"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseImportReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retired_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired At"
+          },
+          "retired_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retired By"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "reviewed",
+              "published",
+              "rejected",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseTemplate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "status",
+          "current",
+          "ifc_file_name",
+          "ifc_sha256",
+          "ifc_size_bytes",
+          "created_at",
+          "created_by",
+          "reviewed_at",
+          "reviewed_by",
+          "published_at",
+          "published_by",
+          "rejected_at",
+          "rejected_by",
+          "retired_at",
+          "retired_by",
+          "job",
+          "decisions",
+          "template",
+          "report",
+          "catalog",
+          "compatibility",
+          "people"
+        ],
+        "title": "HouseTemplateVersionOut",
+        "type": "object"
+      },
+      "HouseTemplateVersionSummaryOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "ifc_file_name": {
+            "title": "Ifc File Name",
+            "type": "string"
+          },
+          "importing": {
+            "title": "Importing",
+            "type": "boolean"
+          },
+          "publishable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishable"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "reviewed",
+              "published",
+              "rejected",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "status",
+          "ifc_file_name",
+          "created_at",
+          "created_by",
+          "importing",
+          "publishable"
+        ],
+        "title": "HouseTemplateVersionSummaryOut",
+        "type": "object"
+      },
+      "HouseText": {
+        "additionalProperties": false,
+        "description": "Text in den Sprachen der Oberfläche (D7: Französisch führend, Deutsch zusätzlich).",
+        "properties": {
+          "de": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "De",
+            "type": "string"
+          },
+          "fr": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Fr",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fr",
+          "de"
+        ],
+        "title": "HouseText",
+        "type": "object"
+      },
+      "HouseWallLayer": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "material_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "structural": {
+            "title": "Structural",
+            "type": "boolean"
+          },
+          "thermal": {
+            "title": "Thermal",
+            "type": "boolean"
+          },
+          "thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Thickness",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "material_id",
+          "thickness",
+          "structural",
+          "thermal"
+        ],
+        "title": "HouseWallLayer",
+        "type": "object"
+      },
+      "HouseWallProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "bearing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseBearing"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "layer_ids": {
+            "items": {
+              "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Layer Ids",
+            "type": "array"
+          },
+          "material_class": {
+            "enum": [
+              "render",
+              "wood",
+              "brick",
+              "stone",
+              "concrete",
+              "metal",
+              "glass",
+              "slate",
+              "clay_tile",
+              "zinc",
+              "composite",
+              "vegetation",
+              "other"
+            ],
+            "title": "Material Class",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "opening_anchor_layer_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Opening Anchor Layer Id",
+            "type": "string"
+          },
+          "reveal_finish": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseRevealFinish"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "layer_ids",
+          "opening_anchor_layer_id",
+          "bearing",
+          "reveal_finish",
+          "material_class"
+        ],
+        "title": "HouseWallProfile",
+        "type": "object"
+      },
+      "HouseWindowShare": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "enum": [
+              "n",
+              "e",
+              "s",
+              "w"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "facade_area": {
+            "title": "Facade Area",
+            "type": "number"
+          },
+          "ratio": {
+            "title": "Ratio",
+            "type": "number"
+          },
+          "window_area": {
+            "title": "Window Area",
+            "type": "number"
+          }
+        },
+        "required": [
+          "direction",
+          "window_area",
+          "facade_area",
+          "ratio"
+        ],
+        "title": "HouseWindowShare",
+        "type": "object"
+      },
+      "HouseWindowType": {
+        "additionalProperties": false,
+        "properties": {
+          "g": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "G"
+          },
+          "head_height": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Head Height",
+            "type": "number"
+          },
+          "height": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Height",
+            "type": "number"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          },
+          "shutter_box_height": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Shutter Box Height",
+            "type": "number"
+          },
+          "uw": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uw"
+          },
+          "width": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Width",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "width",
+          "height",
+          "head_height",
+          "shutter_box_height",
+          "uw",
+          "g",
+          "render_key"
+        ],
+        "title": "HouseWindowType",
         "type": "object"
       },
       "IgnoredZoneOut": {
@@ -13127,6 +17578,435 @@
         ]
       }
     },
+    "/api/v1/admin/house/catalogs": {
+      "get": {
+        "operationId": "list_catalog_versions_api_v1_admin_house_catalogs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HouseCatalogVersionOut"
+                  },
+                  "title": "Response List Catalog Versions Api V1 Admin House Catalogs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Catalog Versions",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates": {
+      "get": {
+        "operationId": "list_templates_api_v1_admin_house_templates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HouseTemplateSummaryOut"
+                  },
+                  "title": "Response List Templates Api V1 Admin House Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Templates",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions": {
+      "post": {
+        "description": "Neue Version eines Haustyps aus einer IFC-Datei (Importvertrag); der Import läuft im Hintergrund.\nDieselbe Datei für einen offenen Entwurf liefert diesen mit 200.",
+        "operationId": "upload_ifc_api_v1_admin_house_templates__slug__versions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_ifc_api_v1_admin_house_templates__slug__versions_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Ifc",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}": {
+      "get": {
+        "operationId": "get_version_api_v1_admin_house_templates__slug__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Version",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/check": {
+      "post": {
+        "description": "Kompatibilität mit der Katalogversion über `engine` prüfen; kompatibel → `reviewed`.",
+        "operationId": "check_version_api_v1_admin_house_templates__slug__versions__version__check_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check Version",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/decisions": {
+      "put": {
+        "description": "Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards).",
+        "operationId": "set_decisions_api_v1_admin_house_templates__slug__versions__version__decisions_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HouseDraftDecisions"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Decisions",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/publish": {
+      "post": {
+        "description": "Freigabe des Prüfbefunds und Veröffentlichung; danach unveränderlich (L4).",
+        "operationId": "publish_version_api_v1_admin_house_templates__slug__versions__version__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Version",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/reject": {
+      "post": {
+        "operationId": "reject_version_api_v1_admin_house_templates__slug__versions__version__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Version",
+        "tags": [
+          "house"
+        ]
+      }
+    },
+    "/api/v1/admin/house/templates/{slug}/versions/{version}/retire": {
+      "post": {
+        "operationId": "retire_version_api_v1_admin_house_templates__slug__versions__version__retire_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,59}$",
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplateVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retire Version",
+        "tags": [
+          "house"
+        ]
+      }
+    },
     "/api/v1/admin/inquiries": {
       "get": {
         "operationId": "list_inquiries_api_v1_admin_inquiries_get",
@@ -18123,5 +23003,15 @@
         ]
       }
     }
-  }
+  },
+  "x-house-contract": [
+    "HouseCatalog",
+    "HouseCompatibility",
+    "HouseCompatibilityRequest",
+    "HouseConfiguration",
+    "HouseEvaluateRequest",
+    "HouseEvaluation",
+    "HouseFacts",
+    "HouseTemplate"
+  ]
 }

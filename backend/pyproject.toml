@@ -28,6 +28,7 @@ dependencies = [
   "pdfminer-six>=20250506",
   "pypdfium2>=4.30",
   "pillow>=10.4",
+  "ifcopenshell>=0.9,<0.10",
 ]
 
 [dependency-groups]

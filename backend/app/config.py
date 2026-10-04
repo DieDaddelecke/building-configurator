@@ -114,6 +114,15 @@ class Settings(BaseSettings):
     # Konfigurator (H2)
     configuration_limit_per_minute: int = 120
 
+    # Hausmodell (docs/PLAN_HAUSMODELL.md): Rechendienst im internen Netz, IFC-Import im Kindprozess (E-HM-19)
+    engine_url: str = "http://engine:8090"
+    engine_timeout_seconds: float = 10.0
+    house_ifc_max_bytes: int = 100 * 1024 * 1024
+    """Größte hochgeladene IFC-Datei eines Haustyps (3.6); die Probedateien des Büros haben 0,2 MB."""
+    house_ifc_timeout_seconds: float = 120.0
+    house_ifc_max_memory_mb: int = Field(default=1024, ge=256, le=8192)
+    """Adressraum des Kindprozesses; unter 160 MB scheitert schon der Start von IfcOpenShell (Spike HM0)."""
+
     # Anfrage (A, Plan 3.6)
     office_email: str = "buero@emprise.local"
     """Sammelpostfach des Architekturbüros für neue Anfragen; ein Anbieterwechsel (E2) ändert nur SMTP."""

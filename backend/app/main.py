@@ -1,6 +1,7 @@
 """FastAPI-Anwendung. Welche Fachmodule ihre Router unter `/api/v1` einhängen, sagt `app.products`."""
 
 from importlib import import_module
+from typing import Any
 
 import sentry_sdk
 from fastapi import APIRouter, FastAPI
@@ -8,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 import app.registry  # noqa: F401  Jobs registrieren, damit enqueue sie kennt
 from app.config import Settings, get_settings
+from app.house.contract import add_contract_schemas
 from app.platform import health
 from app.platform.logging import configure_logging
 from app.platform.middleware import CsrfMiddleware, RequestContextMiddleware
@@ -26,6 +28,19 @@ def init_sentry(settings: Settings) -> None:
             send_default_pii=False,
             traces_sample_rate=0.0,
         )
+
+
+def _include_house_contract(app: FastAPI) -> None:
+    """Vertrag des Hausmodells in `openapi.json`, auch ohne Route (PLAN_HAUSMODELL 3.4, E-HM-29)."""
+    generate = app.openapi
+
+    def openapi() -> dict[str, Any]:
+        if app.openapi_schema is None:
+            add_contract_schemas(generate())
+        assert app.openapi_schema is not None
+        return app.openapi_schema
+
+    app.openapi = openapi  # type: ignore[method-assign]
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -47,6 +62,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         v1.include_router(import_module(name).router)
     app.include_router(v1)
     app.include_router(health.router, prefix="/api")
+    _include_house_contract(app)
 
     # Reihenfolge: die zuletzt hinzugefügte Middleware liegt außen
     app.add_middleware(CsrfMiddleware)

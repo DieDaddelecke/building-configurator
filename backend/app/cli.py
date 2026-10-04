@@ -16,6 +16,7 @@ rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerte
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 reference-check DATEI [--version N|all]  Auswertung an einer Referenzliste messen (G2, ohne Aufruf)
 reference-import DATEI [--replace]  Referenzliste in die Verwaltung übernehmen
+house-catalog-import DATEI|- [--publish]  Katalogversion des Hausmodells übernehmen (HM3, `-`: stdin)
 """
 
 import argparse
@@ -486,6 +487,30 @@ def cmd_envelope_check(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def cmd_house_catalog_import(args: argparse.Namespace) -> None:
+    """Katalogversion des Hausmodells aus einer JSON-Datei (HM3: Demo-Katalog aus
+    `packages/domain/seed/demo-house/catalog.json`). Das Backend-Image enthält den Seed nicht; auf dem Server
+    kommt die Datei über stdin (`-`). Dasselbe Dokument ergibt keine neue Version."""
+    from pydantic import ValidationError
+
+    from app.house import service
+
+    if args.file == "-":
+        text, source = sys.stdin.read(), "stdin"
+    else:
+        path = Path(args.file)
+        text, source = path.read_text(encoding="utf-8"), path.name
+    try:
+        document = json.loads(text)
+        with get_sessionmaker()() as db:
+            version, done = service.import_catalog(db, document, source=source, publish=args.publish)
+    except (ValueError, ValidationError) as exc:
+        print(f"Katalog ungültig: {exc}", file=sys.stderr)
+        sys.exit(1)
+    state = ", ".join(done) if done else "unverändert"
+    print(f"Katalog {version.version} ({version.status}, {state}), sha256 {version.sha256[:12]}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -558,6 +583,12 @@ def main() -> None:
     p_envelope.add_argument("--zone", help="nur Parzellen in dieser Zone (z. B. Uh)")
     p_envelope.add_argument("--sample", type=int, help="gleichmäßige Stichprobe dieser Größe")
     p_envelope.set_defaults(func=cmd_envelope_check)
+    p_house_catalog = sub.add_parser("house-catalog-import")
+    p_house_catalog.add_argument("file", help="JSON-Datei der Katalogversion oder `-` für stdin")
+    p_house_catalog.add_argument(
+        "--publish", action="store_true", help="als aktuelle Version veröffentlichen"
+    )
+    p_house_catalog.set_defaults(func=cmd_house_catalog_import)
     args = parser.parse_args()
     args.func(args)
 

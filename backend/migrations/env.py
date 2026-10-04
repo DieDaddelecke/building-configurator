@@ -9,6 +9,7 @@ import app.analysis.models
 import app.catalog.models
 import app.configuration.models
 import app.envelope.models
+import app.house.models
 import app.inquiry.models
 import app.platform.models  # alle Modelle laden, damit Alembic sie vergleicht
 import app.rules.models

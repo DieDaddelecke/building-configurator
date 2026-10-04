@@ -50,6 +50,11 @@ $$
 """
 
 CLEAN_TABLES = [
+    "house_catalog_compatibility",
+    "house_template_version",
+    "house_template",
+    "house_catalog_version",
+    "house_catalog",
     "configuration",
     "module_type_price",
     "package_type_price",

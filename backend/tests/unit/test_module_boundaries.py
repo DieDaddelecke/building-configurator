@@ -18,7 +18,7 @@ from app.products import JOB_MODULES, ROUTERS
 
 APP = Path(__file__).resolve().parents[2] / "app"
 CORE_PACKAGES = ("platform", "integrations", "site", "rules", "envelope", "plan")
-PRODUCT_PACKAGES = ("catalog", "configuration", "inquiry", "submission", "analysis")
+PRODUCT_PACKAGES = ("catalog", "configuration", "inquiry", "submission", "analysis", "house")
 
 
 def _package_of(path: Path) -> str:

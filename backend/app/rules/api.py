@@ -33,6 +33,7 @@ from app.platform.auth.context import (
 )
 from app.platform.db import get_db
 from app.platform.problems import Problem
+from app.platform.uploads import read_limited
 from app.rules import documents, model_choice, ocr, office, overrides, scheduling, service
 from app.rules.schemas import (
     CoverageOut,
@@ -260,20 +261,6 @@ def delete_own_override(
 # Zonenwahl eine bezahlte Auswertung auslöst (3.7)
 # ---------------------------------------------------------------------------
 
-UPLOAD_CHUNK_BYTES = 1024 * 1024
-
-
-async def _read_limited(file: UploadFile, limit: int) -> bytes:
-    """Datei stückweise lesen und bei Überschreiten der Grenze abbrechen, nicht erst danach."""
-    chunks: list[bytes] = []
-    total = 0
-    while chunk := await file.read(UPLOAD_CHUNK_BYTES):
-        total += len(chunk)
-        if total > limit:
-            raise Problem(413, "upload_too_large")
-        chunks.append(chunk)
-    return b"".join(chunks)
-
 
 @router.get("/projects/{project_id}/regulations", response_model=list[ProjectRegulationOut])
 def list_project_regulations(
@@ -300,7 +287,7 @@ async def upload_project_regulation(
     Mit `du_type` `lotissement` oder `cahier_des_charges` ein Zusatzdokument (AN3), höchstens drei."""
     settings = get_settings()
     rate_limit.check(request, "regulation_write", settings.site_write_limit_per_hour, 3600)
-    data = await _read_limited(file, settings.regulation_upload_max_bytes)
+    data = await read_limited(file, settings.regulation_upload_max_bytes)
     if not data:
         raise Problem(422, "not_a_pdf")
     # Prüfung des PDF und Ablage im Objektspeicher dauern bei großen Dateien Sekunden: nicht im Event-Loop
