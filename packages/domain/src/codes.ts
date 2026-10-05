@@ -21,35 +21,58 @@ export type GeometryErrorCode = (typeof GEOMETRY_ERROR_CODES)[number];
 export const MODEL_ERROR_CODES = [
   "assignment_ambiguous",
   "assignment_missing",
+  "carport_type_unknown",
   "conductivity_missing",
   "default_missing",
   "door_type_unknown",
   "element_unknown",
   "envelope_invalid",
   "envelope_not_counter_clockwise",
+  "floor_slab_missing",
   "ground_slab_missing",
   "host_unknown",
   "layer_not_in_profile",
   "layer_unknown",
   "material_unknown",
   "mixed_wall_profiles",
-  "multi_storey_not_supported",
   "option_unknown",
   "override_not_allowed",
   "price_entry_ambiguous",
   "price_entry_missing",
   "price_entry_unknown",
   "price_unit_mismatch",
-  "roof_kind_not_supported",
+  "roof_not_constructible",
+  "roof_shape_unknown",
   "roof_slab_missing",
+  "roof_type_kind_mismatch",
   "roof_type_unknown",
   "room_invalid",
   "room_unknown",
   "slot_unknown",
+  "storey_envelope_mismatch",
+  "storey_outlines_differ",
+  "terrace_type_unknown",
+  "value_type_mismatch",
   "wall_profile_unknown",
   "window_type_unknown",
 ] as const;
 export type ModelErrorCode = (typeof MODEL_ERROR_CODES)[number];
+
+/**
+ * Gründe, aus denen der Kern eine Dachform auf dem Grundriss nicht erzeugt (Ergänzung 4): `params.reason` bei
+ * `roof_not_constructible`. Fehler des Skeletts selbst zählen als `skeleton_failed`.
+ */
+export const ROOF_REFUSALS = [
+  "break_too_high",
+  "break_too_low",
+  "design_incomplete",
+  "gables_adjacent",
+  "no_eave_edge",
+  "no_gable_edge",
+  "outline_invalid",
+  "skeleton_failed",
+] as const;
+export type RoofRefusal = (typeof ROOF_REFUSALS)[number];
 
 /** Ergebnisse der Regeln (P 6.6, P 8.3): Prüfungen der Geometrie und Katalogregeln (deren Text steht im Katalog). */
 export const RULE_CODES = ["opening_outside_host", "opening_above_ceiling", "opening_below_floor", "openings_overlap", "catalog_rule"] as const;
@@ -64,12 +87,18 @@ const CHECK_CODES = [
   "element_default_not_targeted",
   "exterior_door_unknown",
   "level_unknown",
+  "line_slot_unknown",
+  "line_value_unknown",
+  "parameter_slot_without_shape",
   "price_source_ambiguous",
   "price_target_mismatch",
   "quantity_key_unknown",
+  "roof_shape_default_mismatch",
+  "roof_shape_without_roof_type",
   "room_outside_envelope",
   "room_type_unknown",
   "rooms_overlap",
+  "terrace_without_garden_edge",
   "type_slot_ambiguous",
   "type_slot_missing",
   "wall_axis_zero_length",

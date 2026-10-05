@@ -13,19 +13,26 @@ const TOLERANCE = 10;
 
 export type Status = "valid" | "valid_with_warnings" | "with_deviations" | "blocked";
 
-/** Gebäudekennwerte für `building.*` in Regeln. */
+/**
+ * Gebäudekennwerte für `building.*` in Regeln. Wand des Erdgeschosses; `roof_pitch` ist die Neigung der Traufflächen,
+ * `parapet_upstand` gibt es nur beim Flachdach (sonst `null`, Vergleiche ergeben dann false, E-HM-34).
+ */
 export function buildingContext(model: DerivedModel, quantities: readonly HouseQuantity[]): Record<string, unknown> {
   const loop = model.loops[0]!;
+  const roof = model.roof;
   return {
     storeys: model.loops.length,
-    facade_height: toMetres(loop.facadeHeight),
+    facade_height: toMetres(model.facadeHeight),
     wall_thickness: toMetres(loop.wallThickness),
     wall_profile_id: loop.profile.id,
-    roof_type_id: model.roof.roofType.id,
-    roof_kind: model.roof.roofType.kind,
-    green_roof: model.roof.roofType.green,
-    parapet_upstand: toMetres(model.roof.upstand),
-    top_height: toMetres(model.roof.top),
+    roof_type_id: roof.roofType.id,
+    roof_kind: roof.roofType.kind,
+    roof_form: roof.design.form,
+    roof_shape_id: roof.shapeId,
+    roof_pitch: roof.design.form === "flat" ? null : roof.design.pitchDeg,
+    green_roof: roof.roofType.green,
+    parapet_upstand: roof.flat ? toMetres(roof.flat.upstand) : null,
+    top_height: toMetres(roof.top),
     footprint_area: quantities.find((q) => q.key === "footprint.area")?.value ?? 0,
   };
 }
@@ -49,7 +56,7 @@ function geometryResult(code: Exclude<RuleCode, "catalog_rule">, elementIds: str
   return { code, rule_id: null, outcome: "block", message: null, element_ids: elementIds, suggestion: null, source: null, params };
 }
 
-/** Prüfung der Öffnungen nach der Auflösung (P 6.6): im Host, ohne Überlappung, unter der Decke. */
+/** Prüfung der Öffnungen nach der Auflösung (P 6.6): im Host, ohne Überlappung, unter der Decke ihres Geschosses. */
 export function checkGeometry(model: DerivedModel): HouseRuleResult[] {
   const results: HouseRuleResult[] = [];
   const byHost = new Map<string, typeof model.openings>();
@@ -60,8 +67,8 @@ export function checkGeometry(model: DerivedModel): HouseRuleResult[] {
     if (from < -TOLERANCE || to > opening.hostLength + TOLERANCE) {
       results.push(geometryResult("opening_outside_host", [opening.id, opening.hostId], { host_length: toMetres(opening.hostLength) }));
     }
-    if (opening.head > model.ceiling + TOLERANCE) {
-      results.push(geometryResult("opening_above_ceiling", [opening.id], { head: toMetres(opening.head), ceiling: toMetres(model.ceiling) }));
+    if (opening.head > opening.ceiling + TOLERANCE) {
+      results.push(geometryResult("opening_above_ceiling", [opening.id], { head: toMetres(opening.head), ceiling: toMetres(opening.ceiling) }));
     }
     if (opening.sill < -TOLERANCE) {
       results.push(geometryResult("opening_below_floor", [opening.id], { sill: toMetres(opening.sill) }));

@@ -1,9 +1,9 @@
 // Bauphysik, vorbereitet (P 11): U-Wert eines Wandprofils nach vereinfachtem Verfahren und Fensterflächenanteil
-// je Fassadenrichtung. Ohne Winkelfunktionen, damit jeder Browser dasselbe rechnet.
+// je Fassadenrichtung. Ohne Winkelfunktionen, damit jeder Browser dasselbe rechnet; die Fassadenfläche unter einem
+// geneigten Dach kommt aus derive (Ergänzung 5).
 import type { HouseEnergy, HouseWallProfile, HouseWindowShare } from "./contract.gen.ts";
 import type { DerivedModel } from "./derive.ts";
 import { ModelError } from "./errors.ts";
-import { edgeLength } from "./geometry/edges.ts";
 import { UNITS_PER_METRE } from "./geometry/polygon.ts";
 import type { CatalogIndex } from "./model.ts";
 
@@ -39,12 +39,7 @@ export function energy(model: DerivedModel, catalog: CatalogIndex): HouseEnergy 
     for (const segment of loop.segments) {
       const key = direction(segment.end.x - segment.start.x, segment.end.y - segment.start.y);
       const share = shares.get(key) ?? { window: 0, facade: 0 };
-      if (segment.facadeEdge >= 0) {
-        const outline = loop.facadeOutline;
-        const a = outline[segment.facadeEdge]!;
-        const b = outline[(segment.facadeEdge + 1) % outline.length]!;
-        share.facade += edgeLength(a, b) * loop.facadeHeight;
-      }
+      share.facade += segment.facadeArea;
       for (const opening of model.openings) {
         if (opening.hostId === segment.id && opening.kind === "window") share.window += opening.width * opening.height;
       }

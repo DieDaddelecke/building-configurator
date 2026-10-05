@@ -1,17 +1,18 @@
 // Kompatibilitätsprüfung Template ↔ Katalog (P 2.1 Nr. 5, P 5.2): alle Standards und Slot-Ziele auflösbar und
 // verfügbar, jedes bepreiste Bauteil mit genau einer Preisquelle, das Template geometrisch stimmig (P 6.6,
-// P 20.1.1). Das Ergebnis ist ein Prüfbefund; freigeben muss ein Mensch (PLAN_HAUSMODELL 3.5).
+// P 20.1.1), Dachformen, Linien und Nebenbauten vollständig (HM5). Das Ergebnis ist ein Prüfbefund; freigeben muss
+// ein Mensch (PLAN_HAUSMODELL 3.5).
 import { FillRule, intersect } from "clipper2-ts";
 import { RULE_CODES, type CompatibilityCode, type RuleCode } from "./codes.ts";
 import type { HouseCatalog, HouseCompatibility, HouseCompatibilityIssue, HouseOptionAssigns, HouseTemplate } from "./contract.gen.ts";
 import { ModelError } from "./errors.ts";
 import { DOMAIN_VERSION, evaluate } from "./evaluate.ts";
-import { holds } from "./expr.ts";
 import { GeometryError } from "./geometry/offset.ts";
 import { polygonDefect, signedArea, toUnits, type Point, type Polygon } from "./geometry/polygon.ts";
 import { CatalogIndex, TemplateIndex } from "./model.ts";
+import { ruleUnit, targetEntries } from "./pricing.ts";
 import { QUANTITY_KEYS, type QuantityKey } from "./quantities.ts";
-import { exprContext, selectionContext, slotTargets } from "./resolve.ts";
+import { exprContext, refusal, selectionContext, slotAssigns, slotTargets } from "./resolve.ts";
 
 /** Toleranz der Geometrie (P 4): 1 mm, als Fläche 1 mm × 1 m. */
 const TOLERANCE = 10;
@@ -52,20 +53,18 @@ function checkTemplate(template: HouseTemplate, catalog: CatalogIndex): Issue[] 
   const rooms = new Set(template.rooms.map((r) => r.id));
   const segments = new Set(template.envelope.flatMap((loop) => loop.segments.map((s) => s.id)));
   const walls = new Set(template.interior_walls.map((w) => w.id));
-  if (template.levels.length !== 1 || template.envelope.length !== 1) issues.push(issue("multi_storey_not_supported"));
-
-  const envelopes: Polygon[] = [];
+  // Hülle je Geschoss; Räume und Innenwände liegen in der Hülle ihres Geschosses
+  const envelopes = new Map<string, Polygon>();
   for (const loop of template.envelope) {
     if (!levels.has(loop.level_id)) issues.push(issue("level_unknown", { ref_id: loop.level_id }));
     const polygon = units(loop.inner_polygon);
     const defect = polygonDefect(polygon);
     if (defect) issues.push(issue(`envelope_${defect}`, { ref_id: loop.level_id }));
     else if (signedArea(polygon) <= 0) issues.push(issue("envelope_not_counter_clockwise", { ref_id: loop.level_id }));
-    else envelopes.push(polygon);
+    else envelopes.set(loop.level_id, polygon);
   }
-  const envelope = envelopes[0];
 
-  const roomPolygons: { id: string; polygon: Polygon }[] = [];
+  const roomPolygons: { id: string; level: string; polygon: Polygon }[] = [];
   for (const room of template.rooms) {
     if (!levels.has(room.level_id)) issues.push(issue("level_unknown", { element_id: room.id, ref_id: room.level_id }));
     if (!catalog.roomTypes.has(room.room_type_id)) issues.push(issue("room_type_unknown", { element_id: room.id, ref_id: room.room_type_id }));
@@ -75,13 +74,15 @@ function checkTemplate(template: HouseTemplate, catalog: CatalogIndex): Issue[] 
       issues.push(issue(`room_${defect}`, { element_id: room.id }));
       continue;
     }
+    const envelope = envelopes.get(room.level_id);
     if (envelope && signedArea(polygon) !== 0 && Math.abs(signedArea(polygon)) - overlapArea(polygon, envelope) > AREA_TOLERANCE) {
       issues.push(issue("room_outside_envelope", { element_id: room.id }));
     }
-    roomPolygons.push({ id: room.id, polygon });
+    roomPolygons.push({ id: room.id, level: room.level_id, polygon });
   }
   for (let i = 0; i < roomPolygons.length; i++) {
     for (let j = i + 1; j < roomPolygons.length; j++) {
+      if (roomPolygons[i]!.level !== roomPolygons[j]!.level) continue;
       if (overlapArea(roomPolygons[i]!.polygon, roomPolygons[j]!.polygon) > AREA_TOLERANCE) {
         issues.push(issue("rooms_overlap", { element_id: roomPolygons[i]!.id, ref_id: roomPolygons[j]!.id }));
       }
@@ -92,6 +93,7 @@ function checkTemplate(template: HouseTemplate, catalog: CatalogIndex): Issue[] 
     for (const id of wall.adjacent_room_ids) if (!rooms.has(id)) issues.push(issue("room_unknown", { element_id: wall.id, ref_id: id }));
     const axis = units(wall.axis);
     if (axis[0]!.x === axis[1]!.x && axis[0]!.y === axis[1]!.y) issues.push(issue("wall_axis_zero_length", { element_id: wall.id }));
+    const envelope = envelopes.get(wall.level_id);
     if (envelope && !axis.every((p) => inside(p, envelope))) issues.push(issue("wall_outside_envelope", { element_id: wall.id }));
   }
   for (const opening of template.openings) {
@@ -105,8 +107,15 @@ function checkTemplate(template: HouseTemplate, catalog: CatalogIndex): Issue[] 
       issues.push(issue("exterior_door_unknown", { element_id: id }));
     }
   }
-  for (const kind of ["ground", "roof"] as const) {
-    if (template.slabs.filter((s) => s.kind === kind).length !== 1) issues.push(issue(`${kind}_slab_missing`));
+  // Bodenplatte einmal, eine Decke je oberem Geschoss, die Dachdecke nur beim Flachdach des Templates
+  if (template.slabs.filter((s) => s.kind === "ground").length !== 1) issues.push(issue("ground_slab_missing"));
+  if (template.roof.design.form === "flat" && template.slabs.filter((s) => s.kind === "roof").length !== 1) {
+    issues.push(issue("roof_slab_missing"));
+  }
+  for (const level of [...template.levels].sort((a, b) => a.elevation - b.elevation).slice(1)) {
+    if (template.slabs.filter((s) => s.kind === "floor" && s.level_id === level.id).length !== 1) {
+      issues.push(issue("floor_slab_missing", { ref_id: level.id }));
+    }
   }
   return issues;
 }
@@ -144,12 +153,39 @@ function checkCatalog(catalog: CatalogIndex): Issue[] {
     window_type_id: [catalog.windowTypes, "window_type_unknown"],
     door_type_id: [catalog.doorTypes, "door_type_unknown"],
     roof_type_id: [catalog.roofTypes, "roof_type_unknown"],
+    roof_shape_id: [catalog.roofShapes, "roof_shape_unknown"],
+    terrace_type_id: [catalog.terraceTypes, "terrace_type_unknown"],
+    carport_type_id: [catalog.carportTypes, "carport_type_unknown"],
   };
   for (const option of c.option_values) {
     if (!slots.has(option.slot_id)) issues.push(issue("slot_unknown", { slot_id: option.slot_id, ref_id: option.id }));
     for (const [field, [map, code]] of Object.entries(refs) as [keyof HouseOptionAssigns, [ReadonlyMap<string, unknown>, CompatibilityCode]][]) {
       const id = option.assigns[field];
       if (id !== null && !map.has(id)) issues.push(issue(code, { slot_id: option.slot_id, ref_id: id }));
+    }
+  }
+  // Dachformen: Neigung und Drehung nur mit einem Slot für die Form; zu jeder Form ein passender Dachaufbau
+  const shapeSlots = c.slots.filter((slot) => slotAssigns(catalog, slot.id, "roof_shape_id"));
+  for (const slot of c.slots.filter((s) => s.parameter !== null)) {
+    if (!shapeSlots.length) issues.push(issue("parameter_slot_without_shape", { slot_id: slot.id }));
+  }
+  const roofKinds = new Set(c.option_values.flatMap((o) => (o.assigns.roof_type_id ? [catalog.roofTypes.get(o.assigns.roof_type_id)?.kind] : [])));
+  for (const id of new Set(c.option_values.flatMap((o) => (o.assigns.roof_shape_id ? [o.assigns.roof_shape_id] : [])))) {
+    const shape = catalog.roofShapes.get(id);
+    if (shape && !roofKinds.has(shape.form === "flat" ? "flat" : "pitched")) issues.push(issue("roof_shape_without_roof_type", { ref_id: id }));
+  }
+  // Linien: bekannte Slots, Werte der passenden Art
+  const slotById = new Map(c.slots.map((slot) => [slot.id, slot]));
+  for (const line of c.lines) {
+    for (const [slotId, value] of Object.entries(line.presets)) {
+      const slot = slotById.get(slotId);
+      if (!slot) {
+        issues.push(issue("line_slot_unknown", { slot_id: slotId, ref_id: line.id }));
+        continue;
+      }
+      const option = value.type === "option" ? catalog.options.get(value.option_value_id) : undefined;
+      const fits = slot.value_type === "number" ? value.type === "number" : option !== undefined && option.slot_id === slotId;
+      if (!fits) issues.push(issue("line_value_unknown", { slot_id: slotId, ref_id: line.id }));
     }
   }
   return issues;
@@ -167,6 +203,7 @@ function assignsOf(catalog: CatalogIndex, slotId: string): Set<keyof HouseOption
 function checkSlots(template: HouseTemplate, catalog: CatalogIndex, index: TemplateIndex): Issue[] {
   const issues: Issue[] = [];
   const selection = selectionContext({ selections: {} }, index, catalog);
+  const form = template.roof.design.form;
   const coverage = new Map<string, Map<keyof HouseOptionAssigns, string[]>>();
   for (const [slotId, optionId] of Object.entries(template.defaults)) {
     const option = catalog.options.get(optionId);
@@ -174,7 +211,7 @@ function checkSlots(template: HouseTemplate, catalog: CatalogIndex, index: Templ
     else if (!option || option.slot_id !== slotId) issues.push(issue("default_unknown", { slot_id: slotId, ref_id: optionId }));
   }
   const targeted = new Map<string, Set<string>>();
-  for (const slot of catalog.slots) {
+  for (const slot of catalog.slots.filter((s) => s.value_type !== "number")) {
     const targets = slotTargets(slot.target, index, catalog, selection);
     targeted.set(slot.id, new Set(targets.map((element) => element.id)));
     if (!targets.length) continue;
@@ -185,7 +222,7 @@ function checkSlots(template: HouseTemplate, catalog: CatalogIndex, index: Templ
       // Standard des Bauteils vor dem des Slots (E-HM-37)
       const own = template.element_defaults[element.id]?.[slot.id] ?? defaultId;
       const option = own === undefined ? undefined : catalog.options.get(own);
-      if (option && option.slot_id === slot.id && !holds(option.available_when, exprContext(element, selection, catalog))) {
+      if (option && option.slot_id === slot.id && refusal(option, exprContext(element, selection, catalog), catalog, form)) {
         issues.push(issue("default_unavailable", { slot_id: slot.id, element_id: element.id, ref_id: option.id }));
       }
       const perElement = coverage.get(element.id) ?? new Map<keyof HouseOptionAssigns, string[]>();
@@ -202,7 +239,7 @@ function checkSlots(template: HouseTemplate, catalog: CatalogIndex, index: Templ
       else if (!targets.has(elementId)) issues.push(issue("element_default_not_targeted", { slot_id: slotId, element_id: elementId, ref_id: optionId }));
     }
   }
-  // Jedes Bauteil braucht genau einen Slot, der seinen Typ zuweist (E-HM-31)
+  // Jedes Bauteil braucht genau einen Slot, der seinen Typ zuweist (E-HM-31); Form, Terrasse und Carport höchstens einen
   const needs: [string, keyof HouseOptionAssigns][] = [
     ...template.envelope.flatMap((loop) => loop.segments.map((s): [string, keyof HouseOptionAssigns] => [s.id, "wall_profile_id"])),
     ...template.openings.map((o): [string, keyof HouseOptionAssigns] => [o.id, o.kind === "window" ? "window_type_id" : "door_type_id"]),
@@ -214,6 +251,26 @@ function checkSlots(template: HouseTemplate, catalog: CatalogIndex, index: Templ
       issues.push(issue(slots.length ? "type_slot_ambiguous" : "type_slot_missing", { element_id: elementId, ref_id: field, slot_id: slots[0] ?? null }));
     }
   }
+  const optional: [string, keyof HouseOptionAssigns][] = [
+    ["roof", "roof_shape_id"],
+    ["site", "terrace_type_id"],
+    ["site", "carport_type_id"],
+  ];
+  for (const [elementId, field] of optional) {
+    const slots = coverage.get(elementId)?.get(field) ?? [];
+    if (slots.length > 1) issues.push(issue("type_slot_ambiguous", { element_id: elementId, ref_id: field, slot_id: slots[0]! }));
+  }
+  // Voreingestellte Form = Form des Templates, sonst entstünde ohne Wahl ein anderes Dach als im IFC
+  for (const slot of catalog.slots.filter((s) => slotAssigns(catalog, s.id, "roof_shape_id"))) {
+    const shapeId = catalog.options.get(template.defaults[slot.id] ?? "")?.assigns.roof_shape_id;
+    const shape = shapeId ? catalog.roofShapes.get(shapeId) : undefined;
+    if (shape && shape.form !== form) issues.push(issue("roof_shape_default_mismatch", { slot_id: slot.id, ref_id: shape.id }));
+  }
+  // Die Terrasse liegt an der längsten Gartenkante (Ergänzung 7): ohne Gartenkante keine Terrasse
+  const terraces = catalog.catalog.option_values.some((o) => o.assigns.terrace_type_id !== null);
+  const ground = [...template.levels].sort((a, b) => a.elevation - b.elevation)[0];
+  const garden = template.envelope.some((loop) => loop.level_id === ground?.id && loop.segments.some((s) => s.facade_role === "garden"));
+  if (terraces && !garden) issues.push(issue("terrace_without_garden_edge"));
   return issues;
 }
 
@@ -234,8 +291,15 @@ function checkPrices(template: HouseTemplate, catalog: CatalogIndex): Issue[] {
     window_type: optionRefs("window_type_id"),
     door_type: optionRefs("door_type_id"),
     roof_type: optionRefs("roof_type_id"),
+    terrace_type: optionRefs("terrace_type_id"),
+    carport_type: optionRefs("carport_type_id"),
     template: [template.slug],
   };
+  // Linien eines Dachs (First, Grat, …) gibt es nur bei geneigten Dachaufbauten
+  const refsFor = (key: QuantityKey | null, target: string) =>
+    key !== null && key.startsWith("roof.") && key !== "roof.area"
+      ? (possible[target] ?? []).filter((id) => catalog.roofTypes.get(id)?.kind === "pitched")
+      : (possible[target] ?? []);
   const unconditional = new Map<string, number>();
   for (const rule of c.pricing_rules) {
     const key = rule.quantity_key as QuantityKey | null;
@@ -244,7 +308,7 @@ function checkPrices(template: HouseTemplate, catalog: CatalogIndex): Issue[] {
       continue;
     }
     if (rule.method === "per_unit" && rule.applies_to === null && key !== null) unconditional.set(key, (unconditional.get(key) ?? 0) + 1);
-    const unit = rule.method === "lump_sum" ? "lump_sum" : rule.method === "percent" ? "percent" : QUANTITY_KEYS[key!].unit;
+    const unit = ruleUnit(rule);
     if (rule.entry_id !== null) {
       const e = entries.get(rule.entry_id);
       if (!e) issues.push(issue("price_entry_unknown", { ref_id: rule.entry_id }));
@@ -256,8 +320,8 @@ function checkPrices(template: HouseTemplate, catalog: CatalogIndex): Issue[] {
       issues.push(issue("price_target_mismatch", { ref_id: rule.id }));
       continue;
     }
-    for (const ref of possible[target] ?? []) {
-      const found = c.price_entries.filter((e) => e.target_kind === target && e.target_id === ref);
+    for (const ref of refsFor(key, target)) {
+      const found = targetEntries(c, target, ref, unit);
       if (found.length !== 1) issues.push(issue(found.length ? "price_entry_ambiguous" : "price_entry_missing", { ref_id: `${target}:${ref}` }));
       else if (found[0]!.unit !== unit) issues.push(issue("price_unit_mismatch", { ref_id: found[0]!.id }));
     }
@@ -287,7 +351,8 @@ export function checkCompatibility(input: { readonly template: HouseTemplate; re
       }
     } catch (error) {
       if (!(error instanceof ModelError || error instanceof GeometryError)) throw error;
-      issues.push(issue(error.code));
+      // Grund, aus dem das Dach des Templates nicht entsteht (Ergänzung 4)
+      issues.push(issue(error.code, { ref_id: error instanceof ModelError ? (error.detail.reason ?? null) : null }));
     }
   }
   issues = issues.sort((a, b) => a.code.localeCompare(b.code) || (a.element_id ?? "").localeCompare(b.element_id ?? ""));

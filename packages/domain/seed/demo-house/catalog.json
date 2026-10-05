@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "market": "FR",
   "currency": "EUR",
   "vat_rate": 0.2,
@@ -17,7 +17,9 @@
     { "id": "wood_cladding", "name": { "fr": "Bardage bois", "de": "Holzverkleidung" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "wood" },
     { "id": "roof_insulation", "name": { "fr": "Isolant de toiture", "de": "Dachdämmung" }, "conductivity": 0.035, "density": null, "carbon_per_m3": null, "render_key": "insulation" },
     { "id": "roof_membrane", "name": { "fr": "Étanchéité", "de": "Abdichtung" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "membrane" },
-    { "id": "green_substrate", "name": { "fr": "Substrat et végétation", "de": "Substrat und Vegetation" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "vegetation" }
+    { "id": "green_substrate", "name": { "fr": "Substrat et végétation", "de": "Substrat und Vegetation" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "vegetation" },
+    { "id": "clay_tiles", "name": { "fr": "Tuiles terre cuite", "de": "Tondachziegel" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "tiles" },
+    { "id": "natural_slate", "name": { "fr": "Ardoise naturelle", "de": "Naturschiefer" }, "conductivity": null, "density": null, "carbon_per_m3": null, "render_key": "slate" }
   ],
   "wall_layers": [
     { "id": "layer.concrete_20", "material_id": "concrete", "thickness": 0.2, "structural": true, "thermal": true },
@@ -89,7 +91,48 @@
       "green": true,
       "material_class": "vegetation",
       "render_key": "green_roof"
+    },
+    {
+      "id": "roof.tiles",
+      "name": { "fr": "Tuiles terre cuite", "de": "Tondachziegel" },
+      "kind": "pitched",
+      "build_up": [
+        { "material_id": "roof_insulation", "thickness": 0.22 },
+        { "material_id": "clay_tiles", "thickness": 0.06 }
+      ],
+      "green": false,
+      "material_class": "clay_tile",
+      "render_key": "tiles"
+    },
+    {
+      "id": "roof.slate",
+      "name": { "fr": "Ardoise naturelle", "de": "Naturschiefer" },
+      "kind": "pitched",
+      "build_up": [
+        { "material_id": "roof_insulation", "thickness": 0.22 },
+        { "material_id": "natural_slate", "thickness": 0.04 }
+      ],
+      "green": false,
+      "material_class": "slate",
+      "render_key": "slate"
     }
+  ],
+  "roof_shapes": [
+    { "id": "shape.flat", "name": { "fr": "Toit plat", "de": "Flachdach" }, "form": "flat", "pitch": null, "upper_pitch_deg": null, "break_height": null, "eave_overhang": 0.0, "verge_overhang": 0.0, "slab_thickness": 0.2, "parapet_height": 0.4, "render_key": "flat" },
+    { "id": "shape.mono_pitch", "name": { "fr": "Monopente", "de": "Pultdach" }, "form": "mono_pitch", "pitch": { "default_deg": 15.0, "min_deg": 5.0, "max_deg": 25.0 }, "upper_pitch_deg": null, "break_height": null, "eave_overhang": 0.5, "verge_overhang": 0.3, "slab_thickness": null, "parapet_height": null, "render_key": "mono_pitch" },
+    { "id": "shape.gable", "name": { "fr": "Deux pans", "de": "Satteldach" }, "form": "gable", "pitch": { "default_deg": 35.0, "min_deg": 25.0, "max_deg": 45.0 }, "upper_pitch_deg": null, "break_height": null, "eave_overhang": 0.5, "verge_overhang": 0.3, "slab_thickness": null, "parapet_height": null, "render_key": "gable" },
+    { "id": "shape.hip", "name": { "fr": "Quatre pans", "de": "Walmdach" }, "form": "hip", "pitch": { "default_deg": 30.0, "min_deg": 20.0, "max_deg": 45.0 }, "upper_pitch_deg": null, "break_height": null, "eave_overhang": 0.5, "verge_overhang": 0.5, "slab_thickness": null, "parapet_height": null, "render_key": "hip" },
+    { "id": "shape.half_hip", "name": { "fr": "Demi-croupe", "de": "Krüppelwalmdach" }, "form": "half_hip", "pitch": { "default_deg": 40.0, "min_deg": 35.0, "max_deg": 50.0 }, "upper_pitch_deg": 60.0, "break_height": 2.0, "eave_overhang": 0.5, "verge_overhang": 0.3, "slab_thickness": null, "parapet_height": null, "render_key": "half_hip" },
+    { "id": "shape.mansard", "name": { "fr": "À la Mansart", "de": "Mansarddach" }, "form": "mansard", "pitch": { "default_deg": 70.0, "min_deg": 60.0, "max_deg": 80.0 }, "upper_pitch_deg": 25.0, "break_height": 2.2, "eave_overhang": 0.3, "verge_overhang": 0.3, "slab_thickness": null, "parapet_height": null, "render_key": "mansard" },
+    { "id": "shape.mansard_gable", "name": { "fr": "Mansart à pignons", "de": "Mansardsatteldach" }, "form": "mansard_gable", "pitch": { "default_deg": 70.0, "min_deg": 60.0, "max_deg": 80.0 }, "upper_pitch_deg": 25.0, "break_height": 2.2, "eave_overhang": 0.3, "verge_overhang": 0.3, "slab_thickness": null, "parapet_height": null, "render_key": "mansard_gable" }
+  ],
+  "terrace_types": [
+    { "id": "terrace.wood", "name": { "fr": "Terrasse bois", "de": "Holzterrasse" }, "depth": 3.0, "height_above_terrain": 0.3, "sealing_factor": 0.5, "render_key": "terrace_wood" },
+    { "id": "terrace.stone", "name": { "fr": "Terrasse en pierre", "de": "Steinterrasse" }, "depth": 3.5, "height_above_terrain": 0.2, "sealing_factor": 1.0, "render_key": "terrace_stone" }
+  ],
+  "carport_types": [
+    { "id": "carport.single", "name": { "fr": "Carport une place", "de": "Carport für ein Auto" }, "spaces": 1, "width": 3.0, "depth": 5.0, "height": 2.6, "render_key": "carport" },
+    { "id": "carport.double", "name": { "fr": "Carport deux places", "de": "Carport für zwei Autos" }, "spaces": 2, "width": 5.5, "depth": 5.0, "height": 2.6, "render_key": "carport" }
   ],
   "room_types": [
     { "id": "living", "name": { "fr": "Séjour", "de": "Wohnen/Essen" }, "description": null, "override_priority": 20, "display_key": "living", "aliases": ["SEJOUR", "SALON", "SALLE A MANGER", "SEJOUR/CUISINE", "PIECE DE VIE"], "exterior_door_role": null },
@@ -107,6 +150,7 @@
       "target": { "element_kind": "envelope_segment", "where": null },
       "granularity": "global",
       "value_type": "single",
+      "parameter": null,
       "parent_slot_id": null,
       "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
       "sort_order": 10
@@ -119,6 +163,7 @@
       "target": { "element_kind": "opening", "where": { "op": "eq", "left": { "path": "element.kind" }, "right": "window" } },
       "granularity": "per_element",
       "value_type": "single",
+      "parameter": null,
       "parent_slot_id": null,
       "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
       "sort_order": 20
@@ -140,6 +185,7 @@
       },
       "granularity": "global",
       "value_type": "single",
+      "parameter": null,
       "parent_slot_id": null,
       "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
       "sort_order": 30
@@ -161,6 +207,7 @@
       },
       "granularity": "per_element",
       "value_type": "single",
+      "parameter": null,
       "parent_slot_id": null,
       "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
       "sort_order": 40
@@ -173,31 +220,128 @@
       "target": { "element_kind": "roof", "where": null },
       "granularity": "global",
       "value_type": "single",
+      "parameter": null,
       "parent_slot_id": null,
       "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
       "sort_order": 50
+    },
+    {
+      "id": "roof_shape",
+      "category": "roof",
+      "name": { "fr": "Forme du toit", "de": "Dachform" },
+      "description": null,
+      "target": { "element_kind": "roof", "where": null },
+      "granularity": "global",
+      "value_type": "single",
+      "parameter": null,
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 45
+    },
+    {
+      "id": "roof_pitch",
+      "category": "roof",
+      "name": { "fr": "Pente du toit", "de": "Dachneigung" },
+      "description": { "fr": "Pente des versants en degrés, dans la plage de la forme.", "de": "Neigung der Dachflächen in Grad, in der Spanne der Form." },
+      "target": { "element_kind": "roof", "where": null },
+      "granularity": "global",
+      "value_type": "number",
+      "parameter": "roof_pitch",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 46
+    },
+    {
+      "id": "roof_rotation",
+      "category": "roof",
+      "name": { "fr": "Orientation du faîtage", "de": "Firstrichtung" },
+      "description": null,
+      "target": { "element_kind": "roof", "where": null },
+      "granularity": "global",
+      "value_type": "number",
+      "parameter": "roof_rotation",
+      "parent_slot_id": null,
+      "effects": { "geometry": true, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 47
+    },
+    {
+      "id": "terrace",
+      "category": "site",
+      "name": { "fr": "Terrasse", "de": "Terrasse" },
+      "description": null,
+      "target": { "element_kind": "site", "where": null },
+      "granularity": "global",
+      "value_type": "single",
+      "parameter": null,
+      "parent_slot_id": null,
+      "effects": { "geometry": false, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 60
+    },
+    {
+      "id": "carport",
+      "category": "site",
+      "name": { "fr": "Carport", "de": "Carport" },
+      "description": null,
+      "target": { "element_kind": "site", "where": null },
+      "granularity": "global",
+      "value_type": "single",
+      "parameter": null,
+      "parent_slot_id": null,
+      "effects": { "geometry": false, "quantity": true, "pricing": true, "rules": true, "appearance": true },
+      "sort_order": 70
     }
   ],
   "option_values": [
-    { "id": "wall.standard", "slot_id": "wall_profile", "name": { "fr": "Enduit sur isolant", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": "profile.standard", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
-    { "id": "wall.brick", "slot_id": "wall_profile", "name": { "fr": "Parement brique ventilé", "de": "Vorgehängte Ziegelfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.brick", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
-    { "id": "wall.wood", "slot_id": "wall_profile", "name": { "fr": "Bardage bois", "de": "Holzfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.wood", "window_type_id": null, "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
-    { "id": "window.standard", "slot_id": "window_type", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": "window.standard", "door_type_id": null, "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "wall.standard", "slot_id": "wall_profile", "name": { "fr": "Enduit sur isolant", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": "profile.standard", "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "wall.brick", "slot_id": "wall_profile", "name": { "fr": "Parement brique ventilé", "de": "Vorgehängte Ziegelfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.brick", "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "wall.wood", "slot_id": "wall_profile", "name": { "fr": "Bardage bois", "de": "Holzfassade" }, "description": null, "assigns": { "wall_profile_id": "profile.wood", "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
+    { "id": "window.standard", "slot_id": "window_type", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": "window.standard", "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
     {
       "id": "window.floor_length",
       "slot_id": "window_type",
       "name": { "fr": "Porte-fenêtre", "de": "Bodentief" },
       "description": null,
-      "assigns": { "wall_profile_id": null, "window_type_id": "window.floor_length", "door_type_id": null, "roof_type_id": null },
+      "assigns": { "wall_profile_id": null, "window_type_id": "window.floor_length", "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null },
       "available_when": { "op": "not", "args": [{ "op": "contains", "left": { "path": "element.adjacent_rooms.room_type_id" }, "right": "bathroom" }] },
       "unavailable_reason": { "fr": "Les portes-fenêtres ne sont pas disponibles dans la salle de bain.", "de": "Bodentiefe Fenster sind im Bad nicht verfügbar." },
       "sort_order": 20
     },
-    { "id": "door.entrance", "slot_id": "entrance_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.entrance", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
-    { "id": "door.interior", "slot_id": "interior_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
-    { "id": "door.interior_wide", "slot_id": "interior_door", "name": { "fr": "Large", "de": "Breit" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior_wide", "roof_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
-    { "id": "roof.flat", "slot_id": "roof_type", "name": { "fr": "Toiture-terrasse", "de": "Flachdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.flat" }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
-    { "id": "roof.green", "slot_id": "roof_type", "name": { "fr": "Toiture végétalisée", "de": "Gründach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.green" }, "available_when": null, "unavailable_reason": null, "sort_order": 20 }
+    { "id": "door.entrance", "slot_id": "entrance_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.entrance", "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "door.interior", "slot_id": "interior_door", "name": { "fr": "Standard", "de": "Standard" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior", "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "door.interior_wide", "slot_id": "interior_door", "name": { "fr": "Large", "de": "Breit" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": "door.interior_wide", "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "roof.flat", "slot_id": "roof_type", "name": { "fr": "Toiture-terrasse", "de": "Flachdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.flat", "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "roof.green", "slot_id": "roof_type", "name": { "fr": "Toiture végétalisée", "de": "Gründach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.green", "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "roof.tiles", "slot_id": "roof_type", "name": { "fr": "Tuiles terre cuite", "de": "Tondachziegel" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.tiles", "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
+    { "id": "roof.slate", "slot_id": "roof_type", "name": { "fr": "Ardoise", "de": "Schiefer" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": "roof.slate", "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 40 },
+    { "id": "shape.flat", "slot_id": "roof_shape", "name": { "fr": "Toit plat", "de": "Flachdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.flat", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "shape.mono_pitch", "slot_id": "roof_shape", "name": { "fr": "Monopente", "de": "Pultdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.mono_pitch", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "shape.gable", "slot_id": "roof_shape", "name": { "fr": "Deux pans", "de": "Satteldach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.gable", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
+    { "id": "shape.hip", "slot_id": "roof_shape", "name": { "fr": "Quatre pans", "de": "Walmdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.hip", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 40 },
+    { "id": "shape.half_hip", "slot_id": "roof_shape", "name": { "fr": "Demi-croupe", "de": "Krüppelwalmdach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.half_hip", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 50 },
+    { "id": "shape.mansard", "slot_id": "roof_shape", "name": { "fr": "À la Mansart", "de": "Mansarddach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.mansard", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 60 },
+    { "id": "shape.mansard_gable", "slot_id": "roof_shape", "name": { "fr": "Mansart à pignons", "de": "Mansardsatteldach" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": "shape.mansard_gable", "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 70 },
+    { "id": "terrace.none", "slot_id": "terrace", "name": { "fr": "Sans terrasse", "de": "Keine Terrasse" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "terrace.wood", "slot_id": "terrace", "name": { "fr": "Bois", "de": "Holz" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": "terrace.wood", "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "terrace.stone", "slot_id": "terrace", "name": { "fr": "Pierre", "de": "Stein" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": "terrace.stone", "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 30 },
+    { "id": "carport.none", "slot_id": "carport", "name": { "fr": "Sans carport", "de": "Kein Carport" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": null }, "available_when": null, "unavailable_reason": null, "sort_order": 10 },
+    { "id": "carport.single", "slot_id": "carport", "name": { "fr": "Une place", "de": "Ein Auto" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": "carport.single" }, "available_when": null, "unavailable_reason": null, "sort_order": 20 },
+    { "id": "carport.double", "slot_id": "carport", "name": { "fr": "Deux places", "de": "Zwei Autos" }, "description": null, "assigns": { "wall_profile_id": null, "window_type_id": null, "door_type_id": null, "roof_type_id": null, "roof_shape_id": null, "terrace_type_id": null, "carport_type_id": "carport.double" }, "available_when": null, "unavailable_reason": null, "sort_order": 30 }
+  ],
+  "lines": [
+    {
+      "id": "line.traditional",
+      "name": { "fr": "Traditionnelle", "de": "Traditionell" },
+      "description": { "fr": "Parement brique, toit à deux pans en tuiles", "de": "Ziegelfassade, Satteldach mit Tondachziegeln" },
+      "presets": { "wall_profile": { "type": "option", "option_value_id": "wall.brick" }, "roof_shape": { "type": "option", "option_value_id": "shape.gable" }, "roof_type": { "type": "option", "option_value_id": "roof.tiles" } },
+      "sort_order": 10
+    },
+    {
+      "id": "line.contemporary",
+      "name": { "fr": "Contemporaine", "de": "Modern" },
+      "description": { "fr": "Bardage bois, toit plat végétalisé, portes-fenêtres", "de": "Holzfassade, Gründach, bodentiefe Fenster" },
+      "presets": { "wall_profile": { "type": "option", "option_value_id": "wall.wood" }, "roof_shape": { "type": "option", "option_value_id": "shape.flat" }, "roof_type": { "type": "option", "option_value_id": "roof.green" }, "window_type": { "type": "option", "option_value_id": "window.floor_length" } },
+      "sort_order": 20
+    }
   ],
   "rules": [
     {
@@ -209,6 +353,16 @@
       "message": { "fr": "L'acrotère doit dépasser la toiture d'au moins 10 cm.", "de": "Die Attika muss den Dachaufbau um mindestens 10 cm überragen." },
       "suggestion": { "slot_id": "roof_type", "option_value_id": "roof.flat", "element_ids": [], "label": { "fr": "Choisir la toiture-terrasse", "de": "Flachdach wählen" } },
       "source": null
+    },
+    {
+      "id": "slate_min_pitch",
+      "scope": "building",
+      "target": null,
+      "when": { "op": "and", "args": [{ "op": "eq", "left": { "path": "building.roof_type_id" }, "right": "roof.slate" }, { "op": "lt", "left": { "path": "building.roof_pitch" }, "right": 25.0 }] },
+      "outcome": "warning",
+      "message": { "fr": "L'ardoise demande une pente d'au moins 25°.", "de": "Schiefer braucht eine Neigung von mindestens 25°." },
+      "suggestion": { "slot_id": "roof_type", "option_value_id": "roof.tiles", "element_ids": [], "label": { "fr": "Choisir les tuiles", "de": "Tondachziegel wählen" } },
+      "source": null
     }
   ],
   "pricing_rules": [
@@ -216,7 +370,10 @@
     { "id": "wall_layers", "label": { "fr": "Couches de mur", "de": "Wandschichten" }, "applies_to": null, "method": "per_unit", "quantity_key": "wall.layer.area", "entry_id": null, "by_target": "wall_layer", "percent_base": null, "order": 20 },
     { "id": "windows", "label": { "fr": "Fenêtres", "de": "Fenster" }, "applies_to": null, "method": "per_unit", "quantity_key": "window.count", "entry_id": null, "by_target": "window_type", "percent_base": null, "order": 30 },
     { "id": "roof", "label": { "fr": "Toiture", "de": "Dach" }, "applies_to": null, "method": "per_unit", "quantity_key": "roof.area", "entry_id": null, "by_target": "roof_type", "percent_base": null, "order": 40 },
-    { "id": "bearing", "label": { "fr": "Appui du parement", "de": "Auflager" }, "applies_to": null, "method": "per_unit", "quantity_key": "bearing.length", "entry_id": "price.bearing.foundation_ledge", "by_target": null, "percent_base": null, "order": 50 }
+    { "id": "bearing", "label": { "fr": "Appui du parement", "de": "Auflager" }, "applies_to": null, "method": "per_unit", "quantity_key": "bearing.length", "entry_id": "price.bearing.foundation_ledge", "by_target": null, "percent_base": null, "order": 50 },
+    { "id": "roof_ridge", "label": { "fr": "Faîtage", "de": "First" }, "applies_to": null, "method": "per_unit", "quantity_key": "roof.ridge.length", "entry_id": null, "by_target": "roof_type", "percent_base": null, "order": 45 },
+    { "id": "terrace", "label": { "fr": "Terrasse", "de": "Terrasse" }, "applies_to": null, "method": "per_unit", "quantity_key": "terrace.area", "entry_id": null, "by_target": "terrace_type", "percent_base": null, "order": 60 },
+    { "id": "carport", "label": { "fr": "Carport", "de": "Carport" }, "applies_to": null, "method": "per_unit", "quantity_key": "carport.count", "entry_id": null, "by_target": "carport_type", "percent_base": null, "order": 70 }
   ],
   "price_entries": [
     { "id": "price.template.demo_house", "target_kind": "template", "target_id": "demo_house", "unit": "lump_sum", "value": 390000.0 },
@@ -229,7 +386,16 @@
     { "id": "price.window.floor_length", "target_kind": "window_type", "target_id": "window.floor_length", "unit": "pcs", "value": 1250.0 },
     { "id": "price.roof.flat", "target_kind": "roof_type", "target_id": "roof.flat", "unit": "m2", "value": 180.0 },
     { "id": "price.roof.green", "target_kind": "roof_type", "target_id": "roof.green", "unit": "m2", "value": 260.0 },
-    { "id": "price.bearing.foundation_ledge", "target_kind": "service", "target_id": "bearing.foundation_ledge", "unit": "m", "value": 45.0 }
+    { "id": "price.bearing.foundation_ledge", "target_kind": "service", "target_id": "bearing.foundation_ledge", "unit": "m", "value": 45.0 },
+    { "id": "price.template.demo_house_r1", "target_kind": "template", "target_id": "demo_house_r1", "unit": "lump_sum", "value": 455000.0 },
+    { "id": "price.roof.tiles", "target_kind": "roof_type", "target_id": "roof.tiles", "unit": "m2", "value": 140.0 },
+    { "id": "price.roof.slate", "target_kind": "roof_type", "target_id": "roof.slate", "unit": "m2", "value": 210.0 },
+    { "id": "price.ridge.tiles", "target_kind": "roof_type", "target_id": "roof.tiles", "unit": "m", "value": 35.0 },
+    { "id": "price.ridge.slate", "target_kind": "roof_type", "target_id": "roof.slate", "unit": "m", "value": 60.0 },
+    { "id": "price.terrace.wood", "target_kind": "terrace_type", "target_id": "terrace.wood", "unit": "m2", "value": 180.0 },
+    { "id": "price.terrace.stone", "target_kind": "terrace_type", "target_id": "terrace.stone", "unit": "m2", "value": 220.0 },
+    { "id": "price.carport.single", "target_kind": "carport_type", "target_id": "carport.single", "unit": "pcs", "value": 9500.0 },
+    { "id": "price.carport.double", "target_kind": "carport_type", "target_id": "carport.double", "unit": "pcs", "value": 15500.0 }
   ],
   "ignored_zone_categories": ["SDP", "SHAB", "Surface de plancher", "Emprise au sol"]
 }

@@ -2,6 +2,7 @@
 import type { HouseCatalog, HouseQuantity } from "./contract.gen.ts";
 import type { DerivedModel } from "./derive.ts";
 import { signedArea, toUnits, UNITS_PER_METRE } from "./geometry/polygon.ts";
+import { ROOF_LINE_KINDS, type RoofLineKind } from "./roof/build.ts";
 
 const AREA = UNITS_PER_METRE * UNITS_PER_METRE;
 
@@ -12,12 +13,30 @@ export const QUANTITY_KEYS = {
   "window.count": { unit: "pcs", ref: "window_type" },
   "door.count": { unit: "pcs", ref: "door_type" },
   "roof.area": { unit: "m2", ref: "roof_type" },
+  "roof.ridge.length": { unit: "m", ref: "roof_type" },
+  "roof.hip.length": { unit: "m", ref: "roof_type" },
+  "roof.valley.length": { unit: "m", ref: "roof_type" },
+  "roof.eave.length": { unit: "m", ref: "roof_type" },
+  "roof.verge.length": { unit: "m", ref: "roof_type" },
+  "roof.break.length": { unit: "m", ref: "roof_type" },
+  "gable.area": { unit: "m2", ref: null },
   "bearing.length": { unit: "m", ref: null },
   "reveal.area": { unit: "m2", ref: null },
   "footprint.area": { unit: "m2", ref: null },
+  "terrace.area": { unit: "m2", ref: "terrace_type" },
+  "carport.count": { unit: "pcs", ref: "carport_type" },
 } as const;
 
 export type QuantityKey = keyof typeof QUANTITY_KEYS;
+
+const LINE_KEYS: Readonly<Record<RoofLineKind, QuantityKey>> = {
+  ridge: "roof.ridge.length",
+  hip: "roof.hip.length",
+  valley: "roof.valley.length",
+  eave: "roof.eave.length",
+  verge: "roof.verge.length",
+  break: "roof.break.length",
+};
 
 class Collector {
   private readonly entries = new Map<string, { key: QuantityKey; ref: string | null; value: number; elements: Set<string> }>();
@@ -47,9 +66,9 @@ export function takeOff(model: DerivedModel, catalog: HouseCatalog): HouseQuanti
     const deducted = hosted.filter((o) => o.area > threshold);
     const deduction = deducted.reduce((sum, o) => sum + o.area, 0);
     quantities.add("opening.area", null, deduction / AREA, deducted.map((o) => o.id));
-    // Fläche einer Wandschicht: Länge der Mittellinie × Fassadenhöhe − Öffnungen (P 7)
+    // Fläche einer Wandschicht: auf der Mittellinie bis zur Oberkante des Geschosses − Öffnungen (P 7, Ergänzung 5)
     for (const layer of loop.layers) {
-      quantities.add("wall.layer.area", layer.layerId, (layer.centerline * loop.facadeHeight - deduction) / AREA, segmentIds);
+      quantities.add("wall.layer.area", layer.layerId, (layer.grossArea - deduction) / AREA, segmentIds);
     }
     if (loop.bearingLength !== null && loop.profile.bearing) {
       quantities.add("bearing.length", loop.profile.bearing.kind, loop.bearingLength / UNITS_PER_METRE, segmentIds);
@@ -59,15 +78,31 @@ export function takeOff(model: DerivedModel, catalog: HouseCatalog): HouseQuanti
       const reveal = hosted.reduce((sum, o) => sum + (2 * (o.height + o.shutterBox) + o.width) * loop.revealDepth, 0);
       quantities.add("reveal.area", loop.profile.reveal_finish.material_id, reveal / AREA, hosted.map((o) => o.id));
     }
-    quantities.add("footprint.area", null, signedArea(loop.facadeOutline) / AREA, segmentIds);
   }
+  // Grundfläche einmal: die Fassade des Geschosses mit der dicksten Wand umschließt alle anderen
+  const facade = model.loops[model.facadeLoop]!;
+  quantities.add("footprint.area", null, signedArea(facade.facadeOutline) / AREA, model.loops.flatMap((loop) => loop.segments.map((s) => s.id)));
 
   for (const opening of model.openings) {
     quantities.add(opening.kind === "window" ? "window.count" : "door.count", opening.typeId, 1, [opening.id]);
   }
-  // Dachfläche: innerhalb der Außenkante der letzten thermischen Schicht des obersten Geschosses (P 7)
-  const top = model.loops.at(-1)!;
-  quantities.add("roof.area", model.roof.roofType.id, signedArea(top.thermalOutline) / AREA, ["roof"]);
+  const roof = model.roof;
+  const roofTypeId = roof.roofType.id;
+  if (roof.pitched) {
+    // Geneigt: je Dachfläche mit Überstand; Linien nach Art (Ergänzung 11)
+    quantities.add("roof.area", roofTypeId, roof.pitched.faces.reduce((sum, face) => sum + face.area, 0), ["roof"]);
+    for (const kind of ROOF_LINE_KINDS) {
+      const length = roof.pitched.lines.filter((line) => line.kind === kind).reduce((sum, line) => sum + line.length, 0);
+      if (length > 0) quantities.add(LINE_KEYS[kind], roofTypeId, length, ["roof"]);
+    }
+    if (roof.pitched.gableArea > 0) quantities.add("gable.area", null, roof.pitched.gableArea, ["roof"]);
+  } else {
+    // Flach: innerhalb der Außenkante der letzten thermischen Schicht des obersten Geschosses (P 7)
+    quantities.add("roof.area", roofTypeId, signedArea(model.loops.at(-1)!.thermalOutline) / AREA, ["roof"]);
+  }
+  const { terrace, carport } = model.site;
+  if (terrace && terrace.width !== null) quantities.add("terrace.area", terrace.type.id, terrace.width * terrace.type.depth, ["site"]);
+  if (carport) quantities.add("carport.count", carport.id, 1, ["site"]);
   return quantities.list();
 }
 

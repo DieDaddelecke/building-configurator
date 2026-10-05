@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { HouseCatalog, HouseCompatibility, HouseEvaluation, HouseTemplate } from "@emprise/domain";
+import type { HouseCatalog, HouseCompatibility, HouseEvaluation, HouseRoofGeometry, HouseRoofRequest, HouseTemplate } from "@emprise/domain";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createHandler } from "./app.ts";
 
@@ -67,7 +67,8 @@ describe("engine", () => {
     ["falsche Form", "/evaluate", { template: "x" }, 400, "invalid_request"],
     ["ohne Auswahl", "/evaluate", { template, catalog }, 400, "invalid_request"],
     ["Kandidaten ohne Slot", "/evaluate", { template, catalog, configuration: brick, candidates: {} }, 400, "invalid_request"],
-    ["andere Schemaversion", "/compatibility", { template: { ...template, schema_version: 2 }, catalog }, 400, "schema_version_unsupported"],
+    ["alte Schemaversion", "/compatibility", { template: { ...template, schema_version: 1 }, catalog }, 400, "schema_version_unsupported"],
+    ["Dach ohne Kontur", "/roof", { design: {} }, 400, "invalid_request"],
   ])("lehnt ab: %s", async (_name, path, body, status, code) => {
     const res = await post(path, body);
     expect(res.status).toBe(status);
@@ -92,6 +93,51 @@ describe("engine", () => {
     const res = await post("/evaluate", { template: { ...template, envelope, openings: [] }, catalog, configuration: { selections: {} } });
     expect(res.status).toBe(422);
     expect(await res.json()).toEqual({ code: "envelope_invalid", detail: { defect: "self_intersecting" } });
+  });
+
+  describe("Dach für den IFC-Import", () => {
+    const tan = (deg: number) => Math.tan((deg * Math.PI) / 180);
+    const ring = (points: number[][]) => points.map(([x, y]) => ({ x: x!, y: y! }));
+    const gable = { form: "gable", pitch_deg: 35, upper_pitch_deg: null, break_height: null, rotation: 0 } as const;
+    const request: HouseRoofRequest = {
+      contour: ring([[0, 0], [10, 0], [10, 8], [0, 8]]),
+      wall_thickness: 0.36,
+      bearing_height: 5.8,
+      eave_overhang: 0.5,
+      verge_overhang: 0.3,
+      design: gable,
+      thickness: 0.28,
+    };
+
+    it("baut das Satteldach des R+1", async () => {
+      const res = await post("/roof", request);
+      expect(res.status).toBe(200);
+      const roof = (await res.json()) as HouseRoofGeometry;
+      expect(roof.edge_kinds).toEqual(["eave", "gable", "eave", "gable"]);
+      expect(roof.faces).toHaveLength(2);
+      expect(roof.faces.map((f) => f.pitch_deg)).toEqual([35, 35]);
+      expect(roof.lines.filter((l) => l.kind === "ridge")).toHaveLength(1);
+      expect(roof.ridge_azimuth_deg).toBe(90);
+      expect(roof.top_height).toBeCloseTo(5.8 + 4 * tan(35) + 0.28 / Math.cos((35 * Math.PI) / 180), 9);
+      // Traufkontur: Wand und Überstand vor der Bezugskontur
+      expect(Math.min(...roof.outline.map((p) => p.y))).toBeCloseTo(-0.86, 9);
+      expect(Math.min(...roof.outline.map((p) => p.x))).toBeCloseTo(-0.66, 9);
+    });
+
+    it.each([
+      ["Giebel nebeneinander", { contour: ring([[0, 0], [10, 0], [10, 4], [6, 4], [6, 6.5], [0, 6.5]]), design: { ...gable, rotation: 90 } }, "roof_not_constructible", { reason: "gables_adjacent" }],
+      ["Kontur im Uhrzeigersinn", { contour: [...request.contour].reverse() }, "envelope_not_counter_clockwise", {}],
+      ["Kontur mit Schleife", { contour: ring([[0, 0], [10, 10], [10, 0], [0, 10]]) }, "envelope_invalid", { defect: "self_intersecting" }],
+    ])("lehnt ab: %s", async (_name, change, code, detail) => {
+      const res = await post("/roof", { ...request, ...change });
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ code, detail });
+    });
+
+    it("rechnet kein Flachdach", async () => {
+      const res = await post("/roof", { ...request, design: { ...gable, form: "flat", pitch_deg: null } });
+      expect(res.status).toBe(400);
+    });
   });
 
   it("lehnt große Anfragen und fremde Wege ab", async () => {

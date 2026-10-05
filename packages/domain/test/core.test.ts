@@ -113,7 +113,9 @@ describe("Resolver", () => {
         element_id: "win-bath",
         skipped_level: "global",
         skipped_value_ids: ["window.floor_length"],
+        skipped_number: null,
         applied_value_id: "window.standard",
+        applied_number: null,
         code: "unavailable",
         reason: catalog.option_values.find((o) => o.id === "window.floor_length")!.unavailable_reason,
       },
@@ -145,7 +147,9 @@ describe("Resolver", () => {
         element_id: "door-bedroom",
         skipped_level: "room",
         skipped_value_ids: ["door.interior", "door.interior_wide"],
+        skipped_number: null,
         applied_value_id: "door.interior",
+        applied_number: null,
         code: "room_override_tie",
         reason: null,
       },
@@ -284,7 +288,7 @@ describe("Status und Hausbeschreibung", () => {
   });
 
   it("Höhen, Fläche und Lage der Haustür", () => {
-    expect(base.facts).toMatchObject({ storeys: 1, roof_form: "flat", eave_height: 3, top_height: 3, ground_floor_offset: 0.2, facade_material_class: "render" });
+    expect(base.facts).toMatchObject({ storeys: 1, roof_shape: "flat", ridge_azimuth_deg: null, terrace: null, carport: null, eave_height: 3, top_height: 3, ground_floor_offset: 0.2, facade_material_class: "render" });
     expect(base.facts.floor_area).toBeCloseTo(40 + 2 * 11.56 + 8.28 + 2 * 10.88, 10);
     // Haustür auf der Ostseite (Kante 1 ab der Straßenseite), 4,10 m von der Innenecke
     expect(base.facts.entrance).toEqual({ edge: 1, position: expect.closeTo((4.1 + 0.36) / 8.72, 12) });

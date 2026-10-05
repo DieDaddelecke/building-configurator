@@ -9,6 +9,9 @@ type Case = [string, { template?: Partial<HouseTemplate>; catalog?: Partial<Hous
 
 const opening = (id: string, change: object) => template.openings.map((o) => (o.id === id ? { ...o, ...change } : o));
 const room = (id: string, change: object) => template.rooms.map((r) => (r.id === id ? { ...r, ...change } : r));
+const slot = (id: string) => catalog.slots.find((s) => s.id === id)!;
+const option = (id: string) => catalog.option_values.find((o) => o.id === id)!;
+const assigning = (changes: Record<string, object>) => catalog.option_values.map((o) => (changes[o.id] ? { ...o, assigns: { ...o.assigns, ...changes[o.id] } } : o));
 
 const cases: Case[] = [
   ["Hülle im Uhrzeigersinn", { template: { envelope: [{ ...template.envelope[0]!, inner_polygon: [...template.envelope[0]!.inner_polygon].reverse() }] } }, ["envelope_not_counter_clockwise"]],
@@ -88,6 +91,48 @@ const cases: Case[] = [
     { template: { element_defaults: { "door-bath": { window_type: "window.standard" } } } },
     ["element_default_not_targeted"],
   ],
+  // Dachformen, Linien und Nebenbauten (HM5)
+  ["Dachdecke fehlt beim Flachdach", { template: { slabs: template.slabs.filter((s) => s.kind !== "roof") } }, ["roof_slab_missing"]],
+  [
+    "Neigung und Drehung ohne Slot für die Form",
+    {
+      template: { defaults: Object.fromEntries(Object.entries(template.defaults).filter(([id]) => id !== "roof_shape")) },
+      catalog: { slots: catalog.slots.filter((s) => s.id !== "roof_shape"), option_values: catalog.option_values.filter((o) => o.slot_id !== "roof_shape"), lines: [] },
+    },
+    ["parameter_slot_without_shape"],
+  ],
+  [
+    "geneigte Formen ohne geneigten Dachaufbau",
+    { catalog: { option_values: catalog.option_values.filter((o) => o.id !== "roof.tiles" && o.id !== "roof.slate"), lines: catalog.lines.filter((l) => l.id !== "line.traditional") } },
+    ["roof_shape_without_roof_type"],
+  ],
+  ["voreingestellte Form anders als im Template", { template: { defaults: { ...template.defaults, roof_shape: "shape.gable" } } }, ["roof_shape_default_mismatch"]],
+  [
+    "zwei Slots für die Form",
+    {
+      template: { defaults: { ...template.defaults, roof_shape_2: "shape.flat.2" } },
+      catalog: {
+        slots: [...catalog.slots, { ...slot("roof_shape"), id: "roof_shape_2", sort_order: 48 }],
+        option_values: [...catalog.option_values, { ...option("shape.flat"), id: "shape.flat.2", slot_id: "roof_shape_2" }],
+      },
+    },
+    ["type_slot_ambiguous"],
+  ],
+  [
+    "Form, Terrasse und Carport unbekannt",
+    {
+      catalog: {
+        option_values: assigning({
+          "shape.hip": { roof_shape_id: "shape.dome" },
+          "terrace.wood": { terrace_type_id: "terrace.glass" },
+          "carport.single": { carport_type_id: "carport.tent" },
+        }),
+      },
+    },
+    ["carport_type_unknown", "price_entry_missing", "roof_shape_unknown", "terrace_type_unknown"],
+  ],
+  // Ein Dachaufbau hat zwei Einträge (Fläche, First): fehlt einer, fehlt er, die Einheit des anderen stimmt
+  ["Preis des Firsts fehlt", { catalog: { price_entries: catalog.price_entries.filter((e) => e.id !== "price.ridge.tiles") } }, ["price_entry_missing"]],
 ];
 
 describe("checkCompatibility", () => {
@@ -106,8 +151,8 @@ describe("checkCompatibility", () => {
   });
 });
 
-it("Demo-Seed ist mit seinem Katalog verträglich", () => {
+it.each(["template", "template-r1"])("Demo-Seed %s ist mit seinem Katalog verträglich", (name) => {
   // Der Seed ist frei änderbar (P 19), muss aber rechnen
   const load = (file: string) => JSON.parse(readFileSync(new URL(`../seed/demo-house/${file}.json`, import.meta.url), "utf8"));
-  expect(checkCompatibility({ template: load("template"), catalog: load("catalog") })).toMatchObject({ supported: true, issues: [] });
+  expect(checkCompatibility({ template: load(name), catalog: load("catalog") })).toMatchObject({ supported: true, issues: [] });
 });

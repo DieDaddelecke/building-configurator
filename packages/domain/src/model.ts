@@ -1,14 +1,18 @@
 // Nachschlagen in Template und Katalog: Elemente mit ihrem Kontext für Ausdrücke (P 8.4) und Katalogeinträge
 // nach Kennung. Fehlende Verweise sind ModelErrors; die Kompatibilitätsprüfung meldet sie vorher (P 2.1 Nr. 5).
 import type {
+  HouseCarportType,
   HouseCatalog,
   HouseDoorType,
+  HouseLine,
   HouseMaterial,
   HouseOptionValue,
+  HouseRoofShape,
   HouseRoofType,
   HouseRoomType,
   HouseSlot,
   HouseTemplate,
+  HouseTerraceType,
   HouseWallLayer,
   HouseWallProfile,
   HouseWindowType,
@@ -16,7 +20,7 @@ import type {
 import type { ModelErrorCode } from "./codes.ts";
 import { ModelError } from "./errors.ts";
 
-export type ElementKind = "envelope_segment" | "interior_wall" | "opening" | "roof" | "room" | "building";
+export type ElementKind = "envelope_segment" | "interior_wall" | "opening" | "roof" | "room" | "building" | "site";
 
 export interface ModelElement {
   readonly id: string;
@@ -39,10 +43,14 @@ export class CatalogIndex {
   readonly windowTypes: ReadonlyMap<string, HouseWindowType>;
   readonly doorTypes: ReadonlyMap<string, HouseDoorType>;
   readonly roofTypes: ReadonlyMap<string, HouseRoofType>;
+  readonly roofShapes: ReadonlyMap<string, HouseRoofShape>;
+  readonly terraceTypes: ReadonlyMap<string, HouseTerraceType>;
+  readonly carportTypes: ReadonlyMap<string, HouseCarportType>;
   readonly roomTypes: ReadonlyMap<string, HouseRoomType>;
   readonly slots: readonly HouseSlot[];
   readonly options: ReadonlyMap<string, HouseOptionValue>;
   readonly optionsBySlot: ReadonlyMap<string, readonly HouseOptionValue[]>;
+  readonly lines: readonly HouseLine[];
 
   constructor(catalog: HouseCatalog) {
     this.catalog = catalog;
@@ -52,6 +60,9 @@ export class CatalogIndex {
     this.windowTypes = byId(catalog.window_types);
     this.doorTypes = byId(catalog.door_types);
     this.roofTypes = byId(catalog.roof_types);
+    this.roofShapes = byId(catalog.roof_shapes);
+    this.terraceTypes = byId(catalog.terrace_types);
+    this.carportTypes = byId(catalog.carport_types);
     this.roomTypes = byId(catalog.room_types);
     this.slots = [...catalog.slots].sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
     this.options = byId(catalog.option_values);
@@ -60,6 +71,7 @@ export class CatalogIndex {
       bySlot.set(option.slot_id, [...(bySlot.get(option.slot_id) ?? []), option]);
     }
     this.optionsBySlot = bySlot;
+    this.lines = [...catalog.lines].sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
   }
 
   get<T>(map: ReadonlyMap<string, T>, id: string, code: ModelErrorCode): T {
@@ -141,6 +153,8 @@ export class TemplateIndex {
     }
     elements.push({ id: "roof", elementKind: "roof", roomIds: [], context: { id: "roof", element_kind: "roof" } });
     elements.push({ id: "building", elementKind: "building", roomIds: [], context: { id: "building", element_kind: "building" } });
+    // Nebenbauten auf dem Grundstück: Ziel der Slots für Terrasse und Carport (Ergänzung 7)
+    elements.push({ id: "site", elementKind: "site", roomIds: [], context: { id: "site", element_kind: "site" } });
     this.elements = elements;
     this.elementsById = new Map(elements.map((element) => [element.id, element]));
   }

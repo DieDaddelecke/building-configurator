@@ -1,11 +1,14 @@
-// Spike HM0 (docs/PLAN_HAUSMODELL.md Ergänzung 11, Kapitel 10): gewichtetes gerades Skelett mit Profilwechseln
-// in der Höhe („procedural extrusions“). Prototyp in Gleitkomma und Metern, nicht aus dem Paket exportiert;
-// HM5 baut daraus das Verfahren mit festen Toleranzen in 0,1 mm, Überstand und Mengen.
+// Gewichtetes gerades Skelett mit Profilwechseln in der Höhe („procedural extrusions“, Kelly und Wonka 2011;
+// docs/PLAN_HAUSMODELL.md Ergänzung 11, Kapitel 10). Aus dem Spike HM0 übernommen und erweitert um Teilflächen je
+// Profilabschnitt: Jede Teilfläche ist eben, so lassen sich Flächen, Neigungen und Linien des Dachs bestimmen.
 //
-// Jede Kante der Bezugskontur trägt ein Neigungsprofil. Die Wellenfront zur Höhe t ist die Kontur, deren Kanten
-// um den bis t aufsummierten Weg (Höhe / Neigung) nach innen gewandert sind; senkrechte Kanten (Giebel) stehen.
-// Ereignisse: Kante schrumpft auf null (Kantenereignis), einspringende Ecke trifft eine Kante (Teilungsereignis),
-// Neigungswechsel (Profilereignis). Gleichzeitige Ereignisse werden zur selben Höhe gemeinsam behandelt.
+// Jede Kante der Kontur trägt ein Neigungsprofil. Die Wellenfront zur Höhe t ist die Kontur, deren Kanten um den bis
+// t aufsummierten Weg (Höhe / Neigung) nach innen gewandert sind; senkrechte Abschnitte (Giebel) stehen. Ereignisse:
+// Kante schrumpft auf null (Kantenereignis), einspringende Ecke trifft eine Kante (Teilungsereignis), Neigungswechsel
+// (Profilereignis). Gleichzeitige Ereignisse werden zur selben Höhe gemeinsam behandelt.
+//
+// Rechnung in Metern als Gleitkomma; die Eingabe kommt aus dem Raster von 0,1 mm (P 4). Die Toleranzen sind feste
+// Bruchteile dieses Rasters, keine relativen Schwellen (Kapitel 10, Folgerung 3).
 
 export interface Vec {
   readonly x: number;
@@ -16,37 +19,63 @@ export interface Vec3 extends Vec {
   readonly z: number;
 }
 
-/** Neigung als Steigung (tan); `Infinity` = senkrecht (Giebel). Gilt bis `untilHeight` über dem Auflager. */
+/** Neigung als Steigung (tan) und in Grad; `slope` `Infinity` = senkrecht. Gilt bis `untilHeight` über der Kontur. */
 export interface SlopeSegment {
   readonly slope: number;
+  readonly pitchDeg: number;
   readonly untilHeight: number;
 }
 
 export type EdgeProfile = readonly SlopeSegment[];
 
-export interface RoofFace {
-  /** Index der Kante der Bezugskontur, zu der die Fläche gehört. */
+/** Ebene Teilfläche: Kante der Kontur, Abschnitt ihres Profils, Umrisse (meist einer) in 3D. */
+export interface SkeletonFace {
   readonly edge: number;
-  /** Umriss ab der Kante (Auflager), gegen den Uhrzeigersinn von oben gesehen. */
-  readonly boundary: readonly Vec3[];
+  readonly segment: number;
+  readonly loops: readonly (readonly Vec3[])[];
 }
 
-export class SkeletonError extends Error {}
+export type SkeletonErrorCode =
+  | "invalid_input"
+  | "not_counter_clockwise"
+  | "slope_not_positive"
+  | "collinear_vertex"
+  | "no_progress"
+  | "no_event"
+  | "face_open";
 
-export const tan = (degrees: number) => Math.tan((degrees * Math.PI) / 180);
-export const plane = (degrees: number): EdgeProfile => [{ slope: tan(degrees), untilHeight: Infinity }];
-export const GABLE: EdgeProfile = [{ slope: Infinity, untilHeight: Infinity }];
+export class SkeletonError extends Error {
+  readonly code: SkeletonErrorCode;
 
-const EPS_T = 1e-9;
-const EPS_P = 1e-7;
+  constructor(code: SkeletonErrorCode) {
+    super(code);
+    this.code = code;
+  }
+}
+
+/** Raster der Eingabe: 0,1 mm. */
+const GRID = 1e-4;
+/** Höhe gleichzeitiger Ereignisse. */
+const EPS_T = GRID * 1e-5;
+/** Punkt auf einer Geraden. */
+const EPS_P = GRID * 1e-3;
+/** Gleiche Punkte. */
+const NEAR = GRID * 1e-2;
 const MAX_STEPS = 10_000;
+
+export const vertical = (untilHeight = Infinity): SlopeSegment => ({ slope: Infinity, pitchDeg: 90, untilHeight });
+export const sloped = (pitchDeg: number, untilHeight = Infinity): SlopeSegment => ({
+  slope: Math.tan((pitchDeg * Math.PI) / 180),
+  pitchDeg,
+  untilHeight,
+});
 
 const sub = (a: Vec, b: Vec): Vec => ({ x: a.x - b.x, y: a.y - b.y });
 const addScaled = (a: Vec, b: Vec, s: number): Vec => ({ x: a.x + b.x * s, y: a.y + b.y * s });
 const dot = (a: Vec, b: Vec) => a.x * b.x + a.y * b.y;
 const cross = (a: Vec, b: Vec) => a.x * b.y - a.y * b.x;
 const near = (a: Vec, b: Vec, eps = EPS_P * 10) => Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps;
-const near3 = (a: Vec3, b: Vec3) => near(a, b, 1e-6) && Math.abs(a.z - b.z) < 1e-6;
+const near3 = (a: Vec3, b: Vec3) => near(a, b, NEAR) && Math.abs(a.z - b.z) < NEAR;
 
 export function signedArea(points: readonly Vec[]): number {
   let twice = 0;
@@ -75,34 +104,34 @@ interface Corner {
 
 type Loop = Corner[];
 
-export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly EdgeProfile[]): RoofFace[] {
-  if (polygon.length < 3 || profiles.length !== polygon.length) {
-    throw new SkeletonError("invalid_input");
-  }
-  if (signedArea(polygon) <= 0) {
-    throw new SkeletonError("not_counter_clockwise");
-  }
+export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly EdgeProfile[]): SkeletonFace[] {
+  if (polygon.length < 3 || profiles.length !== polygon.length) throw new SkeletonError("invalid_input");
+  if (signedArea(polygon) <= 0) throw new SkeletonError("not_counter_clockwise");
   const edges: Edge[] = polygon.map((p, i) => {
     const q = polygon[(i + 1) % polygon.length]!;
-    const length = Math.hypot(q.x - p.x, q.y - p.y);
+    const length = Math.sqrt((q.x - p.x) ** 2 + (q.y - p.y) ** 2);
     const d = { x: (q.x - p.x) / length, y: (q.y - p.y) / length };
     const profile = profiles[i]!;
-    if (profile.some((s) => !(s.slope > 0))) {
-      throw new SkeletonError("slope_not_positive");
-    }
+    if (!profile.length || profile.some((s) => !(s.slope > 0) || !(s.untilHeight > 0))) throw new SkeletonError("slope_not_positive");
     return { p, d, n: { x: -d.y, y: d.x }, profile };
   });
-  // Gerade durchlaufende Ecken haben keine Winkelhalbierende; HM5 fasst solche Kanten vorher zusammen
+  // Gerade durchlaufende Ecken haben keine Winkelhalbierende; der Aufrufer fasst solche Kanten vorher zusammen
   edges.forEach((e, i) => {
-    if (Math.abs(cross(edges[(i - 1 + edges.length) % edges.length]!.d, e.d)) < 1e-9) {
-      throw new SkeletonError("collinear_vertex");
-    }
+    if (Math.abs(cross(edges[(i - 1 + edges.length) % edges.length]!.d, e.d)) < 1e-9) throw new SkeletonError("collinear_vertex");
   });
-  const segments = new Map<number, [Vec3, Vec3][]>(edges.map((_, i) => [i, []]));
+  const segments = new Map<string, [Vec3, Vec3][]>();
+  const key = (edge: number, segment: number) => `${edge}/${segment}`;
 
   const speed = (s: SlopeSegment) => (Number.isFinite(s.slope) ? 1 / s.slope : 0);
-  const segmentAt = (i: number, t: number) => edges[i]!.profile.find((s) => s.untilHeight > t + EPS_T) ?? edges[i]!.profile.at(-1)!;
-  const speedAt = (i: number, t: number) => speed(segmentAt(i, t));
+  const indexAt = (i: number, t: number) => {
+    const profile = edges[i]!.profile;
+    const found = profile.findIndex((s) => s.untilHeight > t + EPS_T);
+    return found < 0 ? profile.length - 1 : found;
+  };
+  /** Abschnitt unmittelbar unter bzw. über der Höhe t. */
+  const before = (i: number, t: number) => indexAt(i, t - 2 * EPS_T);
+  const after = (i: number, t: number) => indexAt(i, t);
+  const speedAt = (i: number, t: number) => speed(edges[i]!.profile[after(i, t)]!);
   const offsetAt = (i: number, t: number) => {
     let h0 = 0;
     let offset = 0;
@@ -122,12 +151,18 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
     return end;
   };
 
-  const addSegment = (face: number, a: Vec3, b: Vec3) => {
-    if (!near3(a, b)) segments.get(face)!.push([a, b]);
+  /** Eine Strecke je Teilfläche höchstens einmal: fallen Ereignisse zusammen, melden sie dieselbe Grenze mehrfach. */
+  const addSegment = (edge: number, segment: number, a: Vec3, b: Vec3) => {
+    if (near3(a, b)) return;
+    const k = key(edge, segment);
+    const list = segments.get(k) ?? [];
+    if (list.some(([p, q]) => (near3(p, a) && near3(q, b)) || (near3(p, b) && near3(q, a)))) return;
+    segments.set(k, [...list, [a, b]]);
   };
   const closeTrack = (c: Corner, end: Vec3) => {
-    addSegment(c.prev, c.start, end);
-    addSegment(c.next, c.start, end);
+    const middle = (c.start.z + end.z) / 2;
+    addSegment(c.prev, indexAt(c.prev, middle), c.start, end);
+    addSegment(c.next, indexAt(c.next, middle), c.start, end);
   };
   const node = (p: Vec, t: number): Vec3 => ({ x: p.x, y: p.y, z: t });
 
@@ -174,12 +209,13 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
     return out;
   };
 
+  /** Eine zusammengefallene Schleife endet: waagerechte Linien zwischen ihren Ecken. */
   const finish = (loop: Loop, t: number) => {
     loop.forEach((c) => closeTrack(c, node(c.p, t)));
     for (let k = 0; k < loop.length && loop.length > 1; k++) {
       const a = loop[k]!;
       const b = loop[(k + 1) % loop.length]!;
-      addSegment(a.next, node(a.p, t), node(b.p, t));
+      addSegment(a.next, before(a.next, t), node(a.p, t), node(b.p, t));
     }
   };
 
@@ -208,16 +244,20 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
         const kn = (k + 1) % n;
         const cp = loop[kp]!;
         const cn = loop[kn]!;
-        const ridge = (face: number, from: Vec, to: Vec) => addSegment(face, node(from, t), node(to, t));
         if (dot(a.d, b.d) > 0) {
           const sa = speedAt(c.prev, t);
           const sb = speedAt(c.next, t);
           if (Math.abs(sa - sb) < 1e-12) continue;
+          // Die langsamere Fläche endet (Abschnitt darunter), die schnellere läuft weiter (Abschnitt darüber)
+          const line = (slow: number, fast: number, from: Vec, to: Vec) => {
+            addSegment(slow, before(slow, t), node(from, t), node(to, t));
+            addSegment(fast, after(fast, t), node(from, t), node(to, t));
+          };
           if (sa < sb) {
-            [c.prev, c.next].forEach((f) => ridge(f, cp.p, c.p));
+            line(c.prev, c.next, cp.p, c.p);
             loops[li] = replace(loop, kp, 2, cp.p, cp.prev, c.next, t);
           } else {
-            [c.prev, c.next].forEach((f) => ridge(f, c.p, cn.p));
+            line(c.next, c.prev, c.p, cn.p);
             loops[li] = replace(loop, k, 2, cn.p, c.prev, cn.next, t);
           }
           return true;
@@ -226,7 +266,7 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
         const lb = dot(sub(c.p, cn.p), a.d);
         const shorter = Math.abs(la - lb) < EPS_P * 10 ? "both" : la < lb ? "a" : "b";
         const base = shorter === "b" ? cn.p : cp.p;
-        [c.prev, c.next].forEach((f) => ridge(f, base, c.p));
+        [c.prev, c.next].forEach((f) => addSegment(f, before(f, t), node(base, t), node(c.p, t)));
         loops[li] =
           shorter === "both" ? replace(loop, kp, 3, cp.p, cp.prev, cn.next, t)
           : shorter === "a" ? replace(loop, kp, 2, cp.p, cp.prev, c.next, t)
@@ -291,6 +331,7 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
     throw new SkeletonError("no_progress");
   };
 
+  edges.forEach((edge, i) => addSegment(i, after(i, 0), node(edge.p, 0), node(polygon[(i + 1) % polygon.length]!, 0)));
   let t = 0;
   let loops: Loop[] = [polygon.map((p, i) => ({ p, prev: (i - 1 + polygon.length) % polygon.length, next: i, start: node(p, 0), u: { x: 0, y: 0 } }))];
   loops = settle(loops, t);
@@ -329,8 +370,13 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
       }
     }
     if (!Number.isFinite(next)) throw new SkeletonError("no_event");
+    // Fällt ein Ereignis mit einem Profilwechsel zusammen, gilt genau dessen Höhe: sonst ordneten `before` und
+    // `after` die Strecken im Knick demselben Abschnitt zu
+    const change = phaseEnd(t);
+    if (change - next < EPS_T) next = change;
     for (const loop of loops) for (const c of loop) c.p = addScaled(c.p, c.u, next - t);
     t = next;
+    const upper: { edge: number; a: Vec; b: Vec }[] = [];
     for (const loop of loops) {
       for (const c of loop) {
         if (changesAt(c.prev, t) || changesAt(c.next, t)) {
@@ -339,26 +385,77 @@ export function weightedSkeleton(polygon: readonly Vec[], profiles: readonly Edg
           c.start = at;
         }
       }
+      // Profilwechsel: die Wellenfront der Kante ist Oberkante des unteren Abschnitts und, wenn sie weiterläuft,
+      // Unterkante des oberen
+      for (let k = 0; k < loop.length; k++) {
+        const a = loop[k]!;
+        const b = loop[(k + 1) % loop.length]!;
+        if (!changesAt(a.next, t)) continue;
+        addSegment(a.next, before(a.next, t), node(a.p, t), node(b.p, t));
+        upper.push({ edge: a.next, a: a.p, b: b.p });
+      }
     }
     loops = settle(loops, t);
+    for (const { edge, a, b } of upper) {
+      const alive = loops.some((loop) => loop.some((c) => (c.next === edge && near(c.p, a)) || (c.prev === edge && near(c.p, b))));
+      if (alive) addSegment(edge, after(edge, t), node(a, t), node(b, t));
+    }
   }
 
-  return edges.map((edge, i) => ({ edge: i, boundary: assemble(i, edge, polygon[(i + 1) % polygon.length]!, segments.get(i)!) }));
+  const faces: SkeletonFace[] = [];
+  for (const [k, list] of [...segments.entries()].sort(([a], [b]) => a.localeCompare(b, "en", { numeric: true }))) {
+    const [edge, segment] = k.split("/").map(Number) as [number, number];
+    faces.push({ edge, segment, loops: cycles(list) });
+  }
+  return faces;
 }
 
-function assemble(face: number, edge: Edge, end: Vec, segments: [Vec3, Vec3][]): Vec3[] {
-  const start = { ...edge.p, z: 0 };
-  const boundary: Vec3[] = [start, { ...end, z: 0 }];
-  const used = new Set<number>();
-  let current = boundary[1]!;
-  for (let guard = 0; guard <= segments.length; guard++) {
-    const k = segments.findIndex(([a, b], j) => !used.has(j) && (near3(a, current) || near3(b, current)));
-    if (k < 0) throw new SkeletonError(`face_open_${face}`);
-    used.add(k);
-    const [a, b] = segments[k]!;
-    current = near3(a, current) ? b : a;
-    if (near3(current, start)) return boundary;
-    boundary.push(current);
+/** Teilt Strecken an Knoten anderer Strecken, die in ihrem Inneren liegen (eine Teilung zur selben Höhe). */
+function splitAtNodes(segments: readonly [Vec3, Vec3][]): [Vec3, Vec3][] {
+  const nodes = segments.flat();
+  const out: [Vec3, Vec3][] = [];
+  for (const [a, b] of segments) {
+    const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+    const l2 = ab.x ** 2 + ab.y ** 2 + ab.z ** 2;
+    const cuts: { s: number; p: Vec3 }[] = [];
+    for (const p of nodes) {
+      const s = ((p.x - a.x) * ab.x + (p.y - a.y) * ab.y + (p.z - a.z) * ab.z) / l2;
+      const foot = { x: a.x + ab.x * s, y: a.y + ab.y * s, z: a.z + ab.z * s };
+      if (near3(p, foot) && !near3(p, a) && !near3(p, b) && s > 0 && s < 1 && !cuts.some((c) => near3(c.p, p))) cuts.push({ s, p });
+    }
+    cuts.sort((x, y) => x.s - y.s);
+    let from = a;
+    for (const { p } of cuts) {
+      out.push([from, p]);
+      from = p;
+    }
+    out.push([from, b]);
   }
-  throw new SkeletonError(`face_open_${face}`);
+  return out;
+}
+
+/** Geschlossene Umrisse aus ungeordneten Strecken; jede Strecke genau einmal. */
+function cycles(input: readonly [Vec3, Vec3][]): Vec3[][] {
+  const segments = splitAtNodes(input);
+  const used = new Set<number>();
+  const out: Vec3[][] = [];
+  for (let first = 0; first < segments.length; first++) {
+    if (used.has(first)) continue;
+    used.add(first);
+    const [start, second] = segments[first]!;
+    const ring: Vec3[] = [start];
+    let current = second;
+    for (let guard = 0; ; guard++) {
+      if (guard > segments.length) throw new SkeletonError("face_open");
+      if (near3(current, start)) break;
+      ring.push(current);
+      const k = segments.findIndex(([a, b], j) => !used.has(j) && (near3(a, current) || near3(b, current)));
+      if (k < 0) throw new SkeletonError("face_open");
+      used.add(k);
+      const [a, b] = segments[k]!;
+      current = near3(a, current) ? b : a;
+    }
+    if (ring.length >= 3) out.push(ring);
+  }
+  return out;
 }

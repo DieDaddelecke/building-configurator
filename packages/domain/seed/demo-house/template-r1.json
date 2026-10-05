@@ -1,0 +1,107 @@
+{
+  "schema_version": 2,
+  "slug": "demo_house_r1",
+  "name": { "fr": "Maison à étage (démonstration)", "de": "Haus mit Obergeschoss (Demo)" },
+  "source_ifc": null,
+  "ground_floor_offset": 0.2,
+  "levels": [
+    { "id": "rdc", "name": "RDC", "elevation": 0.0 },
+    { "id": "r1", "name": "R+1", "elevation": 2.8 }
+  ],
+  "envelope": [
+    {
+      "level_id": "rdc",
+      "inner_polygon": [
+        { "x": 0.0, "y": 0.0 },
+        { "x": 10.0, "y": 0.0 },
+        { "x": 10.0, "y": 8.0 },
+        { "x": 0.0, "y": 8.0 }
+      ],
+      "segments": [
+        { "id": "seg-rdc-south", "source_ifc_guid": null, "facade_role": "street" },
+        { "id": "seg-rdc-east", "source_ifc_guid": null, "facade_role": "side_right" },
+        { "id": "seg-rdc-north", "source_ifc_guid": null, "facade_role": "garden" },
+        { "id": "seg-rdc-west", "source_ifc_guid": null, "facade_role": "side_left" }
+      ]
+    },
+    {
+      "level_id": "r1",
+      "inner_polygon": [
+        { "x": 0.0, "y": 0.0 },
+        { "x": 10.0, "y": 0.0 },
+        { "x": 10.0, "y": 8.0 },
+        { "x": 0.0, "y": 8.0 }
+      ],
+      "segments": [
+        { "id": "seg-r1-south", "source_ifc_guid": null, "facade_role": "street" },
+        { "id": "seg-r1-east", "source_ifc_guid": null, "facade_role": "side_right" },
+        { "id": "seg-r1-north", "source_ifc_guid": null, "facade_role": "garden" },
+        { "id": "seg-r1-west", "source_ifc_guid": null, "facade_role": "side_left" }
+      ]
+    }
+  ],
+  "interior_walls": [
+    { "id": "wall-rdc-living-hall", "source_ifc_guid": null, "level_id": "rdc", "axis": [{ "x": 6.05, "y": 0.0 }, { "x": 6.05, "y": 4.05 }], "thickness": 0.1, "adjacent_room_ids": ["room-rdc-living", "room-rdc-hall"] },
+    { "id": "wall-rdc-living-kitchen", "source_ifc_guid": null, "level_id": "rdc", "axis": [{ "x": 6.05, "y": 4.05 }, { "x": 6.05, "y": 8.0 }], "thickness": 0.1, "adjacent_room_ids": ["room-rdc-living", "room-rdc-kitchen"] },
+    { "id": "wall-rdc-hall-kitchen", "source_ifc_guid": null, "level_id": "rdc", "axis": [{ "x": 6.05, "y": 4.05 }, { "x": 10.0, "y": 4.05 }], "thickness": 0.1, "adjacent_room_ids": ["room-rdc-hall", "room-rdc-kitchen"] },
+    { "id": "wall-r1-bed1-bed2", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 4.95, "y": 0.0 }, { "x": 4.95, "y": 4.45 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed1", "room-r1-bed2"] },
+    { "id": "wall-r1-bed1-bed3", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 0.0, "y": 4.45 }, { "x": 2.95, "y": 4.45 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed1", "room-r1-bed3"] },
+    { "id": "wall-r1-bed1-landing", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 2.95, "y": 4.45 }, { "x": 4.95, "y": 4.45 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed1", "room-r1-landing"] },
+    { "id": "wall-r1-bed2-landing", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 4.95, "y": 4.45 }, { "x": 7.05, "y": 4.45 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed2", "room-r1-landing"] },
+    { "id": "wall-r1-bed2-bath", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 7.05, "y": 4.45 }, { "x": 10.0, "y": 4.45 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed2", "room-r1-bath"] },
+    { "id": "wall-r1-bed3-landing", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 2.95, "y": 4.45 }, { "x": 2.95, "y": 8.0 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-bed3", "room-r1-landing"] },
+    { "id": "wall-r1-landing-bath", "source_ifc_guid": null, "level_id": "r1", "axis": [{ "x": 7.05, "y": 4.45 }, { "x": 7.05, "y": 8.0 }], "thickness": 0.1, "adjacent_room_ids": ["room-r1-landing", "room-r1-bath"] }
+  ],
+  "openings": [
+    { "id": "win-rdc-living-south", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-rdc-south", "offset_along_host": 3.0, "adjacent_room_ids": ["room-rdc-living"] },
+    { "id": "win-rdc-living-west", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-rdc-west", "offset_along_host": 4.0, "adjacent_room_ids": ["room-rdc-living"] },
+    { "id": "win-rdc-living-north", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-rdc-north", "offset_along_host": 7.0, "adjacent_room_ids": ["room-rdc-living"] },
+    { "id": "win-rdc-kitchen", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-rdc-north", "offset_along_host": 2.0, "adjacent_room_ids": ["room-rdc-kitchen"] },
+    { "id": "door-entrance", "source_ifc_guid": null, "kind": "door", "host_kind": "envelope_segment", "host_id": "seg-rdc-east", "offset_along_host": 2.0, "adjacent_room_ids": ["room-rdc-hall"] },
+    { "id": "door-rdc-living", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-rdc-living-hall", "offset_along_host": 2.0, "adjacent_room_ids": ["room-rdc-living", "room-rdc-hall"] },
+    { "id": "door-rdc-kitchen", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-rdc-hall-kitchen", "offset_along_host": 2.0, "adjacent_room_ids": ["room-rdc-hall", "room-rdc-kitchen"] },
+    { "id": "win-r1-bed1", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-r1-south", "offset_along_host": 2.5, "adjacent_room_ids": ["room-r1-bed1"] },
+    { "id": "win-r1-bed2", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-r1-south", "offset_along_host": 7.5, "adjacent_room_ids": ["room-r1-bed2"] },
+    { "id": "win-r1-bath", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-r1-north", "offset_along_host": 1.5, "adjacent_room_ids": ["room-r1-bath"] },
+    { "id": "win-r1-bed3", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-r1-north", "offset_along_host": 8.5, "adjacent_room_ids": ["room-r1-bed3"] },
+    { "id": "win-r1-bed3-gable", "source_ifc_guid": null, "kind": "window", "host_kind": "envelope_segment", "host_id": "seg-r1-west", "offset_along_host": 1.75, "adjacent_room_ids": ["room-r1-bed3"] },
+    { "id": "door-r1-bed1", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-r1-bed1-landing", "offset_along_host": 1.0, "adjacent_room_ids": ["room-r1-bed1", "room-r1-landing"] },
+    { "id": "door-r1-bed2", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-r1-bed2-landing", "offset_along_host": 1.0, "adjacent_room_ids": ["room-r1-bed2", "room-r1-landing"] },
+    { "id": "door-r1-bed3", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-r1-bed3-landing", "offset_along_host": 1.5, "adjacent_room_ids": ["room-r1-bed3", "room-r1-landing"] },
+    { "id": "door-r1-bath", "source_ifc_guid": null, "kind": "door", "host_kind": "interior_wall", "host_id": "wall-r1-landing-bath", "offset_along_host": 1.5, "adjacent_room_ids": ["room-r1-landing", "room-r1-bath"] }
+  ],
+  "slabs": [
+    { "id": "slab-ground", "source_ifc_guid": null, "level_id": "rdc", "kind": "ground", "thickness": 0.2 },
+    { "id": "slab-r1", "source_ifc_guid": null, "level_id": "r1", "kind": "floor", "thickness": 0.22 }
+  ],
+  "roof": {
+    "bearing_height": 5.8,
+    "parapet_height": 0.0,
+    "eave_overhang": 0.5,
+    "verge_overhang": 0.3,
+    "design": { "form": "gable", "pitch_deg": 35.0, "upper_pitch_deg": null, "break_height": null, "rotation": 0 }
+  },
+  "rooms": [
+    { "id": "room-rdc-living", "source_ifc_guid": null, "level_id": "rdc", "room_type_id": "living", "polygon": [{ "x": 0.0, "y": 0.0 }, { "x": 6.0, "y": 0.0 }, { "x": 6.0, "y": 8.0 }, { "x": 0.0, "y": 8.0 }] },
+    { "id": "room-rdc-hall", "source_ifc_guid": null, "level_id": "rdc", "room_type_id": "corridor", "polygon": [{ "x": 6.1, "y": 0.0 }, { "x": 10.0, "y": 0.0 }, { "x": 10.0, "y": 4.0 }, { "x": 6.1, "y": 4.0 }] },
+    { "id": "room-rdc-kitchen", "source_ifc_guid": null, "level_id": "rdc", "room_type_id": "kitchen", "polygon": [{ "x": 6.1, "y": 4.1 }, { "x": 10.0, "y": 4.1 }, { "x": 10.0, "y": 8.0 }, { "x": 6.1, "y": 8.0 }] },
+    { "id": "room-r1-bed1", "source_ifc_guid": null, "level_id": "r1", "room_type_id": "bedroom", "polygon": [{ "x": 0.0, "y": 0.0 }, { "x": 4.9, "y": 0.0 }, { "x": 4.9, "y": 4.4 }, { "x": 0.0, "y": 4.4 }] },
+    { "id": "room-r1-bed2", "source_ifc_guid": null, "level_id": "r1", "room_type_id": "bedroom", "polygon": [{ "x": 5.0, "y": 0.0 }, { "x": 10.0, "y": 0.0 }, { "x": 10.0, "y": 4.4 }, { "x": 5.0, "y": 4.4 }] },
+    { "id": "room-r1-bed3", "source_ifc_guid": null, "level_id": "r1", "room_type_id": "bedroom", "polygon": [{ "x": 0.0, "y": 4.5 }, { "x": 2.9, "y": 4.5 }, { "x": 2.9, "y": 8.0 }, { "x": 0.0, "y": 8.0 }] },
+    { "id": "room-r1-landing", "source_ifc_guid": null, "level_id": "r1", "room_type_id": "corridor", "polygon": [{ "x": 3.0, "y": 4.5 }, { "x": 7.0, "y": 4.5 }, { "x": 7.0, "y": 8.0 }, { "x": 3.0, "y": 8.0 }] },
+    { "id": "room-r1-bath", "source_ifc_guid": null, "level_id": "r1", "room_type_id": "bathroom", "polygon": [{ "x": 7.1, "y": 4.5 }, { "x": 10.0, "y": 4.5 }, { "x": 10.0, "y": 8.0 }, { "x": 7.1, "y": 8.0 }] }
+  ],
+  "entrance_opening_id": "door-entrance",
+  "garage_door_opening_id": null,
+  "defaults": {
+    "wall_profile": "wall.standard",
+    "window_type": "window.standard",
+    "entrance_door": "door.entrance",
+    "interior_door": "door.interior",
+    "roof_type": "roof.tiles",
+    "roof_shape": "shape.gable",
+    "terrace": "terrace.none",
+    "carport": "carport.none"
+  },
+  "element_defaults": {}
+}

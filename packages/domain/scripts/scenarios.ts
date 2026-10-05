@@ -99,7 +99,7 @@ export function scenarios(template: HouseTemplate, catalog: HouseCatalog): Scena
       const opening = template.openings.find((o) => o.id === note.element_id)!;
       const room = template.rooms.find((r) => r.id === opening.adjacent_room_ids[0]);
       const type = catalog.room_types.find((t) => t.id === room?.room_type_id);
-      return `${type?.name.de ?? note.element_id}-Fenster ${name(note.applied_value_id)} mit \`ResolutionNote\``;
+      return `${type?.name.de ?? note.element_id}-Fenster ${name(note.applied_value_id!)} mit \`ResolutionNote\``;
     });
     const positions = (m: typeof model) => JSON.stringify(m.openings.map((o) => [o.id, o.center]));
     rows.push({
@@ -121,7 +121,7 @@ export function scenarios(template: HouseTemplate, catalog: HouseCatalog): Scena
     rows.push({
       name: "Gründach",
       result:
-        `Dachaufbau ${number(model.roof.buildUp / 10_000)} m; Dachfläche ${number(quantity(evaluation, "roof.area")!)} m²; ` +
+        `Dachaufbau ${number(model.roof.flat!.buildUp / 10_000)} m; Dachfläche ${number(quantity(evaluation, "roof.area")!)} m²; ` +
         delta(evaluation.price.net_amount - base.evaluation.price.net_amount),
     });
   }

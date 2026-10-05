@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "slug": "demo_house",
   "name": { "fr": "Maison de démonstration", "de": "Demohaus" },
   "source_ifc": null,
@@ -51,7 +51,13 @@
     { "id": "slab-ground", "source_ifc_guid": null, "level_id": "rdc", "kind": "ground", "thickness": 0.2 },
     { "id": "slab-roof", "source_ifc_guid": null, "level_id": "rdc", "kind": "roof", "thickness": 0.1 }
   ],
-  "roof": { "bearing_height": 2.5, "parapet_height": 0.4, "eave_overhang": 0.0, "verge_overhang": 0.0 },
+  "roof": {
+    "bearing_height": 2.5,
+    "parapet_height": 0.4,
+    "eave_overhang": 0.0,
+    "verge_overhang": 0.0,
+    "design": { "form": "flat", "pitch_deg": null, "upper_pitch_deg": null, "break_height": null, "rotation": 0 }
+  },
   "rooms": [
     { "id": "room-living", "source_ifc_guid": null, "level_id": "rdc", "room_type_id": "living", "polygon": [{ "x": 0.0, "y": 0.0 }, { "x": 5.0, "y": 0.0 }, { "x": 5.0, "y": 8.0 }, { "x": 0.0, "y": 8.0 }] },
     { "id": "room-bedroom", "source_ifc_guid": null, "level_id": "rdc", "room_type_id": "bedroom", "polygon": [{ "x": 5.1, "y": 0.0 }, { "x": 8.5, "y": 0.0 }, { "x": 8.5, "y": 3.4 }, { "x": 5.1, "y": 3.4 }] },
@@ -67,7 +73,10 @@
     "window_type": "window.standard",
     "entrance_door": "door.entrance",
     "interior_door": "door.interior",
-    "roof_type": "roof.flat"
+    "roof_type": "roof.flat",
+    "roof_shape": "shape.flat",
+    "terrace": "terrace.none",
+    "carport": "carport.none"
   },
   "element_defaults": {}
 }

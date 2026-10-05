@@ -140,7 +140,8 @@ const selections = fc.record({
   roof_type: fc.option(fc.record({ value: fc.constantFrom("roof.flat", "roof.green") }), { nil: undefined }),
 });
 
-type Selections = NonNullable<Parameters<typeof configuration>[0]>;
+/** Nur Optionswerte: die Eigenschaften gelten den Slots für Fenster und Türen. */
+type Selections = Record<string, { value?: string; rooms?: Record<string, string>; elements?: Record<string, string> }>;
 
 function compact(raw: Record<string, object | undefined>): Selections {
   return Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== undefined)) as Selections;

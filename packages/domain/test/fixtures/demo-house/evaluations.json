@@ -1,16 +1,18 @@
 {
   "standard": {
+    "template": "demo_house",
     "configuration": {
       "selections": {}
     },
     "evaluation": {
-      "domain_version": "0.3.0",
+      "domain_version": "0.4.0",
       "status": "valid",
       "resolved": [
         {
           "slot_id": "wall_profile",
           "element_id": "seg-south",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -18,6 +20,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-east",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -25,6 +28,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-north",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -32,6 +36,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-west",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -39,6 +44,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-south",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -46,6 +52,7 @@
           "slot_id": "window_type",
           "element_id": "win-bedroom",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -53,6 +60,7 @@
           "slot_id": "window_type",
           "element_id": "win-child",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -60,6 +68,7 @@
           "slot_id": "window_type",
           "element_id": "win-bath",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -67,6 +76,7 @@
           "slot_id": "window_type",
           "element_id": "win-kitchen",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -74,6 +84,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-west",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -81,6 +92,7 @@
           "slot_id": "entrance_door",
           "element_id": "door-entrance",
           "option_value_id": "door.entrance",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -88,6 +100,7 @@
           "slot_id": "interior_door",
           "element_id": "door-living",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -95,6 +108,7 @@
           "slot_id": "interior_door",
           "element_id": "door-bedroom",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -102,6 +116,7 @@
           "slot_id": "interior_door",
           "element_id": "door-child",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -109,6 +124,7 @@
           "slot_id": "interior_door",
           "element_id": "door-kitchen",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -116,6 +132,15 @@
           "slot_id": "interior_door",
           "element_id": "door-bath",
           "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.flat",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -123,6 +148,23 @@
           "slot_id": "roof_type",
           "element_id": "roof",
           "option_value_id": "roof.flat",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
           "source": "default",
           "available": true
         }
@@ -406,9 +448,9 @@
           }
         ],
         "storeys": 1,
-        "roof_form": "flat",
+        "roof_shape": "flat",
         "roof_slopes_deg": [],
-        "ridge_direction": null,
+        "ridge_azimuth_deg": null,
         "eave_height": 3,
         "top_height": 3,
         "ground_floor_offset": 0.2,
@@ -437,12 +479,15 @@
         },
         "garage_door": null,
         "facade_material_class": "render",
-        "roof_material_class": "other"
+        "roof_material_class": "other",
+        "terrace": null,
+        "carport": null
       },
       "candidates": null
     }
   },
   "brick": {
+    "template": "demo_house",
     "configuration": {
       "selections": {
         "wall_profile": {
@@ -456,13 +501,14 @@
       }
     },
     "evaluation": {
-      "domain_version": "0.3.0",
+      "domain_version": "0.4.0",
       "status": "valid",
       "resolved": [
         {
           "slot_id": "wall_profile",
           "element_id": "seg-south",
           "option_value_id": "wall.brick",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -470,6 +516,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-east",
           "option_value_id": "wall.brick",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -477,6 +524,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-north",
           "option_value_id": "wall.brick",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -484,6 +532,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-west",
           "option_value_id": "wall.brick",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -491,6 +540,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-south",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -498,6 +548,7 @@
           "slot_id": "window_type",
           "element_id": "win-bedroom",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -505,6 +556,7 @@
           "slot_id": "window_type",
           "element_id": "win-child",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -512,6 +564,7 @@
           "slot_id": "window_type",
           "element_id": "win-bath",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -519,6 +572,7 @@
           "slot_id": "window_type",
           "element_id": "win-kitchen",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -526,6 +580,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-west",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -533,6 +588,7 @@
           "slot_id": "entrance_door",
           "element_id": "door-entrance",
           "option_value_id": "door.entrance",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -540,6 +596,7 @@
           "slot_id": "interior_door",
           "element_id": "door-living",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -547,6 +604,7 @@
           "slot_id": "interior_door",
           "element_id": "door-bedroom",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -554,6 +612,7 @@
           "slot_id": "interior_door",
           "element_id": "door-child",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -561,6 +620,7 @@
           "slot_id": "interior_door",
           "element_id": "door-kitchen",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -568,6 +628,15 @@
           "slot_id": "interior_door",
           "element_id": "door-bath",
           "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.flat",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -575,6 +644,23 @@
           "slot_id": "roof_type",
           "element_id": "roof",
           "option_value_id": "roof.flat",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
           "source": "default",
           "available": true
         }
@@ -971,9 +1057,9 @@
           }
         ],
         "storeys": 1,
-        "roof_form": "flat",
+        "roof_shape": "flat",
         "roof_slopes_deg": [],
-        "ridge_direction": null,
+        "ridge_azimuth_deg": null,
         "eave_height": 3,
         "top_height": 3,
         "ground_floor_offset": 0.2,
@@ -1002,12 +1088,15 @@
         },
         "garage_door": null,
         "facade_material_class": "brick",
-        "roof_material_class": "other"
+        "roof_material_class": "other",
+        "terrace": null,
+        "carport": null
       },
       "candidates": null
     }
   },
   "wood": {
+    "template": "demo_house",
     "configuration": {
       "selections": {
         "wall_profile": {
@@ -1021,13 +1110,14 @@
       }
     },
     "evaluation": {
-      "domain_version": "0.3.0",
+      "domain_version": "0.4.0",
       "status": "valid",
       "resolved": [
         {
           "slot_id": "wall_profile",
           "element_id": "seg-south",
           "option_value_id": "wall.wood",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -1035,6 +1125,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-east",
           "option_value_id": "wall.wood",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -1042,6 +1133,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-north",
           "option_value_id": "wall.wood",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -1049,6 +1141,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-west",
           "option_value_id": "wall.wood",
+          "number": null,
           "source": "global",
           "available": true
         },
@@ -1056,6 +1149,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-south",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1063,6 +1157,7 @@
           "slot_id": "window_type",
           "element_id": "win-bedroom",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1070,6 +1165,7 @@
           "slot_id": "window_type",
           "element_id": "win-child",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1077,6 +1173,7 @@
           "slot_id": "window_type",
           "element_id": "win-bath",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1084,6 +1181,7 @@
           "slot_id": "window_type",
           "element_id": "win-kitchen",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1091,6 +1189,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-west",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1098,6 +1197,7 @@
           "slot_id": "entrance_door",
           "element_id": "door-entrance",
           "option_value_id": "door.entrance",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1105,6 +1205,7 @@
           "slot_id": "interior_door",
           "element_id": "door-living",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1112,6 +1213,7 @@
           "slot_id": "interior_door",
           "element_id": "door-bedroom",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1119,6 +1221,7 @@
           "slot_id": "interior_door",
           "element_id": "door-child",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1126,6 +1229,7 @@
           "slot_id": "interior_door",
           "element_id": "door-kitchen",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1133,6 +1237,15 @@
           "slot_id": "interior_door",
           "element_id": "door-bath",
           "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.flat",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1140,6 +1253,23 @@
           "slot_id": "roof_type",
           "element_id": "roof",
           "option_value_id": "roof.flat",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
           "source": "default",
           "available": true
         }
@@ -1504,9 +1634,9 @@
           }
         ],
         "storeys": 1,
-        "roof_form": "flat",
+        "roof_shape": "flat",
         "roof_slopes_deg": [],
-        "ridge_direction": null,
+        "ridge_azimuth_deg": null,
         "eave_height": 3,
         "top_height": 3,
         "ground_floor_offset": 0.2,
@@ -1535,12 +1665,15 @@
         },
         "garage_door": null,
         "facade_material_class": "wood",
-        "roof_material_class": "other"
+        "roof_material_class": "other",
+        "terrace": null,
+        "carport": null
       },
       "candidates": null
     }
   },
   "green_roof": {
+    "template": "demo_house",
     "configuration": {
       "selections": {
         "roof_type": {
@@ -1554,13 +1687,14 @@
       }
     },
     "evaluation": {
-      "domain_version": "0.3.0",
+      "domain_version": "0.4.0",
       "status": "valid",
       "resolved": [
         {
           "slot_id": "wall_profile",
           "element_id": "seg-south",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1568,6 +1702,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-east",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1575,6 +1710,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-north",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1582,6 +1718,7 @@
           "slot_id": "wall_profile",
           "element_id": "seg-west",
           "option_value_id": "wall.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1589,6 +1726,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-south",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1596,6 +1734,7 @@
           "slot_id": "window_type",
           "element_id": "win-bedroom",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1603,6 +1742,7 @@
           "slot_id": "window_type",
           "element_id": "win-child",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1610,6 +1750,7 @@
           "slot_id": "window_type",
           "element_id": "win-bath",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1617,6 +1758,7 @@
           "slot_id": "window_type",
           "element_id": "win-kitchen",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1624,6 +1766,7 @@
           "slot_id": "window_type",
           "element_id": "win-living-west",
           "option_value_id": "window.standard",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1631,6 +1774,7 @@
           "slot_id": "entrance_door",
           "element_id": "door-entrance",
           "option_value_id": "door.entrance",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1638,6 +1782,7 @@
           "slot_id": "interior_door",
           "element_id": "door-living",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1645,6 +1790,7 @@
           "slot_id": "interior_door",
           "element_id": "door-bedroom",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1652,6 +1798,7 @@
           "slot_id": "interior_door",
           "element_id": "door-child",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1659,6 +1806,7 @@
           "slot_id": "interior_door",
           "element_id": "door-kitchen",
           "option_value_id": "door.interior",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1666,6 +1814,15 @@
           "slot_id": "interior_door",
           "element_id": "door-bath",
           "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.flat",
+          "number": null,
           "source": "default",
           "available": true
         },
@@ -1673,7 +1830,24 @@
           "slot_id": "roof_type",
           "element_id": "roof",
           "option_value_id": "roof.green",
+          "number": null,
           "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
           "available": true
         }
       ],
@@ -1958,9 +2132,9 @@
           }
         ],
         "storeys": 1,
-        "roof_form": "flat",
+        "roof_shape": "flat",
         "roof_slopes_deg": [],
-        "ridge_direction": null,
+        "ridge_azimuth_deg": null,
         "eave_height": 3,
         "top_height": 3,
         "ground_floor_offset": 0.2,
@@ -1989,7 +2163,3959 @@
         },
         "garage_door": null,
         "facade_material_class": "render",
-        "roof_material_class": "vegetation"
+        "roof_material_class": "vegetation",
+        "terrace": null,
+        "carport": null
+      },
+      "candidates": null
+    }
+  },
+  "outbuildings": {
+    "template": "demo_house",
+    "configuration": {
+      "selections": {
+        "terrace": {
+          "value": {
+            "type": "option",
+            "option_value_id": "terrace.wood"
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        },
+        "carport": {
+          "value": {
+            "type": "option",
+            "option_value_id": "carport.single"
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        }
+      }
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "valid",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-bedroom",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-child",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-bedroom",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-child",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.flat",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.flat",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.wood",
+          "number": null,
+          "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.single",
+          "number": null,
+          "source": "global",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "carport.count",
+          "ref_id": "carport.single",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "site"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 5,
+          "unit": "pcs",
+          "element_ids": [
+            "door-bath",
+            "door-bedroom",
+            "door-child",
+            "door-kitchen",
+            "door-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 110.9184,
+          "unit": "m2",
+          "element_ids": [
+            "seg-east",
+            "seg-north",
+            "seg-south",
+            "seg-west"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 13.62,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-bath",
+            "win-bedroom",
+            "win-child",
+            "win-kitchen",
+            "win-living-south",
+            "win-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.flat",
+          "value": 110.9184,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "terrace.area",
+          "ref_id": "terrace.wood",
+          "value": 38.160000000000004,
+          "unit": "m2",
+          "element_ids": [
+            "site"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 116.94,
+          "unit": "m2",
+          "element_ids": [
+            "seg-east",
+            "seg-north",
+            "seg-south",
+            "seg-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 121.548,
+          "unit": "m2",
+          "element_ids": [
+            "seg-east",
+            "seg-north",
+            "seg-south",
+            "seg-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "win-bath",
+            "win-bedroom",
+            "win-child",
+            "win-kitchen",
+            "win-living-south",
+            "win-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 390000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 390000,
+            "amount": 390000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 116.94,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 8185.8,
+            "element_ids": [
+              "seg-east",
+              "seg-north",
+              "seg-south",
+              "seg-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 121.548,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 6077.4,
+            "element_ids": [
+              "seg-east",
+              "seg-north",
+              "seg-south",
+              "seg-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 6,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 5100,
+            "element_ids": [
+              "win-bath",
+              "win-bedroom",
+              "win-child",
+              "win-kitchen",
+              "win-living-south",
+              "win-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.flat",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.flat",
+            "quantity": 110.9184,
+            "unit": "m2",
+            "unit_price": 180,
+            "amount": 19965.312,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "terrace",
+            "label": {
+              "fr": "Terrasse",
+              "de": "Terrasse"
+            },
+            "price_entry_id": "price.terrace.wood",
+            "quantity_key": "terrace.area",
+            "ref_id": "terrace.wood",
+            "quantity": 38.160000000000004,
+            "unit": "m2",
+            "unit_price": 180,
+            "amount": 6868.800000000001,
+            "element_ids": [
+              "site"
+            ]
+          },
+          {
+            "pricing_rule_id": "carport",
+            "label": {
+              "fr": "Carport",
+              "de": "Carport"
+            },
+            "price_entry_id": "price.carport.single",
+            "quantity_key": "carport.count",
+            "ref_id": "carport.single",
+            "quantity": 1,
+            "unit": "pcs",
+            "unit_price": 9500,
+            "amount": 9500,
+            "element_ids": [
+              "site"
+            ]
+          }
+        ],
+        "net_amount": 445697.312,
+        "vat_rate": 0.2,
+        "vat_amount": 89139.4624,
+        "gross_amount": 534836.7744,
+        "deltas": {
+          "carport": 9500,
+          "terrace": 6868.799999999988
+        },
+        "is_estimate": true
+      },
+      "rule_results": [],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 3.84,
+            "facade_area": 40.704,
+            "ratio": 0.09433962264150944
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 27.904,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 40.704,
+            "ratio": 0.14150943396226415
+          },
+          {
+            "direction": "w",
+            "window_area": 1.92,
+            "facade_area": 27.904,
+            "ratio": 0.06880733944954129
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 12.36,
+            "y": -0.36
+          },
+          {
+            "x": 12.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 12.36,
+            "y": -0.36
+          },
+          {
+            "x": 12.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "storeys": 1,
+        "roof_shape": "flat",
+        "roof_slopes_deg": [],
+        "ridge_azimuth_deg": null,
+        "eave_height": 3,
+        "top_height": 3,
+        "ground_floor_offset": 0.2,
+        "floor_area": 93.16,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.5114678899082569
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "other",
+        "terrace": {
+          "type_id": "terrace.wood",
+          "depth": 3,
+          "width": 12.72,
+          "height_above_terrain": 0.3,
+          "sealing_factor": 0.5
+        },
+        "carport": {
+          "type_id": "carport.single",
+          "spaces": 1,
+          "width": 3,
+          "depth": 5,
+          "height": 2.6
+        }
+      },
+      "candidates": null
+    }
+  },
+  "r1_standard": {
+    "template": "demo_house_r1",
+    "configuration": {
+      "selections": {}
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "valid",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-north",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed1",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed2",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3-gable",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed1",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed2",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed3",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.gable",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_pitch",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 35,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_rotation",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 0,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.tiles",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "door-r1-bath",
+            "door-r1-bed1",
+            "door-r1-bed2",
+            "door-r1-bed3",
+            "door-rdc-kitchen",
+            "door-rdc-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 93.4784,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "gable.area",
+          "ref_id": null,
+          "value": 22.406641222710718,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 19.38,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.tiles",
+          "value": 134.3223163112585,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.eave.length",
+          "ref_id": "roof.tiles",
+          "value": 22.64,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.ridge.length",
+          "ref_id": "roof.tiles",
+          "value": 11.32,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.verge.length",
+          "ref_id": "roof.tiles",
+          "value": 23.731858005522703,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 222.38421369399867,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 228.21610138276245,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 9,
+          "unit": "pcs",
+          "element_ids": [
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 455000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house_r1",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 455000,
+            "amount": 455000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 222.38421369399867,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 15566.894958579907,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 228.21610138276245,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 11410.805069138123,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 9,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 7650,
+            "element_ids": [
+              "win-r1-bath",
+              "win-r1-bed1",
+              "win-r1-bed2",
+              "win-r1-bed3",
+              "win-r1-bed3-gable",
+              "win-rdc-kitchen",
+              "win-rdc-living-north",
+              "win-rdc-living-south",
+              "win-rdc-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.tiles",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.tiles",
+            "quantity": 134.3223163112585,
+            "unit": "m2",
+            "unit_price": 140,
+            "amount": 18805.12428357619,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof_ridge",
+            "label": {
+              "fr": "Faîtage",
+              "de": "First"
+            },
+            "price_entry_id": "price.ridge.tiles",
+            "quantity_key": "roof.ridge.length",
+            "ref_id": "roof.tiles",
+            "quantity": 11.32,
+            "unit": "m",
+            "unit_price": 35,
+            "amount": 396.2,
+            "element_ids": [
+              "roof"
+            ]
+          }
+        ],
+        "net_amount": 508829.02431129426,
+        "vat_rate": 0.2,
+        "vat_amount": 101765.80486225885,
+        "gross_amount": 610594.829173553,
+        "deltas": {},
+        "is_estimate": true
+      },
+      "rule_results": [],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 7.68,
+            "facade_area": 61.61775906854109,
+            "ratio": 0.12463939156659495
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 63.432573714403375,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 61.61775906854109,
+            "ratio": 0.09347954367494622
+          },
+          {
+            "direction": "w",
+            "window_area": 3.84,
+            "facade_area": 63.432573714403375,
+            "ratio": 0.060536720727887905
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": 10.66,
+            "y": 8.86
+          },
+          {
+            "x": -0.66,
+            "y": 8.86
+          },
+          {
+            "x": -0.66,
+            "y": -0.86
+          },
+          {
+            "x": 10.66,
+            "y": -0.86
+          }
+        ],
+        "storeys": 2,
+        "roof_shape": "gable",
+        "roof_slopes_deg": [
+          35,
+          35
+        ],
+        "ridge_azimuth_deg": 90,
+        "eave_height": 5.539638401992857,
+        "top_height": 8.942647037692046,
+        "ground_floor_offset": 0.2,
+        "floor_area": 156.67,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.2706422018348624
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "clay_tile",
+        "terrace": null,
+        "carport": null
+      },
+      "candidates": null
+    }
+  },
+  "r1_hip": {
+    "template": "demo_house_r1",
+    "configuration": {
+      "selections": {
+        "roof_shape": {
+          "value": {
+            "type": "option",
+            "option_value_id": "shape.hip"
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        }
+      }
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "valid",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-north",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed1",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed2",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3-gable",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed1",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed2",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed3",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.hip",
+          "number": null,
+          "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "roof_pitch",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 30,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.tiles",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "door-r1-bath",
+            "door-r1-bed1",
+            "door-r1-bed2",
+            "door-r1-bed3",
+            "door-rdc-kitchen",
+            "door-rdc-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 93.4784,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 19.38,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.tiles",
+          "value": 131.54163781130288,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.eave.length",
+          "ref_id": "roof.tiles",
+          "value": 42.879999999999995,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.hip.length",
+          "ref_id": "roof.tiles",
+          "value": 29.69509050331384,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.ridge.length",
+          "ref_id": "roof.tiles",
+          "value": 2,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 199.29535103247616,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 203.87819522082674,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 9,
+          "unit": "pcs",
+          "element_ids": [
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 455000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house_r1",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 455000,
+            "amount": 455000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 199.29535103247616,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 13950.674572273332,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 203.87819522082674,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 10193.909761041337,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 9,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 7650,
+            "element_ids": [
+              "win-r1-bath",
+              "win-r1-bed1",
+              "win-r1-bed2",
+              "win-r1-bed3",
+              "win-r1-bed3-gable",
+              "win-rdc-kitchen",
+              "win-rdc-living-north",
+              "win-rdc-living-south",
+              "win-rdc-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.tiles",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.tiles",
+            "quantity": 131.54163781130288,
+            "unit": "m2",
+            "unit_price": 140,
+            "amount": 18415.829293582403,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof_ridge",
+            "label": {
+              "fr": "Faîtage",
+              "de": "First"
+            },
+            "price_entry_id": "price.ridge.tiles",
+            "quantity_key": "roof.ridge.length",
+            "ref_id": "roof.tiles",
+            "quantity": 2,
+            "unit": "m",
+            "unit_price": 35,
+            "amount": 70,
+            "element_ids": [
+              "roof"
+            ]
+          }
+        ],
+        "net_amount": 505280.4136268971,
+        "vat_rate": 0.2,
+        "vat_amount": 101056.08272537943,
+        "gross_amount": 606336.4963522765,
+        "deltas": {
+          "roof_shape": -3548.6106843971647
+        },
+        "is_estimate": true
+      },
+      "rule_results": [],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 7.68,
+            "facade_area": 62.09188984691689,
+            "ratio": 0.12368765097880721
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 50.50758204073338,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 62.091889846916885,
+            "ratio": 0.09276573823410542
+          },
+          {
+            "direction": "w",
+            "window_area": 3.84,
+            "facade_area": 50.5075820407334,
+            "ratio": 0.07602818913214085
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": 10.86,
+            "y": 8.86
+          },
+          {
+            "x": -0.86,
+            "y": 8.86
+          },
+          {
+            "x": -0.86,
+            "y": -0.86
+          },
+          {
+            "x": 10.86,
+            "y": -0.86
+          }
+        ],
+        "storeys": 2,
+        "roof_shape": "hip",
+        "roof_slopes_deg": [
+          30,
+          30,
+          30,
+          30
+        ],
+        "ridge_azimuth_deg": 90,
+        "eave_height": 5.626794919243112,
+        "top_height": 8.432717227504693,
+        "ground_floor_offset": 0.2,
+        "floor_area": 156.67,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.2706422018348624
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "clay_tile",
+        "terrace": null,
+        "carport": null
+      },
+      "candidates": null
+    }
+  },
+  "r1_half_hip": {
+    "template": "demo_house_r1",
+    "configuration": {
+      "selections": {
+        "roof_shape": {
+          "value": {
+            "type": "option",
+            "option_value_id": "shape.half_hip"
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        }
+      }
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "valid",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-north",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed1",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed2",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3-gable",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed1",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed2",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed3",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.half_hip",
+          "number": null,
+          "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "roof_pitch",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 40,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_rotation",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 0,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.tiles",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "door-r1-bath",
+            "door-r1-bed1",
+            "door-r1-bed2",
+            "door-r1-bed3",
+            "door-rdc-kitchen",
+            "door-rdc-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 93.4784,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "gable.area",
+          "ref_id": null,
+          "value": 22.465971330751522,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 19.38,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.tiles",
+          "value": 149.60635739940506,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.eave.length",
+          "ref_id": "roof.tiles",
+          "value": 34.55540057858272,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.hip.length",
+          "ref_id": "roof.tiles",
+          "value": 16.591031554743466,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.ridge.length",
+          "ref_id": "roof.tiles",
+          "value": 8.433765893261558,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.verge.length",
+          "ref_id": "roof.tiles",
+          "value": 9.822666934023559,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 220.96598180084118,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 223.7358706321341,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 9,
+          "unit": "pcs",
+          "element_ids": [
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 455000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house_r1",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 455000,
+            "amount": 455000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 220.96598180084118,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 15467.618726058883,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 223.7358706321341,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 11186.793531606705,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 9,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 7650,
+            "element_ids": [
+              "win-r1-bath",
+              "win-r1-bed1",
+              "win-r1-bed2",
+              "win-r1-bed3",
+              "win-r1-bed3-gable",
+              "win-rdc-kitchen",
+              "win-rdc-living-north",
+              "win-rdc-living-south",
+              "win-rdc-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.tiles",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.tiles",
+            "quantity": 149.60635739940506,
+            "unit": "m2",
+            "unit_price": 140,
+            "amount": 20944.89003591671,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof_ridge",
+            "label": {
+              "fr": "Faîtage",
+              "de": "First"
+            },
+            "price_entry_id": "price.ridge.tiles",
+            "quantity_key": "roof.ridge.length",
+            "ref_id": "roof.tiles",
+            "quantity": 8.433765893261558,
+            "unit": "m",
+            "unit_price": 35,
+            "amount": 295.18180626415455,
+            "element_ids": [
+              "roof"
+            ]
+          }
+        ],
+        "net_amount": 510544.48409984645,
+        "vat_rate": 0.2,
+        "vat_amount": 102108.89681996929,
+        "gross_amount": 612653.3809198157,
+        "deltas": {
+          "roof_shape": 1715.4597885521944
+        },
+        "is_estimate": true
+      },
+      "rule_results": [],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 7.68,
+            "facade_area": 61.081746703360636,
+            "ratio": 0.1257331431155268
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 60.96499422294151,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 61.081746703360636,
+            "ratio": 0.0942998573366451
+          },
+          {
+            "direction": "w",
+            "window_area": 3.84,
+            "facade_area": 60.964994222941506,
+            "ratio": 0.06298696569965366
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": 10.66,
+            "y": 8.86
+          },
+          {
+            "x": -0.66,
+            "y": 8.86
+          },
+          {
+            "x": -0.66,
+            "y": -0.86
+          },
+          {
+            "x": 10.66,
+            "y": -0.86
+          }
+        ],
+        "storeys": 2,
+        "roof_shape": "half_hip",
+        "roof_slopes_deg": [
+          40,
+          60,
+          40,
+          60
+        ],
+        "ridge_azimuth_deg": 90,
+        "eave_height": 5.443888358200577,
+        "top_height": 9.521912565722156,
+        "ground_floor_offset": 0.2,
+        "floor_area": 156.67,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.2706422018348624
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "clay_tile",
+        "terrace": null,
+        "carport": null
+      },
+      "candidates": null
+    }
+  },
+  "r1_mansard": {
+    "template": "demo_house_r1",
+    "configuration": {
+      "selections": {
+        "roof_shape": {
+          "value": {
+            "type": "option",
+            "option_value_id": "shape.mansard"
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        }
+      }
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "blocked",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-north",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed1",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed2",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3-gable",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed1",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed2",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed3",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.mansard",
+          "number": null,
+          "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "roof_pitch",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 70,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.tiles",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "door-r1-bath",
+            "door-r1-bed1",
+            "door-r1-bed2",
+            "door-r1-bed3",
+            "door-rdc-kitchen",
+            "door-rdc-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 93.4784,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 19.38,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.tiles",
+          "value": 235.2485667068834,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.break.length",
+          "ref_id": "roof.tiles",
+          "value": 29.594123876914836,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.eave.length",
+          "ref_id": "roof.tiles",
+          "value": 42.879999999999995,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.hip.length",
+          "ref_id": "roof.tiles",
+          "value": 39.583458789918964,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.ridge.length",
+          "ref_id": "roof.tiles",
+          "value": 2,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 191.3092832063061,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 180.64220988431452,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 9,
+          "unit": "pcs",
+          "element_ids": [
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 455000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house_r1",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 455000,
+            "amount": 455000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 191.3092832063061,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 13391.649824441427,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 180.64220988431452,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 9032.110494215725,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 9,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 7650,
+            "element_ids": [
+              "win-r1-bath",
+              "win-r1-bed1",
+              "win-r1-bed2",
+              "win-r1-bed3",
+              "win-r1-bed3-gable",
+              "win-rdc-kitchen",
+              "win-rdc-living-north",
+              "win-rdc-living-south",
+              "win-rdc-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.tiles",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.tiles",
+            "quantity": 235.2485667068834,
+            "unit": "m2",
+            "unit_price": 140,
+            "amount": 32934.799338963676,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof_ridge",
+            "label": {
+              "fr": "Faîtage",
+              "de": "First"
+            },
+            "price_entry_id": "price.ridge.tiles",
+            "quantity_key": "roof.ridge.length",
+            "ref_id": "roof.tiles",
+            "quantity": 2,
+            "unit": "m",
+            "unit_price": 35,
+            "amount": 70,
+            "element_ids": [
+              "roof"
+            ]
+          }
+        ],
+        "net_amount": 518078.55965762085,
+        "vat_rate": 0.2,
+        "vat_amount": 103615.71193152417,
+        "gross_amount": 621694.271589145,
+        "deltas": {
+          "roof_shape": 9249.535346326593
+        },
+        "is_estimate": true
+      },
+      "rule_results": [
+        {
+          "code": "opening_above_ceiling",
+          "rule_id": null,
+          "outcome": "block",
+          "message": null,
+          "element_ids": [
+            "win-r1-bed1"
+          ],
+          "suggestion": null,
+          "source": null,
+          "params": {
+            "head": 2.5,
+            "ceiling": 2.0109081289963346
+          }
+        },
+        {
+          "code": "opening_above_ceiling",
+          "rule_id": null,
+          "outcome": "block",
+          "message": null,
+          "element_ids": [
+            "win-r1-bed2"
+          ],
+          "suggestion": null,
+          "source": null,
+          "params": {
+            "head": 2.5,
+            "ceiling": 2.010908128996336
+          }
+        },
+        {
+          "code": "opening_above_ceiling",
+          "rule_id": null,
+          "outcome": "block",
+          "message": null,
+          "element_ids": [
+            "win-r1-bath"
+          ],
+          "suggestion": null,
+          "source": null,
+          "params": {
+            "head": 2.5,
+            "ceiling": 2.010908128996337
+          }
+        },
+        {
+          "code": "opening_above_ceiling",
+          "rule_id": null,
+          "outcome": "block",
+          "message": null,
+          "element_ids": [
+            "win-r1-bed3"
+          ],
+          "suggestion": null,
+          "source": null,
+          "params": {
+            "head": 2.5,
+            "ceiling": 2.010908128996337
+          }
+        },
+        {
+          "code": "opening_above_ceiling",
+          "rule_id": null,
+          "outcome": "block",
+          "message": null,
+          "element_ids": [
+            "win-r1-bed3-gable"
+          ],
+          "suggestion": null,
+          "source": null,
+          "params": {
+            "head": 2.5,
+            "ceiling": 2.0109081289963346
+          }
+        }
+      ],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 7.68,
+            "facade_area": 53.716935170315494,
+            "ratio": 0.14297167132952968
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 43.695118912322826,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 53.716935170315466,
+            "ratio": 0.10722875349714732
+          },
+          {
+            "direction": "w",
+            "window_area": 3.84,
+            "facade_area": 43.695118912322805,
+            "ratio": 0.08788166952252077
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": 10.86,
+            "y": 8.86
+          },
+          {
+            "x": -0.86,
+            "y": 8.86
+          },
+          {
+            "x": -0.86,
+            "y": -0.86
+          },
+          {
+            "x": 10.86,
+            "y": -0.86
+          }
+        ],
+        "storeys": 2,
+        "roof_shape": "mansard",
+        "roof_slopes_deg": [
+          70,
+          25,
+          70,
+          25,
+          70,
+          25,
+          70,
+          25
+        ],
+        "ridge_azimuth_deg": 90,
+        "eave_height": 4.255834651314689,
+        "top_height": 9.800787813256134,
+        "ground_floor_offset": 0.2,
+        "floor_area": 156.67,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.2706422018348624
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "clay_tile",
+        "terrace": null,
+        "carport": null
+      },
+      "candidates": null
+    }
+  },
+  "r1_turned": {
+    "template": "demo_house_r1",
+    "configuration": {
+      "selections": {
+        "roof_rotation": {
+          "value": {
+            "type": "number",
+            "value": 90
+          },
+          "room_overrides": {},
+          "element_overrides": {}
+        }
+      }
+    },
+    "evaluation": {
+      "domain_version": "0.4.0",
+      "status": "valid",
+      "resolved": [
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-rdc-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-south",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-east",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-north",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "wall_profile",
+          "element_id": "seg-r1-west",
+          "option_value_id": "wall.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-south",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-west",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-living-north",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-rdc-kitchen",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed1",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed2",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bath",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "window_type",
+          "element_id": "win-r1-bed3-gable",
+          "option_value_id": "window.standard",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "entrance_door",
+          "element_id": "door-entrance",
+          "option_value_id": "door.entrance",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-living",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-rdc-kitchen",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed1",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed2",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bed3",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "interior_door",
+          "element_id": "door-r1-bath",
+          "option_value_id": "door.interior",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_shape",
+          "element_id": "roof",
+          "option_value_id": "shape.gable",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_pitch",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 35,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "roof_rotation",
+          "element_id": "roof",
+          "option_value_id": null,
+          "number": 90,
+          "source": "global",
+          "available": true
+        },
+        {
+          "slot_id": "roof_type",
+          "element_id": "roof",
+          "option_value_id": "roof.tiles",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "terrace",
+          "element_id": "site",
+          "option_value_id": "terrace.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        },
+        {
+          "slot_id": "carport",
+          "element_id": "site",
+          "option_value_id": "carport.none",
+          "number": null,
+          "source": "default",
+          "available": true
+        }
+      ],
+      "notes": [],
+      "quantities": [
+        {
+          "key": "door.count",
+          "ref_id": "door.entrance",
+          "value": 1,
+          "unit": "pcs",
+          "element_ids": [
+            "door-entrance"
+          ]
+        },
+        {
+          "key": "door.count",
+          "ref_id": "door.interior",
+          "value": 6,
+          "unit": "pcs",
+          "element_ids": [
+            "door-r1-bath",
+            "door-r1-bed1",
+            "door-r1-bed2",
+            "door-r1-bed3",
+            "door-rdc-kitchen",
+            "door-rdc-living"
+          ]
+        },
+        {
+          "key": "footprint.area",
+          "ref_id": null,
+          "value": 93.4784,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "gable.area",
+          "ref_id": null,
+          "value": 35.01037691048549,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "opening.area",
+          "ref_id": null,
+          "value": 19.38,
+          "unit": "m2",
+          "element_ids": [
+            "door-entrance",
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        },
+        {
+          "key": "roof.area",
+          "ref_id": "roof.tiles",
+          "value": 133.34569664024934,
+          "unit": "m2",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.eave.length",
+          "ref_id": "roof.tiles",
+          "value": 18.64,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.ridge.length",
+          "ref_id": "roof.tiles",
+          "value": 9.32,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "roof.verge.length",
+          "ref_id": "roof.tiles",
+          "value": 28.614956360568527,
+          "unit": "m",
+          "element_ids": [
+            "roof"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.concrete_20",
+          "value": 235.26803239705737,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "wall.layer.area",
+          "ref_id": "layer.insulation_16",
+          "value": 241.6040695133321,
+          "unit": "m2",
+          "element_ids": [
+            "seg-r1-east",
+            "seg-r1-north",
+            "seg-r1-south",
+            "seg-r1-west",
+            "seg-rdc-east",
+            "seg-rdc-north",
+            "seg-rdc-south",
+            "seg-rdc-west"
+          ]
+        },
+        {
+          "key": "window.count",
+          "ref_id": "window.standard",
+          "value": 9,
+          "unit": "pcs",
+          "element_ids": [
+            "win-r1-bath",
+            "win-r1-bed1",
+            "win-r1-bed2",
+            "win-r1-bed3",
+            "win-r1-bed3-gable",
+            "win-rdc-kitchen",
+            "win-rdc-living-north",
+            "win-rdc-living-south",
+            "win-rdc-living-west"
+          ]
+        }
+      ],
+      "price": {
+        "market": "FR",
+        "currency": "EUR",
+        "base_amount": 455000,
+        "items": [
+          {
+            "pricing_rule_id": "base",
+            "label": {
+              "fr": "Prestation de base",
+              "de": "Basisleistung"
+            },
+            "price_entry_id": "price.template.demo_house_r1",
+            "quantity_key": null,
+            "ref_id": null,
+            "quantity": 1,
+            "unit": "lump_sum",
+            "unit_price": 455000,
+            "amount": 455000,
+            "element_ids": []
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.concrete_20",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.concrete_20",
+            "quantity": 235.26803239705737,
+            "unit": "m2",
+            "unit_price": 70,
+            "amount": 16468.762267794016,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "wall_layers",
+            "label": {
+              "fr": "Couches de mur",
+              "de": "Wandschichten"
+            },
+            "price_entry_id": "price.layer.insulation_16",
+            "quantity_key": "wall.layer.area",
+            "ref_id": "layer.insulation_16",
+            "quantity": 241.6040695133321,
+            "unit": "m2",
+            "unit_price": 50,
+            "amount": 12080.203475666605,
+            "element_ids": [
+              "seg-r1-east",
+              "seg-r1-north",
+              "seg-r1-south",
+              "seg-r1-west",
+              "seg-rdc-east",
+              "seg-rdc-north",
+              "seg-rdc-south",
+              "seg-rdc-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "windows",
+            "label": {
+              "fr": "Fenêtres",
+              "de": "Fenster"
+            },
+            "price_entry_id": "price.window.standard",
+            "quantity_key": "window.count",
+            "ref_id": "window.standard",
+            "quantity": 9,
+            "unit": "pcs",
+            "unit_price": 850,
+            "amount": 7650,
+            "element_ids": [
+              "win-r1-bath",
+              "win-r1-bed1",
+              "win-r1-bed2",
+              "win-r1-bed3",
+              "win-r1-bed3-gable",
+              "win-rdc-kitchen",
+              "win-rdc-living-north",
+              "win-rdc-living-south",
+              "win-rdc-living-west"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof",
+            "label": {
+              "fr": "Toiture",
+              "de": "Dach"
+            },
+            "price_entry_id": "price.roof.tiles",
+            "quantity_key": "roof.area",
+            "ref_id": "roof.tiles",
+            "quantity": 133.34569664024934,
+            "unit": "m2",
+            "unit_price": 140,
+            "amount": 18668.39752963491,
+            "element_ids": [
+              "roof"
+            ]
+          },
+          {
+            "pricing_rule_id": "roof_ridge",
+            "label": {
+              "fr": "Faîtage",
+              "de": "First"
+            },
+            "price_entry_id": "price.ridge.tiles",
+            "quantity_key": "roof.ridge.length",
+            "ref_id": "roof.tiles",
+            "quantity": 9.32,
+            "unit": "m",
+            "unit_price": 35,
+            "amount": 326.2,
+            "element_ids": [
+              "roof"
+            ]
+          }
+        ],
+        "net_amount": 510193.56327309547,
+        "vat_rate": 0.2,
+        "vat_amount": 102038.7126546191,
+        "gross_amount": 612232.2759277145,
+        "deltas": {
+          "roof_rotation": 1364.5389618012123
+        },
+        "is_estimate": true
+      },
+      "rule_results": [],
+      "energy": {
+        "wall_u_values": [
+          {
+            "wall_profile_id": "profile.standard",
+            "u_value": 0.20675396278428673
+          }
+        ],
+        "window_shares": [
+          {
+            "direction": "n",
+            "window_area": 7.68,
+            "facade_area": 81.73444155829077,
+            "ratio": 0.09396283688465448
+          },
+          {
+            "direction": "e",
+            "window_area": 0,
+            "facade_area": 50.12190849605207,
+            "ratio": 0
+          },
+          {
+            "direction": "s",
+            "window_area": 5.76,
+            "facade_area": 81.73444155829077,
+            "ratio": 0.07047212766349087
+          },
+          {
+            "direction": "w",
+            "window_area": 3.84,
+            "facade_area": 50.12190849605207,
+            "ratio": 0.0766132039904758
+          }
+        ]
+      },
+      "facts": {
+        "facade_outline": [
+          {
+            "x": -0.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": -0.36
+          },
+          {
+            "x": 10.36,
+            "y": 8.36
+          },
+          {
+            "x": -0.36,
+            "y": 8.36
+          }
+        ],
+        "projection_outline": [
+          {
+            "x": 10.86,
+            "y": 8.66
+          },
+          {
+            "x": -0.86,
+            "y": 8.66
+          },
+          {
+            "x": -0.86,
+            "y": -0.66
+          },
+          {
+            "x": 10.86,
+            "y": -0.66
+          }
+        ],
+        "storeys": 2,
+        "roof_shape": "gable",
+        "roof_slopes_deg": [
+          35,
+          35
+        ],
+        "ridge_azimuth_deg": 0,
+        "eave_height": 5.539638401992857,
+        "top_height": 9.642854575901756,
+        "ground_floor_offset": 0.2,
+        "floor_area": 156.67,
+        "facade_roles": [
+          {
+            "edge": 0,
+            "role": "street"
+          },
+          {
+            "edge": 1,
+            "role": "side_right"
+          },
+          {
+            "edge": 2,
+            "role": "garden"
+          },
+          {
+            "edge": 3,
+            "role": "side_left"
+          }
+        ],
+        "entrance": {
+          "edge": 1,
+          "position": 0.2706422018348624
+        },
+        "garage_door": null,
+        "facade_material_class": "render",
+        "roof_material_class": "clay_tile",
+        "terrace": null,
+        "carport": null
       },
       "candidates": null
     }

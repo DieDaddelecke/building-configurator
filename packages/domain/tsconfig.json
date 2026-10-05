@@ -22,7 +22,6 @@
   },
   "include": [
     "src",
-    "spike",
     "test",
     "scripts",
     "vitest.config.ts"
