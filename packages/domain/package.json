@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "contract:types": "node scripts/contract-types.ts",
-    "scenarios": "node scripts/scenarios.ts"
+    "scenarios": "node scripts/scenarios.ts",
+    "evaluations": "node scripts/evaluations.ts"
   },
   "dependencies": {
     "clipper2-ts": "2.0.1-18"

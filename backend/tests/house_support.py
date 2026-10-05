@@ -23,6 +23,83 @@ def fixture(name: str) -> dict[str, Any]:
     return data
 
 
+def publish_template(
+    db: Any,
+    catalog_version: Any,
+    document: dict[str, Any],
+    *,
+    approved: bool = True,
+    actor: str = "test",
+) -> Any:
+    """Veröffentlichte Templateversion mit Prüfbefund zur Katalogversion, wie nach Import, Prüfung und
+    Freigabe im Büro (HM3), ohne IFC: für die Tests des Kundenwegs (HM4) und den Ende-zu-Ende-Seed. Ohne
+    `approved` bleibt der Befund unbestätigt; der Haustyp wird dann nicht angeboten."""
+    from sqlalchemy import func, select
+
+    from app.house.models import HouseTemplateRecord, HouseTemplateVersion
+    from app.platform.db import utcnow
+
+    slug = document["slug"]
+    record = db.scalar(select(HouseTemplateRecord).where(HouseTemplateRecord.slug == slug))
+    if record is None:
+        record = HouseTemplateRecord(slug=slug, created_by=actor)
+        db.add(record)
+        db.flush()
+    number = (
+        db.scalar(
+            select(func.max(HouseTemplateVersion.version)).where(
+                HouseTemplateVersion.template_id == record.id
+            )
+        )
+        or 0
+    ) + 1
+    now = utcnow()
+    version = HouseTemplateVersion(
+        template_id=record.id,
+        version=number,
+        status="published",
+        catalog_version_id=catalog_version.id,
+        ifc_file_name=f"{slug}.ifc",
+        ifc_sha256="0" * 64,
+        ifc_key=f"house/{slug}/{number}.ifc",
+        ifc_size_bytes=0,
+        decisions={},
+        document=document,
+        reviewed_at=now,
+        reviewed_by=actor,
+        published_at=now,
+        published_by=actor,
+        created_by=actor,
+    )
+    db.add(version)
+    db.flush()
+    record.current_version_id = version.id
+    approve(db, version, catalog_version, approved=approved, actor=actor)
+    return version
+
+
+def approve(
+    db: Any, template_version: Any, catalog_version: Any, *, approved: bool = True, actor: str = "test"
+) -> None:
+    """Prüfbefund Template ↔ Katalog, kompatibel; mit `approved` freigegeben (HM3)."""
+    from app.house.models import HouseCatalogCompatibility
+    from app.platform.db import utcnow
+
+    db.add(
+        HouseCatalogCompatibility(
+            template_version_id=template_version.id,
+            catalog_version_id=catalog_version.id,
+            domain_version="0.3.0",
+            supported=True,
+            issues=[],
+            approved_at=utcnow() if approved else None,
+            approved_by=actor if approved else None,
+            created_by=actor,
+        )
+    )
+    db.commit()
+
+
 @dataclass(frozen=True)
 class Opening:
     kind: str

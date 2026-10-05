@@ -8,6 +8,8 @@ Katalogversion des Entwurfs bestätigt) → Veröffentlichen (Freigabe durch `ca
 Der Entwurf entsteht immer neu aus dem gelesenen Modell (`raw`), den Angaben des Büros (`decisions`) und der
 zuletzt veröffentlichten Katalogversion des Markts (3.6 Nr. 3), ohne die Datei erneut zu lesen. Ergänzt das
 Büro im Katalog eine Zonenkategorie, erkennt der nächste Schritt am Entwurf die Zone.
+
+Den Kundenweg (HM4, `configuration.house_service`) versorgen `offered_templates` und `pinned_pair`.
 """
 
 import hashlib
@@ -16,6 +18,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
 
@@ -98,6 +101,102 @@ def current_catalog_version(db: Session) -> HouseCatalogVersion | None:
         .join(HouseCatalogRecord, HouseCatalogRecord.current_version_id == HouseCatalogVersion.id)
         .where(HouseCatalogRecord.market == MARKET)
     )
+
+
+# --- Für den Kundenweg (HM4) -------------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class TemplatePair:
+    """Templateversion mit einer Katalogversion, für die der Befund freigegeben ist (P 2.1 Nr. 5)."""
+
+    slug: str
+    template_version_id: uuid.UUID
+    template_version: int
+    template_status: str
+    catalog_version_id: uuid.UUID
+    catalog_version: int
+    template: HouseTemplate
+    catalog: HouseCatalog
+
+
+def _approved_catalog(db: Session, template_version_id: uuid.UUID) -> HouseCatalogVersion | None:
+    """Neueste Katalogversion mit freigegebenem, kompatiblem Befund für diese Templateversion."""
+    return db.scalar(
+        select(HouseCatalogVersion)
+        .join(
+            HouseCatalogCompatibility,
+            HouseCatalogCompatibility.catalog_version_id == HouseCatalogVersion.id,
+        )
+        .where(
+            HouseCatalogCompatibility.template_version_id == template_version_id,
+            HouseCatalogCompatibility.approved_at.is_not(None),
+            HouseCatalogCompatibility.supported.is_(True),
+            HouseCatalogVersion.status != "draft",
+        )
+        .order_by(HouseCatalogVersion.version.desc())
+        .limit(1)
+    )
+
+
+def _pair(slug: str, version: HouseTemplateVersion, catalog: HouseCatalogVersion) -> TemplatePair:
+    assert version.document is not None
+    return TemplatePair(
+        slug=slug,
+        template_version_id=version.id,
+        template_version=version.version,
+        template_status=version.status,
+        catalog_version_id=catalog.id,
+        catalog_version=catalog.version,
+        template=HouseTemplate.model_validate(version.document),
+        catalog=HouseCatalog.model_validate(catalog.document),
+    )
+
+
+def _offered(
+    db: Session, slug: str | None
+) -> list[tuple[HouseTemplateRecord, HouseTemplateVersion, HouseCatalogVersion]]:
+    query = (
+        select(HouseTemplateRecord, HouseTemplateVersion)
+        .join(HouseTemplateVersion, HouseTemplateVersion.id == HouseTemplateRecord.current_version_id)
+        .where(HouseTemplateVersion.status == "published", HouseTemplateVersion.document.is_not(None))
+        .order_by(HouseTemplateRecord.slug)
+    )
+    if slug is not None:
+        query = query.where(HouseTemplateRecord.slug == slug)
+    found = []
+    for record, version in db.execute(query).all():
+        catalog = _approved_catalog(db, version.id)
+        if catalog is not None:
+            found.append((record, version, catalog))
+    return found
+
+
+def offered_templates(db: Session, slug: str | None = None) -> list[TemplatePair]:
+    """Was neue Konfigurationen bekommen (E-HM-7): je Haustyp die aktuelle veröffentlichte Version mit der
+    neuesten Katalogversion, für die ein Mensch die Kompatibilität freigegeben hat. Ohne Freigabe kein
+    Angebot; nach einer neuen Katalogversion gilt die ältere freigegebene, bis das Büro neu freigibt."""
+    return [_pair(record.slug, version, catalog) for record, version, catalog in _offered(db, slug)]
+
+
+def offered_version_ids(db: Session, slug: str) -> tuple[uuid.UUID, uuid.UUID] | None:
+    """Template- und Katalogversion, die eine neue Konfiguration dieses Haustyps bekäme (ohne Dokumente)."""
+    found = _offered(db, slug)
+    return (found[0][1].id, found[0][2].id) if found else None
+
+
+def pinned_pair(
+    db: Session, template_version_id: uuid.UUID, catalog_version_id: uuid.UUID
+) -> TemplatePair | None:
+    """Festgehaltene Versionen einer Konfiguration (E-HM-7), auch wenn die Templateversion inzwischen
+    zurückgezogen ist oder es eine neuere Katalogversion gibt."""
+    version = db.get(HouseTemplateVersion, template_version_id)
+    catalog = db.get(HouseCatalogVersion, catalog_version_id)
+    if version is None or catalog is None or version.document is None:
+        return None
+    record = db.get(HouseTemplateRecord, version.template_id)
+    assert record is not None
+    return _pair(record.slug, version, catalog)
 
 
 # --- Upload und Import -----------------------------------------------------------------------------------

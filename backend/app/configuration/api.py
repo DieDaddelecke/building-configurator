@@ -52,7 +52,7 @@ def _limit(request: Request, name: str) -> None:
     rate_limit.check(request, name, get_settings().configuration_limit_per_minute, 60)
 
 
-def _revision(if_match: str | None) -> int | None:
+def revision_header(if_match: str | None) -> int | None:
     """`If-Match: 3` oder `"3"`; ohne Header wird nicht auf Änderungen geprüft."""
     if if_match is None:
         return None
@@ -94,7 +94,9 @@ def patch_configuration(
     """Typ, Lage oder Grenzschalter ändern. `If-Match` mit der Revision schützt vor überschriebenen
     Änderungen (409). Ein gesperrter Typ oder eine Lage mit bindendem Verstoß wird nicht gespeichert (422)."""
     _limit(request, "configuration_write")
-    return service.patch_configuration(db, project_id, body, if_match=_revision(if_match), actor="customer")
+    return service.patch_configuration(
+        db, project_id, body, if_match=revision_header(if_match), actor="customer"
+    )
 
 
 @router.get("/projects/{project_id}/catalog/options", response_model=OptionsOut, dependencies=[Feature])

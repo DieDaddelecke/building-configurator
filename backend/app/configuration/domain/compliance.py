@@ -5,6 +5,7 @@ nur bei wirksamer Regel oder geometrischer Gewissheit (D12); sonst ist sie ein H
 prüfbare Regeln stehen als `unknown`, nie als bestanden (Spez. 5.9.1).
 """
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from shapely.geometry.base import BaseGeometry
@@ -18,6 +19,26 @@ from app.envelope.domain.inputs import RuleInput
 from app.envelope.domain.setbacks import rule_for
 
 EPS = 1e-6
+
+
+@dataclass(frozen=True)
+class MaterialSubject:
+    """Träger von Materialklassen für die Prüfung von Fassade und Dach: Linie oder Option (H3) oder das Haus
+    aus der Hausbeschreibung (`house`, HM4)."""
+
+    kind: str
+    slug: str
+    regulatory: Mapping[str, str]
+    """`facade_material`, `roof_material` (Vokabular `rules.domain.kinds.MATERIALS`)."""
+
+
+def material_subjects(resolved: Resolved) -> list[MaterialSubject]:
+    """Linie und wirksame Optionen der Auswahl (H3)."""
+    subjects: list[MaterialSubject] = []
+    if resolved.package is not None:
+        subjects.append(MaterialSubject("package", resolved.package.slug, resolved.package.regulatory))
+    subjects.extend(MaterialSubject("option", o.slug, o.regulatory) for o in resolved.effective)
+    return subjects
 
 
 @dataclass(frozen=True)
@@ -76,7 +97,7 @@ def rule_checks(
     house_part: PartContext | None,
     areas: Areas | None,
     facts: SiteFacts,
-    resolved: Resolved,
+    materials: Sequence[MaterialSubject],
 ) -> list[Check]:
     """Grundfläche der Summe, unversiegelter Anteil, Nebengebäude, Stellplätze und Material."""
     checks = [*_parking_checks(ctx, house_part, facts)]
@@ -85,7 +106,7 @@ def rule_checks(
     if areas is not None:
         checks.extend(_area_checks(ctx, areas, facts))
         checks.extend(_annex_checks(ctx, house_part, facts))
-    checks.extend(_material_checks(house_part, resolved))
+    checks.extend(_material_checks(house_part, materials))
     return checks
 
 
@@ -243,15 +264,12 @@ def _parking_checks(ctx: SiteContext, house_part: PartContext | None, facts: Sit
     ]
 
 
-def _material_checks(part: PartContext, resolved: Resolved) -> list[Check]:
+def _material_checks(part: PartContext, subjects: Sequence[MaterialSubject]) -> list[Check]:
     facade = rule_for(part.rules, "facade")
     roof = rule_for(part.rules, "roof")
-    subjects: list[tuple[str, str, dict[str, str]]] = []
-    if resolved.package is not None:
-        subjects.append(("package", resolved.package.slug, resolved.package.regulatory))
-    subjects.extend(("option", o.slug, o.regulatory) for o in resolved.effective)
     checks: list[Check] = []
-    for kind, slug, regulatory in subjects:
+    for subject in subjects:
+        kind, slug, regulatory = subject.kind, subject.slug, subject.regulatory
         for key, rule, code in (
             ("facade_material", facade, "facade_material"),
             ("roof_material", roof, "roof_material"),
@@ -269,7 +287,8 @@ def _material_checks(part: PartContext, resolved: Resolved) -> list[Check]:
             material = regulatory.get(key)
             params = {"subject": slug, "subject_kind": kind}
             if material is None:
-                if kind == "package":
+                # Eine Option ohne Angabe ändert das Material nicht; offen ist es nur bei Linie oder Haus
+                if kind != "option":
                     checks.append(
                         Check(
                             code="material_unknown",

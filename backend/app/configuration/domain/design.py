@@ -12,7 +12,7 @@ from shapely.geometry.base import BaseGeometry
 from app.catalog.domain.offer import TypeOffer
 from app.configuration.domain.areas import Areas, Buildings, compute_areas
 from app.configuration.domain.checks import Check
-from app.configuration.domain.compliance import SiteFacts, geometry_checks, rule_checks
+from app.configuration.domain.compliance import SiteFacts, geometry_checks, material_subjects, rule_checks
 from app.configuration.domain.context import SiteContext
 from app.configuration.domain.costs import Costs, compute_costs
 from app.configuration.domain.energy import EnergyStatus, energy_status
@@ -93,7 +93,8 @@ def site_part(
             has_garage_door=has_door,
             placed=False,
         )
-        checks = [*geometry_checks(ctx, facts), *rule_checks(ctx, None, None, facts, part.resolved)]
+        materials = material_subjects(part.resolved)
+        checks = [*geometry_checks(ctx, facts), *rule_checks(ctx, None, None, facts, materials)]
         return Design(part, None, None, (), None, checks, None)
 
     terrace = terrace_polygon(part.terrace_spec, placement) if part.terrace_spec else None
@@ -129,7 +130,7 @@ def site_part(
     )
     checks = [
         *geometry_checks(ctx, facts),
-        *rule_checks(ctx, house_result.part, areas, facts, part.resolved),
+        *rule_checks(ctx, house_result.part, areas, facts, material_subjects(part.resolved)),
     ]
     centre = ctx.polygon.centroid
     where = orientation(

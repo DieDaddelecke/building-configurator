@@ -20,6 +20,9 @@ from app.house.contract import (
     HouseCompatibility,
     HouseCompatibilityIssue,
     HouseCompatibilityRequest,
+    HouseConfiguration,
+    HouseEvaluateRequest,
+    HouseEvaluation,
     HouseTemplate,
 )
 from app.platform.logging import get_logger
@@ -126,3 +129,14 @@ def compatibility(
 
 def _id(value: str | None) -> str | None:
     return value if value is not None and _ID.fullmatch(value) else None
+
+
+def evaluate(
+    client: httpx2.Client, template: HouseTemplate, catalog: HouseCatalog, configuration: HouseConfiguration
+) -> HouseEvaluation:
+    """Maßgebliche Rechnung des Kerns (L5): Auflösung, Geometrie, Mengen, Preis, Katalogregeln und
+    Hausbeschreibung. Lehnt der Kern die Auswahl ab (`EngineRejected`), entscheidet der Aufrufer."""
+    body = HouseEvaluateRequest(
+        template=template, catalog=catalog, configuration=configuration, candidates=None
+    ).model_dump(mode="json")
+    return _parse(HouseEvaluation, _call(client, "POST", "/evaluate", body))

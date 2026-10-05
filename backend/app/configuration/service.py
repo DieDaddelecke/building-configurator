@@ -35,7 +35,7 @@ from app.configuration.domain.fit import TypeFit, eligible_parts, evaluate_type,
 from app.configuration.domain.geometry import polygons
 from app.configuration.domain.house import HouseType, make_polygon
 from app.configuration.domain.options import Selection, resolve
-from app.configuration.domain.placement import Placement, PlacementResult
+from app.configuration.domain.placement import Placement
 from app.configuration.domain.rotations import site_rotations
 from app.configuration.domain.surface import BoundaryOptions, surface_by_rotation
 from app.configuration.models import Configuration
@@ -43,12 +43,8 @@ from app.configuration.outputs import check_out as _check_out
 from app.configuration.schemas import (
     ConfigurationOut,
     ConfigurationPatch,
-    EdgeMeasureOut,
-    LocalPointModel,
     OptionsOut,
     PlacementAreaOut,
-    PlacementEvaluationOut,
-    PlacementOut,
     PresetsOut,
     RotationAreaOut,
     TypeFactsOut,
@@ -80,7 +76,8 @@ class Loaded:
     """Prüfsumme von Grundstück und Regeln in zwei Teilen (Prüfstempel, V 3.3)."""
 
 
-def _load(db: Session, project_id: uuid.UUID) -> Loaded:
+def load_site(db: Session, project_id: uuid.UUID) -> Loaded:
+    """Grundstück, Regeln und Baurahmen als Kontext der Prüfung; auch für das Hausmodell (`house_service`)."""
     data, envelope = envelope_service.derived(db, project_id)
     ctx = build_context(data, envelope)
     return Loaded(
@@ -245,41 +242,6 @@ def _fit_out(fit: TypeFit, published: PublishedType) -> TypeFitOut:
     )
 
 
-def _evaluation_out(result: PlacementResult) -> PlacementEvaluationOut:
-    def ring(geometry: object) -> list[list[float]]:
-        parts = polygons(geometry)
-        return _ring(parts[0]) if parts else []
-
-    return PlacementEvaluationOut(
-        valid=result.valid,
-        checks=[_check_out(c) for c in result.checks],
-        edges=[
-            EdgeMeasureOut(
-                seq=e.seq,
-                kind=e.kind,
-                measured_m=e.measured_m,
-                required_m=e.required_m,
-                contour=e.contour,
-                status=e.status,
-                on_boundary=e.on_boundary,
-                on_boundary_allowed=e.on_boundary_allowed,
-                markers=e.markers,
-            )
-            for e in result.edges
-        ],
-        facade_local=ring(result.facade),
-        projection_local=ring(result.projection),
-        zone_code=result.part.zone_code if result.part else None,
-    )
-
-
-def _placement_out(placement: Placement) -> PlacementOut:
-    return PlacementOut(
-        origin=LocalPointModel(e=round(placement.origin[0], 3), n=round(placement.origin[1], 3)),
-        rotation_deg=placement.rotation_deg,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Lesen
 # ---------------------------------------------------------------------------
@@ -287,7 +249,7 @@ def _placement_out(placement: Placement) -> PlacementOut:
 
 def list_types(db: Session, project_id: uuid.UUID) -> TypesOut:
     """Veröffentlichte Typen mit Zulässigkeit, allen Gründen, Hinweisen und Vorschlägen (Spez. 5.4.6)."""
-    loaded = _load(db, project_id)
+    loaded = load_site(db, project_id)
     published = catalog_service.published_types(db)
     by_slug = {p.slug: p for p in published}
     fits = with_suggestions([evaluate_type(_house(p), loaded.ctx) for p in published])
@@ -368,7 +330,7 @@ def _catalog_copy(published: PublishedType, offer: TypeOffer, selection: Selecti
 
 def _configuration(db: Session, project_id: uuid.UUID, *, dropped: list[str] | None = None) -> DesignReview:
     row = _row(db, project_id)
-    loaded = _load(db, project_id)
+    loaded = load_site(db, project_id)
     ctx = loaded.ctx
     empty = ConfigurationOut(
         project_id=project_id,
@@ -405,7 +367,7 @@ def _configuration(db: Session, project_id: uuid.UUID, *, dropped: list[str] | N
     offer = _offer(db, published, row)
     selection = _selection(offer, row)
     result, design = evaluate(house, placement, options, ctx, offer, selection)
-    evaluation = _evaluation_out(result) if result else None
+    evaluation = outputs.evaluation_out(result) if result else None
     out = empty.model_copy(
         update={
             "type": TypeRefOut(
@@ -414,7 +376,7 @@ def _configuration(db: Session, project_id: uuid.UUID, *, dropped: list[str] | N
                 name=published.version.name,
                 retired=published.version.status == "retired",
             ),
-            "placement": _placement_out(placement) if placement else None,
+            "placement": outputs.placement_out(placement) if placement else None,
             "boundary_options": {str(k): True for k in options},
             "rotations": site_rotations(house, ctx),
             "fit": _fit_out(fit, published),
@@ -451,7 +413,7 @@ def options_catalog(db: Session, project_id: uuid.UUID) -> OptionsOut:
     )
     if row is None or published is None:
         raise Problem(409, "no_type_selected")
-    ctx = _load(db, project_id).ctx
+    ctx = load_site(db, project_id).ctx
     house = _house(published)
     offer = _offer(db, published, row)
     boundary, placement = _options(row), _placement(row, ctx)
@@ -507,7 +469,7 @@ def _chosen_type(
 def placement_area(db: Session, project_id: uuid.UUID, type_slug: str | None) -> PlacementAreaOut:
     """Fläche zulässiger Ursprünge je erlaubter Drehung, für den Typ der Konfiguration oder `type_slug`."""
     published, row = _chosen_type(db, project_id, type_slug)
-    ctx = _load(db, project_id).ctx
+    ctx = load_site(db, project_id).ctx
     house = _house(published)
     options = _options(row) if type_slug is None or _same_type(row, published) else {}
     parts = eligible_parts(house, ctx)
@@ -540,13 +502,13 @@ def _same_type(row: Configuration | None, published: PublishedType) -> bool:
 def presets(db: Session, project_id: uuid.UUID, type_slug: str | None) -> PresetsOut:
     """Schnellstellungen `street_near`, `set_back`, `garden_max` (Spez. 5.3.5)."""
     published, row = _chosen_type(db, project_id, type_slug)
-    ctx = _load(db, project_id).ctx
+    ctx = load_site(db, project_id).ctx
     house = _house(published)
     options = _options(row) if _same_type(row, published) else {}
     computed = preset_rules.all_presets(house, ctx, options, eligible_parts(house, ctx))
     return PresetsOut(
         type_slug=published.slug,
-        presets={name: _placement_out(place) if place else None for name, place in computed.items()},
+        presets={name: outputs.placement_out(place) if place else None for name, place in computed.items()},
     )
 
 
@@ -574,7 +536,7 @@ def patch_configuration(
     if not fields:
         return get_configuration(db, project_id)
 
-    ctx = _load(db, project_id).ctx
+    ctx = load_site(db, project_id).ctx
     published: PublishedType | None = None
     if row is not None and row.building_type_version_id is not None:
         published = catalog_service.type_by_version_id(db, row.building_type_version_id)
@@ -679,7 +641,7 @@ def _rejection_fields(rejected: ChangeRejected) -> dict[str, Any]:
             assert rejected.result is not None
             return {
                 "checks": _dump(rejected.result.checks),
-                "edges": [e.model_dump(mode="json") for e in _evaluation_out(rejected.result).edges],
+                "edges": [e.model_dump(mode="json") for e in outputs.evaluation_out(rejected.result).edges],
             }
         case "selection_blocked":
             return {"checks": _dump(rejected.checks)}

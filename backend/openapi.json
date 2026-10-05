@@ -4710,6 +4710,28 @@
         "title": "HouseChoiceOut",
         "type": "object"
       },
+      "HouseClientPrice": {
+        "description": "Preis, den der Browser mit dem Kern gerechnet hat; der Server vergleicht ihn mit seinem (L5).",
+        "properties": {
+          "domain_version": {
+            "maxLength": 40,
+            "title": "Domain Version",
+            "type": "string"
+          },
+          "net_amount": {
+            "maximum": 1000000000.0,
+            "minimum": -1000000000.0,
+            "title": "Net Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "net_amount",
+          "domain_version"
+        ],
+        "title": "HouseClientPrice",
+        "type": "object"
+      },
       "HouseCompatibility": {
         "additionalProperties": false,
         "description": "Prüfung Template ↔ Katalog (P 2.1 Nr. 5); die Freigabe trifft danach ein Mensch.",
@@ -4900,6 +4922,636 @@
           "selections"
         ],
         "title": "HouseConfiguration",
+        "type": "object"
+      },
+      "HouseConfigurationOut": {
+        "properties": {
+          "areas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AreasOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "boundary_options": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Boundary Options",
+            "type": "object"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/HouseConfiguration"
+          },
+          "domain_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain Version"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementEvaluationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "facts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseFactsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "free_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Reason"
+          },
+          "mode": {
+            "enum": [
+              "rules",
+              "free"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/HouseResolutionNote"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrientationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HousePriceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price_match": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Match"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "rotations": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRuleResult"
+            },
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "site_changed": {
+            "title": "Site Changed",
+            "type": "boolean"
+          },
+          "site_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseSiteResultOut"
+            },
+            "title": "Site Results",
+            "type": "array"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "valid",
+                  "valid_with_warnings",
+                  "with_deviations",
+                  "blocked"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseTemplateRefOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "update_available": {
+            "title": "Update Available",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "mode",
+          "free_reason",
+          "notices",
+          "template",
+          "update_available",
+          "configuration",
+          "placement",
+          "boundary_options",
+          "rotations",
+          "facts",
+          "evaluation",
+          "areas",
+          "orientation",
+          "status",
+          "rule_results",
+          "notes",
+          "site_results",
+          "suggestion",
+          "price",
+          "domain_version",
+          "site_changed",
+          "updated_at"
+        ],
+        "title": "HouseConfigurationOut",
+        "type": "object"
+      },
+      "HouseConfigurationPatch": {
+        "description": "Teil-Update (JSON Merge Patch): nur gesendete Felder ändern sich, `null` löscht. Eine unzulässige\nAuswahl oder Lage wird gespeichert und bewertet (E-HM-6). Abgelehnt werden ein gesperrter Haustyp (D12),\neine Auswahl, die der Kern nicht rechnet, und eine Drehung außer den vier zur Straße.",
+        "properties": {
+          "boundary_options": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary Options"
+          },
+          "client_price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseClientPrice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "configuration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "template_slug": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9_]{1,59}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Slug"
+          }
+        },
+        "title": "HouseConfigurationPatch",
+        "type": "object"
+      },
+      "HouseConfigurationStaffOut": {
+        "description": "Für das Büro zusätzlich die festgehaltenen Versionen und der Snapshot mit exakten Beträgen (3.8).",
+        "properties": {
+          "areas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AreasOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "boundary_options": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Boundary Options",
+            "type": "object"
+          },
+          "catalog_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Version Id"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/HouseConfiguration"
+          },
+          "domain_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain Version"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementEvaluationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "facts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseFactsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "free_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Reason"
+          },
+          "mode": {
+            "enum": [
+              "rules",
+              "free"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/HouseResolutionNote"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrientationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "placement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HousePriceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "price_match": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Match"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "rotations": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRuleResult"
+            },
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "site_changed": {
+            "title": "Site Changed",
+            "type": "boolean"
+          },
+          "site_results": {
+            "items": {
+              "$ref": "#/components/schemas/HouseSiteResultOut"
+            },
+            "title": "Site Results",
+            "type": "array"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "valid",
+                  "valid_with_warnings",
+                  "with_deviations",
+                  "blocked"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "suggestion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlacementOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseTemplateRefOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "template_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version Id"
+          },
+          "update_available": {
+            "title": "Update Available",
+            "type": "boolean"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "project_id",
+          "revision",
+          "mode",
+          "free_reason",
+          "notices",
+          "template",
+          "update_available",
+          "configuration",
+          "placement",
+          "boundary_options",
+          "rotations",
+          "facts",
+          "evaluation",
+          "areas",
+          "orientation",
+          "status",
+          "rule_results",
+          "notes",
+          "site_results",
+          "suggestion",
+          "price",
+          "domain_version",
+          "site_changed",
+          "updated_at",
+          "template_version_id",
+          "catalog_version_id",
+          "snapshot"
+        ],
+        "title": "HouseConfigurationStaffOut",
+        "type": "object"
+      },
+      "HouseDocumentsOut": {
+        "description": "Festgehaltene Dokumente der Konfiguration für den Kern im Browser (Einheitspreise öffentlich,\nE-HM-20).",
+        "properties": {
+          "catalog": {
+            "$ref": "#/components/schemas/HouseCatalog"
+          },
+          "catalog_version_id": {
+            "format": "uuid",
+            "title": "Catalog Version Id",
+            "type": "string"
+          },
+          "template": {
+            "$ref": "#/components/schemas/HouseTemplate"
+          },
+          "template_version_id": {
+            "format": "uuid",
+            "title": "Template Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_version_id",
+          "catalog_version_id",
+          "template",
+          "catalog"
+        ],
+        "title": "HouseDocumentsOut",
         "type": "object"
       },
       "HouseDoorChoice": {
@@ -5570,6 +6222,107 @@
           "roof_material_class"
         ],
         "title": "HouseFacts",
+        "type": "object"
+      },
+      "HouseFactsOut": {
+        "description": "Kennwerte und Umrisse aus der Hausbeschreibung (lokale Modellmeter, Y = Modellnord).",
+        "properties": {
+          "depth_m": {
+            "title": "Depth M",
+            "type": "number"
+          },
+          "eave_height_m": {
+            "title": "Eave Height M",
+            "type": "number"
+          },
+          "facade_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Facade Local",
+            "type": "array"
+          },
+          "facade_material": {
+            "title": "Facade Material",
+            "type": "string"
+          },
+          "facade_roles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Facade Roles",
+            "type": "object"
+          },
+          "floor_area_m2": {
+            "title": "Floor Area M2",
+            "type": "number"
+          },
+          "footprint_m2": {
+            "title": "Footprint M2",
+            "type": "number"
+          },
+          "height_m": {
+            "title": "Height M",
+            "type": "number"
+          },
+          "pitch_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Deg"
+          },
+          "projection_local": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "title": "Projection Local",
+            "type": "array"
+          },
+          "roof_form": {
+            "title": "Roof Form",
+            "type": "string"
+          },
+          "roof_material": {
+            "title": "Roof Material",
+            "type": "string"
+          },
+          "storeys": {
+            "title": "Storeys",
+            "type": "string"
+          },
+          "width_m": {
+            "title": "Width M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "storeys",
+          "roof_form",
+          "pitch_deg",
+          "height_m",
+          "eave_height_m",
+          "floor_area_m2",
+          "footprint_m2",
+          "width_m",
+          "depth_m",
+          "facade_local",
+          "projection_local",
+          "facade_roles",
+          "facade_material",
+          "roof_material"
+        ],
+        "title": "HouseFactsOut",
         "type": "object"
       },
       "HouseImportFinding": {
@@ -6766,6 +7519,45 @@
         "title": "HousePriceItem",
         "type": "object"
       },
+      "HousePriceOut": {
+        "description": "Richtpreis für den Kunden: brutto, gesamt auf 1.000 € und Aufpreise je Slot auf 100 € gerundet (L1).",
+        "properties": {
+          "currency": {
+            "const": "EUR",
+            "title": "Currency",
+            "type": "string"
+          },
+          "deltas_rounded": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Deltas Rounded",
+            "type": "object"
+          },
+          "gross_rounded": {
+            "title": "Gross Rounded",
+            "type": "number"
+          },
+          "is_estimate": {
+            "const": true,
+            "default": true,
+            "title": "Is Estimate",
+            "type": "boolean"
+          },
+          "vat_rate": {
+            "title": "Vat Rate",
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "vat_rate",
+          "gross_rounded",
+          "deltas_rounded"
+        ],
+        "title": "HousePriceOut",
+        "type": "object"
+      },
       "HousePricingRule": {
         "additionalProperties": false,
         "description": "Sagt nur, welche Menge mit welchem Eintrag verrechnet wird (P 9.2); enthält keine Beträge.",
@@ -7583,6 +8375,29 @@
         "title": "HouseSelector",
         "type": "object"
       },
+      "HouseSiteResultOut": {
+        "description": "Ergebnis der PLU-Prüfung mit Ergebnisart (3.7).",
+        "properties": {
+          "check": {
+            "$ref": "#/components/schemas/CheckOut"
+          },
+          "outcome": {
+            "enum": [
+              "deviation",
+              "warning",
+              "info"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "check"
+        ],
+        "title": "HouseSiteResultOut",
+        "type": "object"
+      },
       "HouseSlab": {
         "additionalProperties": false,
         "properties": {
@@ -8061,6 +8876,114 @@
         "title": "HouseTemplate",
         "type": "object"
       },
+      "HouseTemplateFitOut": {
+        "description": "Haustyp mit Zulässigkeit auf dem Grundstück, geprüft mit den Standards des Templates (Ergänzung 9).",
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "catalog_version": {
+            "title": "Catalog Version",
+            "type": "integer"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/HouseFactsOut"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "price": {
+            "$ref": "#/components/schemas/HousePriceOut"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "rotations": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Rotations",
+            "type": "array"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "valid",
+              "valid_with_warnings",
+              "with_deviations",
+              "blocked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "catalog_version",
+          "name",
+          "allowed",
+          "reasons",
+          "hints",
+          "rotations",
+          "status",
+          "price",
+          "facts"
+        ],
+        "title": "HouseTemplateFitOut",
+        "type": "object"
+      },
+      "HouseTemplateRefOut": {
+        "properties": {
+          "catalog_version": {
+            "title": "Catalog Version",
+            "type": "integer"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "retired": {
+            "title": "Retired",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slug",
+          "version",
+          "catalog_version",
+          "name",
+          "retired"
+        ],
+        "title": "HouseTemplateRefOut",
+        "type": "object"
+      },
       "HouseTemplateSummaryOut": {
         "properties": {
           "current_version": {
@@ -8396,6 +9319,61 @@
           "publishable"
         ],
         "title": "HouseTemplateVersionSummaryOut",
+        "type": "object"
+      },
+      "HouseTemplatesOut": {
+        "properties": {
+          "free_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Reason"
+          },
+          "mode": {
+            "enum": [
+              "rules",
+              "free"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "simulation": {
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "site_revision": {
+            "title": "Site Revision",
+            "type": "integer"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/HouseTemplateFitOut"
+            },
+            "title": "Templates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "free_reason",
+          "notices",
+          "site_revision",
+          "templates"
+        ],
+        "title": "HouseTemplatesOut",
         "type": "object"
       },
       "HouseText": {
@@ -18323,6 +19301,50 @@
         ]
       }
     },
+    "/api/v1/admin/projects/{project_id}/house/configuration": {
+      "get": {
+        "description": "Konfiguration mit festgehaltenen Versionen und Snapshot (exakte Beträge) für die Prüfung einer Anfrage;\nohne Feature-Flag, nur mit Rolle.",
+        "operationId": "get_configuration_staff_api_v1_admin_projects__project_id__house_configuration_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseConfigurationStaffOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Configuration Staff",
+        "tags": [
+          "house-configuration"
+        ]
+      }
+    },
     "/api/v1/admin/projects/{project_id}/inquiry": {
       "get": {
         "operationId": "get_inquiry_staff_api_v1_admin_projects__project_id__inquiry_get",
@@ -21652,6 +22674,294 @@
         "summary": "Export Project",
         "tags": [
           "inquiry"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/house/configuration": {
+      "get": {
+        "description": "Gespeicherte Konfiguration; Grundstück und Regeln im aktuellen Stand (E-HM-7).",
+        "operationId": "get_configuration_api_v1_projects__project_id__house_configuration_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseConfigurationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Configuration",
+        "tags": [
+          "house-configuration"
+        ]
+      },
+      "patch": {
+        "description": "Haustyp, Auswahl, Lage oder Grenzschalter ändern. `If-Match` mit der Revision schützt vor\nüberschriebenen Änderungen (409). Gespeichert wird auch eine Auswahl oder Lage mit Abweichungen (E-HM-6);\nabgelehnt werden ein gesperrter Haustyp (D12), eine Auswahl, die der Kern nicht rechnet, und eine nicht\nvorgesehene Drehung.",
+        "operationId": "patch_configuration_api_v1_projects__project_id__house_configuration_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "if-match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HouseConfigurationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseConfigurationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Configuration",
+        "tags": [
+          "house-configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/house/configuration/documents": {
+      "get": {
+        "description": "Festgehaltenes Template und Katalogversion für den Kern im Browser (E-HM-20).",
+        "operationId": "get_documents_api_v1_projects__project_id__house_configuration_documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseDocumentsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Documents",
+        "tags": [
+          "house-configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/house/configuration/placement-area": {
+      "get": {
+        "description": "Fläche zulässiger Ursprünge je erlaubter Drehung für das Haus mit der gespeicherten Auswahl.",
+        "operationId": "get_placement_area_api_v1_projects__project_id__house_configuration_placement_area_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlacementAreaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Placement Area",
+        "tags": [
+          "house-configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/house/configuration/placement-presets": {
+      "post": {
+        "description": "Schnellstellungen `street_near`, `set_back`, `garden_max` (Spez. 5.3.5) zur gespeicherten Auswahl.",
+        "operationId": "post_placement_presets_api_v1_projects__project_id__house_configuration_placement_presets_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Placement Presets",
+        "tags": [
+          "house-configuration"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}/house/templates": {
+      "get": {
+        "description": "Angebotene Haustypen mit Zulässigkeit, allen Gründen, Richtpreis „ab“ und Kennwerten (D12).",
+        "operationId": "list_templates_api_v1_projects__project_id__house_templates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseTemplatesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Templates",
+        "tags": [
+          "house-configuration"
         ]
       }
     },

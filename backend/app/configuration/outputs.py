@@ -16,6 +16,7 @@ from app.configuration.domain.energy import EnergyStatus
 from app.configuration.domain.geometry import polygons
 from app.configuration.domain.options import Reason
 from app.configuration.domain.orientation import Orientation
+from app.configuration.domain.placement import Placement, PlacementResult
 from app.configuration.schemas import (
     AreasOut,
     CheckOut,
@@ -23,7 +24,9 @@ from app.configuration.schemas import (
     CostItemOut,
     CostsOut,
     DrivewayOut,
+    EdgeMeasureOut,
     EnergyStatusOut,
+    LocalPointModel,
     OptionChoiceOut,
     OptionState,
     OrientationOut,
@@ -31,6 +34,8 @@ from app.configuration.schemas import (
     OutbuildingsOut,
     PackageChoiceOut,
     PartAreasOut,
+    PlacementEvaluationOut,
+    PlacementOut,
     PriceOut,
     RangeOut,
     SelectionOut,
@@ -77,6 +82,38 @@ def _ring(geometry: BaseGeometry | None) -> list[list[float]] | None:
         return None
     polygon: Polygon = parts[0]
     return [[round(float(x), 3), round(float(y), 3)] for x, y, *_ in polygon.exterior.coords]
+
+
+def placement_out(placement: Placement) -> PlacementOut:
+    return PlacementOut(
+        origin=LocalPointModel(e=round(placement.origin[0], 3), n=round(placement.origin[1], 3)),
+        rotation_deg=placement.rotation_deg,
+    )
+
+
+def evaluation_out(result: PlacementResult) -> PlacementEvaluationOut:
+    """Prüfung einer Lage je Kante mit den gelegten Umrissen (H2 und Hausmodell)."""
+    return PlacementEvaluationOut(
+        valid=result.valid,
+        checks=[check_out(c) for c in result.checks],
+        edges=[
+            EdgeMeasureOut(
+                seq=e.seq,
+                kind=e.kind,
+                measured_m=e.measured_m,
+                required_m=e.required_m,
+                contour=e.contour,
+                status=e.status,
+                on_boundary=e.on_boundary,
+                on_boundary_allowed=e.on_boundary_allowed,
+                markers=e.markers,
+            )
+            for e in result.edges
+        ],
+        facade_local=_ring(result.facade) or [],
+        projection_local=_ring(result.projection) or [],
+        zone_code=result.part.zone_code if result.part else None,
+    )
 
 
 def selection_out(design: Design, offer: TypeOffer, dropped: list[str]) -> SelectionOut:
