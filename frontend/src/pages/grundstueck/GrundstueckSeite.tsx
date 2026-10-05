@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { CONFIGURATOR_FLAG } from "../../api/configuration";
+import { HOUSE_MODEL_FLAG } from "../../api/hausKonfiguration";
 import { ENVELOPE_FLAG, useEnvelope } from "../../api/envelope";
 import { INQUIRY_FLAG } from "../../api/inquiry";
 import { RULES_FLAG, useProjectRules } from "../../api/rules";
@@ -136,6 +137,19 @@ function KonfiguratorLink() {
   );
 }
 
+/** Einstieg in das Hausmodell (HM4), solange beide Konfiguratoren laufen (docs/PLAN_HAUSMODELL.md 3.10). */
+function HausLink() {
+  const { t } = useTranslation();
+  return (
+    <div className="border-t bd pt-8 max-w-xl flex flex-col gap-3">
+      <p className="text-sm t-mute m-0">{t("houseConfigurator.openHint")}</p>
+      <Link className="btn btn-primary self-start" to="/haus">
+        {t("houseConfigurator.open")}
+      </Link>
+    </div>
+  );
+}
+
 function focusOf(site: SiteOut | null | undefined) {
   const position = site ? centerOf(site.outline_geojson) : null;
   return position ? { lon: position[0], lat: position[1], key: `site-${site?.revision}` } : null;
@@ -155,6 +169,7 @@ export function GrundstueckSeite() {
   const envelopeEnabled = Boolean(flags.data?.[ENVELOPE_FLAG]);
   const inquiryEnabled = Boolean(flags.data?.[INQUIRY_FLAG]);
   const configuratorEnabled = Boolean(flags.data?.[CONFIGURATOR_FLAG]);
+  const houseEnabled = Boolean(flags.data?.[HOUSE_MODEL_FLAG]);
 
   let inhalt;
   // Ein eben angelegtes Projekt hat noch kein Grundstück: kein Ladezustand, sonst verliert die
@@ -187,6 +202,7 @@ export function GrundstueckSeite() {
           }}
         />
         {configuratorEnabled && <KonfiguratorLink />}
+        {houseEnabled && <HausLink />}
         {inquiryEnabled && (
           <div className="border-t bd pt-8 max-w-xl">
             <AnfrageFormular projectId={site.data.project_id} />
@@ -219,6 +235,7 @@ export function GrundstueckSeite() {
           </div>
         )}
         {configuratorEnabled && <KonfiguratorLink />}
+        {houseEnabled && <HausLink />}
         {inquiryEnabled && (
           <div className="border-t bd pt-8 max-w-xl">
             <AnfrageFormular projectId={site.data.project_id} />

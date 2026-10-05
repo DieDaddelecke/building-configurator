@@ -121,6 +121,11 @@ jobs:
         run: |
           docker compose cp backend/tests api:/tmp/tests
           docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules
+      - name: Demohaus einspielen (HM4, ohne IFC)
+        # nutzt /tmp/tests aus dem Schritt davor
+        run: |
+          docker compose cp packages/domain/seed/demo-house api:/tmp/demo-house
+          docker compose exec -T -e PYTHONPATH=/tmp api python -m tests.e2e_seed_house /tmp/demo-house
       # pnpm-Version aus packageManager der Wurzel-package.json; Lockfile des Workspace im Wurzelordner
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4

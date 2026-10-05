@@ -23,6 +23,9 @@ void i18n
       order: ["localStorage", "navigator"],
       lookupLocalStorage: "emprise.sprache",
       caches: ["localStorage"],
+      // Nur die Sprache, ohne Region: Code vergleicht `i18n.language` mit "de" (Zahlen, Bezeichnungen); mit
+      // "de-DE" aus dem Browser griffe das sonst nicht
+      convertDetectedLanguage: (lng: string) => lng.slice(0, 2),
     },
   });
 

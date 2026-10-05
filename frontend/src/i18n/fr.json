@@ -2121,7 +2121,9 @@
       "roof": {
         "gable": "Toit à deux pans",
         "hip": "Toit à quatre pans",
+        "mono_pitch": "Toit monopente",
         "flat": "Toit plat",
+        "mansard": "Toit à la Mansart",
         "complex": "Toiture complexe",
         "other": "Autre forme"
       },
@@ -2362,6 +2364,117 @@
       "composite": "composite",
       "vegetation": "végétalisation",
       "other": "autre"
+    }
+  },
+  "houseConfigurator": {
+    "open": "Configurer ma maison",
+    "openHint": "Nouveau : choisissez un modèle de maison, son équipement et son implantation, avec un prix indicatif.",
+    "eyebrow": "Votre maison",
+    "title": "Configurer votre maison",
+    "intro": "Choisissez un modèle, son équipement et son implantation. Prix et vérifications sont calculés automatiquement : c'est une simulation sans valeur contractuelle, examinée ensuite par le bureau d'architecture.",
+    "disabled": {
+      "eyebrow": "Bientôt disponible",
+      "title": "La configuration de maison n'est pas encore ouverte",
+      "text": "Cette fonction est en cours d'essai interne."
+    },
+    "needSite": "Formez d'abord votre terrain pour configurer une maison.",
+    "back": "Retour au terrain",
+    "loadError": "La configuration n'a pas pu être chargée.",
+    "types": {
+      "title": "Modèles de maison",
+      "intro": "Chaque modèle est vérifié sur votre parcelle avec son équipement standard. Le prix « à partir de » correspond à cet équipement.",
+      "empty": "Aucun modèle de maison n'est proposé pour le moment.",
+      "change": "Changer de modèle",
+      "keep": "Revenir à ma configuration",
+      "changeHint": "Un autre modèle repart de son équipement standard et d'une implantation proposée."
+    },
+    "fact": {
+      "footprint": "Emprise au sol",
+      "floorArea": "Surface des pièces",
+      "size": "Dimensions",
+      "roof": "Toiture",
+      "height": "Hauteur",
+      "storeys": "Niveaux"
+    },
+    "price": {
+      "title": "Prix indicatif",
+      "from": "à partir d'env. {{amount}}",
+      "total": "env. {{amount}}",
+      "gross": "TTC",
+      "hint": "Prix indicatif, vérifié par le bureau d'architecture.",
+      "preview": "aperçu, pas encore enregistré",
+      "surcharges": "Suppléments par rapport à l'équipement standard",
+      "none": "Équipement standard, sans supplément.",
+      "mismatch": "Le serveur a calculé un autre prix que l'aperçu ; le prix enregistré fait foi."
+    },
+    "save": {
+      "saving": "Enregistrement …",
+      "saved": "Enregistré",
+      "conflict": "Votre configuration a été modifiée ailleurs ; l'état enregistré a été rechargé.",
+      "error": "L'enregistrement a échoué ; votre dernier choix n'est pas enregistré.",
+      "engine": "Le calcul est momentanément indisponible ; réessayez dans quelques instants.",
+      "selection": "Ce choix ne peut pas être calculé ({{reason}})."
+    },
+    "notice": {
+      "update": "Une version plus récente de ce modèle ou du catalogue existe. Votre configuration reste calculée avec la version enregistrée.",
+      "retired": "Cette version du modèle n'est plus proposée ; votre configuration reste valable."
+    },
+    "equipment": {
+      "title": "Équipement",
+      "intro": "Chaque choix est calculé aussitôt puis enregistré. L'écart de prix indiqué se rapporte à votre choix actuel ; l'effet sur le PLU apparaît dans le résultat de la vérification.",
+      "standard": "standard",
+      "delta": "env. {{amount}}",
+      "same": "même prix",
+      "unavailable": "Non disponible",
+      "partly": "Possible pour {{available}} éléments sur {{total}}",
+      "allElements": "S'applique à tous les éléments concernés ; le choix élément par élément viendra plus tard.",
+      "status": {
+        "blocked": "bloque la transmission",
+        "with_deviations": "avec écart",
+        "valid_with_warnings": "avec point ouvert"
+      }
+    },
+    "placement": {
+      "title": "Implantation sur la parcelle",
+      "intro": "Faites glisser la maison ou choisissez une position rapide. Une implantation qui s'écarte du PLU reste enregistrée et apparaît comme écart."
+    },
+    "suggestion": {
+      "text": "Une implantation conforme existe à proximité.",
+      "apply": "Appliquer l'implantation proposée"
+    },
+    "results": {
+      "title": "Résultat de la vérification",
+      "status": {
+        "valid": "Conforme",
+        "valid_with_warnings": "Conforme, avec points ouverts",
+        "with_deviations": "Avec écarts",
+        "blocked": "Bloqué"
+      },
+      "statusText": {
+        "valid": "Aucune règle vérifiée n'est enfreinte.",
+        "valid_with_warnings": "Certains points n'ont pas pu être vérifiés automatiquement ; le bureau les examinera.",
+        "with_deviations": "Votre projet s'écarte du PLU. Il reste enregistré ; une transmission au bureau demandera votre confirmation.",
+        "blocked": "Une règle technique du catalogue empêche la transmission de ce choix."
+      },
+      "group": {
+        "block": "Bloquant",
+        "deviation": "Écarts par rapport au PLU",
+        "warning": "Points ouverts",
+        "info": "À noter"
+      },
+      "stale": "Mise à jour après l'enregistrement …",
+      "siteChanged": "Le terrain ou les règles ont changé depuis l'enregistrement ; la vérification affichée suit l'état actuel.",
+      "note": {
+        "unavailable": "{{slot}} : « {{value}} » n'est pas possible pour {{count}} élément(s) ; {{applied}} y reste appliqué.",
+        "room_override_tie": "{{slot}} : choix par pièce contradictoires pour {{count}} élément(s) ; {{applied}} est appliqué."
+      }
+    },
+    "rule": {
+      "opening_outside_host": "Une ouverture dépasse de son mur.",
+      "opening_above_ceiling": "Une ouverture dépasse le plafond.",
+      "opening_below_floor": "Une ouverture descend sous le plancher.",
+      "openings_overlap": "Deux ouvertures se chevauchent.",
+      "catalog_rule": "Règle du catalogue"
     }
   },
   "submission": {

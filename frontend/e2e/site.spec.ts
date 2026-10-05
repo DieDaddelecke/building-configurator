@@ -29,6 +29,8 @@ test.describe.serial("Grundstück (G1)", () => {
     await expect(page.getByRole("heading", { name: "Wählen Sie Ihre Parzelle" })).toBeVisible();
 
     await page.getByText("Parzellennummer eingeben").click();
+    // In CI gibt es nur Treillières; ein lokaler Stack kann weitere Gemeinden haben
+    await page.getByLabel("Gemeinde").selectOption({ label: "TREILLIERES" });
     await page.getByLabel("Sektion").fill("AD");
     await page.getByLabel("Nummer").fill("65");
     await page.getByRole("button", { name: "Parzelle suchen" }).click();

@@ -17,7 +17,7 @@ import {
 } from "../../../api/haus";
 import type { components } from "../../../api/schema";
 import { canEditHouse, HausStatusmarke, zeitpunkt } from "../../../haus/import/bausteine";
-import { label } from "../../../haus/import/Entwurf";
+import { label } from "../../../haus/texte";
 import { KatalogFehler } from "../../../katalog/bausteine";
 
 type Staff = components["schemas"]["StaffInfo"];

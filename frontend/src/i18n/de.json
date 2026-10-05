@@ -2121,7 +2121,9 @@
       "roof": {
         "gable": "Satteldach",
         "hip": "Walmdach",
+        "mono_pitch": "Pultdach",
         "flat": "Flachdach",
+        "mansard": "Mansarddach",
         "complex": "Zusammengesetztes Dach",
         "other": "Andere Form"
       },
@@ -2362,6 +2364,117 @@
       "composite": "Verbund",
       "vegetation": "Begrünung",
       "other": "Andere"
+    }
+  },
+  "houseConfigurator": {
+    "open": "Haus konfigurieren",
+    "openHint": "Neu: Haustyp, Ausstattung und Lage wählen, mit Richtpreis.",
+    "eyebrow": "Ihr Haus",
+    "title": "Ihr Haus konfigurieren",
+    "intro": "Wählen Sie Haustyp, Ausstattung und Lage. Preis und Prüfungen werden automatisch berechnet: eine Simulation ohne Verbindlichkeit, die das Architekturbüro danach prüft.",
+    "disabled": {
+      "eyebrow": "Bald verfügbar",
+      "title": "Die Hauskonfiguration ist noch nicht freigeschaltet",
+      "text": "Diese Funktion wird intern erprobt."
+    },
+    "needSite": "Bilden Sie zuerst Ihr Grundstück, um ein Haus zu konfigurieren.",
+    "back": "Zurück zum Grundstück",
+    "loadError": "Die Konfiguration konnte nicht geladen werden.",
+    "types": {
+      "title": "Haustypen",
+      "intro": "Jeder Haustyp wird mit seiner Standardausstattung auf Ihrem Grundstück geprüft. Der Preis „ab“ gilt für diese Ausstattung.",
+      "empty": "Derzeit wird kein Haustyp angeboten.",
+      "change": "Haustyp wechseln",
+      "keep": "Zurück zu meiner Konfiguration",
+      "changeHint": "Ein anderer Haustyp beginnt mit seiner Standardausstattung und einer vorgeschlagenen Lage."
+    },
+    "fact": {
+      "footprint": "Grundfläche",
+      "floorArea": "Fläche der Räume",
+      "size": "Abmessungen",
+      "roof": "Dach",
+      "height": "Höhe",
+      "storeys": "Geschosse"
+    },
+    "price": {
+      "title": "Richtpreis",
+      "from": "ab ca. {{amount}}",
+      "total": "ca. {{amount}}",
+      "gross": "brutto",
+      "hint": "Richtpreis, Prüfung durch das Büro.",
+      "preview": "Vorschau, noch nicht gespeichert",
+      "surcharges": "Aufpreise gegenüber der Standardausstattung",
+      "none": "Standardausstattung, ohne Aufpreis.",
+      "mismatch": "Der Server hat einen anderen Preis berechnet als die Vorschau; maßgeblich ist der gespeicherte Preis."
+    },
+    "save": {
+      "saving": "Wird gespeichert …",
+      "saved": "Gespeichert",
+      "conflict": "Ihre Konfiguration wurde an anderer Stelle geändert; der gespeicherte Stand wurde neu geladen.",
+      "error": "Speichern fehlgeschlagen; Ihre letzte Wahl ist nicht gespeichert.",
+      "engine": "Die Berechnung ist gerade nicht erreichbar; bitte in einigen Augenblicken erneut versuchen.",
+      "selection": "Diese Wahl lässt sich nicht berechnen ({{reason}})."
+    },
+    "notice": {
+      "update": "Es gibt eine neuere Version dieses Haustyps oder des Katalogs. Ihre Konfiguration rechnet weiter mit der gespeicherten Version.",
+      "retired": "Diese Version des Haustyps wird nicht mehr angeboten; Ihre Konfiguration bleibt gültig."
+    },
+    "equipment": {
+      "title": "Ausstattung",
+      "intro": "Jede Wahl wird sofort berechnet und gespeichert. Der Preisunterschied bezieht sich auf Ihre aktuelle Wahl; die Wirkung auf den PLU zeigt das Ergebnis der Prüfung.",
+      "standard": "Standard",
+      "delta": "ca. {{amount}}",
+      "same": "gleicher Preis",
+      "unavailable": "Nicht verfügbar",
+      "partly": "Für {{available}} von {{total}} Elementen möglich",
+      "allElements": "Gilt für alle betroffenen Elemente; die Wahl je Element folgt später.",
+      "status": {
+        "blocked": "sperrt die Übergabe",
+        "with_deviations": "mit Abweichung",
+        "valid_with_warnings": "mit offenem Punkt"
+      }
+    },
+    "placement": {
+      "title": "Lage auf dem Grundstück",
+      "intro": "Ziehen Sie das Haus oder wählen Sie eine Schnellstellung. Eine Lage, die vom PLU abweicht, bleibt gespeichert und erscheint als Abweichung."
+    },
+    "suggestion": {
+      "text": "In der Nähe gibt es eine zulässige Lage.",
+      "apply": "Vorgeschlagene Lage übernehmen"
+    },
+    "results": {
+      "title": "Ergebnis der Prüfung",
+      "status": {
+        "valid": "Zulässig",
+        "valid_with_warnings": "Zulässig, mit offenen Punkten",
+        "with_deviations": "Mit Abweichungen",
+        "blocked": "Gesperrt"
+      },
+      "statusText": {
+        "valid": "Keine geprüfte Regel ist verletzt.",
+        "valid_with_warnings": "Einige Punkte ließen sich nicht automatisch prüfen; das Büro sieht sie sich an.",
+        "with_deviations": "Ihr Entwurf weicht vom PLU ab. Er bleibt gespeichert; eine Übergabe an das Büro verlangt Ihre Bestätigung.",
+        "blocked": "Eine technische Regel des Katalogs verhindert die Übergabe dieser Wahl."
+      },
+      "group": {
+        "block": "Sperrend",
+        "deviation": "Abweichungen vom PLU",
+        "warning": "Offene Prüfpunkte",
+        "info": "Zu beachten"
+      },
+      "stale": "Wird nach dem Speichern aktualisiert …",
+      "siteChanged": "Grundstück oder Regeln haben sich seit dem Speichern geändert; die angezeigte Prüfung folgt dem aktuellen Stand.",
+      "note": {
+        "unavailable": "{{slot}}: „{{value}}“ ist für {{count}} Element(e) nicht möglich; dort bleibt {{applied}}.",
+        "room_override_tie": "{{slot}}: widersprüchliche Wahl je Raum für {{count}} Element(e); es gilt {{applied}}."
+      }
+    },
+    "rule": {
+      "opening_outside_host": "Eine Öffnung ragt über ihre Wand hinaus.",
+      "opening_above_ceiling": "Eine Öffnung reicht über die Decke.",
+      "opening_below_floor": "Eine Öffnung reicht unter den Boden.",
+      "openings_overlap": "Zwei Öffnungen überschneiden sich.",
+      "catalog_rule": "Katalogregel"
     }
   },
   "submission": {

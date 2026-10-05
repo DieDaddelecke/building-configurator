@@ -22,7 +22,8 @@ import {
 import type { components } from "../../../api/schema";
 import { Befunde } from "../../../haus/import/Befunde";
 import { canEditHouse, HausStatusmarke, zeitpunkt } from "../../../haus/import/bausteine";
-import { Entwurf, label, nameIncomplete } from "../../../haus/import/Entwurf";
+import { Entwurf, nameIncomplete } from "../../../haus/import/Entwurf";
+import { label } from "../../../haus/texte";
 import { ROLE_COLORS, Vorschau } from "../../../haus/import/Vorschau";
 import { KatalogFehler, number } from "../../../katalog/bausteine";
 

@@ -24,6 +24,7 @@ import { SUBMISSION_FLAG } from "../../api/submission";
 import { useFlags, useSite } from "../../api/site";
 import { Kopf } from "../../components/Kopf";
 import { Kopfzeile } from "../../components/Kopfzeile";
+import { Hinweise } from "../../configuration/Hinweise";
 import { Implantation } from "../../configuration/Implantation";
 import { Kostenleiste } from "../../configuration/Kostenleiste";
 import { Linien } from "../../configuration/Linien";
@@ -31,19 +32,9 @@ import { Optionen } from "../../configuration/Optionen";
 import { TypKarten } from "../../configuration/TypKarten";
 import { Vorentwurf } from "../../configuration/Vorentwurf";
 import { localLabel } from "../../configuration/format";
-import { useNotices } from "../../site/GrundstueckPruefen";
 
 type Schritt = "type" | "placement" | "package" | "options" | "design";
 const SCHRITTE: readonly Schritt[] = ["type", "placement", "package", "options", "design"];
-
-/** Rückfalltexte, solange die Rechtstexte nach L7 nicht veröffentlicht sind (G16). */
-const FALLBACK_NOTICES: Record<string, string> = {
-  "notice.envelope_simulation": "envelope.notices.simulation",
-  "notice.rules_simulation": "rules.notices.simulation",
-  "notice.rules_lotissement": "rules.notices.lotissement",
-  "notice.cadastre_accuracy": "site.notices.cadastre_accuracy",
-  "notice.manual_sketch": "site.notices.manual_sketch",
-};
 
 function Schritte({ schritt, onGehe, enabled }: { schritt: Schritt; onGehe: (s: Schritt) => void; enabled: (s: Schritt) => boolean }) {
   const { t } = useTranslation();
@@ -81,24 +72,6 @@ function Navigation({ zurueck, weiter, onGehe }: { zurueck?: Schritt; weiter?: S
         </button>
       )}
     </div>
-  );
-}
-
-function Hinweise({ keys, freeReason }: { keys: readonly string[]; freeReason: string | null }) {
-  const { t } = useTranslation();
-  const notices = useNotices(keys);
-  return (
-    <section className="flex flex-col gap-2 text-sm" aria-label={t("site.notices.title")}>
-      {freeReason && <p className="bg-warn t-ink px-4 py-3 m-0">{t(`configurator.mode.${freeReason}`)}</p>}
-      {keys.map((key) => {
-        const published = notices.data?.find((n) => n.key === key);
-        return (
-          <p key={key} className="m-0 t-mute" lang={published?.locale}>
-            {published ? published.body : t(FALLBACK_NOTICES[key] ?? key, { defaultValue: key })}
-          </p>
-        );
-      })}
-    </section>
   );
 }
 

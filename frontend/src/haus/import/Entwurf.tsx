@@ -16,12 +16,11 @@ import type {
   HouseText,
 } from "../../api/haus";
 import { number } from "../../katalog/bausteine";
+import { label } from "../texte";
 import { areaOf } from "./Vorschau";
 
 export const IGNORE = "ignore";
 const FACADE_ROLES: FacadeRole[] = ["street", "garden", "side_left", "side_right"];
-
-export const label = (text: HouseText, language: string) => (language === "de" ? text.de : text.fr);
 
 function withKey<T>(record: Record<string, T>, key: string, value: T | undefined): Record<string, T> {
   const next = { ...record };

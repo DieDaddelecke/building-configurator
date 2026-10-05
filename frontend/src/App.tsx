@@ -23,6 +23,8 @@ import { Start } from "./pages/Start";
 import { VorgangSeite } from "./pages/vorgang/VorgangSeite";
 import { ZugangSeite } from "./pages/vorgang/ZugangSeite";
 
+// Eigener Chunk: Rechenkern und Clipper2 nur für das Hausmodell (HM4)
+const HausSeite = lazy(() => import("./pages/haus/HausSeite").then((m) => ({ default: m.HausSeite })));
 const PlanVorschau = lazy(() => import("./pages/dev/PlanVorschau").then((m) => ({ default: m.PlanVorschau })));
 
 /** Weiter nach `/analyse/verwaltung…`: anderer Router, also mit Neuladen. */
@@ -37,6 +39,7 @@ export const routes: RouteObject[] = [
   { path: "/", element: <Start /> },
   { path: "/grundstueck", element: <GrundstueckSeite /> },
   { path: "/konfigurator", element: <KonfiguratorSeite /> },
+  { path: "/haus", element: <Suspense><HausSeite /></Suspense> },
   { path: "/vorgang", element: <VorgangSeite /> },
   { path: "/zugang", element: <ZugangSeite /> },
   { path: "/buero/kein-zugang", element: <KeinZugang /> },
