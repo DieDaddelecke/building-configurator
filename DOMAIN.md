@@ -1,6 +1,6 @@
 # Fachdomäne
 
-> Stand 04.10.2026 (Hausmodell bis HM3). Was die Anwendung fachlich tut, welche Leitplanken gelten und wie die Begriffe im Code heißen. Technik: [ARCHITECTURE.md](ARCHITECTURE.md). Begründungen und IDs: [DECISIONS.md](DECISIONS.md).
+> Stand 04.10.2026 (Hausmodell bis HM5). Was die Anwendung fachlich tut, welche Leitplanken gelten und wie die Begriffe im Code heißen. Technik: [ARCHITECTURE.md](ARCHITECTURE.md). Begründungen und IDs: [DECISIONS.md](DECISIONS.md).
 
 ## 1. Zweck
 
@@ -72,6 +72,12 @@ Arbeitsprinzip der Regelkette: **Das Sprachmodell liest, Python rechnet, der Men
 | Fassadenrolle | rôle de façade | `street`, `garden`, `side_left`, `side_right` je Kante der Bezugskontur |
 | Importbericht, Befund | rapport d'import, constat | `HouseImportReport`, `HouseImportFinding` mit Schweregrad `error`, `open`, `warning`, `info` |
 | Kompatibilitätsprüfung, Freigabe | vérification, validation | `house_catalog_compatibility`: Befund aus `engine`, bestätigt beim Veröffentlichen |
+| Konfiguration des Hausmodells | configuration | `house_configuration` je Projekt: Auswahl, Lage, festgehaltene Template- und Katalogversion, Snapshot |
+| Geschoss | niveau (RDC, R+1) | `HouseLevel`, im Template `levels` |
+| Dachform | forme de toiture | `RoofShapeKind`: `flat`, `mono_pitch`, `gable`, `hip`, `half_hip`, `mansard`, `mansard_gable`; im Template `roof.design`, im Katalog `roof_shapes` |
+| Traufe, Giebel (Ortgang), Auflagerhöhe | égout, pignon (rive), hauteur d'appui | Kantenarten `eave`, `gable`; `eave_overhang`, `verge_overhang`, `bearing_height` |
+| Ausstattungslinie des Hausmodells | gamme | `HouseLine` im Katalog: setzt mehrere Slots auf einmal, wird nicht gespeichert |
+| Terrasse, Carport | terrasse, carport | `terrace_types`, `carport_types` im Katalog; Slots am Element `site` |
 
 ## 4. Fachregeln
 
@@ -124,3 +130,12 @@ Arbeitsprinzip der Regelkette: **Das Sprachmodell liest, Python rechnet, der Men
 - Der Import deutet nur: Außen ist, was auf dem äußeren Rand der vereinigten Wände liegt; Räume sind die Flächen zwischen den Wänden; eine Zone liefert nur den Raumtyp (Zuordnung über „mehr als die Hälfte“). Keine Zone und kein Bauteil geht still verloren (E-HM-23).
 - Fehler behebt nur eine neue Datei, offene Punkte klärt das Büro im Entwurf; beide verhindern das Veröffentlichen. Veröffentlicht wird nur nach Prüfung gegen die aktuelle Katalogversion und Freigabe durch einen Menschen (E-HM-40).
 - Veröffentlichte Versionen und ihre Freigabe sind unveränderlich (L4); eine Änderung ist eine neue Datei und damit eine neue Version. Modellieren für den Import: [docs/IFC_IMPORTVERTRAG.md](docs/IFC_IMPORTVERTRAG.md).
+
+### 4.8 Hausmodell: Konfiguration (HM4, HM5)
+
+- Angeboten wird ein Haustyp nur mit einer veröffentlichten Templateversion und einer Katalogversion, für die das Büro ihn freigegeben hat; eine Konfiguration behält ihr Paar (E-HM-50).
+- Der Kern rechnet Haus, Mengen, Preis und Prüfungen des Hauses, Python Lage und PLU. Bindend verletzt ist eine Abweichung, nicht bindend verletzt oder nicht prüfbar eine Warnung (E-HM-52). Kunden sehen einen Richtpreis „ca.“; Browser und Server rechnen gleich, maßgeblich ist der Server (E-HM-53).
+- Das Dach ist ein Platzhalter: Der Kern erzeugt es aus Form, Neigungen, Auflagerhöhe und Überständen auf der Bezugskontur. Lässt sich eine gewählte Form nicht erzeugen, nimmt er die Wahl mit Grund zurück, statt sie still zu ersetzen (E-HM-59, E-HM-60).
+- Dachform und Neigung prüft Python gegen die Regel `roof`. Geht die Prüfung je nach Lesart (Krüppelwalm) oder Neigung verschieden aus, bleibt sie offen und ist eine Warnung (E-HM-61); die Auslegung legt der Nutzer fest (E-VA-5).
+- Alle Geschosse haben die Bezugskontur des Erdgeschosses; das Dach liegt über dem obersten (E-HM-63).
+- Eine Ausstattungslinie setzt mehrere Slots auf Klick; gespeichert wird nur die Auswahl (E-HM-66). Terrasse und Carport stehen auf dem Grundstück und zählen in den Prüfungen für Nebenbauten, unversiegelte Fläche und Stellplätze (E-HM-67).

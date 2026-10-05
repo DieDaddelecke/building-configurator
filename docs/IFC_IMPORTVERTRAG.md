@@ -1,6 +1,6 @@
 # IFC-Importvertrag
 
-> **Stand 04.10.2026 (HM3).** Für das Büro: So wird ein Haustyp in Archicad modelliert und exportiert, damit der Konfigurator ihn einlesen kann. Gilt seit dem IFC-Import (HM3); was der Import erst mit HM5 liest, ist markiert. Grundlage: [PLAN_HAUSMODELL.md](PLAN_HAUSMODELL.md) 3.6 und die Probedateien in Kapitel 10. Einzige Ausnahme zur Regel „sechs Dokumente plus Archiv“ (E-HM-17), weil das Büro und nicht der Code der Leser ist.
+> **Stand 04.10.2026 (HM5).** Für das Büro: So wird ein Haustyp in Archicad modelliert und exportiert, damit der Konfigurator ihn einlesen kann. Gilt seit dem IFC-Import (HM3), mit mehreren Geschossen und geneigten Dächern seit HM5. Grundlage: [PLAN_HAUSMODELL.md](PLAN_HAUSMODELL.md) 3.6 und die Probedateien in Kapitel 10. Einzige Ausnahme zur Regel „sechs Dokumente plus Archiv“ (E-HM-17), weil das Büro und nicht der Code der Leser ist.
 
 ## 1. Grundsatz
 
@@ -17,10 +17,13 @@ Außenwände und Dach sind **Platzhalter**. Ihren Aufbau (Schichten, Dämmung, D
 
 ## 3. Geschosse
 
-- Jedes Geschoss mit Wänden oder Zonen zählt als Geschoss. **Bis HM5 nur eingeschossige Häuser:** Mehrere solche Geschosse meldet der Import als Fehler.
+- Jedes Geschoss mit Wänden oder Zonen zählt als Geschoss, z. B. Erdgeschoss und R+1.
+- **Alle Geschosse haben dieselbe Innenkante der Außenwände** (Außenwände genau übereinander, Toleranz 1 mm). Ein kleineres Obergeschoss, Rücksprünge oder Erker nur in einem Geschoss liest der Import nicht.
 - Ein Geschoss, das nur das Dach enthält (z. B. „R+1“ auf Höhe der Traufe), ist die **Dachebene** und zählt nicht als Geschoss.
 - Bodenplatte im Erdgeschoss als Decke (`FLOOR` oder `BASESLAB`), Oberkante auf der Höhe des Geschosses (±0,00).
+- **Unter jedem Obergeschoss eine Geschossdecke** (`FLOOR`), Oberkante auf der Höhe des Geschosses, über mehr als der Hälfte der Fläche innerhalb der Außenwände; ein Treppenloch ist erlaubt. Welchem Geschoss sie in Archicad zugeordnet ist, spielt keine Rolle. Treppen liest der Import nicht.
 - Höhe des Erdgeschosses über dem Gelände: Eigenschaft `Emprise.GroundFloorOffset` am Gebäude, sonst Eingabe im Entwurf (Standard 0,20 m).
+- Die Fassadenrollen (Straße, Garten, Seiten) setzt das Büro im Entwurf am Erdgeschoss; die Obergeschosse übernehmen sie.
 
 ## 4. Außenwände (Platzhalter)
 
@@ -28,7 +31,7 @@ Außenwände und Dach sind **Platzhalter**. Ihren Aufbau (Schichten, Dämmung, D
 - **Die Innenseite ist maßgeblich:** Sie wird die Innenkante der innersten Schicht jedes Wandaufbaus im Konfigurator. Räume bleiben so bei jedem Aufbau gleich groß; die Fassade wandert nach außen.
 - Referenzlinie auf der Innenseite (wie in den Probedateien), Wände an den Ecken geschlossen (Toleranz 1 mm).
 - `IsExternal` (Archicad: Position „Außen“) bei Außenwänden ein, bei Innenwänden aus. Stimmt es nicht, trennt der Import über die Geometrie und warnt.
-- Beim Flachdach mit Attika die Außenwände bis zur Oberkante der Attika hochziehen; der Import liest die Attika als Überstand der Wände über die Dachdecke.
+- Beim Flachdach mit Attika die Außenwände bis zur Oberkante der Attika hochziehen; der Import liest die Attika als Überstand der Wände über die Dachdecke. Beim geneigten Dach liest er die Höhe der Außenwände nicht; Giebelwände dürfen bis unter das Dach reichen.
 - Keine Vorsatzschalen oder getrennten Dämmwände: Sie gehören zum Wandaufbau des Konfigurators.
 
 ## 5. Innenwände
@@ -54,23 +57,32 @@ Außenwände und Dach sind **Platzhalter**. Ihren Aufbau (Schichten, Dämmung, D
 
 ## 8. Dach (Platzhalter)
 
-- **Bis HM5 nur Flachdach:** ein Dach (`IfcRoof` oder Decke vom Typ Dach), oben und unten waagerecht, über der ganzen Fläche innerhalb der Außenwände. Seine Unterseite ist die Auflagerhöhe (Decke des Geschosses über ±0,00), seine Dicke die Dachdecke; die Außenwände reichen bis zur Oberkante der Attika (Abschnitt 4). Ragt das Dach über die Außenseite der Wände, gilt das als Überstand. Geneigte Dachflächen meldet der Import bis dahin als „Dachform nicht erkannt“.
-- Ab HM5 mit dem Dachwerkzeug alle klassischen Formen: Flach, Pult, Sattel, Walm und Zelt, Krüppelwalm, Mansarde, auch auf L-, T- und U-Grundrissen. Die Unterseite des Daches liegt auf der Innenkante der Außenwände (Auflagerhöhe, Probedatei 2: 3,77 m). Neigung je Dachfläche, Überstand ab Außenseite der Wand.
-- Der Konfigurator erzeugt das Dach selbst aus Form, Neigungen, Auflagerhöhe und Überstand und vergleicht es mit dem Dach aus dem IFC. Weicht es ab, meldet der Import „Dachform nicht erkannt“; das Büro setzt die Werte dann im Entwurf (HM5).
+- **Genau ein Dach** über dem obersten Geschoss: `IfcRoof` (ein Körper oder aus Teilen) oder eine Decke vom Typ Dach.
+- **Flachdach:** oben und unten waagerecht, über der ganzen Fläche innerhalb der Außenwände. Seine Unterseite ist die Auflagerhöhe (Decke des obersten Geschosses über ±0,00), seine Dicke die Dachdecke; die Außenwände reichen bis zur Oberkante der Attika (Abschnitt 4). Ragt das Dach über die Außenseite der Wände, gilt das als Überstand.
+- **Geneigt** mit dem Dachwerkzeug: Pultdach, Satteldach, Walm- und Zeltdach, Krüppelwalmdach, Mansarddach (umlaufend) und Mansarddach mit Giebeln, auch auf L-, T- und U-Grundrissen. Der Import liest die Form aus der **Unterseite** des Dachs:
+  - Die Unterseite liegt auf der Innenkante der Außenwände in Auflagerhöhe (Probedatei 2: 3,77 m); alle Traufen liegen gleich hoch.
+  - Alle Traufflächen haben dieselbe Neigung (beim Mansarddach die unteren, steilen Abschnitte). Die oberen Abschnitte des Mansarddachs und die Krüppelwalme haben je eine eigene, untereinander gleiche Neigung.
+  - An einem Giebel steigt das Dach nicht von der Wand an; Giebel liegen nur an den Enden eines Flügels.
+  - Überstand waagerecht ab Außenseite der Wand: an allen Traufen gleich, an den Giebeln (Ortgang) ein eigener, untereinander gleicher Wert.
+- Der Konfigurator erzeugt das Dach selbst aus Form, Neigungen, Auflagerhöhe, Überständen und Drehung und vergleicht seine Unterseite auf 1 mm mit der aus dem IFC. Weicht sie ab oder passt keine Form, meldet der Import „Dachform nicht erkannt“ mit dem Grund (z. B. „die Traufen liegen verschieden hoch“); das Dach ist dann **offen im Entwurf**.
+- **Dach im Entwurf festlegen:** Unter „Geneigtes Dach festlegen“ wählt das Büro Form, Neigung der Traufflächen, beim Krüppelwalm- und Mansarddach die obere Neigung und die Krüppel- bzw. Knickhöhe, die Drehung, die Auflagerhöhe und die Überstände an Traufe und Ortgang. Die Angabe ersetzt das Dach aus dem IFC, auch ein erkanntes. Ein Flachdach lässt sich so nicht festlegen; es braucht die Dachdecke aus dem IFC.
+- **Öffnungen unter einem geneigten Dach:** Die Unterseite fällt von der Innenkante nach außen ab (bei 35° und 0,36 m Wand um 0,25 m). Unter einer Traufe muss jede Öffnung samt Rollladenkasten unter der Dachunterseite an der Außenseite der Wand enden; mit Stürzen auf Auflagerhöhe sperrt der Konfigurator die Dachform. Das Auflager deshalb um diesen Betrag höher legen (Kniestock), gerechnet mit dem dicksten Wandprofil des Katalogs.
 - Noch nicht: Gauben, Dachfenster, versetzte Pultdächer, Dächer über Gebäudeteilen verschiedener Höhe.
 
 ## 9. Was der Import nicht liest
 
-Möbel, Sanitär- und Küchenobjekte, Beschriftungen und Bemaßungen, Schichten und Materialien von Außenwänden und Dach, Proxys, Gelände. Die Bodenplatte dient nur zur Kontrolle (ihre Fläche muss der Innenkontur entsprechen) und für ihre Dicke.
+Möbel, Sanitär- und Küchenobjekte, Treppen, Beschriftungen und Bemaßungen, Schichten und Materialien von Außenwänden und Dach, Proxys, Gelände. Die Bodenplatte dient nur zur Kontrolle (ihre Fläche muss der Innenkontur entsprechen) und für ihre Dicke, ebenso die Geschossdecken (Lage und Dicke).
 
 ## 10. Checkliste vor dem Export
 
-- [ ] Ein Geschoss mit Wänden und Zonen (bis HM5), Bodenplatte auf ±0,00
+- [ ] Geschosse mit Wänden und Zonen, Außenwände aller Geschosse genau übereinander
+- [ ] Bodenplatte auf ±0,00, unter jedem Obergeschoss eine Geschossdecke auf seiner Höhe
 - [ ] Außenwände gerade und geschlossen, Innenseite ist die gewünschte Innenkante, `IsExternal` richtig gesetzt
 - [ ] Innenwände berühren sich; keine Lücke zwischen Räumen
 - [ ] Jede Zone mit Kategorie; nach Wandänderungen aktualisiert
 - [ ] Fenster und Türen in den Wänden, Maße wie ein Typ im Katalog; Haustür führt in die Entrée
-- [ ] Ein Flachdach über der Fläche innerhalb der Außenwände, Außenwände bis Oberkante Attika (bis HM5)
+- [ ] Genau ein Dach: flach über der Fläche innerhalb der Außenwände (Außenwände bis Oberkante Attika) oder geneigt mit der Unterseite auf der Innenkante in Auflagerhöhe, gleichen Traufen und gleichen Überständen
+- [ ] Unter einem geneigten Dach enden die Öffnungen samt Rollladenkasten unter der Dachunterseite an der Außenseite der Wand
 - [ ] Übersetzer „03 - Paramétrique (IFC4)“, Meter, Datei unter 100 MB
 
 ## 11. Meldungen
@@ -80,18 +92,21 @@ Möbel, Sanitär- und Küchenobjekte, Beschriftungen und Bemaßungen, Schichten 
 | Meldung | Art | Abhilfe |
 |---|---|---|
 | Datei nicht lesbar, Schema nicht unterstützt, Lesen zu lang oder zu groß | Fehler | neu exportieren (Übersetzer prüfen) |
-| Kein Geschoss mit Wänden oder Zonen; mehrere solche Geschosse | Fehler | Geschosszuordnung prüfen; R+1 erst ab HM5 |
+| Kein Geschoss mit Wänden oder Zonen; Geschoss mit anderem Außenumriss als das Erdgeschoss | Fehler | Geschosszuordnung prüfen; Außenwände übereinander setzen |
+| Keine Geschossdecke unter einem Obergeschoss | Fehler | Decke mit Oberkante auf der Höhe des Geschosses modellieren |
 | Außenwände umschließen nicht genau eine Fläche; Wand nicht gerade | Fehler | Ecken schließen, Wand gerade modellieren |
 | Zone liegt in keinem Raum zwischen den Wänden | Fehler | Zone in einen Raum legen oder Wände schließen |
 | Öffnung in keiner Wand oder außerhalb ihrer Wand | Fehler | Fenster oder Tür mit dem Werkzeug in die Wand setzen |
-| Keine Bodenplatte; kein Dach, mehrere Dächer, Dachform nicht erkannt | Fehler | Bodenplatte bzw. ein Flachdach modellieren (geneigt ab HM5) |
+| Keine Bodenplatte; kein Dach oder mehrere Dächer | Fehler | Bodenplatte bzw. genau ein Dach modellieren |
 | Zone nicht erkannt, Raum ohne Zone | offen im Entwurf | Raumtyp zuweisen oder Alias im Katalog ergänzen |
 | Raum mit Zonen verschiedener Typen | offen im Entwurf | Teilung bestätigen |
 | Kein oder mehrere Katalogtypen passen zur Öffnung | offen im Entwurf | Wert wählen oder Typ im Katalog anlegen lassen |
 | Kein Eingang erkannt, mehrere Kandidaten für Eingang oder Garagentor | offen im Entwurf | Tür wählen |
+| Dachform nicht erkannt (mit Grund) | offen im Entwurf | Dach im Entwurf festlegen oder in Archicad korrigieren (Abschnitt 8) |
 | Zone nicht aktualisiert; Werte der Zone widersprechen sich | Warnung | Zone an die Wände anpassen bzw. Kategorie prüfen |
 | `IsExternal` widerspricht der Lage | Warnung | Position der Wand korrigieren |
-| Bodenplatte neben ±0,00 oder mit anderer Fläche; Dach deckt die Fläche nicht | Warnung | Platte bzw. Dach prüfen |
+| Bodenplatte neben ±0,00 oder mit anderer Fläche, Geschossdecke neben der Höhe ihres Geschosses; Flachdach deckt die Fläche nicht | Warnung | Platte, Decke bzw. Dach prüfen |
 | Noch keine Fassadenrolle gesetzt | Warnung | Straße, Garten und Seiten im Entwurf zuordnen |
+| Geschoss nur mit Dach (Dachebene); Dach im Entwurf festgelegt | Hinweis | – |
 
-Offen: Referenz-IFC des Demohauses und Liste der Zonenkategorien des Büros (bis dahin die Aliasse des Demo-Katalogs, Abschnitt 6), Treppen bei R+1 (HM5).
+Offen: Referenz-IFC des Demohauses, Liste der Zonenkategorien des Büros (bis dahin die Aliasse des Demo-Katalogs, Abschnitt 6) und je Dachform eine Probe aus Archicad. Geprüft ist bisher nur das Walmdach der Probedatei 2, die übrigen Formen nur mit nachgebauten Dateien; Abschnitt 8 kann sich mit den ersten Proben noch ändern.

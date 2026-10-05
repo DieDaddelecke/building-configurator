@@ -1,6 +1,6 @@
 # Architektur
 
-> Stand 04.10.2026, aus dem Code nach dem Refactoring vom 29./30.09.2026 und HM0, HM1 und HM3 des Hausmodells. Warum es so ist: [DECISIONS.md](DECISIONS.md). Fachbegriffe: [DOMAIN.md](DOMAIN.md). Befehle: [README.md](README.md).
+> Stand 04.10.2026, aus dem Code nach dem Refactoring vom 29./30.09.2026 und HM0, HM1, HM3, HM4 und HM5 des Hausmodells. Warum es so ist: [DECISIONS.md](DECISIONS.md). Fachbegriffe: [DOMAIN.md](DOMAIN.md). Befehle: [README.md](README.md).
 
 ## 1. Überblick
 
@@ -27,7 +27,7 @@ Eine Anwendung mit drei Bereichen unter einem Hostnamen: Hauskonfigurator für K
 
 `migrate` ist ein Einmal-Job vor jedem Start: `alembic upgrade head` und `storage-init` (legt `/data/files` an, Schreibprobe).
 
-Dazu kommt seit HM0 der Rechendienst `engine` (Node 24, ohne Zustand, nur im Compose-Netz, Port 8090). Er rechnet mit dem Rechenkern `packages/domain`, den später auch der Browser lädt: `/evaluate` (Auswahl bis Hausbeschreibung, mit Kandidaten) und `/compatibility`. Die API ruft `/compatibility` bei der Prüfung eines Haustyps aus IFC (HM3, 4.5), `/evaluate` ab dem Kundenweg ([docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) 3, E-HM-1).
+Dazu kommt seit HM0 der Rechendienst `engine` (Node 24, ohne Zustand, nur im Compose-Netz, Port 8090). Er rechnet mit dem Rechenkern `packages/domain`, den später auch der Browser lädt: `/evaluate` (Auswahl bis Hausbeschreibung, mit Kandidaten), `/compatibility` und `/roof` (geneigtes Dach aus Form und Parametern, HM5). Die API ruft `/compatibility` bei der Prüfung eines Haustyps aus IFC (HM3, 4.5), `/roof` beim Erkennen eines geneigten Dachs im Import, `/evaluate` ab dem Kundenweg ([docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) 3, E-HM-1).
 
 ## 2. Auslieferung
 
@@ -87,7 +87,7 @@ Einrichtung, Aktualisieren, Rückrollen, Sicherung: [deploy/unraid/README.md](de
 | `app/inquiry` | A | Anfrage, Einwilligung, Kundenzugang |
 | `app/submission` | V | Vorentwurf-Übergabe, Dossier-PDF |
 | `app/analysis` | AN3–AN5 | Analyse: Grundfläche, Geschosse, Nutzfläche, Gabarit, Schnitt, Bericht, DXF, GeoJSON |
-| `app/house` | Hausmodell | Vertrag mit dem Rechenkern (`contract.py`: Template, Katalog, Auswahl, Ergebnis, Hausbeschreibung); IFC lesen im Kindprozess (`ifc_process.py` startet `ifc_reader.py`), rein in `domain/` (Zonen erkennen, Template und Importbericht bilden, Angaben des Büros); Büro-API für Haustypen aus IFC und Katalogversionen (`api.py`, `service.py`); Aufrufe von `engine` (`engine.py`) |
+| `app/house` | Hausmodell | Vertrag mit dem Rechenkern (`contract.py`: Template, Katalog, Auswahl, Ergebnis, Hausbeschreibung); IFC lesen im Kindprozess (`ifc_process.py` startet `ifc_reader.py`), rein in `domain/` (Zonen erkennen, geneigtes Dach erkennen, Template und Importbericht bilden, Angaben des Büros); Büro-API für Haustypen aus IFC und Katalogversionen (`api.py`, `service.py`); Aufrufe von `engine` (`engine.py`) |
 
 `app/products.py` listet Router und Job-Module der Anwendung; `app/cli.py` die Befehle (`python -m app.cli --help`).
 
@@ -187,15 +187,17 @@ Büro (catalog_admin): Upload /admin/house/templates/{slug}/versions      Prüfu
  → house/ifc/<sha256>.ifc + house_template_version (draft) + Job house_ifc_import (long)
  → Kindprozess: Adressraum begrenzen, dann IfcOpenShell → gelesenes Modell (raw, JSONB)   (E-HM-19, E-HM-43)
  → domain/assemble.py mit der zuletzt veröffentlichten Katalogversion
-       Wände vereinigen → Bezugskontur, Räume zwischen den Wänden, Zonen → Raumtyp (zones.py),
-       Öffnungen auf ihren Wänden, Typ über die Maße, Bodenplatte, Flachdach
+       je Geschoss: Wände vereinigen → Bezugskontur (in allen Geschossen dieselbe), Räume zwischen den Wänden,
+       Zonen → Raumtyp (zones.py), Öffnungen auf ihren Wänden, Typ über die Maße, Bodenplatte bzw. Decke
+       Dach über dem obersten: Flachdach, oder geneigt: roof.py leitet Form und Parameter aus der Unterseite ab,
+       engine /roof erzeugt je Kandidat das Dach zum Vergleich; Dachangabe des Büros geht vor   (E-HM-65)
    → Template-Entwurf + Importbericht (Befunde error · open · warning · info)
  → Büro: Angaben (decisions) → Entwurf und Bericht neu aus raw, ohne die Datei erneut zu lesen   (E-HM-39)
  → Prüfen: engine /compatibility → house_catalog_compatibility; kompatibel → reviewed
  → Freigeben: Befund bestätigt, Version published und aktuell; Trigger halten beides fest (L4)
 ```
 
-Katalogversionen (`house_catalog_version`) kommen bis HM6 nur über die CLI (`house-catalog-import`). Ablauf und Rollen: DECISIONS E-HM-37 bis E-HM-46.
+Katalogversionen (`house_catalog_version`) kommen bis HM6 nur über die CLI (`house-catalog-import`). Ablauf und Rollen: DECISIONS E-HM-37 bis E-HM-46, Geschosse und Dach E-HM-63 bis E-HM-65.
 
 ### 4.6 Hausmodell: Kundenweg (HM4)
 
@@ -206,14 +208,15 @@ Kunde (Fahne house_model): GET /projects/{id}/house/templates
 PATCH /projects/{id}/house/configuration  (If-Match: Revision)
  → Typwahl: Paar festhalten, D12 prüfen, Lage street_near
  → engine /evaluate mit der Auswahl → exakter Preis, Katalogregeln, Hausbeschreibung
- → configuration/domain/site_check.py: Lage, Abstände, Fläche, PLU-Prüfung, Vorschlag (rein)
+ → configuration/domain/site_check.py: Lage, Abstände, Fläche, PLU-Prüfung, Vorschlag (rein);
+   Terrasse, Carport und Zufahrten aus den Maßen des Kerns mit outbuildings.py (E-HM-67)
  → outcomes.py: Ergebnisarten 3.7, Status, Rundung; Vergleich mit client_price (E-HM-53)
  → house_configuration mit Snapshot (exakt) → Antwort nur gerundet (L1)
 GET … ohne engine: Hausbeschreibung aus dem Snapshot, Lage und PLU mit aktuellem Grundstück (E-HM-54)
 Browser /haus: Kern im Hauptthread rechnet Preis und Kandidaten aus den festgehaltenen Dokumenten (…/documents)
 ```
 
-Das Büro liest die Konfiguration mit Snapshot über `/admin/projects/{id}/house/configuration`. Festlegungen: DECISIONS E-HM-48 bis E-HM-57.
+Das Büro liest die Konfiguration mit Snapshot über `/admin/projects/{id}/house/configuration`. Festlegungen: DECISIONS E-HM-48 bis E-HM-57, Dach in der PLU-Prüfung E-HM-61, Linien und Nebenbauten E-HM-66 und E-HM-67.
 
 ## 5. Frontend
 
@@ -230,8 +233,14 @@ Technik: React 19, React Router, TanStack Query, openapi-fetch, MapLibre, Tailwi
 **Rechenkern `packages/domain`** (`@emprise/domain`, HM0/HM1): TypeScript ohne React, DOM und Datenbank; exportiert Quelltext, den Vite, Vitest und Node 24 (Type-Stripping) direkt lesen und esbuild für `engine` bündelt. Geometrie ganzzahlig in 0,1 mm, Offset und Vereinigung mit `clipper2-ts` nach Prüfung jedes Rings (`polygonDefect`, E-HM-27). `evaluate` ist eine reine Funktion von Template, Katalog und Auswahl, ohne Zwischenspeicher:
 
 ```text
-resolve.ts     Auswahl → wirksamer Wert je Slot und Bauteil, Notizen (Element → Raum → global → Standard)
-derive.ts      Schichten, Fassaden- und Wärmekontur, Öffnungen, Dach (HM1: ein Geschoss, Flachdach)
+resolve.ts     Auswahl → wirksamer Wert je Slot und Bauteil, Notizen (Element → Raum → global → Standard);
+               zuerst die Dachform, zuletzt die Zahlen für Neigung und Drehung (E-HM-62)
+evaluate.ts    Ablauf, Aufpreise, Kandidaten; Rücknahme, wenn das Dach nicht entsteht (E-HM-60)
+derive.ts      Geschosse mit derselben Bezugskontur: Schichten, Fassaden- und Wärmekontur, Öffnungen, Decken;
+               Dach über dem obersten, flach oder geneigt (E-HM-63)
+roof/          skeleton.ts gewichtetes Skelett · build.ts Formen, Flächen, Linien, Unterseite · effective.ts
+               wirksames Dach aus Template und Katalogform · request.ts für engine /roof (E-HM-59, E-HM-64)
+lines.ts       Ausstattungslinien: Werte setzen, aktive Linie ableiten (E-HM-66)
 quantities.ts  Mengen mit Herkunft → pricing.ts Preis mit Positionen je Preiseintrag, Aufpreise je Slot
 rules.ts       Prüfung der Öffnungen und Katalogregeln (expr.ts) → Status
 energy.ts      U-Werte, Fensteranteile · facts.ts Hausbeschreibung für die Prüfung in Python (E-HM-4)
@@ -239,7 +248,7 @@ compatibility.ts  Template ↔ Katalog vor dem Veröffentlichen
 codes.ts       Codes des Kerns als geschlossene Listen; die Oberfläche übersetzt sie (E-HM-47)
 ```
 
-Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn seit HM4 als Paket ein, nur in der Seite `/haus` (`src/haus/kern.ts`: Auswertung, Kandidaten; Speichern in `speichern.ts`, ein `PATCH` nach dem anderen); `spike/roof` enthält den Dach-Prototyp (gewichtetes Skelett, nicht exportiert).
+Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn seit HM4 als Paket ein, nur in der Seite `/haus` (`src/haus/kern.ts`: Auswertung, Kandidaten; Speichern in `speichern.ts`, ein `PATCH` nach dem anderen); das Dach rechnet `src/roof/` (gewichtetes Skelett, Formen, Unterseite für Wände und Decken).
 
 ## 6. Anmeldung und Zugriff
 

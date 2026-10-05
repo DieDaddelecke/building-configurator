@@ -1,6 +1,6 @@
 # Betrieb
 
-Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026): **Teil A** (Abschnitte 1–9) richtet Emprise auf Unraid ein, **Teil B** (10–23) beschreibt die Module im Betrieb, typische Störungen und Handgriffe. Befehle mit `docker compose exec api …` gelten lokal und auf Unraid (dort im Ordner `deploy/unraid`). Aufbau: [ARCHITECTURE.md](../../ARCHITECTURE.md).
+Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026): **Teil A** (Abschnitte 1–9) richtet Emprise auf Unraid ein, **Teil B** (10–26) beschreibt die Module im Betrieb, typische Störungen und Handgriffe. Befehle mit `docker compose exec api …` gelten lokal und auf Unraid (dort im Ordner `deploy/unraid`). Aufbau: [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 # Teil A – Einrichtung auf Unraid
 
@@ -203,6 +203,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (21) |
 | Hausmodell (HM3) | 0024 | – (nur Rollen: bearbeiten `catalog_admin`; lesen `architect`, `ops`) | `house_ifc_import` | – (`engine` im Netz `intern`) | veröffentlichte Katalogversion per CLI, Konto mit `catalog_admin` (24) |
 | Hausmodell (HM4) | 0025 | `house_model` | – | – (`engine` im Netz `intern`) | ein veröffentlichter und freigegebener Haustyp (25) |
+| Hausmodell (HM5) | – | `house_model` (dieselbe Fahne) | – (`house_ifc_import` ruft `engine`) | – (`engine` im Netz `intern`) | neue Katalogversion per CLI, Haustypen neu geprüft und freigegeben (26) |
 
 „Emprise Analyse“ läuft in derselben Anwendung unter `/analyse`: Abschnitt 22.
 
@@ -619,3 +620,26 @@ Kunden wählen unter `/haus` einen Haustyp des Hausmodells, seine Ausstattung un
 - Log `house_template_not_computable`: Der Kern rechnet einen angebotenen Haustyp mit den Standardwerten nicht; der Haustyp fehlt in der Liste. Haustyp und Katalogversion im Büro prüfen (Abschnitt 24).
 
 **Prüfen:** Mit freigeschalteter Fahne auf `/grundstueck` eine Parzelle wählen, „Haus konfigurieren“ öffnen, einen Haustyp wählen, eine Ausstattung ändern: Unten steht „Gespeichert“ und ein Richtpreis „ca. … €“. Das Büro sieht die Konfiguration mit exakten Beträgen über `GET /api/v1/admin/projects/<Projekt-ID>/house/configuration`.
+
+## 26. Hausmodell: Dachformen, R+1, Linien, Nebenbauten (HM5)
+
+Haustypen mit mehreren Geschossen und geneigtem Dach; unter `/haus` wählen Kunden zusätzlich Dachform, Neigung und Drehung, eine Ausstattungslinie, Terrasse und Carport ([docs/PLAN_HAUSMODELL.md](../../docs/PLAN_HAUSMODELL.md) Ergänzungen 5.3–5.8 und 5.11, DECISIONS E-HM-58 bis E-HM-67). Keine Migration, keine neue Fahne, kein neuer Job. Wie das Büro geneigte Dächer und Obergeschosse modelliert: [docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md) Abschnitte 3 und 8.
+
+**Nach dem Ausliefern**
+
+1. Web-Image und `engine` aus demselben Commit (Abschnitt 5). Der IFC-Import ruft für ein geneigtes Dach `engine` (`/roof`); `worker-long` erreicht ihn im Netz `intern`.
+2. Neue Version des Demo-Katalogs einspielen (Dachformen, Dachdeckungen, Linien, Terrasse, Carport), im Ordner `deploy/unraid`:
+
+   ```bash
+   docker compose exec -T api python -m app.cli house-catalog-import - --publish < ../../packages/domain/seed/demo-house/catalog.json
+   ```
+
+   Erwartet: `Katalog 2 (published, created, published)`, die Nummer eins höher als die bisherige. Alte Templates und Konfigurationen liest der Server weiter (Schema 1 wird beim Lesen angehoben).
+3. Das Büro prüft jeden angebotenen Haustyp gegen die neue Katalogversion und gibt ihn frei (Abschnitt 24, „Gegen den Katalog prüfen“). Bis dahin bleibt die alte Freigabe ohne die neuen Wahlmöglichkeiten im Angebot.
+
+**Störungen**
+
+- Bericht „Der Import ist wiederholt gescheitert“ bei einer Datei mit geneigtem Dach, im Log `engine_unavailable reason=…`: `engine` prüfen (Abschnitt 9), dann dieselbe Datei noch einmal hochladen. `http_404` heißt: `engine` ist älter als HM5 (`deploy.sh` erneut).
+- „Dachform nicht erkannt“ im Importbericht ist kein Betriebsfehler: Das Büro legt das Dach im Entwurf fest ([docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md) Abschnitt 8).
+
+**Prüfen:** Auf `/haus` zeigt die Ausstattung eines neu freigegebenen Haustyps „Ligne d'équipement“ (DE „Ausstattungslinie“) und „Forme du toit“ (DE „Dachform“); Formen, die sich auf dem Grundriss nicht bauen lassen, stehen gesperrt mit Grund da. Eine andere Linie wählen: Preis und Prüfung ändern sich, unten steht „Enregistré“ (DE „Gespeichert“).
