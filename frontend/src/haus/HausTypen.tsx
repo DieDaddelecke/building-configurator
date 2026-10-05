@@ -3,6 +3,7 @@
  * des Templates; ein gesperrter Typ nennt alle Gründe. Der Richtpreis „ab“ ist brutto und auf 1.000 € gerundet.
  */
 
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 
 import type { CheckOut } from "../api/configuration";
@@ -10,7 +11,7 @@ import type { HouseTemplateFitOut } from "../api/hausKonfiguration";
 import { checkText, STATUS_TONE } from "../configuration/format";
 import { formatNumber } from "../site/geo";
 import { euro } from "./preis";
-import { label } from "./texte";
+import { grad, label } from "./texte";
 
 interface HausTypenProps {
   templates: readonly HouseTemplateFitOut[];
@@ -38,6 +39,13 @@ function Pruefungen({ title, checks, tone }: { title: string; checks: readonly C
   );
 }
 
+/** Dachform mit ihren Neigungen, z. B. „Mansarddach, 25° / 70°“ (E-HM-61). */
+function dach(facts: HouseTemplateFitOut["facts"], t: TFunction, lng: string): string {
+  const form = t(`configurator.types.roof.${facts.roof_form}`, { defaultValue: facts.roof_form });
+  if (facts.pitches_deg.length === 0) return form;
+  return `${form}, ${facts.pitches_deg.map((pitch) => grad(pitch, lng)).join(" / ")}`;
+}
+
 export function HausTypen({ templates, selectedSlug, onSelect, pending = false, failedSlug = null }: HausTypenProps) {
   const { t, i18n } = useTranslation();
   const lng = i18n.language;
@@ -53,7 +61,7 @@ export function HausTypen({ templates, selectedSlug, onSelect, pending = false, 
           [t("houseConfigurator.fact.footprint"), `${formatNumber(facts.footprint_m2, lng, 0)} m²`],
           [t("houseConfigurator.fact.floorArea"), `${formatNumber(facts.floor_area_m2, lng, 0)} m²`],
           [t("houseConfigurator.fact.size"), `${formatNumber(facts.width_m, lng, 2)} × ${formatNumber(facts.depth_m, lng, 2)} m`],
-          [t("houseConfigurator.fact.roof"), t(`configurator.types.roof.${facts.roof_form}`, { defaultValue: facts.roof_form })],
+          [t("houseConfigurator.fact.roof"), dach(facts, t, lng)],
           [t("houseConfigurator.fact.height"), `${formatNumber(facts.height_m, lng, 2)} m`],
           [t("houseConfigurator.fact.storeys"), facts.storeys],
         ];

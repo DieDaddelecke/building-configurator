@@ -59,7 +59,7 @@ const P = (x: number, y: number) => ({ x, y });
 
 /** 10 × 8 m, gegen den Uhrzeigersinn: Wohnen links mit Zone, rechts ein Raum ohne Zone; Fenster Süd, Tür Nord. */
 const template = (overrides: Partial<HouseTemplate> = {}): HouseTemplate => ({
-  schema_version: 1,
+  schema_version: 2,
   slug: "demo",
   name: { fr: "Maison test", de: "Testhaus" },
   source_ifc: null,
@@ -106,7 +106,13 @@ const template = (overrides: Partial<HouseTemplate> = {}): HouseTemplate => ({
     { id: "slab-ground", level_id: "rdc", kind: "ground", thickness: 0.2, source_ifc_guid: null },
     { id: "slab-roof", level_id: "rdc", kind: "roof", thickness: 0.1, source_ifc_guid: null },
   ],
-  roof: { bearing_height: 2.5, parapet_height: 0.4, eave_overhang: 0, verge_overhang: 0 },
+  roof: {
+    bearing_height: 2.5,
+    parapet_height: 0.4,
+    eave_overhang: 0,
+    verge_overhang: 0,
+    design: { form: "flat", pitch_deg: null, upper_pitch_deg: null, break_height: null, rotation: 0 },
+  },
   rooms: [
     {
       id: "room-living",
@@ -240,6 +246,7 @@ const version = (overrides: Partial<HouseTemplateVersionOut> = {}): HouseTemplat
     garage_door: null,
     defaults: {},
     element_defaults: {},
+    roof: null,
   },
   template: template(),
   report: report(OPEN),
@@ -416,6 +423,39 @@ describe("Hausmodell im Büro", () => {
       await userEvent.click(save);
       expect(state.save).toHaveBeenCalledWith(
         expect.objectContaining({ room_types: { "room-x": "kitchen" }, facade_roles: { "seg-s": "street" } }),
+      );
+    });
+
+    it("legt ein nicht erkanntes Dach im Entwurf fest (E-HM-65)", async () => {
+      staff("catalog_admin");
+      const roofOpen = finding("roof_form_not_recognized", "open", { params: { reason: "edges_differ", slopes: "45°" } });
+      state.version = version({ report: report([roofOpen]) });
+      renderAt("/buero/katalog/hausmodell/demo/2");
+      expect(
+        within(screen.getByRole("list", { name: "Befunde" })).getByText(
+          "Die Dachform wurde nicht erkannt: keine Dachform hat dieselben Trauf- und Giebelkanten. Geneigte Flächen: 45°. Bitte das Dach im Entwurf festlegen.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("dach-entwurf")).toHaveTextContent("Dach im Entwurf: Flachdach, Attika 0,40 m, Unterkante Dachdecke 2,50 m");
+
+      await userEvent.click(screen.getByRole("radio", { name: "Geneigtes Dach festlegen" }));
+      await userEvent.selectOptions(screen.getByRole("combobox", { name: "Dachform" }), "mansard");
+      const pitch = screen.getByRole("spinbutton", { name: "Neigung der Traufflächen (°)" });
+      await userEvent.clear(pitch);
+      await userEvent.type(pitch, "70");
+      expect(screen.getByRole("spinbutton", { name: "Knickhöhe (m)" })).toHaveValue(2.2);
+      await userEvent.selectOptions(screen.getByRole("combobox", { name: "Drehung" }), "90");
+      await userEvent.click(screen.getByRole("button", { name: "Angaben speichern" }));
+      expect(state.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          roof: {
+            bearing_height: 2.5,
+            parapet_height: 0,
+            eave_overhang: 0.5,
+            verge_overhang: 0.3,
+            design: { form: "mansard", pitch_deg: 70, upper_pitch_deg: 25, break_height: 2.2, rotation: 90 },
+          },
+        }),
       );
     });
 

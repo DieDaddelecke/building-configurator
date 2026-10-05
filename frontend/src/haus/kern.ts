@@ -5,14 +5,17 @@
  */
 
 import {
+  activeLine,
   DOMAIN_VERSION,
   evaluate,
+  roofPitchRange,
   type HouseCandidate,
   type HouseCatalog,
   type HouseConfiguration,
   type HouseEvaluation,
   type HouseSlotSelection,
   type HouseTemplate,
+  type PitchRange,
 } from "@emprise/domain";
 
 import type { HouseDocumentsOut } from "../api/hausKonfiguration";
@@ -41,7 +44,70 @@ export function kandidaten(docs: Dokumente, configuration: HouseConfiguration, s
 
 /** Globaler Wert eines Slots in der Auswahl, sonst der Standard des Templates. */
 export function gewaehlt(docs: Dokumente, configuration: HouseConfiguration, slotId: string): string | null {
-  return configuration.selections[slotId]?.value?.option_value_id ?? docs.template.defaults[slotId] ?? null;
+  const value = configuration.selections[slotId]?.value;
+  return value?.type === "option" ? value.option_value_id : (docs.template.defaults[slotId] ?? null);
+}
+
+/** Wirksame Zahl eines Zahl-Slots (Neigung, Drehung des Dachs) nach der Auflösung; `null`, wenn er für die
+ * Dachform nicht gilt (E-HM-62). */
+export function zahl(evaluation: HouseEvaluation, slotId: string): number | null {
+  return evaluation.resolved.find((value) => value.slot_id === slotId)?.number ?? null;
+}
+
+/** Spanne der Neigung für den Regler; `null` beim Flachdach oder wenn sich die Auswahl nicht rechnen lässt. */
+export function neigung(docs: Dokumente, configuration: HouseConfiguration): PitchRange | null {
+  try {
+    return roofPitchRange({ ...docs, configuration });
+  } catch {
+    return null;
+  }
+}
+
+function ohne(configuration: HouseConfiguration, slotId: string): HouseConfiguration {
+  const selections = { ...configuration.selections };
+  delete selections[slotId];
+  return { selections };
+}
+
+/** Auswahl mit einer Zahl; `null` oder der Standard der Dachform entfernen die Wahl (wie bei `mitWert`). */
+export function mitZahl(docs: Dokumente, configuration: HouseConfiguration, slotId: string, value: number | null): HouseConfiguration {
+  const rest = ohne(configuration, slotId);
+  if (value === null) return rest;
+  let standard: number | null = null;
+  try {
+    standard = zahl(rechne(docs, rest), slotId);
+  } catch {
+    // Lässt sich die Auswahl ohne die Zahl nicht rechnen, bleibt die Zahl gewählt
+  }
+  if (standard !== null && Math.abs(standard - value) < 1e-9) return rest;
+  return { selections: { ...rest.selections, [slotId]: { value: { type: "number", value }, room_overrides: {}, element_overrides: {} } } };
+}
+
+/** Aktive Ausstattungslinie (Ergänzung 6, E-HM-14) oder `null`. */
+export function linie(docs: Dokumente, configuration: HouseConfiguration): string | null {
+  return activeLine({ ...docs, configuration });
+}
+
+/** Auswahl mit den Werten einer Linie; die Linie selbst wird nicht gespeichert. Werte gleich dem Standard des
+ * Templates entfallen wie bei `mitWert`; Zahlen bleiben gesetzt, weil die Linie sie ausdrücklich verlangt. */
+export function mitLinie(docs: Dokumente, configuration: HouseConfiguration, lineId: string): HouseConfiguration {
+  const line = docs.catalog.lines.find((l) => l.id === lineId);
+  if (!line) return configuration;
+  let next = configuration;
+  for (const [slotId, value] of Object.entries(line.presets)) {
+    if (value.type === "option") {
+      next = mitWert(docs, next, slotId, value.option_value_id);
+    } else {
+      const current = next.selections[slotId];
+      next = {
+        selections: {
+          ...next.selections,
+          [slotId]: { value, room_overrides: current?.room_overrides ?? {}, element_overrides: current?.element_overrides ?? {} },
+        },
+      };
+    }
+  }
+  return next;
 }
 
 /** Auswahl mit neuem globalem Wert; der Standard des Templates entfernt die Wahl (nichts bleibt still gesetzt). */

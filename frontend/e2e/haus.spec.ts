@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-// Hausmodell HM4, Kundenweg bis Speichern (docs/PLAN_HAUSMODELL.md 6): Demohaus auf AD 65 wählen, Fassade ändern,
+// Hausmodell HM4/HM5, Kundenweg bis Speichern (docs/PLAN_HAUSMODELL.md 6): Demohaus auf AD 65 wählen, Fassade ändern,
 // speichern. Der Server rechnet denselben Preis wie der Kern in Chromium (`price_match`). Voraussetzungen wie in
-// rules.spec.ts, zusätzlich das Demohaus ohne IFC:
+// rules.spec.ts, zusätzlich die Demohäuser ohne IFC:
 //   docker compose cp packages/domain/seed/demo-house api:/tmp/demo-house
 //   docker compose exec -T -e PYTHONPATH=/tmp api python -m tests.e2e_seed_house /tmp/demo-house
 
@@ -41,6 +41,10 @@ test.describe.serial("Hausmodell: Kundenweg (HM4)", () => {
     const card = page.getByTestId("haustyp-demo_house");
     await expect(card.getByText("Auf Ihrem Grundstück möglich")).toBeVisible();
     await expect(card.getByTestId("ab-preis")).toHaveText(/^ab ca\. \d{1,3}(\.\d{3})+ €$/);
+    // HM5: das R+1 mit Satteldach steht als zweiter Typ zur Wahl, mit Geschossen und Neigung
+    const r1 = page.getByTestId("haustyp-demo_house_r1");
+    await expect(r1.getByText("R+1")).toBeVisible();
+    await expect(r1.getByText("Satteldach, 35°")).toBeVisible();
 
     await card.getByRole("button", { name: "Diesen Typ wählen" }).click();
     await expect(page.getByTestId("haus-name")).toHaveText("Demohaus");

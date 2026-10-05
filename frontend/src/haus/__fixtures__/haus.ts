@@ -1,12 +1,13 @@
 /**
- * Testdaten des Kundenwegs im Hausmodell (HM4): das Demohaus aus den Testdaten des Kerns, die gespeicherten
- * Auswertungen (`packages/domain/test/fixtures/demo-house/evaluations.json`) und Antworten der API dazu.
+ * Testdaten des Kundenwegs im Hausmodell (HM4, HM5): das Demohaus und das R+1 aus den Testdaten des Kerns, die
+ * gespeicherten Auswertungen (`packages/domain/test/fixtures/demo-house/evaluations.json`) und Antworten der API.
  */
 
 import type { HouseCatalog, HouseConfiguration, HouseTemplate } from "@emprise/domain";
 
 import catalogJson from "../../../../packages/domain/test/fixtures/demo-house/catalog.json";
 import evaluationsJson from "../../../../packages/domain/test/fixtures/demo-house/evaluations.json";
+import templateR1Json from "../../../../packages/domain/test/fixtures/demo-house/template-r1.json";
 import templateJson from "../../../../packages/domain/test/fixtures/demo-house/template.json";
 import type { HouseConfigurationOut, HouseDocumentsOut, HouseTemplatesOut } from "../../api/hausKonfiguration";
 import { CONFIGURATION } from "../../configuration/__fixtures__/konfiguration";
@@ -15,11 +16,16 @@ import type { Dokumente } from "../kern";
 export const template = templateJson as unknown as HouseTemplate;
 export const catalog = catalogJson as unknown as HouseCatalog;
 export const DOCS: Dokumente = { template, catalog };
+/** Dokumente je Haustyp der gespeicherten Auswertungen: das flache Demohaus und das R+1 mit Satteldach (HM5). */
+export const DOCS_BY_TEMPLATE: Record<string, Dokumente> = {
+  demo_house: DOCS,
+  demo_house_r1: { template: templateR1Json as unknown as HouseTemplate, catalog },
+};
 
 type Fall = keyof typeof evaluationsJson;
 export const EVALUATIONS = evaluationsJson as unknown as Record<
   Fall,
-  { configuration: HouseConfiguration; evaluation: import("@emprise/domain").HouseEvaluation }
+  { template: string; configuration: HouseConfiguration; evaluation: import("@emprise/domain").HouseEvaluation }
 >;
 
 export const DOCUMENTS: HouseDocumentsOut = {
@@ -43,6 +49,7 @@ export const FACTS: NonNullable<HouseConfigurationOut["facts"]> = {
   storeys: "R",
   roof_form: "flat",
   pitch_deg: null,
+  pitches_deg: [],
   height_m: 3.47,
   eave_height_m: 3.47,
   floor_area_m2: 98.6,
@@ -103,6 +110,7 @@ export const EMPTY: HouseConfigurationOut = {
   facts: null,
   evaluation: null,
   areas: null,
+  outbuildings: null,
   orientation: null,
   status: null,
   rule_results: [],
@@ -132,7 +140,7 @@ export const CHOSEN: HouseConfigurationOut = {
     },
   ],
   price: price(515000),
-  domain_version: "0.3.0",
+  domain_version: "0.4.0",
   updated_at: "2026-10-04T08:00:00Z",
 };
 

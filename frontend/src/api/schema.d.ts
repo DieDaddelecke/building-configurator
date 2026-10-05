@@ -557,7 +557,8 @@ export interface paths {
         get?: never;
         /**
          * Set Decisions
-         * @description Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards).
+         * @description Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards, Dach). Ein
+         *     geneigtes Dach aus dem IFC vergleicht der Import mit dem Dach des Kerns (`engine`).
          */
         put: operations["set_decisions_api_v1_admin_house_templates__slug__versions__version__decisions_put"];
         post?: never;
@@ -3865,13 +3866,15 @@ export interface components {
         };
         /**
          * HouseCandidate
-         * @description Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`).
+         * @description Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`); bei der Drehung des Dachs je Zahl.
          */
         HouseCandidate: {
             /** Available Count */
             available_count: number;
+            /** Number */
+            number: number | null;
             /** Option Value Id */
-            option_value_id: string;
+            option_value_id: string | null;
             /** Price Delta */
             price_delta: number;
             /** Rule Results */
@@ -3892,11 +3895,45 @@ export interface components {
             /** Slot Id */
             slot_id: string;
         };
+        /** HouseCarportFacts */
+        HouseCarportFacts: {
+            /** Depth */
+            depth: number;
+            /** Height */
+            height: number;
+            /** Spaces */
+            spaces: number;
+            /** Type Id */
+            type_id: string;
+            /** Width */
+            width: number;
+        };
+        /**
+         * HouseCarportType
+         * @description Carport (Ergänzung 7): Maße für Preis und Prüfung; Lage und Zufahrt rechnet Python.
+         */
+        HouseCarportType: {
+            /** Depth */
+            depth: number;
+            /** Height */
+            height: number;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+            /** Spaces */
+            spaces: number;
+            /** Width */
+            width: number;
+        };
         /**
          * HouseCatalog
          * @description Katalogversion eines Markts: Bauteile, Slots, Werte, Regeln und Preise in einem Dokument (E-HM-8).
          */
         HouseCatalog: {
+            /** Carport Types */
+            carport_types: components["schemas"]["HouseCarportType"][];
             /**
              * Currency
              * @constant
@@ -3906,6 +3943,8 @@ export interface components {
             door_types: components["schemas"]["HouseDoorType"][];
             /** Ignored Zone Categories */
             ignored_zone_categories: string[];
+            /** Lines */
+            lines: components["schemas"]["HouseLine"][];
             /**
              * Market
              * @constant
@@ -3920,6 +3959,8 @@ export interface components {
             price_entries: components["schemas"]["HousePriceEntry"][];
             /** Pricing Rules */
             pricing_rules: components["schemas"]["HousePricingRule"][];
+            /** Roof Shapes */
+            roof_shapes: components["schemas"]["HouseRoofShape"][];
             /** Roof Types */
             roof_types: components["schemas"]["HouseRoofType"][];
             /** Room Types */
@@ -3930,9 +3971,11 @@ export interface components {
              * Schema Version
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** Slots */
             slots: components["schemas"]["HouseSlot"][];
+            /** Terrace Types */
+            terrace_types: components["schemas"]["HouseTerraceType"][];
             /** Vat Rate */
             vat_rate: number;
             /** Wall Layers */
@@ -4108,6 +4151,7 @@ export interface components {
             /** Notices */
             notices: string[];
             orientation: components["schemas"]["OrientationOut"] | null;
+            outbuildings: components["schemas"]["OutbuildingsOut"] | null;
             placement: components["schemas"]["PlacementOut"] | null;
             price: components["schemas"]["HousePriceOut"] | null;
             /** Price Match */
@@ -4187,6 +4231,7 @@ export interface components {
             /** Notices */
             notices: string[];
             orientation: components["schemas"]["OrientationOut"] | null;
+            outbuildings: components["schemas"]["OutbuildingsOut"] | null;
             placement: components["schemas"]["PlacementOut"] | null;
             price: components["schemas"]["HousePriceOut"] | null;
             /** Price Match */
@@ -4291,6 +4336,7 @@ export interface components {
             /** Ground Floor Offset */
             ground_floor_offset: number | null;
             name: components["schemas"]["HouseText"] | null;
+            roof: components["schemas"]["HouseRoofPlacement"] | null;
             /** Room Types */
             room_types: {
                 [key: string]: string;
@@ -4381,6 +4427,7 @@ export interface components {
          * @description Hausbeschreibung für die Prüfung auf dem Grundstück in Python (3.1, E-HM-4); ersetzt `HouseType`.
          */
         HouseFacts: {
+            carport: components["schemas"]["HouseCarportFacts"] | null;
             /** Eave Height */
             eave_height: number;
             entrance: components["schemas"]["HouseEdgePosition"] | null;
@@ -4400,22 +4447,23 @@ export interface components {
             ground_floor_offset: number;
             /** Projection Outline */
             projection_outline: components["schemas"]["HousePoint"][];
-            /** Ridge Direction */
-            ridge_direction: ("x" | "y") | null;
-            /**
-             * Roof Form
-             * @enum {string}
-             */
-            roof_form: "gable" | "hip" | "mono_pitch" | "flat" | "mansard" | "other";
+            /** Ridge Azimuth Deg */
+            ridge_azimuth_deg: number | null;
             /**
              * Roof Material Class
              * @enum {string}
              */
             roof_material_class: "render" | "wood" | "brick" | "stone" | "concrete" | "metal" | "glass" | "slate" | "clay_tile" | "zinc" | "composite" | "vegetation" | "other";
+            /**
+             * Roof Shape
+             * @enum {string}
+             */
+            roof_shape: "flat" | "mono_pitch" | "gable" | "hip" | "half_hip" | "mansard" | "mansard_gable";
             /** Roof Slopes Deg */
             roof_slopes_deg: number[];
             /** Storeys */
             storeys: number;
+            terrace: components["schemas"]["HouseTerraceFacts"] | null;
             /** Top Height */
             top_height: number;
         };
@@ -4444,6 +4492,8 @@ export interface components {
             height_m: number;
             /** Pitch Deg */
             pitch_deg: number | null;
+            /** Pitches Deg */
+            pitches_deg: number[];
             /** Projection Local */
             projection_local: number[][];
             /** Roof Form */
@@ -4613,6 +4663,24 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * HouseLine
+         * @description Ausstattungslinie (Ergänzung 6, E-HM-14): setzt mehrere Slots auf ausdrückliche Wahl des Kunden auf
+         *     einmal. Sie wird nicht gespeichert und hat keinen eigenen Preis; aktiv ist sie, solange alle ihre Werte
+         *     gelten.
+         */
+        HouseLine: {
+            description: components["schemas"]["HouseText"] | null;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Presets */
+            presets: {
+                [key: string]: components["schemas"]["HouseSlotValue"];
+            };
+            /** Sort Order */
+            sort_order: number;
+        };
         HouseLiteral: string | number | boolean | null;
         /** HouseLogicExpr */
         HouseLogicExpr: {
@@ -4666,10 +4734,16 @@ export interface components {
          * @description Ein Wert weist immer einen vollständigen Typ zu, nie eine Ergänzung (P 8.1).
          */
         HouseOptionAssigns: {
+            /** Carport Type Id */
+            carport_type_id: string | null;
             /** Door Type Id */
             door_type_id: string | null;
+            /** Roof Shape Id */
+            roof_shape_id: string | null;
             /** Roof Type Id */
             roof_type_id: string | null;
+            /** Terrace Type Id */
+            terrace_type_id: string | null;
             /** Wall Profile Id */
             wall_profile_id: string | null;
             /** Window Type Id */
@@ -4707,6 +4781,15 @@ export interface components {
             x: number;
             /** Y */
             y: number;
+        };
+        /** HousePoint3 */
+        HousePoint3: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Z */
+            z: number;
         };
         /**
          * HousePrice
@@ -4758,7 +4841,7 @@ export interface components {
              * Target Kind
              * @enum {string}
              */
-            target_kind: "wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service";
+            target_kind: "wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service" | "terrace_type" | "carport_type";
             /**
              * Unit
              * @enum {string}
@@ -4824,7 +4907,7 @@ export interface components {
         HousePricingRule: {
             applies_to: components["schemas"]["HouseOptionCondition"] | null;
             /** By Target */
-            by_target: ("wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service") | null;
+            by_target: ("wall_layer" | "window_type" | "door_type" | "roof_type" | "template" | "slot_option" | "service" | "terrace_type" | "carport_type") | null;
             /** Entry Id */
             entry_id: string | null;
             /** Id */
@@ -4867,16 +4950,22 @@ export interface components {
         };
         /**
          * HouseResolutionNote
-         * @description Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert.
+         * @description Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert. `default_replaced`: der
+         *     Standard ist nicht verfügbar, es gilt der erste verfügbare Wert (E-HM-60). `out_of_range`: die Zahl liegt
+         *     außerhalb der Spanne. `roof_kind_mismatch`: der Dachaufbau passt nicht zur wirksamen Dachform (flach oder
+         *     geneigt). `roof_not_constructible`: Form, Neigung oder Drehung lässt sich auf dem Grundriss nicht erzeugen
+         *     (Ergänzung 4).
          */
         HouseResolutionNote: {
+            /** Applied Number */
+            applied_number: number | null;
             /** Applied Value Id */
-            applied_value_id: string;
+            applied_value_id: string | null;
             /**
              * Code
              * @enum {string}
              */
-            code: "unavailable" | "room_override_tie";
+            code: "unavailable" | "room_override_tie" | "out_of_range" | "roof_kind_mismatch" | "roof_not_constructible" | "default_replaced";
             /** Element Id */
             element_id: string;
             reason: components["schemas"]["HouseText"] | null;
@@ -4884,20 +4973,27 @@ export interface components {
              * Skipped Level
              * @enum {string}
              */
-            skipped_level: "element" | "room" | "global";
+            skipped_level: "element" | "room" | "global" | "default";
+            /** Skipped Number */
+            skipped_number: number | null;
             /** Skipped Value Ids */
             skipped_value_ids: string[];
             /** Slot Id */
             slot_id: string;
         };
-        /** HouseResolvedValue */
+        /**
+         * HouseResolvedValue
+         * @description Wirksamer Wert: ein Wert des Katalogs oder bei Parameter-Slots eine Zahl.
+         */
         HouseResolvedValue: {
             /** Available */
             available: boolean;
             /** Element Id */
             element_id: string;
+            /** Number */
+            number: number | null;
             /** Option Value Id */
-            option_value_id: string;
+            option_value_id: string | null;
             /** Slot Id */
             slot_id: string;
             /**
@@ -4911,6 +5007,57 @@ export interface components {
             /** Material Id */
             material_id: string;
         };
+        /**
+         * HouseRoofDesign
+         * @description Dachform mit Parametern (Ergänzung 4, 11): aus dem IFC oder im Entwurf vom Büro gesetzt; Voreinstellung
+         *     der Dachform im Konfigurator.
+         */
+        HouseRoofDesign: {
+            /** Break Height */
+            break_height: number | null;
+            /**
+             * Form
+             * @enum {string}
+             */
+            form: "flat" | "mono_pitch" | "gable" | "hip" | "half_hip" | "mansard" | "mansard_gable";
+            /** Pitch Deg */
+            pitch_deg: number | null;
+            /**
+             * Rotation
+             * @enum {integer}
+             */
+            rotation: 0 | 90 | 180 | 270;
+            /** Upper Pitch Deg */
+            upper_pitch_deg: number | null;
+        };
+        /** HouseRoofFace */
+        HouseRoofFace: {
+            /** Contour Edges */
+            contour_edges: number[];
+            /** Pitch Deg */
+            pitch_deg: number;
+            /** Polygon */
+            polygon: components["schemas"]["HousePoint3"][];
+            /** Segment */
+            segment: number;
+        };
+        /** HouseRoofGeometry */
+        HouseRoofGeometry: {
+            /** Eave Height */
+            eave_height: number;
+            /** Edge Kinds */
+            edge_kinds: ("eave" | "gable")[];
+            /** Faces */
+            faces: components["schemas"]["HouseRoofFace"][];
+            /** Lines */
+            lines: components["schemas"]["HouseRoofLine"][];
+            /** Outline */
+            outline: components["schemas"]["HousePoint"][];
+            /** Ridge Azimuth Deg */
+            ridge_azimuth_deg: number | null;
+            /** Top Height */
+            top_height: number;
+        };
         /** HouseRoofLayer */
         HouseRoofLayer: {
             /** Material Id */
@@ -4918,17 +5065,88 @@ export interface components {
             /** Thickness */
             thickness: number;
         };
+        /** HouseRoofLine */
+        HouseRoofLine: {
+            a: components["schemas"]["HousePoint3"];
+            b: components["schemas"]["HousePoint3"];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ridge" | "hip" | "valley" | "eave" | "verge" | "break";
+        };
+        /** HouseRoofPitch */
+        HouseRoofPitch: {
+            /** Default Deg */
+            default_deg: number;
+            /** Max Deg */
+            max_deg: number;
+            /** Min Deg */
+            min_deg: number;
+        };
         /**
          * HouseRoofPlacement
-         * @description Platzhalter-Dach (3.6): nur Lage und Maße, Form und Aufbau wählt der Konfigurator (E-HM-10).
+         * @description Dach des Templates (3.6, E-HM-10): Lage, Maße und Form aus dem IFC; Form und Aufbau wählt der
+         *     Konfigurator.
          */
         HouseRoofPlacement: {
             /** Bearing Height */
             bearing_height: number;
+            design: components["schemas"]["HouseRoofDesign"];
             /** Eave Overhang */
             eave_overhang: number;
             /** Parapet Height */
             parapet_height: number;
+            /** Verge Overhang */
+            verge_overhang: number;
+        };
+        /**
+         * HouseRoofRequest
+         * @description Geneigtes Dach aus Form und Parametern; der IFC-Import vergleicht es mit dem Dach aus Archicad.
+         */
+        HouseRoofRequest: {
+            /** Bearing Height */
+            bearing_height: number;
+            /** Contour */
+            contour: components["schemas"]["HousePoint"][];
+            design: components["schemas"]["HouseRoofDesign"];
+            /** Eave Overhang */
+            eave_overhang: number;
+            /** Thickness */
+            thickness: number;
+            /** Verge Overhang */
+            verge_overhang: number;
+            /** Wall Thickness */
+            wall_thickness: number;
+        };
+        /**
+         * HouseRoofShape
+         * @description Dachform des Katalogs (Ergänzung 4): Voreinstellung und Spanne der Neigung, Knick- und Krüppelhöhe.
+         *     Ist die Form die des Templates, gelten die Werte des Templates. Überstände, Dachdecke und Attika gelten
+         *     nur, wenn das Template die andere Dachart hat (flach ↔ geneigt).
+         */
+        HouseRoofShape: {
+            /** Break Height */
+            break_height: number | null;
+            /** Eave Overhang */
+            eave_overhang: number;
+            /**
+             * Form
+             * @enum {string}
+             */
+            form: "flat" | "mono_pitch" | "gable" | "hip" | "half_hip" | "mansard" | "mansard_gable";
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Parapet Height */
+            parapet_height: number | null;
+            pitch: components["schemas"]["HouseRoofPitch"] | null;
+            /** Render Key */
+            render_key: string;
+            /** Slab Thickness */
+            slab_thickness: number | null;
+            /** Upper Pitch Deg */
+            upper_pitch_deg: number | null;
             /** Verge Overhang */
             verge_overhang: number;
         };
@@ -5051,7 +5269,7 @@ export interface components {
              * Element Kind
              * @enum {string}
              */
-            element_kind: "envelope_segment" | "interior_wall" | "opening" | "roof" | "room" | "building";
+            element_kind: "envelope_segment" | "interior_wall" | "opening" | "roof" | "room" | "building" | "site";
             where: components["schemas"]["HouseExpr"];
         };
         /**
@@ -5096,6 +5314,8 @@ export interface components {
             /** Id */
             id: string;
             name: components["schemas"]["HouseText"];
+            /** Parameter */
+            parameter: ("roof_pitch" | "roof_rotation") | null;
             /** Parent Slot Id */
             parent_slot_id: string | null;
             /** Sort Order */
@@ -5103,9 +5323,9 @@ export interface components {
             target: components["schemas"]["HouseSelector"];
             /**
              * Value Type
-             * @constant
+             * @enum {string}
              */
-            value_type: "single";
+            value_type: "single" | "number";
         };
         /** HouseSlotChoiceOut */
         HouseSlotChoiceOut: {
@@ -5133,6 +5353,29 @@ export interface components {
             /** Rules */
             rules: boolean;
         };
+        /**
+         * HouseSlotNumber
+         * @description Zahl eines Parameter-Slots, z. B. Dachneigung in Grad (E-HM-62).
+         */
+        HouseSlotNumber: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "number";
+            /** Value */
+            value: number;
+        };
+        /** HouseSlotOption */
+        HouseSlotOption: {
+            /** Option Value Id */
+            option_value_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "option";
+        };
         /** HouseSlotSelection */
         HouseSlotSelection: {
             /** Element Overrides */
@@ -5145,16 +5388,7 @@ export interface components {
             };
             value: components["schemas"]["HouseSlotValue"] | null;
         };
-        /** HouseSlotValue */
-        HouseSlotValue: {
-            /** Option Value Id */
-            option_value_id: string;
-            /**
-             * Type
-             * @constant
-             */
-            type: "option";
-        };
+        HouseSlotValue: components["schemas"]["HouseSlotOption"] | components["schemas"]["HouseSlotNumber"];
         /** HouseSourceIfc */
         HouseSourceIfc: {
             /** File Name */
@@ -5182,6 +5416,8 @@ export interface components {
         /**
          * HouseTemplate
          * @description Haustyp in einer Version, unveränderlich nach der Veröffentlichung (P 5.1, L4). Keine Preise.
+         *
+         *     Mehrere Geschosse haben dieselbe Bezugskontur (E-HM-63); das Dach liegt über dem obersten.
          */
         HouseTemplate: {
             /** Defaults */
@@ -5216,7 +5452,7 @@ export interface components {
              * Schema Version
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** Slabs */
             slabs: components["schemas"]["HouseSlab"][];
             /** Slug */
@@ -5369,6 +5605,36 @@ export interface components {
             site_revision: number;
             /** Templates */
             templates: components["schemas"]["HouseTemplateFitOut"][];
+        };
+        /** HouseTerraceFacts */
+        HouseTerraceFacts: {
+            /** Depth */
+            depth: number;
+            /** Height Above Terrain */
+            height_above_terrain: number;
+            /** Sealing Factor */
+            sealing_factor: number;
+            /** Type Id */
+            type_id: string;
+            /** Width */
+            width: number | null;
+        };
+        /**
+         * HouseTerraceType
+         * @description Terrasse (Ergänzung 7): an der längsten Gartenkante, so breit wie diese; die Lage rechnet Python.
+         */
+        HouseTerraceType: {
+            /** Depth */
+            depth: number;
+            /** Height Above Terrain */
+            height_above_terrain: number;
+            /** Id */
+            id: string;
+            name: components["schemas"]["HouseText"];
+            /** Render Key */
+            render_key: string;
+            /** Sealing Factor */
+            sealing_factor: number;
         };
         /**
          * HouseText

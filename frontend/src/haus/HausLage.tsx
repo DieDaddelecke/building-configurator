@@ -1,5 +1,6 @@
 /**
- * Lage des Hauses (HM4): der gemeinsame Lageplan mit den Daten des Hausmodells. Eine Lage mit Verstoß wird
+ * Lage des Hauses (HM4): der gemeinsame Lageplan mit den Daten des Hausmodells, dazu Terrasse, Carport und Zufahrt,
+ * wie der Server sie gesetzt hat (Ergänzung 7, HM5). Eine Lage mit Verstoß wird
  * gespeichert und als Abweichung ausgewiesen (E-HM-6); gibt es eine zulässige Lage in der Nähe, lässt sie sich
  * übernehmen (Ergänzung 9). Gespeichert wird über die Seite, damit alle Änderungen nacheinander laufen.
  * Die Seite gibt `key={revision}` mit: Ein neuer Stand vom Server ersetzt den Entwurf des Plans.
@@ -12,6 +13,7 @@ import type { EnvelopeOut } from "../api/envelope";
 import { useHousePlacementArea, useHousePresets, type HouseConfigurationOut } from "../api/hausKonfiguration";
 import type { SiteOut } from "../api/site";
 import { Lageplan, type Lage } from "../configuration/Lageplan";
+import { Nebenbauten } from "../configuration/Nebenbauten";
 import { label } from "./texte";
 
 interface HausLageProps {
@@ -54,6 +56,7 @@ export function HausLage({ projectId, site, current, envelope, pending, problem,
       onPlace={onPlace}
       onBoundary={onBoundary}
       names={names}
+      overlay={(size) => <Nebenbauten outbuildings={current.outbuildings} size={size} />}
       meldung={
         suggestion && !pending ? (
           <span className="flex flex-col gap-2 mt-2">

@@ -35,7 +35,7 @@ import { DOMAIN_VERSION, dokumente, gleich, rechne, type Dokumente } from "../..
 import { kundenpreis } from "../../haus/preis";
 import { Preisleiste, type Aufpreis } from "../../haus/Preisleiste";
 import { useSpeichern, type Fehler } from "../../haus/speichern";
-import { label } from "../../haus/texte";
+import { grad, label } from "../../haus/texte";
 
 function fehlerText(fehler: Fehler | null, t: TFunction): string | null {
   if (!fehler || fehler.art === "typ") return null;
@@ -65,9 +65,11 @@ function aufpreiseMitText(
     .sort(([a], [b]) => order(a) - order(b))
     .map(([slot, betrag]) => {
       const definition = slots.find((s) => s.id === slot);
-      const valueId = configuration.selections[slot]?.value?.option_value_id;
-      const option = docs?.catalog.option_values.find((o) => o.id === valueId);
-      const text = definition ? `${label(definition.name, lng)}${option ? ` – ${label(option.name, lng)}` : ""}` : slot;
+      const value = configuration.selections[slot]?.value;
+      const option = value?.type === "option" ? docs?.catalog.option_values.find((o) => o.id === value.option_value_id) : undefined;
+      // Neigung und Drehung des Dachs sind Zahlen (E-HM-62)
+      const wert = option ? label(option.name, lng) : value?.type === "number" ? grad(value.value, lng) : null;
+      const text = definition ? `${label(definition.name, lng)}${wert ? ` – ${wert}` : ""}` : slot;
       return { slot, text, betrag };
     });
 }

@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import type { HouseConfigurationOut } from "../api/hausKonfiguration";
 import { checkText } from "../configuration/format";
 import type { Dokumente } from "./kern";
-import { label } from "./texte";
+import { grad, label } from "./texte";
 
 type Gruppe = "block" | "deviation" | "warning" | "info";
 const GRUPPEN: readonly Gruppe[] = ["block", "deviation", "warning", "info"];
@@ -25,19 +25,21 @@ function regelText(result: Regel, t: TFunction, lng: string): string {
   return result.message ? label(result.message, lng) : t(`houseConfigurator.rule.${result.code}`, { defaultValue: result.code });
 }
 
-/** Notizen je Slot, Wert und angewandtem Wert zusammengefasst: „Fenster: … gilt für 3 Elemente nicht“. */
+/** Notizen je Slot, Wert und angewandtem Wert zusammengefasst: „Fenster: … gilt für 3 Elemente nicht“. Bei
+ * Neigung und Drehung des Dachs stehen Zahlen statt Werten (E-HM-62). */
 function notizen(notes: readonly Notiz[], docs: Dokumente | null, t: TFunction, lng: string): string[] {
   const name = (id: string) => {
     const option = docs?.catalog.option_values.find((o) => o.id === id);
     return option ? label(option.name, lng) : id;
   };
+  const zahl = (value: number | null) => (value === null ? "–" : grad(value, lng));
   const slotName = (id: string) => {
     const slot = docs?.catalog.slots.find((s) => s.id === id);
     return slot ? label(slot.name, lng) : id;
   };
   const groups = new Map<string, { note: Notiz; count: number }>();
   for (const note of notes) {
-    const key = [note.code, note.slot_id, note.skipped_value_ids.join(","), note.applied_value_id].join("|");
+    const key = [note.code, note.slot_id, note.skipped_value_ids.join(","), note.skipped_number, note.applied_value_id, note.applied_number].join("|");
     const group = groups.get(key);
     if (group) group.count += 1;
     else groups.set(key, { note, count: 1 });
@@ -45,8 +47,8 @@ function notizen(notes: readonly Notiz[], docs: Dokumente | null, t: TFunction, 
   return [...groups.values()].map(({ note, count }) => {
     const text = t(`houseConfigurator.results.note.${note.code}`, {
       slot: slotName(note.slot_id),
-      value: note.skipped_value_ids.map(name).join(", "),
-      applied: name(note.applied_value_id),
+      value: note.skipped_value_ids.length > 0 ? note.skipped_value_ids.map(name).join(", ") : zahl(note.skipped_number),
+      applied: note.applied_value_id !== null ? name(note.applied_value_id) : zahl(note.applied_number),
       count,
     });
     return note.reason ? `${text} ${label(note.reason, lng)}` : text;

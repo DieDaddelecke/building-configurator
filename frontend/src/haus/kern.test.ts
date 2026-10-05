@@ -8,12 +8,12 @@ import { describe, expect, it } from "vitest";
 
 import de from "../i18n/de.json";
 import fr from "../i18n/fr.json";
-import { DOCS, EVALUATIONS } from "./__fixtures__/haus";
+import { DOCS, DOCS_BY_TEMPLATE, EVALUATIONS } from "./__fixtures__/haus";
 import { gewaehlt, gleich, kandidaten, mitWert, rechne } from "./kern";
 
 describe("Kern im Browser", () => {
-  it.each(Object.entries(EVALUATIONS))("rechnet %s wie die gespeicherte Auswertung", (_name, { configuration, evaluation }) => {
-    expect(JSON.parse(JSON.stringify(rechne(DOCS, configuration)))).toEqual(evaluation);
+  it.each(Object.entries(EVALUATIONS))("rechnet %s wie die gespeicherte Auswertung", (_name, { template, configuration, evaluation }) => {
+    expect(JSON.parse(JSON.stringify(rechne(DOCS_BY_TEMPLATE[template]!, configuration)))).toEqual(evaluation);
   });
 
   it("entfernt die Wahl, wenn der Standard gewählt wird", () => {

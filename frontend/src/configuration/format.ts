@@ -37,19 +37,28 @@ const MATERIAL_CHECKS = new Set(["facade_material", "roof_material"]);
 export function checkText(check: CheckOut, t: TFunction, lng: string, names: Record<string, string> = {}): string {
   const number = (value: string | number | null | undefined, digits = 2) =>
     typeof value === "number" ? formatNumber(value, lng, digits) : String(value ?? "");
-  const isForm = check.code === "roof_form" || check.code === "roof_flat";
+  const isForm = check.code === "roof_form" || check.code === "roof_form_open" || check.code === "roof_flat";
   const areas = AREA_CHECKS.has(check.code);
   const isMaterial = MATERIAL_CHECKS.has(check.code);
   const orientation = typeof check.params?.orientation === "string" ? check.params.orientation : "";
   const slug = typeof check.params?.subject === "string" ? check.params.subject : "";
   // Ein Carport oder eine Terrasse ohne Platz meldet dieselbe Ursache wie ein Haus, hat aber einen eigenen Text
   const key = check.code === "no_valid_position" && slug ? "no_valid_position_option" : check.code;
+  // Lesarten und Neigungen einer Mansarde oder eines Krüppelwalms (E-HM-61)
+  const readings = typeof check.params?.readings === "string" ? check.params.readings : "";
+  const pitches = typeof check.params?.pitches === "string" ? check.params.pitches : "";
   return t(`configurator.check.${key}`, {
     measured: isForm ? roofForms(check.measured, t) : isMaterial ? materials(check.measured, t) : number(check.measured, areas ? 1 : 2),
     limit: isForm ? roofForms(check.limit, t) : isMaterial ? materials(check.limit, t) : number(check.limit, areas ? 1 : 2),
     orientation: orientation ? t(`configurator.orientation.${orientation}`, { defaultValue: orientation }) : "",
     reason: check.reason ? t(`configurator.reason.${check.reason}`, { defaultValue: check.reason }) : "",
     subject: names[slug] ?? slug,
+    readings: roofForms(readings, t),
+    pitches: pitches
+      .split(",")
+      .filter(Boolean)
+      .map((pitch) => `${formatNumber(Number(pitch), lng, 1)}°`)
+      .join(" / "),
     defaultValue: check.code,
   });
 }

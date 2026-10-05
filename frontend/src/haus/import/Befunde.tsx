@@ -22,7 +22,8 @@ const PERCENT = new Set(["share", "deviation"]);
 
 const locale = (language: string) => (language === "de" ? "de-DE" : "fr-FR");
 
-/** Zahlen für den Text: Anteile in Prozent, sonst höchstens zwei Nachkommastellen; ohne Wert ein Strich. */
+/** Zahlen für den Text: Anteile in Prozent, sonst höchstens zwei Nachkommastellen; ohne Wert ein Strich. Die
+ * Neigungen eines Dachs (`slopes`) kommen als Text und bekommen das Dezimalkomma. */
 export function formatParams(params: HouseImportFinding["params"], language: string): Record<string, string> {
   const format = new Intl.NumberFormat(locale(language), { maximumFractionDigits: 2 });
   const percent = new Intl.NumberFormat(locale(language), { style: "percent", maximumFractionDigits: 1 });
@@ -35,9 +36,26 @@ export function formatParams(params: HouseImportFinding["params"], language: str
           : format.format(value)
         : value === null || value === ""
           ? "–"
-          : value,
+          : key === "slopes"
+            ? value.replace(/(\d)\.(\d)/g, "$1,$2")
+            : value,
     ]),
   );
+}
+
+/** Dach (E-HM-65): Grund der Erkennung, Ablehnung durch den Kern und gesetzte Form als Text. */
+function roofTexts(t: TFunction, raw: HouseImportFinding["params"], params: Record<string, string>): Record<string, string> {
+  const texts: Record<string, string> = {};
+  if (typeof raw.refusal === "string") {
+    texts.refusalText = t(`houseConfigurator.roofRefusal.${raw.refusal}`, { defaultValue: raw.refusal });
+  }
+  if (typeof raw.reason === "string") {
+    texts.reasonText = t(`house.roofReason.${raw.reason}`, { ...params, ...texts, defaultValue: raw.reason });
+  }
+  if (typeof raw.form === "string") {
+    texts.formText = t(`configurator.types.roof.${raw.form}`, { defaultValue: raw.form });
+  }
+  return texts;
 }
 
 export function findingText(t: TFunction, finding: HouseImportFinding, language: string): string {
@@ -47,7 +65,13 @@ export function findingText(t: TFunction, finding: HouseImportFinding, language:
     .map(([key, value]) => `${key} ${value}`)
     .join(", ");
   // Ein fehlender Wert bliebe sonst als Platzhalter im Text stehen
-  return t(`house.finding.${finding.code}`, { detail: "–", ...params, list, defaultValue: finding.code });
+  return t(`house.finding.${finding.code}`, {
+    detail: "–",
+    ...params,
+    ...roofTexts(t, finding.params, params),
+    list,
+    defaultValue: finding.code,
+  });
 }
 
 /** Elemente des Entwurfs zu einem Befund: das genannte Element, sonst alle aus derselben IFC-Kennung. */

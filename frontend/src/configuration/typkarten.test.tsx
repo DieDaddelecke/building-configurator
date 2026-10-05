@@ -68,6 +68,18 @@ describe("Texte der Prüfungen", () => {
     expect(checkText(check, i18n.t, "de")).toBe("Abstand zur Straße: 5,00 m (mindestens 5,00 m)");
   });
 
+  it("nennt bei offener Dachform die Lesarten und bei offener Neigung alle Neigungen", async () => {
+    await act(() => i18n.changeLanguage("de"));
+    const form = { ...ROOF_FORM_FAIL, code: "roof_form_open", status: "unknown" as const, binding: false };
+    expect(
+      checkText({ ...form, measured: "half_hip", limit: "gable", params: { readings: "gable,hip,other" } }, i18n.t, "de"),
+    ).toBe(
+      "Dachform: Krüppelwalmdach, nach dem PLU zu lesen als Satteldach, Walmdach, Andere Form (zulässig: Satteldach); offen, bis die Auslegung festgelegt ist",
+    );
+    const pitch = { ...form, code: "roof_pitch_open", measured: 70, limit: 45, params: { min: 20, max: 45, pitches: "25,70" } };
+    expect(checkText(pitch, i18n.t, "de")).toMatch(/^Dachneigungen: 25,0° \/ 70,0° \(Grenze 45,00°\);/);
+  });
+
   it("zeigt einen unbekannten Code als Code statt leer", () => {
     expect(checkText({ ...ROOF_FORM_FAIL, code: "neu_und_unbekannt" }, i18n.t, "de")).toBe("neu_und_unbekannt");
   });

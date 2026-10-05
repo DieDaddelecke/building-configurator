@@ -4,7 +4,8 @@
  * Angaben, Entwurf und Bericht bildet der Server daraus neu.
  */
 
-import type { ReactNode } from "react";
+import type { TFunction } from "i18next";
+import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import type {
@@ -72,6 +73,7 @@ export function Entwurf(props: EntwurfProps) {
       <Raeume {...props} />
       {props.template && <Fassade {...props} template={props.template} />}
       {props.template && <Tueren {...props} template={props.template} />}
+      {props.template && <Dach {...props} template={props.template} />}
       <Standards {...props} />
       <Oeffnungen {...props} />
     </div>
@@ -409,6 +411,180 @@ function Tueren({ report, saved, draft, onChange, editable, template }: EntwurfP
         {field("entrance")}
         {field("garage_door")}
       </div>
+    </Abschnitt>
+  );
+}
+
+type RoofPlacement = HouseTemplate["roof"];
+type RoofForm = RoofPlacement["design"]["form"];
+type PitchedForm = Exclude<RoofForm, "flat">;
+
+const ROOF_FORMS: readonly PitchedForm[] = ["mono_pitch", "gable", "hip", "half_hip", "mansard", "mansard_gable"];
+const ROTATIONS = [0, 90, 180, 270] as const;
+const TWO_PART = new Set<RoofForm>(["half_hip", "mansard", "mansard_gable"]);
+
+/** Startwerte beim Wechsel der Form, bis das Büro sie ändert; die Neigung bleibt, wenn es schon eine gibt. */
+const START: Record<PitchedForm, { pitch: number; upper: number | null; breakHeight: number | null }> = {
+  mono_pitch: { pitch: 15, upper: null, breakHeight: null },
+  gable: { pitch: 35, upper: null, breakHeight: null },
+  hip: { pitch: 30, upper: null, breakHeight: null },
+  half_hip: { pitch: 40, upper: 60, breakHeight: 2 },
+  mansard: { pitch: 70, upper: 25, breakHeight: 2.2 },
+  mansard_gable: { pitch: 70, upper: 25, breakHeight: 2.2 },
+};
+
+/** Das Dach des Entwurfs in einer Zeile: Form, Neigungen, Auflager, Überstände, Drehung. */
+export function roofSummary(roof: RoofPlacement, t: TFunction, lng: string): string {
+  const design = roof.design;
+  const form = t(`configurator.types.roof.${design.form}`, { defaultValue: design.form });
+  if (design.form === "flat") {
+    return t("house.draft.roofSummaryFlat", { form, parapet: number(roof.parapet_height, lng, 2), bearing: number(roof.bearing_height, lng, 2) });
+  }
+  const pitches = [design.pitch_deg, design.upper_pitch_deg]
+    .filter((p): p is number => p !== null)
+    .map((p) => `${number(p, lng, 1)}°`);
+  return t("house.draft.roofSummary", {
+    form,
+    pitches: pitches.join(" / "),
+    bearing: number(roof.bearing_height, lng, 2),
+    eave: number(roof.eave_overhang, lng, 2),
+    verge: number(roof.verge_overhang, lng, 2),
+    rotation: design.rotation,
+  });
+}
+
+/** Zahl mit eigenem Text während der Eingabe: Ein leeres Feld oder ein halber Wert ändert die Angabe nicht;
+ * Schranken prüft der Server beim Speichern. */
+function ZahlFeld({ label: text, value, step, disabled, onValue }: { label: string; value: number | null; step: string; disabled: boolean; onValue: (next: number) => void }) {
+  const [entwurf, setEntwurf] = useState<string | null>(null);
+  return (
+    <label className="flex flex-col gap-1 text-sm">
+      {text}
+      <input
+        className="field num"
+        type="number"
+        step={step}
+        value={entwurf ?? value ?? ""}
+        disabled={disabled}
+        onChange={(e) => {
+          setEntwurf(e.target.value);
+          const next = Number(e.target.value);
+          if (e.target.value !== "" && Number.isFinite(next)) onValue(next);
+        }}
+        onBlur={() => setEntwurf(null)}
+      />
+    </label>
+  );
+}
+
+/**
+ * Dach (E-HM-65): Der Import erkennt die Form aus der Dachgeometrie des IFC. Erkennt er sie nicht oder will das
+ * Büro ein anderes geneigtes Dach, legt es Form und Maße hier fest; ein Flachdach braucht die Dachdecke aus dem IFC.
+ */
+function Dach({ draft, onChange, editable, template }: EntwurfProps & { template: HouseTemplate }) {
+  const { t, i18n } = useTranslation();
+  const lng = i18n.language;
+  const roof = draft.roof;
+  const set = (next: RoofPlacement | null) => onChange({ ...draft, roof: next });
+  const start = (): RoofPlacement => {
+    if (template.roof.design.form !== "flat") return template.roof;
+    return {
+      bearing_height: template.roof.bearing_height,
+      parapet_height: 0,
+      eave_overhang: 0.5,
+      verge_overhang: 0.3,
+      design: { form: "gable", pitch_deg: START.gable.pitch, upper_pitch_deg: null, break_height: null, rotation: 0 },
+    };
+  };
+  const withForm = (current: RoofPlacement, form: PitchedForm): RoofPlacement => {
+    const two = TWO_PART.has(form);
+    const design = current.design;
+    return {
+      ...current,
+      design: {
+        form,
+        pitch_deg: design.pitch_deg ?? START[form].pitch,
+        upper_pitch_deg: two ? (design.upper_pitch_deg ?? START[form].upper) : null,
+        break_height: two ? (design.break_height ?? START[form].breakHeight) : null,
+        rotation: design.rotation,
+      },
+    };
+  };
+  // Leere oder ungültige Eingaben ändern nichts; Schranken prüft der Server beim Speichern
+  const field = (key: string, value: number | null, apply: (next: number) => RoofPlacement, step: string) => (
+    <ZahlFeld label={t(`house.draft.${key}`)} value={value} step={step} disabled={!editable} onValue={(next) => set(apply(next))} />
+  );
+  return (
+    <Abschnitt id="entwurf-dach" title={t("house.draft.roof")} intro={t("house.draft.roofIntro")}>
+      <p className="m-0 text-sm" data-testid="dach-entwurf">
+        {t("house.draft.roofCurrent")}: {roofSummary(template.roof, t, lng)}
+      </p>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <label className="flex gap-2 items-center">
+          <input type="radio" name="dach" checked={roof === null} disabled={!editable} onChange={() => set(null)} />
+          {t("house.draft.roofFromIfc")}
+        </label>
+        <label className="flex gap-2 items-center">
+          <input type="radio" name="dach" checked={roof !== null} disabled={!editable} onChange={() => set(roof ?? start())} />
+          {t("house.draft.roofSet")}
+        </label>
+      </div>
+      {roof !== null && (
+        <div className="grid gap-4 md:grid-cols-3 items-start">
+          <label className="flex flex-col gap-1 text-sm">
+            {t("house.draft.roofForm")}
+            <select
+              className="field"
+              value={roof.design.form}
+              disabled={!editable}
+              onChange={(e) => set(withForm(roof, e.target.value as PitchedForm))}
+            >
+              {ROOF_FORMS.map((form) => (
+                <option key={form} value={form}>
+                  {t(`configurator.types.roof.${form}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {field("roofPitch", roof.design.pitch_deg, (next) => ({ ...roof, design: { ...roof.design, pitch_deg: next } }), "0.5")}
+          <label className="flex flex-col gap-1 text-sm">
+            {t("house.draft.roofRotation")}
+            <select
+              className="field"
+              value={roof.design.rotation}
+              disabled={!editable}
+              onChange={(e) =>
+                set({ ...roof, design: { ...roof.design, rotation: Number(e.target.value) as RoofPlacement["design"]["rotation"] } })
+              }
+            >
+              {ROTATIONS.map((rotation) => (
+                <option key={rotation} value={rotation}>
+                  {rotation}°
+                </option>
+              ))}
+            </select>
+          </label>
+          {TWO_PART.has(roof.design.form) && (
+            <>
+              {field(
+                "roofUpperPitch",
+                roof.design.upper_pitch_deg,
+                (next) => ({ ...roof, design: { ...roof.design, upper_pitch_deg: next } }),
+                "0.5",
+              )}
+              {field(
+                roof.design.form === "half_hip" ? "roofHipHeight" : "roofBreakHeight",
+                roof.design.break_height,
+                (next) => ({ ...roof, design: { ...roof.design, break_height: next } }),
+                "0.01",
+              )}
+            </>
+          )}
+          {field("roofBearing", roof.bearing_height, (next) => ({ ...roof, bearing_height: next }), "0.01")}
+          {field("roofEave", roof.eave_overhang, (next) => ({ ...roof, eave_overhang: next }), "0.01")}
+          {field("roofVerge", roof.verge_overhang, (next) => ({ ...roof, verge_overhang: next }), "0.01")}
+        </div>
+      )}
     </Abschnitt>
   );
 }

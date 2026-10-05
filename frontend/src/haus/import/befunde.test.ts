@@ -50,4 +50,18 @@ describe("Texte der Importbefunde", () => {
     const unknown = { code: "neu_im_backend", severity: "info" as const, element_id: null, ifc_guid: null, params: {} };
     expect(findingText(t, unknown, "fr")).toBe("neu_im_backend");
   });
+
+  it("übersetzt Grund und Ablehnung eines nicht erkannten Dachs und die gesetzte Form (E-HM-65)", () => {
+    const t = i18n.getFixedT("de");
+    const finding = (params: Record<string, string | number>) =>
+      ({ code: "roof_form_not_recognized", severity: "open", element_id: null, ifc_guid: null, params }) as const;
+    expect(findingText(t, finding({ reason: "shape_differs", distance: 0.2, slopes: "37.5°" }), "de")).toBe(
+      "Die Dachform wurde nicht erkannt: die Form weicht um 0,2 m vom erzeugten Dach ab. Geneigte Flächen: 37,5°. Bitte das Dach im Entwurf festlegen.",
+    );
+    expect(findingText(t, finding({ reason: "not_constructible", refusal: "gables_adjacent", slopes: "45°" }), "de")).toContain(
+      "der Kern erzeugt diese Form nicht (zwei Giebel stießen aneinander)",
+    );
+    const set = { code: "roof_set_by_office", severity: "info", element_id: null, ifc_guid: null, params: { form: "half_hip" } } as const;
+    expect(findingText(t, set, "de")).toContain("(Krüppelwalmdach)");
+  });
 });
