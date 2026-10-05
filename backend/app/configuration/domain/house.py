@@ -24,12 +24,18 @@ class HouseType:
     projection: Polygon
     storeys: str
     roof_form: str
-    """`gable`, `hip`, `flat` oder `complex` (Plan H1)."""
+    """Begriff der PLU-Regeln (`gable`, `hip`, `mono_pitch`, `flat`, `mansard`, `other`), bei Typen aus H1
+    auch `complex`; bei einer Form, die der PLU nicht eindeutig benennt, die Form des Kerns (`half_hip`)."""
     ridge_height_m: float
     """Bei Flachdach die Oberkante der Attika (Plan H1 3.1)."""
     eave_height_m: float
     living_area_m2: float
     pitch_deg: float | None = None
+    """Neigung, wenn alle Dachflächen gleich geneigt sind."""
+    roof_form_readings: tuple[str, ...] = ()
+    """Begriffe der PLU-Regeln, die eine nicht eindeutig benannte Form sein kann (E-HM-61); sonst leer."""
+    roof_pitches_deg: tuple[float, ...] = ()
+    """Verschiedene Neigungen der Dachflächen (Mansarde, Krüppelwalm), wenn `pitch_deg` fehlt (E-HM-61)."""
     ridge_direction: str | None = None
     """`laengs` oder `quer`: First parallel zur langen oder zur kurzen Rechteckseite."""
     facade_roles: dict[int, str] = field(default_factory=dict)

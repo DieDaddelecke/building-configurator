@@ -4,11 +4,11 @@ Der Entwurf entsteht immer neu aus dem gelesenen Modell und den Angaben (`assemb
 nachvollziehbar, und eine Angabe lässt sich zurücknehmen, ohne die Datei erneut zu lesen.
 """
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.house.contract import FacadeRole, HouseText
+from app.house.contract import FacadeRole, HouseRoofPlacement, HouseText
 from app.house.domain.zones import SourceKind
 
 IGNORE = "ignore"
@@ -47,6 +47,24 @@ class HouseDraftDecisions(BaseModel):
     """Slot → Wert; ohne Angabe der häufigste erkannte Wert, sonst der erste des Slots."""
     element_defaults: dict[Key, dict[Key, Key]]
     """Öffnung → Slot → Wert, für Öffnungen ohne eindeutigen Typ im Katalog (E-HM-37)."""
+    roof: HouseRoofPlacement | None
+    """Geneigtes Dach statt des Dachs aus dem IFC, wenn der Import die Form nicht erkennt oder das Büro sie
+    anders will (E-HM-65). Ein Flachdach braucht die Dachdecke aus dem IFC und lässt sich nicht setzen."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _lift(cls, data: Any) -> Any:
+        """Angaben aus HM3 und HM4 kennen das Dach nicht."""
+        if isinstance(data, dict) and "roof" not in data:
+            return {**data, "roof": None}
+        return data
+
+    @field_validator("roof")
+    @classmethod
+    def _pitched(cls, value: HouseRoofPlacement | None) -> HouseRoofPlacement | None:
+        if value is not None and value.design.form == "flat":
+            raise ValueError("Im Entwurf nur ein geneigtes Dach")
+        return value
 
 
 EMPTY_DECISIONS = HouseDraftDecisions(
@@ -60,6 +78,7 @@ EMPTY_DECISIONS = HouseDraftDecisions(
     garage_door=None,
     defaults={},
     element_defaults={},
+    roof=None,
 )
 
 Severity = Literal["error", "open", "warning", "info"]
@@ -76,7 +95,6 @@ FINDING_CODES: tuple[str, ...] = (
     "import_failed",
     # Geschosse und Bauteile
     "no_storey",
-    "storeys_multiple",
     "roof_level",
     "element_without_storey",
     "geometry_failed",
@@ -108,14 +126,18 @@ FINDING_CODES: tuple[str, ...] = (
     "entrance_missing",
     "entrance_ambiguous",
     "garage_door_ambiguous",
-    # Bodenplatte und Dach
+    # Geschosse, Platten und Dach
+    "storey_contour_differs",
     "ground_slab_missing",
     "ground_slab_offset",
     "ground_slab_area_mismatch",
+    "floor_slab_missing",
+    "floor_slab_offset",
     "roof_missing",
     "roof_multiple",
     "roof_form_not_recognized",
     "roof_incomplete",
+    "roof_set_by_office",
     # Angaben und Entwurf
     "decision_invalid",
     "ground_floor_offset_invalid",

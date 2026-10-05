@@ -29,7 +29,13 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.house import engine
-from app.house.contract import HouseCatalog, HouseSourceIfc, HouseTemplate
+from app.house.contract import (
+    HouseCatalog,
+    HouseRoofGeometry,
+    HouseRoofRequest,
+    HouseSourceIfc,
+    HouseTemplate,
+)
 from app.house.domain.assemble import assemble
 from app.house.domain.draft import (
     EMPTY_DECISIONS,
@@ -39,6 +45,7 @@ from app.house.domain.draft import (
     HouseImportSummary,
 )
 from app.house.domain.raw import RawModel
+from app.house.domain.roof import RoofBuilder
 from app.house.ifc_process import IfcReadError, read_ifc
 from app.house.models import (
     HouseCatalogCompatibility,
@@ -333,7 +340,7 @@ def run_import(sessions: SessionFactory, settings: Settings, version_id: uuid.UU
         else:
             version.raw = raw.model_dump(mode="json")
             record = db.get_one(HouseTemplateRecord, version.template_id)
-            _, report, _ = _assemble(db, record, version)
+            _, report, _ = _assemble(db, record, version, engine.engine_client())
             result = {"status": "imported", "publishable": report.publishable}
         db.commit()
     return result
@@ -351,10 +358,23 @@ def mark_import_failed(sessions: SessionFactory, version_id: uuid.UUID, error: s
         db.commit()
 
 
+def roof_builder(client: httpx2.Client) -> RoofBuilder:
+    """Geneigtes Dach des Kerns für den Vergleich im Import; eine Ablehnung des Kerns ist ihr Grund."""
+
+    def build(request: HouseRoofRequest) -> HouseRoofGeometry | str:
+        try:
+            return engine.roof(client, request)
+        except engine.EngineRejected as exc:
+            return exc.detail.get("reason", exc.code)
+
+    return build
+
+
 def _assemble(
-    db: Session, record: HouseTemplateRecord, version: HouseTemplateVersion
+    db: Session, record: HouseTemplateRecord, version: HouseTemplateVersion, client: httpx2.Client
 ) -> tuple[HouseTemplate | None, HouseImportReport, HouseCatalog]:
-    """Entwurf und Bericht neu aus `raw` und `decisions`, mit der zuletzt veröffentlichten Katalogversion."""
+    """Entwurf und Bericht neu aus `raw` und `decisions`, mit der zuletzt veröffentlichten Katalogversion.
+    `engine` wird nur für ein geneigtes Dach gerufen."""
     catalog_version = current_catalog_version(db) or db.get_one(
         HouseCatalogVersion, version.catalog_version_id
     )
@@ -368,7 +388,13 @@ def _assemble(
     )
     name = PurePosixPath(version.ifc_file_name).stem or record.slug
     template, report = assemble(
-        raw, HouseDraftDecisions.model_validate(version.decisions), catalog, source, record.slug, name
+        raw,
+        HouseDraftDecisions.model_validate(version.decisions),
+        catalog,
+        source,
+        record.slug,
+        name,
+        roof_builder(client),
     )
     version.catalog_version_id = catalog_version.id
     version.document = template.model_dump(mode="json") if template is not None else None
@@ -431,7 +457,7 @@ def get_version(db: Session, slug: str, number: int) -> HouseTemplateVersionOut:
 
 
 def set_decisions(
-    db: Session, slug: str, number: int, decisions: HouseDraftDecisions, actor: str
+    db: Session, client: httpx2.Client, slug: str, number: int, decisions: HouseDraftDecisions, actor: str
 ) -> HouseTemplateVersionOut:
     """Angaben des Büros ersetzen (3.6 Nr. 5); Entwurf und Bericht entstehen neu."""
     record, version = _version(db, slug, number, lock=True)
@@ -441,7 +467,7 @@ def set_decisions(
     if after != before:
         version.decisions = after
         _back_to_draft(db, version)
-        _assemble(db, record, version)
+        _assemble(db, record, version, client)
         audit.record(
             db,
             actor_type="staff",
@@ -462,7 +488,7 @@ def check_version(
     """Entwurf ohne offenen Punkt gegen die Katalogversion prüfen (P 2.1 Nr. 5): kompatibel → `reviewed`."""
     record, version = _version(db, slug, number, lock=True)
     _require_editable(version)
-    template, report, catalog = _assemble(db, record, version)
+    template, report, catalog = _assemble(db, record, version, client)
     _back_to_draft(db, version)
     if template is None or not report.publishable:
         db.commit()

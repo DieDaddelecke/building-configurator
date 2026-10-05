@@ -1,7 +1,7 @@
 """Template-Entwurf und Importbericht aus dem gelesenen Modell (docs/PLAN_HAUSMODELL.md 3.6, P 12.3,
 P 12.4).
 
-Ablauf je Geschoss (HM3: nur das Erdgeschoss, ab HM5 alle):
+Ablauf je Geschoss (E-HM-63: alle Geschosse mit derselben Bezugskontur):
 
 1. Wände vereinigen (Lücken bis 1 mm geschlossen). Außen ist eine Wand, die auf dem äußeren Rand liegt;
    `IsExternal` dient nur zum Vergleich (P 12.3).
@@ -11,8 +11,12 @@ Ablauf je Geschoss (HM3: nur das Erdgeschoss, ab HM5 alle):
 4. Innenwände als Achsen, an Anschlüssen auf die Achse der anderen Wand bzw. die Bezugskontur gezogen und
    dort geteilt, damit jedes Stück höchstens zwei Räume trennt.
 5. Öffnungen auf ihrem Host mit Abstand vom Anfang bis zur Mitte; Typ aus dem Katalog über Maße (E-HM-37).
-6. Platten und Dach: Bodenplatte zur Kontrolle und für ihre Dicke, Flachdach mit Auflagerhöhe, Dachdecke,
-   Attika (Oberkante Außenwände über Dachdecke) und Überstand. Geneigte Dächer erkennt der Import ab HM5.
+6. Platten: Bodenplatte zur Kontrolle und für ihre Dicke, je Obergeschoss die Decke darunter (Oberkante auf
+   der Höhe des Geschosses).
+
+Danach das Dach über dem obersten Geschoss: Flachdach mit Auflagerhöhe, Dachdecke, Attika (Oberkante
+Außenwände über Dachdecke) und Überstand; ein geneigtes Dach erkennt `roof.py` mit dem Kern. Fassadenrollen
+setzt das Büro am Erdgeschoss, die Obergeschosse übernehmen sie je Kante.
 
 Koordinaten des Templates: Ursprung in der linken unteren Ecke der Bezugskontur, gerundet auf 0,1 mm (P 4).
 """
@@ -29,7 +33,14 @@ from shapely import LineString, Point, Polygon, oriented_envelope, unary_union
 from shapely.affinity import translate
 from shapely.geometry.base import BaseGeometry
 
-from app.house.contract import HouseCatalog, HouseOptionValue, HouseSourceIfc, HouseTemplate, HouseText
+from app.house.contract import (
+    FLAT_DESIGN,
+    HouseCatalog,
+    HouseOptionValue,
+    HouseSourceIfc,
+    HouseTemplate,
+    HouseText,
+)
 from app.house.domain.draft import (
     IGNORE,
     HouseDoorChoice,
@@ -42,7 +53,8 @@ from app.house.domain.draft import (
     HouseImportZoneSource,
     Severity,
 )
-from app.house.domain.raw import Polygon2, RawModel, RawOpening, RawRoof, RawSpace, RawWall
+from app.house.domain.raw import Polygon2, RawModel, RawOpening, RawRoof, RawSpace, RawStorey, RawWall
+from app.house.domain.roof import NotRecognized, RoofBuilder, recognize, underside
 from app.house.domain.zones import SourceValue, ZoneMatch, classify
 
 TOL = 0.001
@@ -204,8 +216,10 @@ class Assembler:
         source: HouseSourceIfc,
         slug: str,
         default_name: str,
+        build_roof: RoofBuilder,
     ) -> None:
         self.raw = raw
+        self.build_roof = build_roof
         self.decisions = decisions
         self.catalog = catalog
         self.source = source
@@ -296,9 +310,11 @@ class Assembler:
                     is_external=str(wall.is_external).lower(),
                 )
 
-    def zone_matches(self, storey: str) -> None:
+    def zone_matches(self, storey: str) -> list[Zone]:
+        """Zonen des Geschosses mit ihrem Raumtyp; der Bericht nennt alle (`self.zones`)."""
         table = self.catalog.zone_table()
         room_types = {t.id for t in self.catalog.room_types}
+        zones: list[Zone] = []
         for space in self.raw.spaces:
             if space.storey_guid != storey:
                 continue
@@ -326,11 +342,13 @@ class Assembler:
             if space.footprint is not None:
                 polygon = translate(_polygon(space.footprint), -self.origin[0], -self.origin[1])
             decided = decision in room_types or decision == IGNORE
-            self.zones.append(Zone(space, match, decided, polygon))
+            zones.append(Zone(space, match, decided, polygon))
+        self.zones += zones
+        return zones
 
-    def rooms(self, storey_index: int, holes: list[Polygon]) -> list[Room]:
+    def rooms(self, storey_index: int, holes: list[Polygon], zones: list[Zone]) -> list[Room]:
         """Räume zwischen den Wänden mit ihrem Typ aus den Zonen (3.6 Nr. 4)."""
-        for zone in self.zones:
+        for zone in zones:
             if zone.match.result == "ignored":
                 continue
             if zone.polygon is None or zone.polygon.area <= 0:
@@ -349,7 +367,7 @@ class Assembler:
 
         rooms: list[Room] = []
         for index, hole in enumerate(holes):
-            mine = [z for z in self.zones if z.room_index == index]
+            mine = [z for z in zones if z.room_index == index]
             if mine:
                 covered = unary_union([z.polygon for z in mine if z.polygon is not None])
                 deviation = hole.symmetric_difference(covered).area / hole.area
@@ -702,7 +720,7 @@ class Assembler:
 
     # --- Typen und Standardwerte ------------------------------------------------------------------------
 
-    def match_types(self) -> tuple[dict[str, str], dict[str, dict[str, str]]]:
+    def match_types(self, roof_form: str) -> tuple[dict[str, str], dict[str, dict[str, str]]]:
         """Typ je Öffnung über die Maße (E-HM-37), Standard je Slot; liefert `defaults` und
         `element_defaults`."""
         options = {o.id: o for o in self.catalog.option_values}
@@ -746,16 +764,28 @@ class Assembler:
             matched.append(opening)
         self.report_openings = matched
 
-        defaults = self.slot_defaults(chosen)
+        defaults = self.slot_defaults(chosen, roof_form)
         element_defaults: dict[str, dict[str, str]] = {}
         for element_id, (slot_id, value_id) in sorted(chosen.items()):
             if defaults.get(slot_id) != value_id:
                 element_defaults.setdefault(element_id, {})[slot_id] = value_id
         return defaults, element_defaults
 
-    def slot_defaults(self, chosen: Mapping[str, tuple[str, str]]) -> dict[str, str]:
-        """Angabe des Büros, sonst der häufigste erkannte Wert, sonst der erste Wert des Slots."""
+    def slot_defaults(self, chosen: Mapping[str, tuple[str, str]], roof_form: str) -> dict[str, str]:
+        """Angabe des Büros, sonst der häufigste erkannte Wert, sonst der erste Wert des Slots, der zum Dach
+        passt: Dachform mit der Form des Templates, Dachaufbau flach bzw. geneigt (E-HM-65)."""
         options = {o.id: o for o in self.catalog.option_values}
+        shapes = {s.id: s.form for s in self.catalog.roof_shapes}
+        kinds = {t.id: t.kind for t in self.catalog.roof_types}
+
+        def fits(option: HouseOptionValue) -> bool:
+            shape, roof_type = option.assigns.roof_shape_id, option.assigns.roof_type_id
+            if shape is not None:
+                return shapes.get(shape) == roof_form
+            if roof_type is not None:
+                return kinds.get(roof_type) == ("flat" if roof_form == "flat" else "pitched")
+            return True
+
         by_slot: dict[str, Counter[str]] = {}
         for slot_id, value_id in chosen.values():
             by_slot.setdefault(slot_id, Counter())[value_id] += 1
@@ -775,8 +805,9 @@ class Assembler:
             values = sorted(
                 (o for o in self.catalog.option_values if o.slot_id == slot.id), key=lambda o: order[o.id]
             )
-            if values:
-                defaults[slot.id] = values[0].id
+            fitting = [o for o in values if fits(o)] or values
+            if fitting:
+                defaults[slot.id] = fitting[0].id
         return defaults
 
     def candidates(self, opening: HouseImportOpening) -> list[HouseOptionValue]:
@@ -834,17 +865,52 @@ class Assembler:
             "thickness": _r(slab.z_max - slab.z_min),
         }
 
+    def floor_slab(self, storey: RawStorey, contour: Polygon) -> dict[str, Any] | None:
+        """Decke unter einem Obergeschoss: Oberkante auf der Höhe des Geschosses (±0,10 m), über mehr als der
+        Hälfte der Kontur (Treppenloch erlaubt), gleich welchem Geschoss sie zugeordnet ist."""
+        slabs = [
+            s
+            for s in self.raw.slabs
+            if s.predefined_type in ("FLOOR", None, "NOTDEFINED")
+            and abs(s.z_max - storey.z) <= 0.1
+            and _polygon(s.footprint).intersection(contour).area > 0.5 * contour.area
+        ]
+        if not slabs:
+            self.findings.add("error", "floor_slab_missing", ifc_guid=storey.guid, name=storey.name)
+            return None
+        slab = max(slabs, key=lambda s: _polygon(s.footprint).area)
+        if abs(slab.z_max - storey.z) > TOL:
+            self.findings.add(
+                "warning", "floor_slab_offset", ifc_guid=slab.guid, offset=_r(slab.z_max - storey.z)
+            )
+        return {
+            "id": f"slab-{slab.guid}",
+            "source_ifc_guid": slab.guid,
+            "kind": "floor",
+            "thickness": _r(slab.z_max - slab.z_min),
+        }
+
     def roof(
-        self, ground_z: float, exterior: list[RawWall], shell: BaseGeometry, contour_world: Polygon
+        self,
+        ground_z: float,
+        exterior: list[RawWall],
+        contour_world: Polygon,
+        ring: list[tuple[float, float]],
     ) -> tuple[dict[str, Any], dict[str, Any] | None]:
-        """Flachdach: Auflagerhöhe, Dachdecke, Attika, Überstand (E-HM-35). Ohne erkanntes Dach
-        Platzhalter."""
+        """Dach über dem obersten Geschoss (`exterior`, `contour_world`): Angabe des Büros, sonst aus dem IFC
+        ein Flachdach (E-HM-35) oder ein geneigtes Dach (`roof.py`). Ohne erkanntes Dach ein Platzhalter."""
+        decided = self.decisions.roof
+        if decided is not None:
+            self.findings.add("info", "roof_set_by_office", form=decided.design.form)
+            return decided.model_dump(mode="json"), None
+        shell = _close(_polygon(w.footprint) for w in exterior)
         top_of_walls = max((w.z_max for w in exterior), default=ground_z)
         fallback = {
             "bearing_height": _r(top_of_walls - ground_z),
             "parapet_height": 0.0,
             "eave_overhang": 0.0,
             "verge_overhang": 0.0,
+            "design": FLAT_DESIGN,
         }
         if not self.raw.roofs:
             self.findings.add("error", "roof_missing")
@@ -854,27 +920,33 @@ class Assembler:
             return fallback, None
         roof = self.raw.roofs[0]
         faces = _faces(roof)
-        slopes = sorted({round(slope, 1) for slope, _, _ in faces if FLAT_DEG < slope < 90 - FLAT_DEG})
-        if slopes:
-            self.findings.add(
-                "error",
-                "roof_form_not_recognized",
-                ifc_guid=roof.guid,
-                slopes=", ".join(f"{s:g}°" for s in slopes),
+        if any(FLAT_DEG < slope < 90 - FLAT_DEG for slope, _, _ in faces):
+            result = recognize(
+                underside(roof, self.origin, ground_z),
+                ring,
+                translate(shell, -self.origin[0], -self.origin[1]),
+                self.build_roof,
             )
-            return fallback, None
+            if isinstance(result, NotRecognized):
+                self.findings.add("open", "roof_form_not_recognized", ifc_guid=roof.guid, **result.params)
+                return fallback, None
+            return result.placement, None
         up: defaultdict[float, float] = defaultdict(float)
         down: defaultdict[float, float] = defaultdict(float)
         for slope, normal_z, (z, area) in faces:
             if slope <= FLAT_DEG:
                 (up if normal_z > 0 else down)[round(z, 3)] += area
         if not up or not down:
-            self.findings.add("error", "roof_form_not_recognized", ifc_guid=roof.guid, slopes="")
+            self.findings.add(
+                "open", "roof_form_not_recognized", ifc_guid=roof.guid, reason="flat", slopes=""
+            )
             return fallback, None
         z_top = max(up, key=lambda z: up[z])
         z_bottom = max(down, key=lambda z: down[z])
         if z_top <= z_bottom:
-            self.findings.add("error", "roof_form_not_recognized", ifc_guid=roof.guid, slopes="")
+            self.findings.add(
+                "open", "roof_form_not_recognized", ifc_guid=roof.guid, reason="flat", slopes=""
+            )
             return fallback, None
         footprint = unary_union(
             [
@@ -901,6 +973,7 @@ class Assembler:
             "parapet_height": _r(parapet) if parapet > TOL else 0.0,
             "eave_overhang": _r(overhang) if overhang > TOL else 0.0,
             "verge_overhang": _r(overhang) if overhang > TOL else 0.0,
+            "design": FLAT_DESIGN,
         }
         slab = {
             "id": f"slab-{roof.guid}",
@@ -989,70 +1062,138 @@ class Assembler:
         if not storeys:
             self.findings.add("error", "no_storey")
             return None
-        if len(storeys) > 1:
-            self.findings.add("error", "storeys_multiple", count=float(len(storeys)))
-        ground = storeys[0]
-        storey = next(s for s in self.raw.storeys if s.guid == ground)
+        by_guid = {s.guid: s for s in self.raw.storeys}
+        ground = by_guid[storeys[0]]
 
-        found = self.walls(ground)
-        if found is None:
-            return None
-        exterior, interior, main = found
-        contour_world = self.contour(exterior)
-        if contour_world is None:
-            return None
-        self.compare_flags(exterior, interior)
-        minx, miny, maxx, maxy = contour_world.bounds
-        self.origin = (minx, miny)
-        contour = translate(contour_world, -minx, -miny)
-        shell = _close(_polygon(w.footprint) for w in exterior)
+        levels: list[dict[str, Any]] = []
+        envelope: list[dict[str, Any]] = []
+        interior_walls: list[dict[str, Any]] = []
+        openings: list[dict[str, Any]] = []
+        slabs: list[dict[str, Any]] = []
+        rooms: list[Room] = []
+        room_levels: dict[str, str] = {}
+        ring: list[tuple[float, float]] = []
+        roles: list[str | None] = []
+        counts: Counter[str] = Counter()
+        top: tuple[str, list[RawWall], Polygon] | None = None
+        for index, guid in enumerate(storeys):
+            storey = by_guid[guid]
+            level_id = f"level-{guid}"
+            found = self.walls(guid)
+            if found is None:
+                return None
+            exterior, interior, main = found
+            contour_world = self.contour(exterior)
+            if contour_world is None:
+                return None
+            self.compare_flags(exterior, interior)
+            if index == 0:
+                minx, miny, maxx, maxy = contour_world.bounds
+                self.origin = (minx, miny)
+                self.summary = self.summary.model_copy(
+                    update={
+                        "inner_width": _r(maxx - minx),
+                        "inner_depth": _r(maxy - miny),
+                        "inner_area": round(contour_world.area, 2),
+                    }
+                )
+            ox, oy = self.origin
+            contour = translate(contour_world, -ox, -oy)
+            own = _ring(contour.exterior.coords)
+            if index == 0:
+                ring = own
+            elif not _same_ring(own, ring):
+                # Alle Geschosse haben dieselbe Bezugskontur (E-HM-63); weiter mit der des Erdgeschosses
+                self.findings.add("error", "storey_contour_differs", ifc_guid=guid, name=storey.name)
+            counts.update(exterior=len(exterior), interior=len(interior))
+
+            holes = [translate(Polygon(r), -ox, -oy) for part in _parts(main) for r in part.interiors]
+            small = [h for h in holes if h.area < SMALL_AREA]
+            if small:
+                self.findings.add("warning", "small_area_ignored", count=float(len(small)))
+            holes = [h for h in holes if h.area >= SMALL_AREA]
+            storey_rooms = self.rooms(index, holes, self.zone_matches(guid))
+            ignored_rooms = [
+                h for h in holes if not any(r.polygon.representative_point().within(h) for r in storey_rooms)
+            ]
+            walls_local = {w.guid: translate(_polygon(w.footprint), -ox, -oy) for w in [*exterior, *interior]}
+            edges = self.edges(ring, exterior, walls_local, index)
+            axes = self.axes(interior)
+            self.snap(axes, contour)
+            pieces = self.pieces(axes, storey_rooms)
+            openings += self.openings(
+                guid,
+                storey.z,
+                edges,
+                pieces,
+                {w.guid for w in exterior},
+                {w.guid for w in interior},
+                walls_local,
+                storey_rooms,
+                ignored_rooms,
+            )
+
+            if index == 0:
+                # Rollen setzt das Büro am Erdgeschoss; die Obergeschosse übernehmen sie je Kante
+                roles = [self.decisions.facade_roles.get(edge.id) for edge in edges]
+                if not any(roles):
+                    self.findings.add("warning", "facade_roles_missing")
+            levels.append(
+                {
+                    "id": level_id,
+                    "name": storey.name or ("RDC" if index == 0 else f"R+{index}"),
+                    "elevation": _r(storey.z - ground.z),
+                }
+            )
+            envelope.append(
+                {
+                    "level_id": level_id,
+                    "inner_polygon": _xy(ring),
+                    "segments": [
+                        {
+                            "id": edge.id,
+                            "source_ifc_guid": edge.guid,
+                            "facade_role": roles[i] if i < len(roles) else None,
+                        }
+                        for i, edge in enumerate(edges)
+                    ],
+                }
+            )
+            interior_walls += [
+                {
+                    "id": p.id,
+                    "source_ifc_guid": p.guid,
+                    "level_id": level_id,
+                    "axis": _xy([p.a, p.b]),
+                    "thickness": p.thickness,
+                    "adjacent_room_ids": p.rooms,
+                }
+                for p in pieces
+            ]
+            rooms += storey_rooms
+            room_levels |= {r.id: level_id for r in storey_rooms}
+            slab = (
+                self.ground_slab(guid, storey.z, contour_world)
+                if index == 0
+                else self.floor_slab(storey, contour_world)
+            )
+            if slab is not None:
+                slabs.append(slab | {"level_id": level_id})
+            top = (level_id, exterior, contour_world)
+
+        assert top is not None
+        top_level, top_exterior, top_contour = top
         self.summary = self.summary.model_copy(
             update={
-                "exterior_walls": len(exterior),
-                "interior_walls": len(interior),
-                "inner_width": _r(maxx - minx),
-                "inner_depth": _r(maxy - miny),
-                "inner_area": round(contour.area, 2),
+                "exterior_walls": counts["exterior"],
+                "interior_walls": counts["interior"],
+                "rooms": len(rooms),
             }
         )
-
-        holes = [translate(Polygon(ring), -minx, -miny) for part in _parts(main) for ring in part.interiors]
-        small = [h for h in holes if h.area < SMALL_AREA]
-        if small:
-            self.findings.add("warning", "small_area_ignored", count=float(len(small)))
-        holes = [h for h in holes if h.area >= SMALL_AREA]
-        self.zone_matches(ground)
-        rooms = self.rooms(0, holes)
-        ignored_rooms = [
-            h for h in holes if not any(r.polygon.representative_point().within(h) for r in rooms)
-        ]
-
-        ring = _ring(contour.exterior.coords)
-        walls_local = {w.guid: translate(_polygon(w.footprint), -minx, -miny) for w in [*exterior, *interior]}
-        edges = self.edges(ring, exterior, walls_local)
-        axes = self.axes(interior)
-        self.snap(axes, contour)
-        pieces = self.pieces(axes, rooms)
-        openings = self.openings(
-            ground,
-            storey.z,
-            edges,
-            pieces,
-            {w.guid for w in exterior},
-            {w.guid for w in interior},
-            walls_local,
-            rooms,
-            ignored_rooms,
-        )
-        defaults, element_defaults = self.match_types()
-
-        slabs = []
-        ground_slab = self.ground_slab(ground, storey.z, contour_world)
-        if ground_slab is not None:
-            slabs.append(ground_slab | {"level_id": f"level-{ground}"})
-        roof, roof_slab = self.roof(storey.z, exterior, shell, contour_world)
+        roof, roof_slab = self.roof(ground.z, top_exterior, top_contour, ring)
         if roof_slab is not None:
-            slabs.append(roof_slab | {"level_id": f"level-{ground}"})
+            slabs.append(roof_slab | {"level_id": top_level})
+        defaults, element_defaults = self.match_types(roof["design"]["form"])
 
         offset = self.decisions.ground_floor_offset
         if offset is None:
@@ -1064,36 +1205,18 @@ class Assembler:
                 offset = DEFAULT_GROUND_FLOOR_OFFSET
                 self.findings.add("info", "ground_floor_offset_default", value=offset)
 
-        segments = []
-        for edge in edges:
-            role = self.decisions.facade_roles.get(edge.id)
-            segments.append({"id": edge.id, "source_ifc_guid": edge.guid, "facade_role": role})
-        if not any(s["facade_role"] for s in segments):
-            self.findings.add("warning", "facade_roles_missing")
-
         entrance = self.door_choice(self.decisions.entrance, "entrance", openings, rooms)
         garage = self.door_choice(self.decisions.garage_door, "garage_door", openings, rooms)
         name = self.decisions.name or HouseText(fr=self.default_name, de=self.default_name)
-        self.summary = self.summary.model_copy(update={"rooms": len(rooms)})
         document = {
-            "schema_version": 1,
+            "schema_version": 2,
             "slug": self.slug,
             "name": name.model_dump(),
             "source_ifc": self.source.model_dump(mode="json"),
             "ground_floor_offset": offset,
-            "levels": [{"id": f"level-{ground}", "name": storey.name or "RDC", "elevation": 0.0}],
-            "envelope": [{"level_id": f"level-{ground}", "inner_polygon": _xy(ring), "segments": segments}],
-            "interior_walls": [
-                {
-                    "id": p.id,
-                    "source_ifc_guid": p.guid,
-                    "level_id": f"level-{ground}",
-                    "axis": _xy([p.a, p.b]),
-                    "thickness": p.thickness,
-                    "adjacent_room_ids": p.rooms,
-                }
-                for p in pieces
-            ],
+            "levels": levels,
+            "envelope": envelope,
+            "interior_walls": interior_walls,
             "openings": openings,
             "slabs": slabs,
             "roof": roof,
@@ -1101,7 +1224,7 @@ class Assembler:
                 {
                     "id": r.id,
                     "source_ifc_guid": r.source_guid,
-                    "level_id": f"level-{ground}",
+                    "level_id": room_levels[r.id],
                     "room_type_id": r.room_type_id,
                     "polygon": _xy(_ring(r.polygon.exterior.coords)),
                 }
@@ -1119,7 +1242,11 @@ class Assembler:
             return None
 
     def edges(
-        self, ring: list[tuple[float, float]], exterior: list[RawWall], walls: dict[str, Polygon]
+        self,
+        ring: list[tuple[float, float]],
+        exterior: list[RawWall],
+        walls: dict[str, Polygon],
+        storey_index: int,
     ) -> list[Edge]:
         """Ein Segment je Kante der Bezugskontur; Kennung aus der Wand, die die Kante am längsten trägt."""
         owners: list[str | None] = []
@@ -1131,14 +1258,23 @@ class Assembler:
             owners.append(best if best is not None and lengths[best] > 0 else None)
         counts = Counter(owners)
         seen: Counter[str | None] = Counter()
+        # Ohne tragende Wand eigene Kennungen je Geschoss, damit sie über die Geschosse eindeutig bleiben
+        anonymous = "seg" if storey_index == 0 else f"seg-s{storey_index}"
         edges = []
         for i, a in enumerate(ring):
             owner = owners[i]
             seen[owner] += 1
-            base = f"seg-{owner}" if owner is not None else "seg"
+            base = f"seg-{owner}" if owner is not None else anonymous
             edge_id = base if counts[owner] == 1 and owner is not None else f"{base}-{seen[owner]}"
             edges.append(Edge(edge_id, owner, a, ring[(i + 1) % len(ring)]))
         return edges
+
+
+def _same_ring(a: list[tuple[float, float]], b: list[tuple[float, float]]) -> bool:
+    """Gleiche Ringe bis 1 mm, gleich mit welchem Punkt sie beginnen."""
+    if len(a) != len(b):
+        return False
+    return any(all(math.dist(a[(i + k) % len(a)], q) <= TOL for i, q in enumerate(b)) for k in range(len(a)))
 
 
 def _points(geometry: BaseGeometry) -> list[tuple[float, float]]:
@@ -1186,5 +1322,8 @@ def assemble(
     source: HouseSourceIfc,
     slug: str,
     default_name: str,
+    build_roof: RoofBuilder,
 ) -> tuple[HouseTemplate | None, HouseImportReport]:
-    return Assembler(raw, decisions, catalog, source, slug, default_name).run()
+    """`build_roof` erzeugt ein geneigtes Dach mit dem Kern (`engine /roof`); nur bei geneigten Dächern
+    gerufen."""
+    return Assembler(raw, decisions, catalog, source, slug, default_name, build_roof).run()

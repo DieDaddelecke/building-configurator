@@ -4284,16 +4284,34 @@
       },
       "HouseCandidate": {
         "additionalProperties": false,
-        "description": "Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`).",
+        "description": "Vorschau eines Werts vor der Wahl (P 8.2 `evaluateCandidates`); bei der Drehung des Dachs je Zahl.",
         "properties": {
           "available_count": {
             "title": "Available Count",
             "type": "integer"
           },
+          "number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
           "option_value_id": {
-            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
-            "title": "Option Value Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Value Id"
           },
           "price_delta": {
             "maximum": 1000000000.0,
@@ -4335,6 +4353,7 @@
         },
         "required": [
           "option_value_id",
+          "number",
           "available_count",
           "target_count",
           "unavailable_reason",
@@ -4373,10 +4392,106 @@
         "title": "HouseCandidatesRequest",
         "type": "object"
       },
+      "HouseCarportFacts": {
+        "additionalProperties": false,
+        "properties": {
+          "depth": {
+            "title": "Depth",
+            "type": "number"
+          },
+          "height": {
+            "title": "Height",
+            "type": "number"
+          },
+          "spaces": {
+            "title": "Spaces",
+            "type": "integer"
+          },
+          "type_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Type Id",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type_id",
+          "spaces",
+          "width",
+          "depth",
+          "height"
+        ],
+        "title": "HouseCarportFacts",
+        "type": "object"
+      },
+      "HouseCarportType": {
+        "additionalProperties": false,
+        "description": "Carport (Ergänzung 7): Maße für Preis und Prüfung; Lage und Zufahrt rechnet Python.",
+        "properties": {
+          "depth": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Depth",
+            "type": "number"
+          },
+          "height": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Height",
+            "type": "number"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          },
+          "spaces": {
+            "maximum": 10,
+            "minimum": 1,
+            "title": "Spaces",
+            "type": "integer"
+          },
+          "width": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Width",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "spaces",
+          "width",
+          "depth",
+          "height",
+          "render_key"
+        ],
+        "title": "HouseCarportType",
+        "type": "object"
+      },
       "HouseCatalog": {
         "additionalProperties": false,
         "description": "Katalogversion eines Markts: Bauteile, Slots, Werte, Regeln und Preise in einem Dokument (E-HM-8).",
         "properties": {
+          "carport_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseCarportType"
+            },
+            "title": "Carport Types",
+            "type": "array"
+          },
           "currency": {
             "const": "EUR",
             "title": "Currency",
@@ -4397,6 +4512,13 @@
             },
             "maxItems": 50,
             "title": "Ignored Zone Categories",
+            "type": "array"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/HouseLine"
+            },
+            "title": "Lines",
             "type": "array"
           },
           "market": {
@@ -4435,6 +4557,13 @@
             "title": "Pricing Rules",
             "type": "array"
           },
+          "roof_shapes": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoofShape"
+            },
+            "title": "Roof Shapes",
+            "type": "array"
+          },
           "roof_types": {
             "items": {
               "$ref": "#/components/schemas/HouseRoofType"
@@ -4457,7 +4586,7 @@
             "type": "array"
           },
           "schema_version": {
-            "const": 1,
+            "const": 2,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -4466,6 +4595,13 @@
               "$ref": "#/components/schemas/HouseSlot"
             },
             "title": "Slots",
+            "type": "array"
+          },
+          "terrace_types": {
+            "items": {
+              "$ref": "#/components/schemas/HouseTerraceType"
+            },
+            "title": "Terrace Types",
             "type": "array"
           },
           "vat_rate": {
@@ -4508,9 +4644,13 @@
           "window_types",
           "door_types",
           "roof_types",
+          "roof_shapes",
+          "terrace_types",
+          "carport_types",
           "room_types",
           "slots",
           "option_values",
+          "lines",
           "rules",
           "pricing_rules",
           "price_entries",
@@ -5020,6 +5160,16 @@
               }
             ]
           },
+          "outbuildings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutbuildingsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "placement": {
             "anyOf": [
               {
@@ -5159,6 +5309,7 @@
           "facts",
           "evaluation",
           "areas",
+          "outbuildings",
           "orientation",
           "status",
           "rule_results",
@@ -5345,6 +5496,16 @@
               }
             ]
           },
+          "outbuildings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OutbuildingsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "placement": {
             "anyOf": [
               {
@@ -5508,6 +5669,7 @@
           "facts",
           "evaluation",
           "areas",
+          "outbuildings",
           "orientation",
           "status",
           "rule_results",
@@ -5724,6 +5886,16 @@
               }
             ]
           },
+          "roof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseRoofPlacement"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "room_types": {
             "additionalProperties": {
               "maxLength": 80,
@@ -5761,7 +5933,8 @@
           "entrance",
           "garage_door",
           "defaults",
-          "element_defaults"
+          "element_defaults",
+          "roof"
         ],
         "title": "HouseDraftDecisions",
         "type": "object"
@@ -6060,6 +6233,16 @@
         "additionalProperties": false,
         "description": "Hausbeschreibung für die Prüfung auf dem Grundstück in Python (3.1, E-HM-4); ersetzt `HouseType`.",
         "properties": {
+          "carport": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseCarportFacts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "eave_height": {
             "maximum": 100,
             "minimum": -100,
@@ -6138,32 +6321,18 @@
             "title": "Projection Outline",
             "type": "array"
           },
-          "ridge_direction": {
+          "ridge_azimuth_deg": {
             "anyOf": [
               {
-                "enum": [
-                  "x",
-                  "y"
-                ],
-                "type": "string"
+                "exclusiveMaximum": 180,
+                "minimum": 0,
+                "type": "number"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Ridge Direction"
-          },
-          "roof_form": {
-            "enum": [
-              "gable",
-              "hip",
-              "mono_pitch",
-              "flat",
-              "mansard",
-              "other"
-            ],
-            "title": "Roof Form",
-            "type": "string"
+            "title": "Ridge Azimuth Deg"
           },
           "roof_material_class": {
             "enum": [
@@ -6184,6 +6353,19 @@
             "title": "Roof Material Class",
             "type": "string"
           },
+          "roof_shape": {
+            "enum": [
+              "flat",
+              "mono_pitch",
+              "gable",
+              "hip",
+              "half_hip",
+              "mansard",
+              "mansard_gable"
+            ],
+            "title": "Roof Shape",
+            "type": "string"
+          },
           "roof_slopes_deg": {
             "items": {
               "type": "number"
@@ -6197,6 +6379,16 @@
             "title": "Storeys",
             "type": "integer"
           },
+          "terrace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseTerraceFacts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "top_height": {
             "maximum": 100,
             "minimum": -100,
@@ -6208,9 +6400,9 @@
           "facade_outline",
           "projection_outline",
           "storeys",
-          "roof_form",
+          "roof_shape",
           "roof_slopes_deg",
-          "ridge_direction",
+          "ridge_azimuth_deg",
           "eave_height",
           "top_height",
           "ground_floor_offset",
@@ -6219,7 +6411,9 @@
           "entrance",
           "garage_door",
           "facade_material_class",
-          "roof_material_class"
+          "roof_material_class",
+          "terrace",
+          "carport"
         ],
         "title": "HouseFacts",
         "type": "object"
@@ -6279,6 +6473,13 @@
             ],
             "title": "Pitch Deg"
           },
+          "pitches_deg": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Pitches Deg",
+            "type": "array"
+          },
           "projection_local": {
             "items": {
               "items": {
@@ -6310,6 +6511,7 @@
           "storeys",
           "roof_form",
           "pitch_deg",
+          "pitches_deg",
           "height_m",
           "eave_height_m",
           "floor_area_m2",
@@ -6338,7 +6540,6 @@
               "reader_failed",
               "import_failed",
               "no_storey",
-              "storeys_multiple",
               "roof_level",
               "element_without_storey",
               "geometry_failed",
@@ -6367,13 +6568,17 @@
               "entrance_missing",
               "entrance_ambiguous",
               "garage_door_ambiguous",
+              "storey_contour_differs",
               "ground_slab_missing",
               "ground_slab_offset",
               "ground_slab_area_mismatch",
+              "floor_slab_missing",
+              "floor_slab_offset",
               "roof_missing",
               "roof_multiple",
               "roof_form_not_recognized",
               "roof_incomplete",
+              "roof_set_by_office",
               "decision_invalid",
               "ground_floor_offset_invalid",
               "ground_floor_offset_default",
@@ -6928,6 +7133,52 @@
         "title": "HouseLevel",
         "type": "object"
       },
+      "HouseLine": {
+        "additionalProperties": false,
+        "description": "Ausstattungslinie (Ergänzung 6, E-HM-14): setzt mehrere Slots auf ausdrückliche Wahl des Kunden auf\neinmal. Sie wird nicht gespeichert und hat keinen eigenen Preis; aktiv ist sie, solange alle ihre Werte\ngelten.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseText"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "presets": {
+            "patternProperties": {
+              "^[A-Za-z0-9_$.\\-]{1,64}$": {
+                "$ref": "#/components/schemas/HouseSlotValue"
+              }
+            },
+            "title": "Presets",
+            "type": "object"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "presets",
+          "sort_order"
+        ],
+        "title": "HouseLine",
+        "type": "object"
+      },
       "HouseLiteral": {
         "anyOf": [
           {
@@ -7114,6 +7365,18 @@
         "additionalProperties": false,
         "description": "Ein Wert weist immer einen vollständigen Typ zu, nie eine Ergänzung (P 8.1).",
         "properties": {
+          "carport_type_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carport Type Id"
+          },
           "door_type_id": {
             "anyOf": [
               {
@@ -7126,6 +7389,18 @@
             ],
             "title": "Door Type Id"
           },
+          "roof_shape_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roof Shape Id"
+          },
           "roof_type_id": {
             "anyOf": [
               {
@@ -7137,6 +7412,18 @@
               }
             ],
             "title": "Roof Type Id"
+          },
+          "terrace_type_id": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terrace Type Id"
           },
           "wall_profile_id": {
             "anyOf": [
@@ -7167,7 +7454,10 @@
           "wall_profile_id",
           "window_type_id",
           "door_type_id",
-          "roof_type_id"
+          "roof_type_id",
+          "roof_shape_id",
+          "terrace_type_id",
+          "carport_type_id"
         ],
         "title": "HouseOptionAssigns",
         "type": "object"
@@ -7292,6 +7582,36 @@
         "title": "HousePoint",
         "type": "object"
       },
+      "HousePoint3": {
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "maximum": 1000,
+            "minimum": -1000,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 1000,
+            "minimum": -1000,
+            "title": "Y",
+            "type": "number"
+          },
+          "z": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Z",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "HousePoint3",
+        "type": "object"
+      },
       "HousePrice": {
         "additionalProperties": false,
         "description": "Exakte Richtpreise für Snapshot und Dossier; der Kunde sieht nur gerundete Beträge (E-HM-2, L1).",
@@ -7395,7 +7715,9 @@
               "roof_type",
               "template",
               "slot_option",
-              "service"
+              "service",
+              "terrace_type",
+              "carport_type"
             ],
             "title": "Target Kind",
             "type": "string"
@@ -7582,7 +7904,9 @@
                   "roof_type",
                   "template",
                   "slot_option",
-                  "service"
+                  "service",
+                  "terrace_type",
+                  "carport_type"
                 ],
                 "type": "string"
               },
@@ -7735,17 +8059,39 @@
       },
       "HouseResolutionNote": {
         "additionalProperties": false,
-        "description": "Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert.",
+        "description": "Eine Stufe der Auflösung griff nicht (P 8.2); die Auswahl bleibt unverändert. `default_replaced`: der\nStandard ist nicht verfügbar, es gilt der erste verfügbare Wert (E-HM-60). `out_of_range`: die Zahl liegt\naußerhalb der Spanne. `roof_kind_mismatch`: der Dachaufbau passt nicht zur wirksamen Dachform (flach oder\ngeneigt). `roof_not_constructible`: Form, Neigung oder Drehung lässt sich auf dem Grundriss nicht erzeugen\n(Ergänzung 4).",
         "properties": {
+          "applied_number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Number"
+          },
           "applied_value_id": {
-            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
-            "title": "Applied Value Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Value Id"
           },
           "code": {
             "enum": [
               "unavailable",
-              "room_override_tie"
+              "room_override_tie",
+              "out_of_range",
+              "roof_kind_mismatch",
+              "roof_not_constructible",
+              "default_replaced"
             ],
             "title": "Code",
             "type": "string"
@@ -7769,10 +8115,22 @@
             "enum": [
               "element",
               "room",
-              "global"
+              "global",
+              "default"
             ],
             "title": "Skipped Level",
             "type": "string"
+          },
+          "skipped_number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped Number"
           },
           "skipped_value_ids": {
             "items": {
@@ -7793,7 +8151,9 @@
           "element_id",
           "skipped_level",
           "skipped_value_ids",
+          "skipped_number",
           "applied_value_id",
+          "applied_number",
           "code",
           "reason"
         ],
@@ -7802,6 +8162,7 @@
       },
       "HouseResolvedValue": {
         "additionalProperties": false,
+        "description": "Wirksamer Wert: ein Wert des Katalogs oder bei Parameter-Slots eine Zahl.",
         "properties": {
           "available": {
             "title": "Available",
@@ -7812,10 +8173,28 @@
             "title": "Element Id",
             "type": "string"
           },
+          "number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
           "option_value_id": {
-            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
-            "title": "Option Value Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Value Id"
           },
           "slot_id": {
             "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
@@ -7837,6 +8216,7 @@
           "slot_id",
           "element_id",
           "option_value_id",
+          "number",
           "source",
           "available"
         ],
@@ -7856,6 +8236,187 @@
           "material_id"
         ],
         "title": "HouseRevealFinish",
+        "type": "object"
+      },
+      "HouseRoofDesign": {
+        "additionalProperties": false,
+        "description": "Dachform mit Parametern (Ergänzung 4, 11): aus dem IFC oder im Entwurf vom Büro gesetzt; Voreinstellung\nder Dachform im Konfigurator.",
+        "properties": {
+          "break_height": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 20,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Break Height"
+          },
+          "form": {
+            "enum": [
+              "flat",
+              "mono_pitch",
+              "gable",
+              "hip",
+              "half_hip",
+              "mansard",
+              "mansard_gable"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "pitch_deg": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 90,
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pitch Deg"
+          },
+          "rotation": {
+            "enum": [
+              0,
+              90,
+              180,
+              270
+            ],
+            "title": "Rotation",
+            "type": "integer"
+          },
+          "upper_pitch_deg": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 90,
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Pitch Deg"
+          }
+        },
+        "required": [
+          "form",
+          "pitch_deg",
+          "upper_pitch_deg",
+          "break_height",
+          "rotation"
+        ],
+        "title": "HouseRoofDesign",
+        "type": "object"
+      },
+      "HouseRoofFace": {
+        "additionalProperties": false,
+        "properties": {
+          "contour_edges": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Contour Edges",
+            "type": "array"
+          },
+          "pitch_deg": {
+            "title": "Pitch Deg",
+            "type": "number"
+          },
+          "polygon": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint3"
+            },
+            "title": "Polygon",
+            "type": "array"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contour_edges",
+          "segment",
+          "pitch_deg",
+          "polygon"
+        ],
+        "title": "HouseRoofFace",
+        "type": "object"
+      },
+      "HouseRoofGeometry": {
+        "additionalProperties": false,
+        "properties": {
+          "eave_height": {
+            "title": "Eave Height",
+            "type": "number"
+          },
+          "edge_kinds": {
+            "items": {
+              "enum": [
+                "eave",
+                "gable"
+              ],
+              "type": "string"
+            },
+            "title": "Edge Kinds",
+            "type": "array"
+          },
+          "faces": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoofFace"
+            },
+            "title": "Faces",
+            "type": "array"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/HouseRoofLine"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "outline": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Outline",
+            "type": "array"
+          },
+          "ridge_azimuth_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ridge Azimuth Deg"
+          },
+          "top_height": {
+            "title": "Top Height",
+            "type": "number"
+          }
+        },
+        "required": [
+          "outline",
+          "edge_kinds",
+          "faces",
+          "lines",
+          "top_height",
+          "eave_height",
+          "ridge_azimuth_deg"
+        ],
+        "title": "HouseRoofGeometry",
         "type": "object"
       },
       "HouseRoofLayer": {
@@ -7880,15 +8441,78 @@
         "title": "HouseRoofLayer",
         "type": "object"
       },
+      "HouseRoofLine": {
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "$ref": "#/components/schemas/HousePoint3"
+          },
+          "b": {
+            "$ref": "#/components/schemas/HousePoint3"
+          },
+          "kind": {
+            "enum": [
+              "ridge",
+              "hip",
+              "valley",
+              "eave",
+              "verge",
+              "break"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "a",
+          "b"
+        ],
+        "title": "HouseRoofLine",
+        "type": "object"
+      },
+      "HouseRoofPitch": {
+        "additionalProperties": false,
+        "properties": {
+          "default_deg": {
+            "exclusiveMaximum": 90,
+            "exclusiveMinimum": 0,
+            "title": "Default Deg",
+            "type": "number"
+          },
+          "max_deg": {
+            "exclusiveMaximum": 90,
+            "exclusiveMinimum": 0,
+            "title": "Max Deg",
+            "type": "number"
+          },
+          "min_deg": {
+            "exclusiveMaximum": 90,
+            "exclusiveMinimum": 0,
+            "title": "Min Deg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "default_deg",
+          "min_deg",
+          "max_deg"
+        ],
+        "title": "HouseRoofPitch",
+        "type": "object"
+      },
       "HouseRoofPlacement": {
         "additionalProperties": false,
-        "description": "Platzhalter-Dach (3.6): nur Lage und Maße, Form und Aufbau wählt der Konfigurator (E-HM-10).",
+        "description": "Dach des Templates (3.6, E-HM-10): Lage, Maße und Form aus dem IFC; Form und Aufbau wählt der\nKonfigurator.",
         "properties": {
           "bearing_height": {
             "maximum": 100,
             "minimum": -100,
             "title": "Bearing Height",
             "type": "number"
+          },
+          "design": {
+            "$ref": "#/components/schemas/HouseRoofDesign"
           },
           "eave_overhang": {
             "maximum": 100,
@@ -7913,9 +8537,190 @@
           "bearing_height",
           "parapet_height",
           "eave_overhang",
-          "verge_overhang"
+          "verge_overhang",
+          "design"
         ],
         "title": "HouseRoofPlacement",
+        "type": "object"
+      },
+      "HouseRoofRequest": {
+        "additionalProperties": false,
+        "description": "Geneigtes Dach aus Form und Parametern; der IFC-Import vergleicht es mit dem Dach aus Archicad.",
+        "properties": {
+          "bearing_height": {
+            "maximum": 100,
+            "minimum": -100,
+            "title": "Bearing Height",
+            "type": "number"
+          },
+          "contour": {
+            "items": {
+              "$ref": "#/components/schemas/HousePoint"
+            },
+            "maxItems": 1000,
+            "minItems": 3,
+            "title": "Contour",
+            "type": "array"
+          },
+          "design": {
+            "$ref": "#/components/schemas/HouseRoofDesign"
+          },
+          "eave_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Eave Overhang",
+            "type": "number"
+          },
+          "thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Thickness",
+            "type": "number"
+          },
+          "verge_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Verge Overhang",
+            "type": "number"
+          },
+          "wall_thickness": {
+            "exclusiveMinimum": 0,
+            "maximum": 2,
+            "title": "Wall Thickness",
+            "type": "number"
+          }
+        },
+        "required": [
+          "contour",
+          "wall_thickness",
+          "bearing_height",
+          "eave_overhang",
+          "verge_overhang",
+          "design",
+          "thickness"
+        ],
+        "title": "HouseRoofRequest",
+        "type": "object"
+      },
+      "HouseRoofShape": {
+        "additionalProperties": false,
+        "description": "Dachform des Katalogs (Ergänzung 4): Voreinstellung und Spanne der Neigung, Knick- und Krüppelhöhe.\nIst die Form die des Templates, gelten die Werte des Templates. Überstände, Dachdecke und Attika gelten\nnur, wenn das Template die andere Dachart hat (flach ↔ geneigt).",
+        "properties": {
+          "break_height": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 20,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Break Height"
+          },
+          "eave_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Eave Overhang",
+            "type": "number"
+          },
+          "form": {
+            "enum": [
+              "flat",
+              "mono_pitch",
+              "gable",
+              "hip",
+              "half_hip",
+              "mansard",
+              "mansard_gable"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "parapet_height": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parapet Height"
+          },
+          "pitch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HouseRoofPitch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          },
+          "slab_thickness": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 2,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slab Thickness"
+          },
+          "upper_pitch_deg": {
+            "anyOf": [
+              {
+                "exclusiveMaximum": 90,
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Pitch Deg"
+          },
+          "verge_overhang": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Verge Overhang",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "form",
+          "pitch",
+          "upper_pitch_deg",
+          "break_height",
+          "eave_overhang",
+          "verge_overhang",
+          "slab_thickness",
+          "parapet_height",
+          "render_key"
+        ],
+        "title": "HouseRoofShape",
         "type": "object"
       },
       "HouseRoofType": {
@@ -8359,7 +9164,8 @@
               "opening",
               "roof",
               "room",
-              "building"
+              "building",
+              "site"
             ],
             "title": "Element Kind",
             "type": "string"
@@ -8486,6 +9292,21 @@
           "name": {
             "$ref": "#/components/schemas/HouseText"
           },
+          "parameter": {
+            "anyOf": [
+              {
+                "enum": [
+                  "roof_pitch",
+                  "roof_rotation"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter"
+          },
           "parent_slot_id": {
             "anyOf": [
               {
@@ -8506,7 +9327,10 @@
             "$ref": "#/components/schemas/HouseSelector"
           },
           "value_type": {
-            "const": "single",
+            "enum": [
+              "single",
+              "number"
+            ],
             "title": "Value Type",
             "type": "string"
           }
@@ -8519,6 +9343,7 @@
           "target",
           "granularity",
           "value_type",
+          "parameter",
           "parent_slot_id",
           "effects",
           "sort_order"
@@ -8591,6 +9416,50 @@
         "title": "HouseSlotEffects",
         "type": "object"
       },
+      "HouseSlotNumber": {
+        "additionalProperties": false,
+        "description": "Zahl eines Parameter-Slots, z. B. Dachneigung in Grad (E-HM-62).",
+        "properties": {
+          "type": {
+            "const": "number",
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 1000,
+            "minimum": -1000,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "HouseSlotNumber",
+        "type": "object"
+      },
+      "HouseSlotOption": {
+        "additionalProperties": false,
+        "properties": {
+          "option_value_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Option Value Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "option",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "option_value_id"
+        ],
+        "title": "HouseSlotOption",
+        "type": "object"
+      },
       "HouseSlotSelection": {
         "additionalProperties": false,
         "properties": {
@@ -8632,25 +9501,21 @@
         "type": "object"
       },
       "HouseSlotValue": {
-        "additionalProperties": false,
-        "properties": {
-          "option_value_id": {
-            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
-            "title": "Option Value Id",
-            "type": "string"
+        "discriminator": {
+          "mapping": {
+            "number": "#/components/schemas/HouseSlotNumber",
+            "option": "#/components/schemas/HouseSlotOption"
           },
-          "type": {
-            "const": "option",
-            "title": "Type",
-            "type": "string"
-          }
+          "propertyName": "type"
         },
-        "required": [
-          "type",
-          "option_value_id"
-        ],
-        "title": "HouseSlotValue",
-        "type": "object"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/HouseSlotOption"
+          },
+          {
+            "$ref": "#/components/schemas/HouseSlotNumber"
+          }
+        ]
       },
       "HouseSourceIfc": {
         "additionalProperties": false,
@@ -8721,7 +9586,7 @@
       },
       "HouseTemplate": {
         "additionalProperties": false,
-        "description": "Haustyp in einer Version, unveränderlich nach der Veröffentlichung (P 5.1, L4). Keine Preise.",
+        "description": "Haustyp in einer Version, unveränderlich nach der Veröffentlichung (P 5.1, L4). Keine Preise.\n\nMehrere Geschosse haben dieselbe Bezugskontur (E-HM-63); das Dach liegt über dem obersten.",
         "properties": {
           "defaults": {
             "patternProperties": {
@@ -8827,7 +9692,7 @@
             "type": "array"
           },
           "schema_version": {
-            "const": 1,
+            "const": 2,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -9374,6 +10239,95 @@
           "templates"
         ],
         "title": "HouseTemplatesOut",
+        "type": "object"
+      },
+      "HouseTerraceFacts": {
+        "additionalProperties": false,
+        "properties": {
+          "depth": {
+            "title": "Depth",
+            "type": "number"
+          },
+          "height_above_terrain": {
+            "title": "Height Above Terrain",
+            "type": "number"
+          },
+          "sealing_factor": {
+            "title": "Sealing Factor",
+            "type": "number"
+          },
+          "type_id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Type Id",
+            "type": "string"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "type_id",
+          "depth",
+          "width",
+          "height_above_terrain",
+          "sealing_factor"
+        ],
+        "title": "HouseTerraceFacts",
+        "type": "object"
+      },
+      "HouseTerraceType": {
+        "additionalProperties": false,
+        "description": "Terrasse (Ergänzung 7): an der längsten Gartenkante, so breit wie diese; die Lage rechnet Python.",
+        "properties": {
+          "depth": {
+            "exclusiveMinimum": 0,
+            "maximum": 100,
+            "title": "Depth",
+            "type": "number"
+          },
+          "height_above_terrain": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Height Above Terrain",
+            "type": "number"
+          },
+          "id": {
+            "pattern": "^[A-Za-z0-9_$.\\-]{1,64}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/HouseText"
+          },
+          "render_key": {
+            "maxLength": 100,
+            "title": "Render Key",
+            "type": "string"
+          },
+          "sealing_factor": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Sealing Factor",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "depth",
+          "height_above_terrain",
+          "sealing_factor",
+          "render_key"
+        ],
+        "title": "HouseTerraceType",
         "type": "object"
       },
       "HouseText": {
@@ -18767,7 +19721,7 @@
     },
     "/api/v1/admin/house/templates/{slug}/versions/{version}/decisions": {
       "put": {
-        "description": "Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards).",
+        "description": "Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards, Dach). Ein\ngeneigtes Dach aus dem IFC vergleicht der Import mit dem Dach des Kerns (`engine`).",
         "operationId": "set_decisions_api_v1_admin_house_templates__slug__versions__version__decisions_put",
         "parameters": [
           {
@@ -24322,6 +25276,8 @@
     "HouseEvaluateRequest",
     "HouseEvaluation",
     "HouseFacts",
+    "HouseRoofGeometry",
+    "HouseRoofRequest",
     "HouseTemplate"
   ]
 }

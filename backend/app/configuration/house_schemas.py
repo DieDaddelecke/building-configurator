@@ -16,6 +16,7 @@ from app.configuration.schemas import (
     CheckOut,
     Mode,
     OrientationOut,
+    OutbuildingsOut,
     PlacementEvaluationOut,
     PlacementOut,
     PlacementRequest,
@@ -41,7 +42,12 @@ class HouseFactsOut(BaseModel):
     storeys: str
     """`R`, `R+1` …"""
     roof_form: str
+    """Dachform des Kerns (Ergänzung 11), nicht der Begriff der PLU-Regel."""
     pitch_deg: float | None
+    """Neigung, wenn alle Dachflächen gleich geneigt sind."""
+    pitches_deg: list[float]
+    """Verschiedene Neigungen der Dachflächen, aufsteigend (Mansarde, Krüppelwalm: mehrere); Flachdach
+    leer."""
     height_m: float
     """Höchster Punkt über Gelände (E-HM-11)."""
     eave_height_m: float
@@ -155,6 +161,8 @@ class HouseConfigurationOut(BaseModel):
     facts: HouseFactsOut | None
     evaluation: PlacementEvaluationOut | None
     areas: AreasOut | None
+    outbuildings: OutbuildingsOut | None
+    """Terrasse, Carport und Zufahrten, von Python gesetzt (Ergänzung 7); `null` ohne Haustyp."""
     orientation: OrientationOut | None
     status: Status | None
     """Abgeleitet aus Katalogregeln und PLU-Prüfung, nie gespeichert (3.7)."""

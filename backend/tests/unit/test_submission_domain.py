@@ -296,6 +296,27 @@ def test_check_texts_use_the_synchronised_translations() -> None:
     assert fmt.edge_name("street", 3, "de") == "Straße (3)"
 
 
+def test_open_roof_checks_name_readings_and_pitches() -> None:
+    """E-HM-61: Krüppelwalm mit seinen Lesarten, Mansarde mit allen Neigungen."""
+    form = {
+        "code": "roof_form_open",
+        "measured": "half_hip",
+        "limit": "gable",
+        "params": {"readings": "gable,hip,other"},
+    }
+    assert fmt.check_text(form, "de") == (
+        "Dachform: Krüppelwalmdach, nach dem PLU zu lesen als Satteldach, Walmdach, Andere Form "
+        "(zulässig: Satteldach); offen, bis die Auslegung festgelegt ist"
+    )
+    pitch = {
+        "code": "roof_pitch_open",
+        "measured": 70.0,
+        "limit": 45.0,
+        "params": {"min": 20, "max": 45, "pitches": "25,70"},
+    }
+    assert fmt.check_text(pitch, "fr").startswith("Pentes de toiture : 25,0° / 70,0° (limite 45,00°)")
+
+
 # ---------------------------------------------------------------------------
 # Lageplan, DXF, PDF
 # ---------------------------------------------------------------------------

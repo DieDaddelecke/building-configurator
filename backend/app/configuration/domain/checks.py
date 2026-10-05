@@ -83,14 +83,21 @@ def _roof_checks(house: HouseType, part: PartContext) -> list[Check]:
     allowed = [str(f) for f in params.get("allowed_forms", [])]
     form_failed = False
     if allowed:
-        form_failed = form not in allowed
+        # Benennt der PLU die Form nicht eindeutig (Krüppelwalm), entscheidet die Prüfung nur, wenn alle
+        # Lesarten gleich ausgehen; sonst bleibt sie offen, bis die Auslegung festgelegt ist (E-HM-61)
+        readings = house.roof_form_readings or (form,)
+        fitting = [f for f in readings if f in allowed]
+        form_failed = not fitting
+        undecided = 0 < len(fitting) < len(readings)
         checks.append(
             Check(
-                code="roof_form",
+                code="roof_form_open" if undecided else "roof_form",
                 kind="roof",
-                status=FAIL if form_failed else PASS,
+                status=UNKNOWN if undecided else FAIL if form_failed else PASS,
+                binding=not undecided,
                 measured=form,
                 limit=",".join(allowed),
+                params={"readings": ",".join(readings)} if house.roof_form_readings else {},
                 zone_code=zone,
                 citation=rule.citation,
             )
@@ -118,7 +125,9 @@ def _roof_checks(house: HouseType, part: PartContext) -> list[Check]:
     minimum, maximum = params.get("pitch_min_deg"), params.get("pitch_max_deg")
     if (minimum is not None or maximum is not None) and not house.is_flat:
         pitch = house.pitch_deg
-        if pitch is None:
+        if pitch is None and house.roof_pitches_deg:
+            checks.append(_pitches_check(house.roof_pitches_deg, minimum, maximum, zone, rule))
+        elif pitch is None:
             checks.append(
                 Check(
                     code="roof_pitch",
@@ -146,6 +155,42 @@ def _roof_checks(house: HouseType, part: PartContext) -> list[Check]:
                 )
             )
     return checks
+
+
+def _pitches_check(
+    pitches: tuple[float, ...], minimum: Any, maximum: Any, zone: str | None, rule: RuleInput
+) -> Check:
+    """Dachflächen verschieden geneigt (Mansarde, Krüppelwalm): entschieden, wenn alle Neigungen die Grenzen
+    einhalten oder keine; sonst offen, weil die Auslegung festlegt, welche Neigung maßgeblich ist
+    (E-HM-61)."""
+
+    def violated(pitch: float) -> float | None:
+        if minimum is not None and pitch < float(minimum) - tol.PITCH_TOLERANCE_DEG:
+            return float(minimum)
+        if maximum is not None and pitch > float(maximum) + tol.PITCH_TOLERANCE_DEG:
+            return float(maximum)
+        return None
+
+    failing = [(p, limit) for p in pitches if (limit := violated(p)) is not None]
+    undecided = 0 < len(failing) < len(pitches)
+    if failing:
+        measured, limit = failing[0]
+    else:
+        # Alle eingehalten: die Neigung am nächsten an einer Grenze
+        measured = max(pitches) if maximum is not None else min(pitches)
+        limit = float(maximum) if maximum is not None else float(minimum)
+    return Check(
+        code="roof_pitch_open" if undecided else "roof_pitch",
+        kind="roof",
+        status=UNKNOWN if undecided else FAIL if failing else PASS,
+        binding=not undecided,
+        measured=measured,
+        limit=limit,
+        unit="deg",
+        params={"min": minimum, "max": maximum, "pitches": ",".join(f"{p:g}" for p in pitches)},
+        zone_code=zone,
+        citation=rule.citation,
+    )
 
 
 def _height_checks(house: HouseType, part: PartContext, ctx: SiteContext) -> list[Check]:

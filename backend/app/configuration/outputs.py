@@ -4,6 +4,8 @@ Preise gehen brutto hinaus (Anzeigebasis, D10); intern wird netto gerechnet. Es 
 Gesamtpreis lesbar ist (L1): nur Spannen und Einzelposten.
 """
 
+from collections.abc import Sequence
+
 from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 
@@ -16,6 +18,7 @@ from app.configuration.domain.energy import EnergyStatus
 from app.configuration.domain.geometry import polygons
 from app.configuration.domain.options import Reason
 from app.configuration.domain.orientation import Orientation
+from app.configuration.domain.outbuildings import CarportPlacement, CarportSpec, Driveway, TerraceSpec
 from app.configuration.domain.placement import Placement, PlacementResult
 from app.configuration.schemas import (
     AreasOut,
@@ -130,35 +133,46 @@ def selection_out(design: Design, offer: TypeOffer, dropped: list[str]) -> Selec
 
 def outbuildings_out(design: Design) -> OutbuildingsOut:
     part = design.type_part
-    terrace = None
-    if part.terrace_spec is not None:
-        spec = part.terrace_spec
-        terrace = OutbuildingOut(
-            slug=spec.slug,
+    return placed_outbuildings_out(
+        part.terrace_spec, design.terrace, part.carport_spec, design.carport, design.driveways
+    )
+
+
+def placed_outbuildings_out(
+    terrace_spec: TerraceSpec | None,
+    terrace: BaseGeometry | None,
+    carport_spec: CarportSpec | None,
+    carport: CarportPlacement | None,
+    driveways: Sequence[Driveway],
+) -> OutbuildingsOut:
+    """Terrasse, Carport und Zufahrten, wie `outbuildings.py` sie gesetzt hat (H3 und Hausmodell)."""
+    terrace_out = None
+    if terrace_spec is not None:
+        terrace_out = OutbuildingOut(
+            slug=terrace_spec.slug,
             kind="terrace",
-            placed=design.terrace is not None,
-            polygon_local=_ring(design.terrace),
-            area_m2=spec.area_m2,
-            width_m=spec.width_m,
-            depth_m=spec.depth_m,
+            placed=terrace is not None,
+            polygon_local=_ring(terrace),
+            area_m2=terrace_spec.area_m2,
+            width_m=terrace_spec.width_m,
+            depth_m=terrace_spec.depth_m,
         )
-    carport = None
-    if part.carport_spec is not None:
-        spec_c = part.carport_spec
-        carport = OutbuildingOut(
-            slug=spec_c.slug,
+    carport_out = None
+    if carport_spec is not None:
+        carport_out = OutbuildingOut(
+            slug=carport_spec.slug,
             kind="carport",
-            placed=design.carport is not None,
-            polygon_local=_ring(design.carport.polygon) if design.carport else None,
-            area_m2=spec_c.area_m2,
-            width_m=spec_c.width_m,
-            depth_m=spec_c.depth_m,
-            spaces=spec_c.spaces,
-            setback=design.carport.setback if design.carport else None,
+            placed=carport is not None,
+            polygon_local=_ring(carport.polygon) if carport else None,
+            area_m2=carport_spec.area_m2,
+            width_m=carport_spec.width_m,
+            depth_m=carport_spec.depth_m,
+            spaces=carport_spec.spaces,
+            setback=carport.setback if carport else None,
         )
     return OutbuildingsOut(
-        terrace=terrace,
-        carport=carport,
+        terrace=terrace_out,
+        carport=carport_out,
         driveways=[
             DrivewayOut(
                 source=d.source,
@@ -166,7 +180,7 @@ def outbuildings_out(design: Design) -> OutbuildingsOut:
                 length_m=d.length_m,
                 area_m2=d.area_m2,
             )
-            for d in design.driveways
+            for d in driveways
         ],
     )
 

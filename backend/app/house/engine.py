@@ -23,6 +23,8 @@ from app.house.contract import (
     HouseConfiguration,
     HouseEvaluateRequest,
     HouseEvaluation,
+    HouseRoofGeometry,
+    HouseRoofRequest,
     HouseTemplate,
 )
 from app.platform.logging import get_logger
@@ -140,3 +142,10 @@ def evaluate(
         template=template, catalog=catalog, configuration=configuration, candidates=None
     ).model_dump(mode="json")
     return _parse(HouseEvaluation, _call(client, "POST", "/evaluate", body))
+
+
+def roof(client: httpx2.Client, request: HouseRoofRequest) -> HouseRoofGeometry:
+    """Geneigtes Dach aus Form und Parametern (E-HM-64), mit dem der IFC-Import das Dach aus Archicad
+    vergleicht. Lässt sich die Form nicht erzeugen: `EngineRejected` mit `roof_not_constructible` und
+    Grund."""
+    return _parse(HouseRoofGeometry, _call(client, "POST", "/roof", request.model_dump(mode="json")))

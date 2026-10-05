@@ -1,21 +1,27 @@
-"""IFC-Import (docs/PLAN_HAUSMODELL.md 3.6, Abnahme HM3): Leser im Kindprozess und Zusammenbau des Entwurfs.
+"""IFC-Import (docs/PLAN_HAUSMODELL.md 3.6, Abnahme HM3 und HM5): Leser im Kindprozess und Zusammenbau des
+Entwurfs.
 
 Referenz-IFC → Template gleich den Testdaten (1 mm, P 20.3); fehlerhafte Dateien → erwartete Meldungen;
-Probedateien 1 und 2 vollständig erkannt. Solange die Referenz-IFC des Büros fehlt, steht das Demohaus aus
-`tests/house_support.py` dafür; liegt sie als `ifc-proben/demohaus_referenz.ifc` vor, gilt derselbe Vergleich
-auch für sie. Probedateien liegen nur lokal (`ifc-proben/.gitignore`); ohne sie werden die Tests übersprungen.
+Probedateien 1 und 2 vollständig erkannt; jede Dachform aus einer Probe erkannt, ein Typ R+1 gleich den
+Testdaten (HM5). Statt `engine /roof` antworten die gespeicherten Dächer des Kerns (`roofs.json`).
+Solange die Referenz-IFC des Büros fehlt, steht das Demohaus aus `tests/house_support.py` dafür; liegt sie
+als `ifc-proben/demohaus_referenz.ifc` vor, gilt derselbe Vergleich auch für sie. Probedateien liegen nur
+lokal (`ifc-proben/.gitignore`); ohne sie werden die Tests übersprungen.
 """
 
 import ast
+import functools
 import os
+from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
-from app.house.contract import HouseCatalog, HouseSourceIfc, HouseTemplate, HouseText
+from app.house.contract import HouseCatalog, HouseRoofGeometry, HouseSourceIfc, HouseTemplate, HouseText
 from app.house.domain import assemble as assemble_module
 from app.house.domain.assemble import assemble
 from app.house.domain.draft import (
@@ -26,11 +32,28 @@ from app.house.domain.draft import (
     HouseImportReport,
 )
 from app.house.domain.raw import RawModel
+from app.house.domain.roof import RoofBuilder
 from app.house.ifc_process import READ_ERRORS, IfcReadError, read_failure, read_ifc
-from tests.house_support import PROBES, DemoHouse, Opening, canonical, fixture, write_ifc
+from tests.house_support import (
+    PROBES,
+    DemoHouse,
+    Opening,
+    canonical,
+    fixture,
+    kernel_roofs,
+    roofs,
+    write_ifc,
+    write_template_ifc,
+)
+
+Point3 = tuple[float, float, float]
+Move = Callable[[dict[str, Any], Point3], Point3]
 
 LIMITS: dict[str, Any] = {"timeout_seconds": 120, "max_memory_bytes": 1024**3}
-CATALOG = HouseCatalog.model_validate(fixture("catalog"))
+CATALOG_DOCUMENT = fixture("catalog")
+CATALOG = HouseCatalog.model_validate(CATALOG_DOCUMENT)
+KERNEL = kernel_roofs()
+ROOF_PROBES = {p["name"]: p for p in roofs()["probes"]}
 SOURCE = HouseSourceIfc(
     file_name="demo.ifc", sha256="0" * 64, ifc_schema="IFC4", imported_at=datetime(2026, 10, 4, tzinfo=UTC)
 )
@@ -49,9 +72,9 @@ def _read(house: DemoHouse, directory: Path) -> RawModel:
 
 
 def _assemble(
-    raw: RawModel, decisions: HouseDraftDecisions = EMPTY_DECISIONS
+    raw: RawModel, decisions: HouseDraftDecisions = EMPTY_DECISIONS, build: RoofBuilder = KERNEL
 ) -> tuple[HouseTemplate | None, HouseImportReport]:
-    return assemble(raw, decisions, CATALOG, SOURCE, "demo_house", "Demo")
+    return assemble(raw, decisions, CATALOG, SOURCE, "demo_house", "Demo", build)
 
 
 def _decide(**changes: Any) -> HouseDraftDecisions:
@@ -145,12 +168,17 @@ def test_reference_ifc_of_the_office_gives_the_fixture_template() -> None:
 PROBE_ROOMS = ["bathroom", "bedroom", "bedroom", "corridor", "living"]
 
 
-@pytest.mark.parametrize("name", ["test_building_1_ifc.ifc", "test_building_2_ifc.ifc"])
-def test_probe_files_recognize_every_zone(name: str) -> None:
+@functools.cache
+def _probe_file(name: str) -> RawModel:
     path = PROBES / name
     if not path.exists():
         pytest.skip(f"Probedatei {name} fehlt (nur lokal)")
-    raw = read_ifc(path, **LIMITS)
+    return read_ifc(path, **LIMITS)
+
+
+@pytest.mark.parametrize("name", ["test_building_1_ifc.ifc", "test_building_2_ifc.ifc"])
+def test_probe_files_recognize_every_zone(name: str) -> None:
+    raw = _probe_file(name)
     template, report = _assemble(raw)
     assert template is not None
     assert len(report.zones) == len(raw.spaces) == 5
@@ -229,7 +257,7 @@ def test_cut_file_reports_failed_geometry(tmp_path: Path) -> None:
     ("changes", "severity", "code"),
     [
         ({"roof": None}, "error", "roof_missing"),
-        ({"roof": "pitched"}, "error", "roof_form_not_recognized"),
+        ({"roof": "pitched"}, "open", "roof_form_not_recognized"),
         ({"ground_slab": None}, "error", "ground_slab_missing"),
         ({"ground_floor_offset": None}, "info", "ground_floor_offset_default"),
     ],
@@ -239,11 +267,12 @@ def test_missing_parts_are_reported(
 ) -> None:
     template, report = _assemble(_variant(tmp_path, **changes))
     assert code in _codes(report, severity)
-    if severity == "error":
+    if severity in ("error", "open"):
         assert not report.publishable
     if code == "roof_form_not_recognized":
+        # Satteldach mit waagerechter Unterseite: keine Traufe, die der Kern so erzeugt
         finding = next(f for f in report.findings if f.code == code)
-        assert finding.params == {"slopes": "30°"}
+        assert finding.params == {"reason": "no_eave", "slopes": "0°"}
     if code == "ground_floor_offset_default":
         assert template is not None
         assert template.ground_floor_offset == 0.2
@@ -256,6 +285,222 @@ def test_open_envelope_is_an_error(tmp_path: Path) -> None:
     assert [(f.severity, f.code, f.params) for f in report.findings] == [
         ("error", "envelope_not_closed", {"areas": 3.0})
     ]
+
+
+# --- Geschosse und Dach (HM5) -----------------------------------------------------------------------------
+
+
+def _probe_template(request: dict[str, Any]) -> dict[str, Any]:
+    """Was `write_template_ifc` braucht: ein Geschoss mit der Kontur und dem Dach einer Probe, ein Raum,
+    keine Öffnungen."""
+    contour = request["contour"]
+    return {
+        "ground_floor_offset": 0.2,
+        "levels": [{"id": "rdc", "name": "RDC", "elevation": 0.0}],
+        "envelope": [
+            {
+                "level_id": "rdc",
+                "inner_polygon": contour,
+                "segments": [{"id": f"seg-{i}"} for i in range(len(contour))],
+            }
+        ],
+        "interior_walls": [],
+        "openings": [],
+        "slabs": [{"level_id": "rdc", "kind": "ground", "thickness": 0.2}],
+        "roof": _placement(request),
+        "rooms": [{"level_id": "rdc", "room_type_id": "living", "polygon": contour}],
+    }
+
+
+def _placement(request: dict[str, Any]) -> dict[str, Any]:
+    keys = ("bearing_height", "eave_overhang", "verge_overhang", "design")
+    return {"parapet_height": 0.0} | {k: request[k] for k in keys}
+
+
+def _probe_raw(name: str, directory: Path, move: Move | None = None) -> RawModel:
+    """IFC mit dem Dach einer Probe als Platzhalter; `move` verschiebt die Punkte einer Fläche des Dachs."""
+    probe = ROOF_PROBES[name]
+    geometry = probe["geometry"]
+    if move is not None:
+        faces = [
+            f
+            | {
+                "polygon": [
+                    dict(zip("xyz", move(f, (p["x"], p["y"], p["z"])), strict=True)) for p in f["polygon"]
+                ]
+            }
+            for f in geometry["faces"]
+        ]
+        geometry = geometry | {"faces": faces}
+    path = write_template_ifc(
+        _probe_template(probe["request"]), CATALOG_DOCUMENT, directory / f"{name}.ifc", roof=geometry
+    )
+    return read_ifc(path, **LIMITS)
+
+
+def _roof_findings(report: HouseImportReport) -> list[tuple[str, str, dict[str, str | float]]]:
+    return [(f.severity, f.code, f.params) for f in report.findings if f.code.startswith("roof")]
+
+
+@pytest.mark.parametrize("name", list(ROOF_PROBES))
+def test_every_roof_form_is_recognized(tmp_path: Path, name: str) -> None:
+    """Abnahme HM5: jede Form der Ergänzung 11 auf Rechteck und L-Grundriss aus dem Platzhalter im IFC
+    erkannt; der Kern erzeugt dasselbe Dach (E-HM-65)."""
+    request = ROOF_PROBES[name]["request"]
+    template, report = _assemble(_probe_raw(name, tmp_path))
+    assert template is not None
+    assert _roof_findings(report) == []
+    assert template.roof.model_dump(mode="json") == _placement(request)
+    shapes = {s.id: s.form for s in CATALOG.roof_shapes}
+    shape = next(
+        o.assigns.roof_shape_id for o in CATALOG.option_values if o.id == template.defaults["roof_shape"]
+    )
+    assert shape is not None and shapes[shape] == request["design"]["form"], (
+        "Standard der Dachform nach dem Dach"
+    )
+    assert template.defaults["roof_type"] == "roof.tiles"
+
+
+def test_two_storey_type_gives_the_fixture_template(tmp_path: Path) -> None:
+    """Abnahme HM5: ein Typ R+1 aus IFC gleich den Testdaten, Satteldach als Platzhalter, Decke über dem RDC,
+    Fassadenrollen vom Erdgeschoss übernommen (E-HM-63)."""
+    expected = fixture("template-r1")
+    roof = ROOF_PROBES["rectangle-gable"]["geometry"]
+    raw = read_ifc(write_template_ifc(expected, CATALOG_DOCUMENT, tmp_path / "r1.ifc", roof=roof), **LIMITS)
+    template, report = _with_roles(raw)
+    assert template is not None
+    assert report.findings == []
+    assert report.publishable
+    assert canonical(template.model_dump(mode="json")) == canonical(expected)
+    assert (report.summary.storeys, report.summary.rooms) == (2, 8)
+
+
+def test_probe_file_2_has_a_hip_roof() -> None:
+    """Probedatei 2 aus Archicad: Walmdach 20° auf dem L-Grundriss, Dachkörper als ein `IfcRoof`."""
+    raw = _probe_file("test_building_2_ifc.ifc")
+    template, report = _assemble(raw)
+    assert template is not None
+    # Das Dach steht in einem eigenen Geschoss „R+1“ ohne Wände: Dachgeschoss, kein Wohngeschoss
+    assert _roof_findings(report) == [("info", "roof_level", {"name": "R+1"})]
+    hip = {"form": "hip", "pitch_deg": 20.0, "upper_pitch_deg": None, "break_height": None, "rotation": 0}
+    assert template.roof.model_dump(mode="json") == {
+        "bearing_height": 3.77,
+        "parapet_height": 0.0,
+        "eave_overhang": 0.5,
+        "verge_overhang": 0.5,
+        "design": hip,
+    }
+
+
+def _flared(face: dict[str, Any], point: Point3) -> Point3:
+    """Ortgang an der Traufe 0,20 m weiter außen als am First: Ebenen und Überstände in der Mitte gleich."""
+    x, y, z = point
+    if z < 6.0 and not 0 <= x <= 10:
+        return (x - 0.2 if x < 0 else x + 0.2, y, z)
+    return point
+
+
+@pytest.mark.parametrize(
+    ("move", "params"),
+    [
+        (lambda face, p: (p[0] + 30.0, p[1], p[2]), {"reason": "contour_not_covered"}),
+        (
+            lambda face, p: (p[0], p[1], p[2] + 0.1) if face["contour_edges"] == [2] else p,
+            {"reason": "eave_heights_differ", "spread": 0.1},
+        ),
+        (lambda face, p: (p[0] + 0.1, p[1], p[2]), {"reason": "overhangs_differ"}),
+        (_flared, {"reason": "shape_differs", "distance": 0.2}),
+    ],
+)
+def test_roof_unlike_the_kernel_is_open(tmp_path: Path, move: Move, params: dict[str, str | float]) -> None:
+    """Ein Dach, das der Kern so nicht erzeugt, ist nicht erkannt: offen, bis das Büro es setzt (E-HM-65)."""
+    template, report = _assemble(_probe_raw("rectangle-gable", tmp_path, move))
+    assert template is not None
+    assert _roof_findings(report) == [("open", "roof_form_not_recognized", params | {"slopes": "35°"})]
+    assert not report.publishable
+    assert template.roof.design.form == "flat", "Platzhalter bis zur Angabe des Büros"
+
+
+def test_roof_the_kernel_refuses_or_builds_otherwise_is_open(tmp_path: Path) -> None:
+    raw = _probe_raw("rectangle-gable", tmp_path)
+    _, refused = _assemble(raw, build=lambda request: "gables_adjacent")
+    assert _roof_findings(refused) == [
+        (
+            "open",
+            "roof_form_not_recognized",
+            {"reason": "not_constructible", "slopes": "35°", "refusal": "gables_adjacent"},
+        )
+    ]
+    turned = HouseRoofGeometry.model_validate(ROOF_PROBES["rectangle-gable-90"]["geometry"])
+    _, other = _assemble(raw, build=lambda request: turned)
+    assert _roof_findings(other) == [
+        ("open", "roof_form_not_recognized", {"reason": "edges_differ", "slopes": "35°"})
+    ]
+
+
+ROOF = {
+    "bearing_height": 3.0,
+    "parapet_height": 0.0,
+    "eave_overhang": 0.5,
+    "verge_overhang": 0.3,
+    "design": {
+        "form": "gable",
+        "pitch_deg": 30.0,
+        "upper_pitch_deg": None,
+        "break_height": None,
+        "rotation": 0,
+    },
+}
+
+
+def test_office_sets_a_pitched_roof(tmp_path: Path) -> None:
+    """Das Büro setzt ein geneigtes Dach, wenn der Import es nicht erkennt oder es anders will; dann zählt
+    das Dach im IFC nicht. Ein Flachdach braucht die Dachdecke aus dem IFC (E-HM-65)."""
+    decisions = HouseDraftDecisions.model_validate(EMPTY_DECISIONS.model_dump() | {"roof": ROOF})
+    raw = _variant(tmp_path, roof="pitched")
+    template, report = _assemble(raw, decisions)
+    assert template is not None
+    assert _roof_findings(report) == [("info", "roof_set_by_office", {"form": "gable"})]
+    assert template.roof.model_dump(mode="json") == ROOF
+    assert [s.kind for s in template.slabs] == ["ground"]
+    assert (template.defaults["roof_shape"], template.defaults["roof_type"]) == ("shape.gable", "roof.tiles")
+    _, without = _assemble(_variant(tmp_path, roof=None), decisions)
+    assert "roof_missing" not in _codes(without)
+    flat = ROOF | {
+        "design": {"form": "flat", "pitch_deg": None, "upper_pitch_deg": None, "break_height": None}
+    }
+    with pytest.raises(ValidationError):
+        HouseDraftDecisions.model_validate(EMPTY_DECISIONS.model_dump() | {"roof": flat})
+
+
+def test_older_decisions_are_lifted() -> None:
+    """Angaben aus HM3 und HM4 kennen das Dach nicht (E-HM-58)."""
+    stored = EMPTY_DECISIONS.model_dump(mode="json")
+    stored.pop("roof")
+    assert HouseDraftDecisions.model_validate(stored) == EMPTY_DECISIONS
+
+
+def test_upper_storey_needs_a_floor_and_the_same_contour(tmp_path: Path) -> None:
+    """E-HM-63: unter jedem Obergeschoss eine Decke, alle Geschosse auf der Bezugskontur des Erdgeschosses."""
+    r1 = fixture("template-r1")
+    roof = ROOF_PROBES["rectangle-gable"]["geometry"]
+    no_floor = r1 | {"slabs": [s for s in r1["slabs"] if s["kind"] != "floor"]}
+    path = write_template_ifc(no_floor, CATALOG_DOCUMENT, tmp_path / "ohne_decke.ifc", roof=roof)
+    _, report = _assemble(read_ifc(path, **LIMITS))
+    assert [(f.code, f.params) for f in report.findings if f.severity == "error"] == [
+        ("floor_slab_missing", {"name": "R+1"})
+    ]
+
+    wider = [{"x": p["x"], "y": 8.5 if p["y"] == 8 else p["y"]} for p in r1["envelope"][1]["inner_polygon"]]
+    envelope = [r1["envelope"][0], r1["envelope"][1] | {"inner_polygon": wider}]
+    path = write_template_ifc(
+        r1 | {"envelope": envelope}, CATALOG_DOCUMENT, tmp_path / "breiter.ifc", roof=roof
+    )
+    _, report = _assemble(read_ifc(path, **LIMITS))
+    assert ("storey_contour_differs", {"name": "R+1"}) in [
+        (f.code, f.params) for f in report.findings if f.severity == "error"
+    ]
+    assert not report.publishable
 
 
 # --- Zonen und Räume im Entwurf ---------------------------------------------------------------------------

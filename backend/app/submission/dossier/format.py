@@ -88,7 +88,7 @@ def check_text(check: dict[str, Any], locale: Locale, names: dict[str, str] | No
         return code
 
     def value(raw: object) -> str:
-        if code in ("roof_form", "roof_flat"):
+        if code in ("roof_form", "roof_form_open", "roof_flat"):
             return _words(raw, "check_roof", locale)
         if code in MATERIAL_CHECKS:
             return _words(raw, "check_material", locale)
@@ -98,6 +98,10 @@ def check_text(check: dict[str, Any], locale: Locale, names: dict[str, str] | No
 
     orientation = params.get("orientation")
     reason = check.get("reason")
+    # Mehrere Neigungen einer Mansarde oder eines Krüppelwalms (E-HM-61)
+    pitches = " / ".join(
+        f"{number(float(p), locale, 1)}°" for p in str(params.get("pitches") or "").split(",") if p
+    )
     return tr(
         f"check.{key}",
         locale,
@@ -106,6 +110,8 @@ def check_text(check: dict[str, Any], locale: Locale, names: dict[str, str] | No
         orientation=_words(orientation, "check_orientation", locale) if orientation else "",
         reason=_words(reason, "check_reason", locale) if reason else "",
         subject=names.get(str(slug), str(slug)),
+        readings=_words(params.get("readings"), "check_roof", locale),
+        pitches=pitches,
     )
 
 

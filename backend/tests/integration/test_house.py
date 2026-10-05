@@ -2,7 +2,8 @@
 
 Upload → Job im Kindprozess → Entwurf und Bericht → Angaben des Büros → Prüfung über `engine` (hier ein
 `MockTransport`) → Freigabe. Das Demohaus aus `tests/house_support.py` steht für die Referenz-IFC; über die
-API entsteht daraus dasselbe Template wie in den Testdaten.
+API entsteht daraus dasselbe Template wie in den Testdaten. Ebenso das R+1 mit Satteldach (HM5); das Dach
+erzeugt dort der Kern (`engine /roof`, hier mit den Antworten aus `roofs.json`).
 """
 
 import json
@@ -21,15 +22,23 @@ from sqlalchemy.exc import DBAPIError
 
 from app import cli
 from app.config import get_settings
-from app.house import service
-from app.house.contract import HouseCompatibilityRequest
+from app.house import engine, service
+from app.house.contract import HouseCompatibilityRequest, HouseRoofRequest
 from app.house.engine import engine_client
 from app.house.jobs import house_ifc_import
 from app.house.models import HouseCatalogVersion, HouseTemplateVersion
 from app.platform.jobs import JobContext
 from app.platform.jobs.worker import run_one
 from app.platform.models import AuditLog
-from tests.house_support import DemoHouse, canonical, fixture, write_ifc
+from tests.house_support import (
+    DemoHouse,
+    canonical,
+    fixture,
+    kernel_roofs,
+    roofs,
+    write_ifc,
+    write_template_ifc,
+)
 
 BASE = "/api/v1/admin/house"
 ROLES = ["street", "side_right", "garden", "side_left"]
@@ -55,7 +64,7 @@ def catalog(db_session: Any) -> HouseCatalogVersion:
 def engine_calls(app: Any) -> Iterator[list[dict[str, Any]]]:
     """Rechendienst als `MockTransport`: Jede Anfrage wird mit dem Vertrag geprüft und festgehalten."""
     calls: list[dict[str, Any]] = []
-    answer: dict[str, Any] = {"domain_version": "0.3.0", "supported": True, "issues": []}
+    answer: dict[str, Any] = {"domain_version": "0.4.0", "supported": True, "issues": []}
 
     def handler(request: httpx2.Request) -> httpx2.Response:
         body = json.loads(request.content)
@@ -239,6 +248,69 @@ def test_reference_ifc_through_the_api_gives_the_fixture_template(
     assert (retired.json()["status"], retired.json()["current"]) == ("retired", False)
 
 
+def _kernel_with_roofs(paths: list[str]) -> Engine:
+    """Rechendienst mit den Dächern aus `roofs.json` (`/roof`) und bestandener Kompatibilität."""
+    build = kernel_roofs()
+
+    def handler(request: httpx2.Request) -> httpx2.Response:
+        paths.append(request.url.path)
+        body = json.loads(request.content)
+        if request.url.path == "/roof":
+            built = build(HouseRoofRequest.model_validate(body))
+            if isinstance(built, str):
+                detail = {"reason": built}
+                return httpx2.Response(422, json={"code": "roof_not_constructible", "detail": detail})
+            return httpx2.Response(200, json=built.model_dump(mode="json"))
+        HouseCompatibilityRequest.model_validate(body)
+        return httpx2.Response(200, json={"domain_version": "0.4.0", "supported": True, "issues": []})
+
+    return handler
+
+
+def test_two_storey_ifc_through_the_api_gives_the_fixture_template(
+    client: Any,
+    app: Any,
+    login_as: Any,
+    catalog: HouseCatalogVersion,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Abnahme HM5 im Büro: ein Typ R+1 mit Satteldach aus IFC über Upload, Job, Entwurf, Prüfung und
+    Freigabe. Das Dach erkennt der Import im Job und bei jeder Angabe des Büros mit dem Kern."""
+    roof = next(p for p in roofs()["probes"] if p["name"] == "rectangle-gable")["geometry"]
+    data = write_template_ifc(fixture("template-r1"), fixture("catalog"), tmp_path / "r1.ifc", roof=roof)
+    paths: list[str] = []
+    handler = _kernel_with_roofs(paths)
+    _engine(app, handler)
+    # Der Job läuft ohne Anfrage und holt den Client direkt
+    monkeypatch.setattr(
+        engine,
+        "engine_client",
+        lambda: httpx2.Client(base_url="http://engine.test", transport=httpx2.MockTransport(handler)),
+    )
+    try:
+        login_as("catalog_admin")
+        assert _upload(client, data.read_bytes(), name="r1.ifc").status_code == 201
+        _run_jobs()
+        body = _version(client)
+        assert _codes(body) == ["facade_roles_missing"]
+        assert body["report"]["summary"]["storeys"] == 2
+        assert body["template"]["roof"]["design"]["form"] == "gable"
+        assert paths == ["/roof"]
+
+        body = _with_roles(client)
+        assert body["report"]["findings"] == []
+        assert canonical(body["template"]) == canonical(fixture("template-r1"))
+        assert client.post(f"{BASE}/templates/demo/versions/1/check").status_code == 200
+        published = client.post(f"{BASE}/templates/demo/versions/1/publish")
+        assert published.status_code == 200, published.text
+        assert published.json()["status"] == "published"
+        # Angabe des Büros und Prüfung bauen den Entwurf neu, mit dem Dach des Kerns
+        assert paths == ["/roof", "/roof", "/roof", "/compatibility"]
+    finally:
+        app.dependency_overrides.pop(engine_client, None)
+
+
 def test_published_version_and_its_approval_are_immutable(
     client: Any,
     login_as: Any,
@@ -337,7 +409,7 @@ def test_incompatible_template_stays_a_draft(
     _engine(
         app,
         lambda request: httpx2.Response(
-            200, json={"domain_version": "0.3.0", "supported": False, "issues": [issue]}
+            200, json={"domain_version": "0.4.0", "supported": False, "issues": [issue]}
         ),
     )
     login_as("catalog_admin")
@@ -359,7 +431,7 @@ def test_rejection_of_the_core_becomes_an_issue(
 
     def handler(request: httpx2.Request) -> httpx2.Response:
         if request.url.path == "/health":
-            return httpx2.Response(200, json={"status": "ok", "domain": "0.3.0", "release": "test"})
+            return httpx2.Response(200, json={"status": "ok", "domain": "0.4.0", "release": "test"})
         return httpx2.Response(422, json={"code": "mixed_wall_profiles", "detail": {"level": "level-x"}})
 
     _engine(app, handler)
@@ -368,7 +440,7 @@ def test_rejection_of_the_core_becomes_an_issue(
     _run_jobs()
     body = client.post(f"{BASE}/templates/demo/versions/1/check").json()
     assert body["status"] == "draft"
-    assert body["compatibility"]["domain_version"] == "0.3.0"
+    assert body["compatibility"]["domain_version"] == "0.4.0"
     assert body["compatibility"]["issues"] == [
         {"code": "mixed_wall_profiles", "slot_id": None, "element_id": None, "ref_id": "level=level-x"}
     ]
@@ -378,7 +450,7 @@ def test_rejection_of_the_core_becomes_an_issue(
     "handler",
     [
         lambda request: httpx2.Response(500, json={"code": "internal_error", "detail": {}}),
-        lambda request: httpx2.Response(200, json={"domain_version": "0.3.0"}),
+        lambda request: httpx2.Response(200, json={"domain_version": "0.4.0"}),
         lambda request: (_ for _ in ()).throw(httpx2.ConnectError("engine down")),
     ],
     ids=["5xx", "contract", "down"],
@@ -527,7 +599,7 @@ def test_catalog_import_by_cli_from_file_and_stdin(
     assert [(c["version"], c["status"], c["current"], c["source"]) for c in listed] == [
         (1, "published", True, "catalog.json")
     ]
-    assert (listed[0]["room_types"], listed[0]["slots"]) == (5, 5)
+    assert (listed[0]["room_types"], listed[0]["slots"]) == (5, 10)
 
     with pytest.raises(SystemExit):
         run("-", stdin=json.dumps({**fixture("catalog"), "market": "DE"}))

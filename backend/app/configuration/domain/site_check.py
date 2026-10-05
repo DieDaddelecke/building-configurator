@@ -1,9 +1,9 @@
 """Prüfung eines Hauses aus der Hausbeschreibung auf dem Grundstück (docs/PLAN_HAUSMODELL.md 3.1, 3.7; HM4).
 
 Wie `design.site_part` ohne Linie und Optionen aus H3: Lage je Kante, Flächen, Regeln der Teilfläche, Material
-aus den Klassen von Fassade und Dach, Stellplätze, Himmelsrichtung. Terrasse und Carport kommen mit HM5 als
-Slots `site` dazu (Ergänzung 7). Eine unzulässige Lage wird nicht abgelehnt, sondern bewertet (E-HM-6); dazu
-gibt es den Vorschlag einer zulässigen Lage (Ergänzung 9).
+aus den Klassen von Fassade und Dach, Stellplätze, Himmelsrichtung. Terrasse und Carport aus den Slots `site`
+setzt `outbuildings.py` wie im heutigen Konfigurator (Ergänzung 7, HM5). Eine unzulässige Lage wird nicht
+abgelehnt, sondern bewertet (E-HM-6); dazu gibt es den Vorschlag einer zulässigen Lage (Ergänzung 9).
 """
 
 import math
@@ -19,9 +19,20 @@ from app.configuration.domain.checks import Check
 from app.configuration.domain.compliance import MaterialSubject, SiteFacts, geometry_checks, rule_checks
 from app.configuration.domain.context import SiteContext
 from app.configuration.domain.fit import TypeFit, eligible_parts, evaluate_type
-from app.configuration.domain.geometry import turn
+from app.configuration.domain.geometry import turn, union
 from app.configuration.domain.house import HouseType
 from app.configuration.domain.orientation import Orientation, orientation
+from app.configuration.domain.outbuildings import (
+    CarportPlacement,
+    CarportSpec,
+    Driveway,
+    TerraceSpec,
+    carport_driveway,
+    garage_driveway,
+    place_carport,
+    street_reference,
+    terrace_polygon,
+)
 from app.configuration.domain.placement import Placement, PlacementResult, check_placement
 from app.configuration.domain.rotations import site_rotations
 from app.configuration.domain.surface import BoundaryOptions, surface_by_rotation
@@ -39,6 +50,11 @@ class SiteCheck:
     """Zulässigkeit mit dieser Hausbeschreibung (Spez. 5.4.6); gesperrt heißt: keine zulässige Lage."""
     suggestion: Placement | None
     """Nächste zulässige Lage, wenn die Lage bindende Verstöße hat und es eine gibt."""
+    terrace_spec: TerraceSpec | None = None
+    terrace: BaseGeometry | None = None
+    carport_spec: CarportSpec | None = None
+    carport: CarportPlacement | None = None
+    driveways: tuple[Driveway, ...] = ()
 
 
 def placement_surfaces(
@@ -101,20 +117,52 @@ def evaluate_site(
     ctx: SiteContext,
     boundary: BoundaryOptions,
     materials: Sequence[MaterialSubject],
+    terrace_spec: TerraceSpec | None = None,
+    carport_spec: CarportSpec | None = None,
 ) -> SiteCheck:
     fit = evaluate_type(house, ctx, boundary)
     result = check_placement(house, placement, ctx, boundary) if placement else None
-    facts = SiteFacts(has_garage_door=house.garage_door is not None, placed=result is not None)
+    has_door = house.garage_door is not None
     if placement is None or result is None:
+        facts = SiteFacts(
+            terrace_spec=terrace_spec, carport_spec=carport_spec, has_garage_door=has_door, placed=False
+        )
         checks = [
             *fit.reasons,
             *fit.hints,
             *geometry_checks(ctx, facts),
             *rule_checks(ctx, None, None, facts, materials),
         ]
-        return SiteCheck(None, None, checks, None, fit, None)
-    areas = compute_areas(
-        ctx, Buildings(house_facade=result.facade, house_projection=result.projection), result.part
+        return SiteCheck(None, None, checks, None, fit, None, terrace_spec, None, carport_spec)
+    terrace = terrace_polygon(terrace_spec, placement) if terrace_spec else None
+    # Haus und Terrasse sind Hindernisse: kein Überlapp mit dem Carport, seine Zufahrt kreuzt sie nicht
+    obstacle = union([g for g in (result.projection, terrace) if g is not None])
+    carport = place_carport(carport_spec, ctx, obstacle) if carport_spec else None
+    street = street_reference(ctx)
+    drives: list[Driveway] = []
+    if street is not None:
+        if carport is not None:
+            drives.append(carport_driveway(carport, street))
+        garage = garage_driveway(house, placement, street)
+        if garage is not None:
+            drives.append(garage)
+    buildings = Buildings(
+        house_facade=result.facade,
+        house_projection=result.projection,
+        carport=carport.polygon if carport else None,
+        terrace=terrace,
+        terrace_height_m=terrace_spec.height_above_terrain_m if terrace_spec else 0.0,
+        terrace_sealing_factor=terrace_spec.sealing_factor if terrace_spec else 1.0,
+        driveways=tuple(d.polygon for d in drives),
+    )
+    areas = compute_areas(ctx, buildings, result.part)
+    facts = SiteFacts(
+        terrace_spec=terrace_spec,
+        terrace=terrace,
+        carport_spec=carport_spec,
+        carport=carport,
+        has_garage_door=has_door,
+        placed=True,
     )
     checks = [
         *result.checks,
@@ -131,4 +179,16 @@ def evaluate_site(
     where = orientation(
         house, placement.rotation_deg, (float(centre.x) + ctx.origin[0], float(centre.y) + ctx.origin[1])
     )
-    return SiteCheck(result, areas, checks, where, fit, suggestion)
+    return SiteCheck(
+        result,
+        areas,
+        checks,
+        where,
+        fit,
+        suggestion,
+        terrace_spec,
+        terrace,
+        carport_spec,
+        carport,
+        tuple(drives),
+    )

@@ -19,7 +19,7 @@ from app.configuration.domain import ENGINE_VERSION
 from app.configuration.domain import presets as preset_rules
 from app.configuration.domain.change import ChangeRejected, check_boundary_options
 from app.configuration.domain.compliance import MaterialSubject
-from app.configuration.domain.facts import FactsError, house_type
+from app.configuration.domain.facts import FactsError, house_type, outbuilding_specs
 from app.configuration.domain.fit import eligible_parts, evaluate_type
 from app.configuration.domain.geometry import polygons
 from app.configuration.domain.house import HouseType
@@ -160,8 +160,9 @@ def _facts_out(house: HouseType, facts: HouseFacts) -> HouseFactsOut:
     min_x, min_y, max_x, max_y = house.facade.bounds
     return HouseFactsOut(
         storeys=house.storeys,
-        roof_form=house.roof_form,
+        roof_form=facts.roof_shape,
         pitch_deg=house.pitch_deg,
+        pitches_deg=[house.pitch_deg] if house.pitch_deg is not None else list(house.roof_pitches_deg),
         height_m=house.ridge_height_m,
         eave_height_m=house.eave_height_m,
         floor_area_m2=round(facts.floor_area, 2),
@@ -216,6 +217,7 @@ def _empty(
         facts=None,
         evaluation=None,
         areas=None,
+        outbuildings=None,
         orientation=None,
         status=None,
         rule_results=[],
@@ -261,6 +263,9 @@ def _out(
             "facts": _facts_out(house, evaluation.facts),
             "evaluation": outputs.evaluation_out(site.result) if site.result else None,
             "areas": outputs.areas_out(site.areas),
+            "outbuildings": outputs.placed_outbuildings_out(
+                site.terrace_spec, site.terrace, site.carport_spec, site.carport, site.driveways
+            ),
             "orientation": outputs.orientation_out(site.orientation),
             "status": combined_status(evaluation.status, (r.outcome for r in results)),
             "rule_results": evaluation.rule_results,
@@ -334,7 +339,12 @@ def _configuration(
         return _empty(project_id, row, loaded), row
     house = _house(pair, evaluation.facts)
     site = evaluate_site(
-        house, _placement(row, loaded), loaded.ctx, _options(row), _materials(pair, evaluation.facts)
+        house,
+        _placement(row, loaded),
+        loaded.ctx,
+        _options(row),
+        _materials(pair, evaluation.facts),
+        *outbuilding_specs(evaluation.facts, house),
     )
     return _out(db, row, pair, evaluation, house, site, loaded), row
 
@@ -492,7 +502,14 @@ def patch_configuration(
         placement = preset_rules.compute(
             house, loaded.ctx, "street_near", boundary, eligible_parts(house, loaded.ctx)
         )
-    site = evaluate_site(house, placement, loaded.ctx, boundary, _materials(pair, evaluation.facts))
+    site = evaluate_site(
+        house,
+        placement,
+        loaded.ctx,
+        boundary,
+        _materials(pair, evaluation.facts),
+        *outbuilding_specs(evaluation.facts, house),
+    )
 
     price_match = None
     if body.client_price is not None:

@@ -2,7 +2,8 @@
 (Zone Uh). `engine` ist ein `MockTransport` mit den Antworten des Kerns aus `evaluations.json`.
 
 Abnahme HM4: Die Konfiguration lädt nach einer Katalogänderung unverändert; Preise gehen gerundet an den
-Kunden, exakt nur in den Snapshot; der Preis aus dem Browser wird mit dem des Servers verglichen.
+Kunden, exakt nur in den Snapshot; der Preis aus dem Browser wird mit dem des Servers verglichen. Abnahme HM5:
+das R+1 mit Satteldach auf AD 65, geprüft wie im heutigen Konfigurator.
 """
 
 import copy
@@ -64,15 +65,23 @@ def _scaled(facts: dict[str, Any], factor: float) -> None:
 
 @pytest.fixture
 def engine_calls(app: Any) -> Iterator[list[dict[str, Any]]]:
-    """Kern als `MockTransport`: Antworten aus `evaluations.json` nach der Auswahl; jede Anfrage wird mit dem
-    Vertrag geprüft und festgehalten. Haustyp `gross_haus` ist das Demohaus in dreifacher Größe."""
+    """Kern als `MockTransport`: Antworten aus `evaluations.json` nach Haustyp und Auswahl; jede Anfrage wird
+    mit dem Vertrag geprüft und festgehalten. Haustyp `gross_haus` ist das Demohaus in dreifacher Größe."""
     calls: list[dict[str, Any]] = []
 
     def handler(request: httpx2.Request) -> httpx2.Response:
         body = json.loads(request.content)
         HouseEvaluateRequest.model_validate(body)
         calls.append(body)
-        found = next((c for c in EVALUATIONS.values() if c["configuration"] == body["configuration"]), None)
+        slug = "demo_house" if body["template"]["slug"] == "gross_haus" else body["template"]["slug"]
+        found = next(
+            (
+                c
+                for c in EVALUATIONS.values()
+                if c["template"] == slug and c["configuration"] == body["configuration"]
+            ),
+            None,
+        )
         if found is None:
             return httpx2.Response(422, json={"code": "option_unknown", "detail": {"slot": "wall_profile"}})
         evaluation = copy.deepcopy(found["evaluation"])
@@ -175,6 +184,40 @@ def test_templates_show_admissibility_and_a_rounded_price_from(
     assert [call["configuration"] for call in engine_calls] == [{"selections": {}}]
 
 
+def test_two_storey_type_on_ad65_is_checked_like_today(
+    client: Any, project: str, house_model: None, catalog: Any, db_session: Any, engine_calls: Any
+) -> None:
+    """Abnahme HM5: das R+1 (Satteldach 35°) auf AD 65, Zone Uh, mit denselben Prüfungen wie im heutigen
+    Konfigurator: Lage, Bauband und Grundfläche eingehalten; Höhen ohne Gelände nicht prüfbar, Dach und
+    unversiegelte Fläche ohne Regel (Warnungen). Traufe und First mit Gelände: `test_house_site_check.py`."""
+    publish_template(db_session, catalog, fixture("template-r1"))
+    [offer] = client.get(url(project, "templates")).json()["templates"]
+    assert (offer["slug"], offer["allowed"]) == ("demo_house_r1", True)
+    facts = offer["facts"]
+    assert (facts["storeys"], facts["roof_form"], facts["pitch_deg"]) == ("R+1", "gable", 35.0)
+    assert facts["height_m"] == pytest.approx(9.143, abs=1e-3)
+    assert facts["eave_height_m"] == pytest.approx(5.74, abs=1e-3)
+
+    response = patch(client, project, {"template_slug": "demo_house_r1"}, revision=0)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["placement"] is not None and body["evaluation"]["valid"] is True
+    checks = {c["code"]: (c["status"], c["binding"], c["reason"]) for c in body["evaluation"]["checks"]}
+    assert {"band_building", "footprint", "setback_street", "setback_side", "setback_rear"} <= set(checks)
+    assert all(status == "pass" for status, binding, _ in checks.values() if binding)
+    assert checks["height_unverifiable"] == ("unknown", False, "terrain_unavailable")
+    assert checks["roof_unknown"] == ("unknown", False, "missing")
+    outcomes = {r["check"]["code"]: r["outcome"] for r in body["site_results"]}
+    assert outcomes == {
+        "height_unverifiable": "warning",
+        "roof_unknown": "warning",
+        "unsealed_min_unknown": "warning",
+        "parking_not_shown": "info",
+    }
+    assert body["status"] == "valid_with_warnings"
+    assert [call["template"]["slug"] for call in engine_calls] == ["demo_house_r1", "demo_house_r1"]
+
+
 def test_only_approved_pairs_are_offered(
     client: Any, project: str, house_model: None, catalog: Any, db_session: Any, engine_calls: Any
 ) -> None:
@@ -230,7 +273,7 @@ def test_choosing_a_template_pins_its_versions_and_places_it_near_the_street(
     assert body["status"] in ("valid", "valid_with_warnings")
     assert all(r["outcome"] != "deviation" for r in body["site_results"])
     assert body["suggestion"] is None and body["areas"]["house_m2"] == pytest.approx(110.92)
-    assert body["price"]["gross_rounded"] == 515_000 and body["domain_version"] == "0.3.0"
+    assert body["price"]["gross_rounded"] == 515_000 and body["domain_version"] == "0.4.0"
     assert body["facts"]["facade_local"] and body["rotations"]
     assert exact_keys(body) == set()
     # Ein Aufruf des Kerns: Die Standards rechnet die Wahl des Haustyps schon (D12)
@@ -249,7 +292,7 @@ def test_choosing_a_template_pins_its_versions_and_places_it_near_the_street(
     assert office["catalog_version_id"] == str(catalog.id)
     snapshot = office["snapshot"]
     assert snapshot["evaluation"]["price"]["net_amount"] == STANDARD_NET
-    assert snapshot["domain_version"] == "0.3.0" and snapshot["price_check"] is None
+    assert snapshot["domain_version"] == "0.4.0" and snapshot["price_check"] is None
     assert snapshot["site"]["status"] == body["status"] and snapshot["site"]["input_parts"]
 
 
@@ -262,7 +305,7 @@ def test_selection_with_deviation_is_saved_with_its_price_check(
     body = {
         "configuration": BRICK,
         "placement": {"origin": {"e": 500.0, "n": 500.0}, "rotation_deg": rotation},
-        "client_price": {"net_amount": BRICK_NET, "domain_version": "0.3.0"},
+        "client_price": {"net_amount": BRICK_NET, "domain_version": "0.4.0"},
     }
     response = patch(client, project, body, revision=1)
     assert response.status_code == 200, response.text
@@ -282,12 +325,36 @@ def test_selection_with_deviation_is_saved_with_its_price_check(
     row = db_session.scalar(select(HouseConfigurationRecord))
     assert row.snapshot["price_check"] == {"client_net": BRICK_NET, "match": True}
     assert row.snapshot["evaluation"]["price"]["net_amount"] == BRICK_NET
-    assert row.engine_version == "0.3.0"
+    assert row.engine_version == "0.4.0"
 
     # Der Vorschlag ist eine zulässige Lage
     moved = patch(client, project, {"placement": saved["suggestion"]}, revision=2).json()
     assert moved["evaluation"]["valid"] is True and moved["suggestion"] is None
     assert moved["status"] != "with_deviations"
+
+
+def test_terrace_and_carport_are_placed_on_the_site(
+    client: Any, project: str, house_model: None, offered: Any, engine_calls: Any
+) -> None:
+    """Ergänzung 7 (HM5): Terrasse und Carport aus den Slots `site`; Lage, Zufahrt und Flächen rechnet Python
+    wie im heutigen Konfigurator."""
+    choose(client, project)
+    body = {"configuration": EVALUATIONS["outbuildings"]["configuration"]}
+    response = patch(client, project, body, revision=1)
+    assert response.status_code == 200, response.text
+    saved = response.json()
+    terrace, carport = saved["outbuildings"]["terrace"], saved["outbuildings"]["carport"]
+    assert (terrace["slug"], terrace["placed"], terrace["area_m2"]) == ("terrace.wood", True, 38.16)
+    assert (carport["slug"], carport["placed"], carport["spaces"]) == ("carport.single", True, 1)
+    assert terrace["polygon_local"] and carport["polygon_local"]
+    assert [d["source"] for d in saved["outbuildings"]["driveways"]] == ["carport"]
+    areas = saved["areas"]
+    assert (areas["terrace_m2"], areas["carport_m2"], areas["emprise_m2"]) == (38.16, 15.0, 125.92)
+    # 9.500 € netto → 11.400 € brutto; 6.868,80 € → 8.242,56 € → 8.200 €
+    assert saved["price"]["deltas_rounded"] == {"carport": 11_400, "terrace": 8_200}
+    outcomes = {r["check"]["code"]: r["outcome"] for r in saved["site_results"]}
+    assert outcomes["carport_setback_relaxed"] == "info" and "deviation" not in outcomes.values()
+    assert client.get(url(project)).json()["outbuildings"] == saved["outbuildings"]
 
 
 def test_differing_browser_price_is_reported_but_saved(

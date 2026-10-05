@@ -76,9 +76,11 @@ def set_decisions(
     body: HouseDraftDecisions,
     staff: StaffPrincipal = Editor,
     db: Session = Depends(get_db),
+    client: httpx2.Client = Depends(engine_client),
 ) -> HouseTemplateVersionOut:
-    """Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards)."""
-    return service.set_decisions(db, slug, version, body, staff.actor_id)
+    """Angaben des Büros zum Entwurf (Raumtypen, Rollen, Eingang, Höhe über Gelände, Standards, Dach). Ein
+    geneigtes Dach aus dem IFC vergleicht der Import mit dem Dach des Kerns (`engine`)."""
+    return service.set_decisions(db, client, slug, version, body, staff.actor_id)
 
 
 @router.post(VERSION + "/check", response_model=HouseTemplateVersionOut)
