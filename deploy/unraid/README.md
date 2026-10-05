@@ -202,6 +202,7 @@ Alarme (Uptime-Dienst, minütlich): `/api/health/ready` ≠ 200 → „API oder 
 | H3 | 0010 | `configurator` (dasselbe Flag) | – | – | veröffentlichter Preiskatalog mit Linien, Optionen und Preisen netto (20) |
 | V | 0011 | `submission` (Übergabe); „Mein Vorgang“ mit `inquiry` oder `submission` | `dossier_generate`, `mail_send` | – | `legal-seed` für die zwei neuen Texte, Büro-Postfach (21) |
 | Hausmodell (HM3) | 0024 | – (nur Rollen: bearbeiten `catalog_admin`; lesen `architect`, `ops`) | `house_ifc_import` | – (`engine` im Netz `intern`) | veröffentlichte Katalogversion per CLI, Konto mit `catalog_admin` (24) |
+| Hausmodell (HM4) | 0025 | `house_model` | – | – (`engine` im Netz `intern`) | ein veröffentlichter und freigegebener Haustyp (25) |
 
 „Emprise Analyse“ läuft in derselben Anwendung unter `/analyse`: Abschnitt 22.
 
@@ -576,7 +577,7 @@ KI-Modell der Auswertung (`app_setting`) und Referenzlisten (`reference_list`, `
 
 ## 24. Hausmodell: Haustypen aus IFC (HM3)
 
-Das Büro lädt unter `/buero/katalog/hausmodell` eine IFC-Datei aus Archicad hoch; der Job `house_ifc_import` (Warteschlange `long`) liest sie in einem Kindprozess, das Büro ergänzt den Entwurf, `engine` prüft ihn gegen den Katalog, und ein Mensch gibt frei ([docs/PLAN_HAUSMODELL.md](../../docs/PLAN_HAUSMODELL.md) 3.6, DECISIONS E-HM-37 bis E-HM-46). Kunden sehen davon noch nichts; der Kundenweg kommt mit HM4 hinter der Fahne `house_model`. Wie das Büro modelliert: [docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md).
+Das Büro lädt unter `/buero/katalog/hausmodell` eine IFC-Datei aus Archicad hoch; der Job `house_ifc_import` (Warteschlange `long`) liest sie in einem Kindprozess, das Büro ergänzt den Entwurf, `engine` prüft ihn gegen den Katalog, und ein Mensch gibt frei ([docs/PLAN_HAUSMODELL.md](../../docs/PLAN_HAUSMODELL.md) 3.6, DECISIONS E-HM-37 bis E-HM-46). Kunden sehen einen Haustyp erst nach der Freigabe und mit der Fahne `house_model` (Abschnitt 25). Wie das Büro modelliert: [docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md).
 
 **Einrichten**
 
@@ -600,3 +601,21 @@ Das Büro lädt unter `/buero/katalog/hausmodell` eine IFC-Datei aus Archicad ho
 - „Nicht kompatibel“ mit einem Befund wie „Preise: Ein Preiseintrag fehlt …“ und darunter `price_entry_missing · template:<Kennung>`: Haustyp und Katalog passen nicht zusammen. Die Kennung beim Hochladen muss die sein, unter der der Katalog den Typ führt (Demo-Katalog: `demo_house`).
 
 **Prüfen:** Seite `/buero/katalog/hausmodell` zeigt die Katalogversion als „veröffentlicht · aktuell“; eine hochgeladene Datei steht nach wenigen Sekunden mit Vorschau und Befunden da.
+
+## 25. Hausmodell: Kundenweg (HM4)
+
+Kunden wählen unter `/haus` einen Haustyp des Hausmodells, seine Ausstattung und die Lage; Preis und Prüfung rechnet `engine`, jede Änderung wird sofort gespeichert ([docs/PLAN_HAUSMODELL.md](../../docs/PLAN_HAUSMODELL.md) 3.7–3.10, DECISIONS E-HM-48 bis E-HM-57). Der bisherige Konfigurator (`/konfigurator`, Abschnitte 19–20) läuft unverändert daneben; auf der Grundstücksseite stehen beide Einstiege, solange beide Fahnen an sind. 2D, 3D und die Wahl je Raum oder Element kommen später (HM2).
+
+**Vor dem Freischalten**
+
+1. Die Migration 0025 (Tabelle `house_configuration`) läuft beim Ausliefern mit (Job `migrate`).
+2. Es braucht mindestens einen Haustyp, der veröffentlicht und für die aktuelle Katalogversion freigegeben ist (Abschnitt 24). Ohne Freigabe zeigt `/haus` „Derzeit wird kein Haustyp angeboten“. Nach einer neuen Katalogversion bleibt die ältere freigegebene im Angebot, bis das Büro den Haustyp neu prüft und freigibt; gespeicherte Konfigurationen behalten ihre Versionen.
+3. `engine` muss laufen (Abschnitt 9). Fällt er aus, lädt eine gespeicherte Konfiguration weiter; Ändern und die Liste der Haustypen antworten mit `503 engine_unavailable`.
+4. Freischalten zuerst intern: `docker compose exec api python -m app.cli flag-set house_model --role architect`. Ohne `site_selection` kommt niemand zu einem Grundstück und damit nicht zu `/haus`.
+
+**Störungen**
+
+- Log `house_price_mismatch`: Browser und Server haben verschieden gerechnet (Versionen von Web-Image und `engine` verschieden?). Kunden sehen dann den Preis des Servers mit Hinweis. Beide Images aus demselben Commit ausliefern (Abschnitt 5).
+- Log `house_template_not_computable`: Der Kern rechnet einen angebotenen Haustyp mit den Standardwerten nicht; der Haustyp fehlt in der Liste. Haustyp und Katalogversion im Büro prüfen (Abschnitt 24).
+
+**Prüfen:** Mit freigeschalteter Fahne auf `/grundstueck` eine Parzelle wählen, „Haus konfigurieren“ öffnen, einen Haustyp wählen, eine Ausstattung ändern: Unten steht „Gespeichert“ und ein Richtpreis „ca. … €“. Das Büro sieht die Konfiguration mit exakten Beträgen über `GET /api/v1/admin/projects/<Projekt-ID>/house/configuration`.

@@ -105,11 +105,17 @@ Szenarien des Demohauses (P 19.7) als Tabelle, mit den Testdaten oder einem ande
 cd packages/domain && corepack pnpm run scenarios
 ```
 
+Gespeicherte Antworten des Kerns, mit denen die Python-Tests des Kundenwegs `engine` ersetzen (HM4), neu schreiben, wenn der Kern anders rechnet (`evaluations.test.ts` meldet es):
+
+```bash
+cd packages/domain && corepack pnpm run evaluations
+```
+
 ```bash
 cd engine && corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test && corepack pnpm run build
 ```
 
-Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann; für G2 zusätzlich `docker compose cp backend/tests api:/tmp/tests` und `docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules`). Wie in der CI ohne Aufrufe an Behördendienste: vorher `docker compose -f compose.yaml -f compose.e2e.yaml up -d`, danach wieder `docker compose up -d` (Stolperstellen, Frontend):
+Ende-zu-Ende (laufende Compose-Umgebung, Konto `ops@emprise.local` freigeschaltet, Kataster-Ausschnitt importiert: `docker compose cp backend/tests/fixtures/site api:/tmp/site-fixtures` und `docker compose exec api python -m app.cli cadastre-import --from-dir /tmp/site-fixtures --release e2e --force`; `--force`, weil der Worker parallel den vollständigen Stand laden kann; für G2 zusätzlich `docker compose cp backend/tests api:/tmp/tests` und `docker compose exec -T -e EMPRISE_OPENROUTER_API_KEY=e2e-ohne-aufruf -e PYTHONPATH=/tmp api python -m tests.e2e_seed_rules`; für HM4 das Demohaus ohne IFC, mit `/tmp/tests` wie bei G2: `docker compose cp packages/domain/seed/demo-house api:/tmp/demo-house` und `docker compose exec -T -e PYTHONPATH=/tmp api python -m tests.e2e_seed_house /tmp/demo-house`). Wie in der CI ohne Aufrufe an Behördendienste: vorher `docker compose -f compose.yaml -f compose.e2e.yaml up -d`, danach wieder `docker compose up -d` (Stolperstellen, Frontend):
 
 ```bash
 cd frontend && corepack pnpm exec playwright install chromium && corepack pnpm e2e
@@ -185,8 +191,11 @@ Gesammelt aus allen Fassungen des Hand-offs; neue dauerhafte Stolperstellen hier
 - Datei-Uploads: `openapi-fetch` mit `bodySerializer: () => formData` und Platzhalter-Rumpf (`frontend/src/api/catalog.ts`); Content-Type nicht setzen.
 - `openapi-fetch` macht Tupel in Antworttypen zu Listen (`Readable<T>`); `components["schemas"][…]` und die Antwort passen dann nicht zusammen („Two different types with this name exist“). Typen des Hausmodells deshalb aus den Rückgabetypen der Abruffunktionen ableiten (`frontend/src/api/haus.ts`).
 - jsdom: Ein Dateifeld mit `required` gilt nach `userEvent.upload` als ungültig, ein Klick sendet das Formular nicht ab; im Test mit `fireEvent.submit` absenden (`hausmodell.test.tsx`).
-- React-Hooks-Lint (Version 7): keine Ref-Zugriffe beim Rendern, keine `setState`-Effekte; `Implantation` baut deshalb mit `key={revision}` neu auf.
+- React-Hooks-Lint (Version 7): keine Ref-Zugriffe beim Rendern, keine `setState`-Effekte; der Lageplan (`Implantation`, `HausLage`) baut deshalb mit `key={revision}` neu auf.
+- Die Spracherkennung liefert aus dem Browser `de-DE`; ungekürzt griffen Vergleiche wie `i18n.language === "de"` nicht (Zahlen mit französischem Tausendertrennzeichen, Bezeichnungen aus Dokumenten auf Französisch). `convertDetectedLanguage` kürzt deshalb auf zwei Buchstaben (`src/i18n/index.ts`, 04.10.2026). Vitest setzt die Sprache mit `changeLanguage("de")` und merkt es nicht; Dezimalzahlen sehen in beiden Sprachen gleich aus.
+- Seitentests mit gemockten Hooks: Zeichnet im echten Hook erst `setQueryData` die Seite neu, muss auch der Mock aus dem Query-Cache lesen, sonst rendert nur die Komponente mit dem Zustand neu (`haus-seite.test.tsx`).
 - Telefonbreite: Ein Rasterfeld (`grid`) wächst auf die Mindestbreite seines Inhalts, auch wenn eine Tabelle darin in `overflow-x-auto` steht – Rasterkinder brauchen `min-w-0` (`[&>*]:min-w-0` am Raster). Und `sr-only`-Beschriftungen in einer verschiebbaren Tabelle sind absolut positioniert: Ist der Rahmen nicht `relative`, beschneidet er sie nicht, und die ganze Seite wird breiter (`KantenListe`, 28.09.2026). Prüfen mit `document.documentElement.scrollWidth` gegen `clientWidth`.
+- E2E mit vollständigem Kataster im lokalen Stack: Die Gemeindeauswahl steht dann nicht auf Treillières; die Tests wählen sie ausdrücklich (`TREILLIERES`), in der CI gibt es nur diese Gemeinde.
 - E2E unter Windows: Früher löste Chromium von Playwright `oidc.localhost` nicht auf; am 30.09.2026 liefen alle 7 Tests lokal, auch die mit Büro-Anmeldung. Die Tests laufen parallel; die Kundentests verlassen sich nicht darauf, dass die ops-Tests vorher die Flags setzen. Deshalb vorher `flag-set … --all` für die sechs Modul-Flags und danach wieder `--role architect` (die ops-Tests lassen `site_selection`, `rules_simulation` und `envelope_simulation` für alle offen).
 
 **Rechenkern und Rechendienst**

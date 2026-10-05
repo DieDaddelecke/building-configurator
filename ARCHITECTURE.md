@@ -83,7 +83,7 @@ Einrichtung, Aktualisieren, Rückrollen, Sicherung: [deploy/unraid/README.md](de
 | `app/envelope` | G3 | Baurahmen (rein) und Steckbrief-PDF |
 | `app/plan` | – | Lageplan-Geometrie und DXF |
 | `app/catalog` | H1 | Hauskatalog: Typen, Linien, Optionen, Preise, Plandokumente, Angebot je Typ |
-| `app/configuration` | H2/H3 | Konfiguration: Lage, Prüfungen, Linie, Optionen, Kosten |
+| `app/configuration` | H2/H3, HM4 | Konfiguration: Lage, Prüfungen, Linie, Optionen, Kosten; Kundenweg des Hausmodells (`house_api.py`, `house_service.py`, rein in `domain/`: Hausbeschreibung, PLU-Prüfung, Ergebnisarten) |
 | `app/inquiry` | A | Anfrage, Einwilligung, Kundenzugang |
 | `app/submission` | V | Vorentwurf-Übergabe, Dossier-PDF |
 | `app/analysis` | AN3–AN5 | Analyse: Grundfläche, Geschosse, Nutzfläche, Gabarit, Schnitt, Bericht, DXF, GeoJSON |
@@ -119,7 +119,7 @@ submission ⇄ inquiry → configuration → catalog
                            └── plan ◄───┘ (analysis, submission)
 ```
 
-`house` hängt bisher nur von `platform` und `rules/domain` (Dachformen der G2-Regeln) ab.
+`house` hängt nur von `platform` und `rules/domain` (Dachformen der G2-Regeln) ab; `configuration` nutzt `house` für den Kundenweg des Hausmodells (Versionen, Freigaben, `engine`), nicht umgekehrt (E-HM-48).
 
 Per Test gesichert (`backend/tests/unit/test_module_boundaries.py`):
 - Der Kern (`platform`, `integrations`, `site`, `rules`, `envelope`, `plan`) importiert kein Produktmodul (`catalog`, `configuration`, `inquiry`, `submission`, `analysis`, `house`).
@@ -197,6 +197,24 @@ Büro (catalog_admin): Upload /admin/house/templates/{slug}/versions      Prüfu
 
 Katalogversionen (`house_catalog_version`) kommen bis HM6 nur über die CLI (`house-catalog-import`). Ablauf und Rollen: DECISIONS E-HM-37 bis E-HM-46.
 
+### 4.6 Hausmodell: Kundenweg (HM4)
+
+```text
+Kunde (Fahne house_model): GET /projects/{id}/house/templates
+ → je angebotenem Paar (E-HM-50) engine /evaluate mit den Standards → Hausbeschreibung (configuration/domain/facts.py)
+ → Zulässigkeit nach D12 auf dem Grundstück, Richtpreis „ab“ gerundet
+PATCH /projects/{id}/house/configuration  (If-Match: Revision)
+ → Typwahl: Paar festhalten, D12 prüfen, Lage street_near
+ → engine /evaluate mit der Auswahl → exakter Preis, Katalogregeln, Hausbeschreibung
+ → configuration/domain/site_check.py: Lage, Abstände, Fläche, PLU-Prüfung, Vorschlag (rein)
+ → outcomes.py: Ergebnisarten 3.7, Status, Rundung; Vergleich mit client_price (E-HM-53)
+ → house_configuration mit Snapshot (exakt) → Antwort nur gerundet (L1)
+GET … ohne engine: Hausbeschreibung aus dem Snapshot, Lage und PLU mit aktuellem Grundstück (E-HM-54)
+Browser /haus: Kern im Hauptthread rechnet Preis und Kandidaten aus den festgehaltenen Dokumenten (…/documents)
+```
+
+Das Büro liest die Konfiguration mit Snapshot über `/admin/projects/{id}/house/configuration`. Festlegungen: DECISIONS E-HM-48 bis E-HM-57.
+
 ## 5. Frontend
 
 | Ort | Inhalt |
@@ -204,7 +222,7 @@ Katalogversionen (`house_catalog_version`) kommen bis HM6 nur über die CLI (`ho
 | `src/main.tsx` | wählt nach dem Pfad: `/analyse…` lädt `analyse/App` (eigener Chunk, eigener Router mit `basename: "/analyse"`), sonst `App` (Konfigurator und Büro). Wechsel zwischen den Bereichen per Link mit Neuladen |
 | `src/App.tsx` | Routen des Konfigurators (`/`, `/grundstueck`, …), des Büros (`/buero/*`); `/verwaltung/*` leitet auf `/analyse/verwaltung` weiter |
 | `src/api/` | Hooks mit `openapi-fetch`; Typen aus `schema.d.ts` (`pnpm run api:types`), keine handgeschriebenen DTOs außer `Problem` (RFC 9457) und einzelnen Frontend-Typen |
-| Fachordner | `site`, `rules`, `envelope`, `configuration`, `katalog`, `haus` (Hausmodell; bisher der IFC-Import im Büro unter `/buero/katalog/hausmodell`), `inquiry`, `verwaltung`, `analyse`, `components`, `pages` |
+| Fachordner | `site`, `rules`, `envelope`, `configuration` (mit dem Lageplan `Lageplan.tsx` für Konfigurator und Hausmodell), `katalog`, `haus` (Hausmodell: Kundenweg `/haus` als eigener Chunk mit Kern, IFC-Import im Büro unter `/buero/katalog/hausmodell`), `inquiry`, `verwaltung`, `analyse`, `components`, `pages` |
 | `src/i18n/` | Französisch (führend) und Deutsch; die Texte der Prüfungen gleicht `tools/sync-check-texts.cjs` ins Backend ab (Dossier-PDF) |
 
 Technik: React 19, React Router, TanStack Query, openapi-fetch, MapLibre, Tailwind 4, i18next, Vite. Rechnungen im Browser sind nur Vorschau; maßgeblich ist der Server (L5).
@@ -221,7 +239,7 @@ compatibility.ts  Template ↔ Katalog vor dem Veröffentlichen
 codes.ts       Codes des Kerns als geschlossene Listen; die Oberfläche übersetzt sie (E-HM-47)
 ```
 
-Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn ab HM2 ein (bis dahin liest ein Frontend-Test nur `codes.ts`, ohne Paketabhängigkeit); `spike/roof` enthält den Dach-Prototyp (gewichtetes Skelett, nicht exportiert).
+Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json` (E-HM-29). Das Frontend bindet ihn seit HM4 als Paket ein, nur in der Seite `/haus` (`src/haus/kern.ts`: Auswertung, Kandidaten; Speichern in `speichern.ts`, ein `PATCH` nach dem anderen); `spike/roof` enthält den Dach-Prototyp (gewichtetes Skelett, nicht exportiert).
 
 ## 6. Anmeldung und Zugriff
 

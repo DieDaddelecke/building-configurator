@@ -338,6 +338,30 @@ Probedateien mit dem Demo-Katalog: Datei 1 meldet den Fehler „Kein Dach gefund
 
 Laufzeit des Jobs im lokalen Stack, mit Start des Kindprozesses: Demohaus (39 kB) 1,3–1,9 s, Probedatei 1 (193 kB) 1,1 s. Tests: Backend zum Hausmodell 116 (dazu 1 übersprungen, die Referenz-IFC; ganzes Backend 943), Frontend 25 (Seiten und Texte), Kern 140, `engine` 13. Von Hand im lokalen Stack geprüft: Upload, Import, Entwurf mit Namen und Fassadenrollen, Prüfung im echten `engine`, Freigabe, Verwerfen, Sperre nach dem Veröffentlichen, Französisch und Deutsch. Ein Playwright-Test für diesen Weg fehlt noch.
 
+**HM4 (04.10.2026), Kundenweg.** Umgesetzt vor HM2 mit schlanker Oberfläche (E-HM-56); Festlegungen E-HM-48 bis E-HM-57. Die Templates kommen bis zur Referenz-IFC aus dem Demohaus (HM3).
+
+| Abnahme | Ergebnis |
+|---|---|
+| Konfiguration lädt nach Katalogänderung unverändert | Integrationstest: Preise ×1,1 als Katalogversion 2 mit Templateversion 2, Version 1 zurückgezogen. Die gespeicherte Konfiguration lädt mit Version 1 und Katalog 1, Preis und Ergebnisse unverändert, `update_available`; `engine` erhält die alten Preise. Ein neues Projekt bekommt Version 2 mit Katalog 2 |
+| Server- gleich Browserpreis (Chromium) | Playwright: Chromium rechnet die Ziegelfassade und schickt den Nettopreis mit, der Server antwortet `price_match: true` und zeigt denselben gerundeten Betrag. Vitest: Kern im Browser gleich den gespeicherten Antworten von `engine` (vier Fälle), Rundungstabelle gleich der in Python |
+| Playwright Kunde bis Speichern auf AD 65 | `e2e/haus.spec.ts`: Parzelle AD 65, Demohaus zulässig mit „ab ca. 515.000 €“, Typwahl mit Lage `street_near`, Fassade gewählt und gespeichert, nach Neuladen derselbe Stand |
+
+Grundstücksszenarien P 19.6/19.7 in Python (`tests/unit/test_house_site_check.py`): Grundstück 18 × 12 m, Abstände 1,5 m, Haus mittig.
+
+| Fall | Abstand zu den Längs- / Schmalseiten des Grundstücks | Überbauung | mit 55 % (P 19.6) | mit 52 % (P 20.1) |
+|---|---|---|---|---|
+| Standard | 1,64 / 2,64 m | 51,35 % | zulässig | zulässig |
+| Ziegel | 1,52 / 2,52 m | 53,76 % | zulässig | Abweichung, kein Vorschlag (keine Lage behebt sie) |
+| Holz | 1,56 / 2,56 m | 52,95 % | zulässig | Abweichung, kein Vorschlag |
+
+Dazu: Ziegel bei 1,60 m Straßenabstand ist an der Lage des Standardhauses eine Abweichung mit Vorschlag weniger als 0,2 m daneben (Ergänzung 9); Material der Fassade aus dem Wandprofil geprüft; ohne Lage nur der Typ.
+
+Laufzeiten im lokalen Stack (Docker auf dem Entwicklungsrechner, AD 65, Zone Uh, je 6 bis 9 Aufrufe aus den Ende-zu-Ende-Läufen): `PATCH` mit `engine` und PLU-Prüfung 160–341 ms (Median 249), `GET` der Konfiguration ohne `engine` 172–375 ms, Haustypen mit Zulässigkeit 243–481 ms, Fläche der Ursprünge 118–258 ms, Dokumente 32–50 ms. Das Ziel aus P 4.1 für den Server (1 s) ist eingehalten; die Ziele im Browser misst HM2 auf den Referenzgeräten. Seite `/haus` als eigener Chunk 106 kB (gzip 31 kB) mit Kern und `clipper2-ts`.
+
+Tests: Backend zum Kundenweg 60 (Einheiten 45, Integration 15), Frontend 30 (Rundung, Kern, Seite), Kern 141 (dazu die Aktualität von `evaluations.json`), Ende-zu-Ende 2.
+
+Offen aus HM2 (nicht nachgeholt, E-HM-56): 2D und 3D, Web Worker, Wahl je Raum oder Element, Vorschau im Büro, Messung P 4.1 auf den Referenzgeräten.
+
 ## 11. Selbstprüfung
 
 ### 11.1 Prüfprotokoll
