@@ -16,7 +16,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from app.rules.domain import lexicon
-from app.rules.domain.text import normalize, partial_match
+from app.rules.domain.text import line_key, normalize, partial_match, running_lines
 
 PASSAGE_MIN_CHARS = 25
 """Kürzere Stellen (Vergleichsform) sind Beschriftungen oder Kopfzeilen."""
@@ -89,19 +89,6 @@ def normative(text: str) -> tuple[bool, bool]:
     return has_number or any(word in plain for word in NORM_WORDS), has_number
 
 
-def _line_key(line: str) -> str:
-    return re.sub(r"\d+", "#", normalize(line))
-
-
-def running_lines(page_texts: Mapping[int, str], pages: Iterable[int]) -> set[str]:
-    """Kopf- und Fußzeilen: Zeilen, die (ohne Ziffern) auf mindestens drei Seiten stehen."""
-    seen: dict[str, int] = {}
-    for page in pages:
-        for key in {_line_key(line) for line in page_texts.get(page, "").splitlines() if line.strip()}:
-            seen[key] = seen.get(key, 0) + 1
-    return {key for key, count in seen.items() if count >= 3}
-
-
 def _is_heading(line: str) -> bool:
     letters = [c for c in line if c.isalpha()]
     return bool(_HEADING.match(line)) or (len(letters) >= 3 and all(c.isupper() for c in letters))
@@ -111,7 +98,7 @@ def _blocks(text: str, skip: set[str]) -> list[str]:
     blocks: list[list[str]] = []
     for raw in text.splitlines():
         line = raw.strip()
-        if not line or _line_key(line) in skip:
+        if not line or line_key(line) in skip:
             if blocks and blocks[-1]:
                 blocks.append([])
             continue
