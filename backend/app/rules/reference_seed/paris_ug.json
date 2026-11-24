@@ -1,0 +1,574 @@
+{
+  "format": "emprise-reference/1",
+  "document": {
+    "title": "PLU de Paris, Règlement Tome 1 (décembre 2025)",
+    "sha256": "29bc4a649a46c0dceedfbcd6f54223a763951e652ae62135c0e1fcc91a27f96a"
+  },
+  "zone": "UG",
+  "sector": "UG",
+  "pages": "61–99 (UG.3.1, UG.3.2, UG.3.3, UG.4.1), Definitionen S. 25–35",
+  "status": "draft",
+  "note": "ENTWURF 24.11.2026 zur gemeinsamen Prüfung, von Hand aus dem Originaltext. Umfang: Implantation (UG.3.1.1–UG.3.1.3) und Höhe (UG.3.2.1–UG.3.2.6) für ein neues Wohnhaus auf einem gewöhnlichen Grundstück in UG, ohne ECM, HMC, ECB, Bâtiments et ensembles modernes und ohne die Sondersektoren (Paris Rive Gauche, Montmartre usw.). Enthalten: UG.3.3 (Überschreitungen) ohne Aufstockungen bestehender Gebäude, Ladenfronten und Sondersektoren; UG.4.1 (Freiflächen). Noch nicht enthalten: UG.4.2–4.4, Dach, Fassade, Stellplätze.",
+  "entries": [
+    {
+      "kind": "setback_street",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {
+        "mode": "alignment"
+      },
+      "page": 61,
+      "quote": "En bordure de voie*, le nu extérieur de la façade* de toute construction doit être implanté à la limite de la voie* ou, le cas échéant, à l’emplacement du filet de couleur* figurant aux documents graphiques du règlement.",
+      "note": "Grundsatz: Bauen an der Straßengrenze (Flucht). Rücksprung nur ausnahmsweise (nächster Eintrag)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 61,
+      "quote": "Une implantation en retrait peut toutefois être admise, au sol ou en étage, pour maintenir, requalifier ou créer des espaces libres et des espaces végétalisés, pour végétaliser le bâti",
+      "note": "Rücksprung von der Straße zulässig, qualitativ begründet, ohne Maß."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 62,
+      "quote": "l’implantation de la construction ou d’une partie de la construction à au moins 3 mètres de l’axe de la voie* peut être imposée.",
+      "note": "An Straßen unter 6 m Breite kann ein Abstand von 3 m zur Straßenachse verlangt werden (Kann-Vorschrift)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 63,
+      "quote": "Dans la bande de constructibilité principale*, les constructions doivent en principe être implantées en limite séparative*.",
+      "note": "In der Hauptbaubande (18 m ab Straße, Definition S. 25) grundsätzlich auf der seitlichen Grenze."
+    },
+    {
+      "kind": "setback_side",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 64,
+      "quote": "le nu extérieur de la façade* doit, au droit de cette baie ou de ces baies, et sur une largeur minimale de 4 mètres, être implanté à une distance minimale de 6 mètres par rapport à la limite séparative*.",
+      "note": "Abstand hängt von der Fassade ab: Fenster von Hauptaufenthaltsräumen 6 m (auf 4 m Breite), andere Fenster 3 m, ohne Fenster auf der Grenze oder mindestens 3 m (S. 64). Alle Varianten stehen als eigene Einträge (Variante A/B/C); die Analyse muss jede wiedergeben (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "setback_rear",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 64,
+      "quote": "le nu extérieur de la façade* doit, au droit de cette baie ou de ces baies, et sur une largeur minimale de 4 mètres, être implanté à une distance minimale de 6 mètres par rapport à la limite séparative*.",
+      "note": "Paris unterscheidet keine hintere Grenze; es gelten die Regeln für alle limites séparatives. Alle Varianten stehen als eigene Einträge (Variante A/B/C); die Analyse muss jede wiedergeben (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 64,
+      "quote": "le nu extérieur de la façade* doit, au droit de cette baie ou de ces baies, et sur une largeur minimale de 4 mètres, être implanté à une distance minimale de 6 mètres par rapport à la limite séparative*.",
+      "note": "Variante A (Grenzen): Fassade mit Fenstern von Hauptaufenthaltsräumen → mindestens 6 m zur Grenze, auf 4 m Breite vor dem Fenster. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 64,
+      "quote": "le nu extérieur de la façade* doit, au droit de cette baie ou de ces baies, être implanté à une distance minimale de 3 mètres par rapport à la limite séparative*.",
+      "note": "Variante B (Grenzen): Fassade nur mit anderen Fenstern → mindestens 3 m zur Grenze. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 64,
+      "quote": "Les façades* ne comportant pas de baie peuvent être implantées en limite séparative* ou en retrait.",
+      "note": "Variante C (Grenzen): Fassade ohne Fenster → auf der Grenze oder im Rücksprung. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 64,
+      "quote": "En cas d’implantation en retrait, le nu extérieur de la façade* doit être implanté à une distance minimale de 3 mètres par rapport à la limite séparative*.",
+      "note": "Variante C, Fortsetzung: Rücksprung einer fensterlosen Fassade → mindestens 3 m. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 64,
+      "quote": "un prospect* minimal de 6 mètres entre façades* peut être imposé pour ne pas porter gravement atteinte à l’habitabilité* des locaux en vis-à-vis.",
+      "note": "Zusatz zu B und C: gegenüber Fenstern des Nachbarn können 6 m verlangt werden (Kann-Vorschrift). Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "setback_between_buildings",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 67,
+      "quote": "droit de cette baie ou de ces baies, et sur une largeur minimale de 4 mètres, être distants de 6 mètres minimum.",
+      "note": "Variante A (gleiches Grundstück): Fenster von Hauptaufenthaltsräumen → mindestens 6 m, auf 4 m Breite. Auf demselben Grundstück: 6 m bei Fenstern von Hauptaufenthaltsräumen, 3 m bei anderen Fenstern, ohne Fenster kein Mindestabstand (S. 66–67). Alle Varianten stehen als eigene Einträge (Variante A/B/C); die Analyse muss jede wiedergeben (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 67,
+      "quote": "les nus extérieurs de ces façades doivent, au droit de cette baie ou de ces baies, être distants de 3 mètres minimum.",
+      "note": "Variante B (gleiches Grundstück): nur andere Fenster → mindestens 3 m. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 67,
+      "quote": "Lorsque des façades* en vis-à-vis ne comportent pas de baie, aucune distance minimale n’est requise.",
+      "note": "Variante C (gleiches Grundstück): ohne Fenster → kein Mindestabstand. Muss in der Analyse als eigene Variante erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "max_height",
+      "building_kind": "any",
+      "expected": "graphic_reference",
+      "params": {},
+      "page": 69,
+      "quote": "Le Plan général des hauteurs des documents graphiques du règlement fixe la hauteur plafond, mesurée à partir de la surface de nivellement* de l’îlot, que toute construction doit respecter.",
+      "note": "Variante „in der Hauptbaubande (bis 18 m ab Straße)“: Höchsthöhe aus dem Plan général des hauteurs. Beide Höhenregeln müssen in der Analyse erkennbar sein (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 69,
+      "quote": "Au-delà de la bande de constructibilité principale*, la hauteur des constructions est limitée à 15 mètres à partir de la surface de nivellement* de l’îlot.",
+      "note": "Variante „hinter der Hauptbaubande (über 18 m ab Straße)“: höchstens 15 m. Muss neben der Höhe aus dem Plan als eigene Regel erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 69,
+      "quote": "Une hauteur supérieure est admise, dans la limite de la hauteur plafond définie au Plan général des hauteurs",
+      "note": "Ausnahme von der 15-m-Regel: höher bis zur Plafondhöhe bei öffentlichen Einrichtungen, Grundstücken über 4 000 m² und im Sektor Bâtiments et ensembles modernes."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 72,
+      "quote": "d’une verticale de hauteur H définie par l’expression H = P + (25 % x P), avec un maximum de 28 mètres, arrondie au décimètre supérieur",
+      "note": "Gabarit an der Straße: H = 1,25 × Straßenbreite P, höchstens 28 m, plus Viertelkreis (r = 25 % von P, 3–7 m). Eine Formel, die Python rechnen kann. PRÜFFRAGE 3."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 77,
+      "quote": "d’une verticale de hauteur H égale à la hauteur résultant de l’application du paragraphe 2° de la sous-section UG.3.2.1",
+      "note": "Gabarit an der seitlichen Grenze hinter der Hauptbaubande: senkrecht bis 15 m, dann waagrecht."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 80,
+      "quote": "d’une verticale de hauteur H, définie par l’expression H = P + 4, dans laquelle P est le prospect* mesuré en tout point entre les nus extérieurs des façades* en vis-à-vis",
+      "note": "Gabarit zwischen Gebäuden auf demselben Grundstück: H = Abstand + 4 m, dann 45°."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 82,
+      "quote": "Une hauteur inférieure à celle résultant de l’application des sous-sections UG.3.2.1 à UG.3.2.6 peut être exigée en application de ce principe général d’insertion",
+      "note": "Einfügung in die Straßenfolge: Eine geringere Höhe als nach UG.3.2.1–3.2.6 kann verlangt werden (Kann-Vorschrift, qualitativ)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 82,
+      "quote": "rehaussements de couverture pour isolation thermique, dans la limite de 3 mètres au-delà de la hauteur maximale",
+      "note": "Überschreitung: Anlagen zur Energieeinsparung/-erzeugung (Solar, Wärmepumpe, Gründach, Außendämmung) bis 3 m über der Höchsthöhe bzw. dem Gabarit."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 82,
+      "quote": "les garde-corps à claire-voie d’une hauteur maximale de 1,20 mètre",
+      "note": "Überschreitung: durchbrochene Brüstungen bis 1,20 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 83,
+      "quote": "les pare-vues d’une hauteur maximale de 1,90 mètre",
+      "note": "Überschreitung: Sichtschutz bis 1,90 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 83,
+      "quote": "conduits de cheminées et murs coupe-feu supports de conduits ne dépassant pas de plus de 1,50 mètre le niveau du faîtage",
+      "note": "Überschreitung: Schornsteine höchstens 1,50 m über First."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 83,
+      "quote": "les édicules de circulation verticale (escaliers, ascenseurs…) dont la plus grande dimension est inférieure à 3,50 mètres et dont la hauteur est inférieure à 4 mètres au-dessus du plancher bas du dernier niveau desservi",
+      "note": "Überschreitung: Treppen-/Aufzugsaufbauten < 3,50 m größte Abmessung, < 4 m über dem obersten bedienten Geschoss; bei geneigtem Dach höchstens bis First."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 83,
+      "quote": "un dépassement de la hauteur maximale résultant de l’application de la sous-section UG.3.2.4 (gabarit-enveloppe en bordure de voie) peut être admis, dans la limite de 1,50 mètre",
+      "note": "Kann-Überschreitung des Straßen-Gabarits um bis zu 1,50 m, um Brandwände (murs pignons) zu vermeiden; Versatz zum Nachbarn höchstens etwa eine Geschosshöhe."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 85,
+      "quote": "sur une distance de 9 mètres mesurés perpendiculairement à la limite séparative* attenante à la construction ou au mur de soutènement",
+      "note": "Variante Höhe hinter der Hauptbaubande bei Anbau an ein Nachbargebäude auf der Grenze: bis zur Höhe des Nachbargebäudes (max. Plafondhöhe), auf 9 m Tiefe ab dieser Grenze. Ergänzt Eintrag 15 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 86,
+      "quote": "doivent respecter un retrait minimal de 6 mètres par rapport aux limites séparatives* autres que celle concernée par l’adossement",
+      "note": "Zusatz zur Anbau-Variante: Teile über 15 m mindestens 6 m von den übrigen seitlichen Grenzen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 86,
+      "quote": "d’une verticale de hauteur H définie par l’expression H = P , arrondie au décimètre supérieur, avec un maximum de 25 mètres",
+      "note": "Variante Grundstück an Park, Garten, Friedhof oder Sportanlage > 3 000 m² (ohne Gegenüber): Gabarit H = P (Tiefe der Freifläche), max. 25 m, in einem 18-m-Streifen ab dieser Grenze. Fall für die Regelart Gabarit."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 87,
+      "quote": "respecter un retrait minimal de 6 mètres par rapport aux autres limites séparatives",
+      "note": "Zusatz zur Park-Variante: Teile über 15 m im 18-m-Streifen mindestens 6 m von den übrigen Grenzen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 88,
+      "quote": "respecter une distance d’1,40 mètres minimum entre la partie la plus saillante de l’ouvrage et la bordure du trottoir",
+      "note": "Vorsprünge an der Straße: mindestens 1,40 m Abstand zur Bordsteinkante (bei schmalem Gehweg bis 1,20 m)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 88,
+      "quote": "respecter une distance de 0,60 mètre minimum avec toute limite séparative",
+      "note": "Vorsprünge an der Straße: mindestens 0,60 m zu jeder seitlichen Grenze."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 89,
+      "quote": "0,20 m maximum par rapport à la verticale du gabarit-enveloppe* Non réglementé",
+      "note": "Variante: Schmuckvorsprünge (Gesimse, Fensterbänke, Faschen) an allen Straßen höchstens 0,20 m, ohne Höhenvorgabe."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 89,
+      "quote": "8 m 0,35 m maximum par rapport à la verticale du gabarit-enveloppe* 3,20 m minimum",
+      "note": "Variante: Schmuckvorsprünge an Straßen ≥ 8 m Breite höchstens 0,35 m, ab 3,20 m über Gehweg."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 89,
+      "quote": "3 m maximum 3 m minimum et 5 m maximum Les marquises ou auvents doivent présenter une hauteur de 0,80 m maximum",
+      "note": "Vordächer/Marquisen: Ausladung höchstens 3 m, Höhe über Gehweg 3–5 m, Bauhöhe höchstens 0,80 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 89,
+      "quote": "1,20 m maximum 3,20 m minimum La surface verticale des saillies* des ouvrages constitutifs de surface de plancher* (oriels...)",
+      "note": "Balkone, Wintergärten, Erker zur Straße: höchstens 1,20 m Ausladung, ab 3,20 m über Gehweg."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 89,
+      "quote": "ne peut excéder 50 % de la surface délimitée, pour chaque façade",
+      "note": "Zusatz Erker: Ansichtsfläche der Vorsprünge mit Geschossfläche höchstens 50 % der Fassadenfläche zwischen 3,20 m und Oberkante der Gabarit-Senkrechten."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 90,
+      "quote": "les bandeaux, corniches, acrotères en saillie* de 0,20 mètre maximum",
+      "note": "Über dem Viertelkreis des Straßen-Gabarits: Gesimse und Attiken höchstens 0,20 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 90,
+      "quote": "les lucarnes dans la hauteur du volume de couverture, dont le total des largeurs cumulées par niveau n’excède pas 40 % de la longueur de la façade",
+      "note": "Über dem Viertelkreis: Dachgauben, Summe der Breiten je Geschoss höchstens 40 % der Fassadenlänge (nicht kumulierbar mit Fassadenverlängerungen)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 90,
+      "quote": "à condition que leur largeur n’excède pas 3 mètres et que le total des largeurs cumulées n’excède pas 40 % de la longueur de la façade",
+      "note": "Über dem Viertelkreis: Fassadenverlängerungen im Geschoss über der Senkrechten, je höchstens 3 m breit, zusammen höchstens 40 %."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 90,
+      "quote": "à l’angle des voies*, les prolongements de façade*, à condition que leur hauteur n’excède pas 3 mètres au-dessus de la verticale du gabarit-enveloppe* applicable sur la voie* la plus large",
+      "note": "Variante Eckgrundstück: Fassadenverlängerung bis 3 m über der Senkrechten der breiteren Straße, abgewickelte Länge höchstens 15 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 91,
+      "quote": "ou UG.2.3.3 (couronnement et couverture des constructions existantes), d’une hauteur maximale de 3 mètres",
+      "note": "Über der Horizontalen des Straßen-Gabarits: technische Aufbauten (Lüftung, Heizung, Regenwasser) höchstens 3 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 92,
+      "quote": "de ne pas excéder 3 mètres ; de ne pas porter atteinte à l’éclairement des locaux",
+      "note": "Vorsprünge zur Grundstücksseite (Balkone usw.): höchstens 3 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 92,
+      "quote": "qu’une distance minimale de 3 mètres soit ménagée entre tout élément de construction et une limite séparative* en vis-à-vis",
+      "note": "Vorsprünge zur Grundstücksseite: mindestens 3 m zur gegenüberliegenden seitlichen Grenze."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 92,
+      "quote": "qu’une distance minimale de 6 mètres soit ménagée entre tout élément de construction en vis-à-vis sur un même terrain* et entre toute façade* ou partie de façade* comportant des baies* constituant l’éclairement premier de pièces principales",
+      "note": "Vorsprünge zur Grundstücksseite: mindestens 6 m zu Fassaden mit Fenstern von Hauptaufenthaltsräumen auf demselben Grundstück."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 92,
+      "quote": "les bandeaux, corniches et acrotères en saillie* de 0,20 mètre maximum par rapport au gabarit-enveloppe",
+      "note": "Über Schräge und Horizontale der Gabarits an der Grenze und zwischen Gebäuden: Gesimse und Attiken höchstens 0,20 m."
+    },
+    {
+      "kind": "unsealed_min",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 93,
+      "quote": "Toute construction neuve, extension* ou épaississement* doit réserver sur le terrain* une surface minimale d’espaces libres de construction*, déterminée en fonction de la superficie du terrain* sur lequel elle se situe.",
+      "note": "Mindestfreifläche (SELC) als Staffel nach Grundstücksgröße und Sektor; Varianten in den folgenden Einträgen. Formel, die Python rechnen kann (wie E-VA-4)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "Inférieure à 150 m² – –",
+      "note": "Variante: Grundstück unter 150 m² → keine Mindestfreifläche. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = (ST × 0,26) - 10",
+      "note": "Variante: 150–1 000 m², außerhalb der Sektoren renforcement du végétal / ceinture verte → SELC = 0,26 × ST − 10 m². Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = (ST × 0,67) - 420",
+      "note": "Variante: 1 000–3 500 m², außerhalb der Sektoren → SELC = 0,67 × ST − 420 m². Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = ST × 0,55",
+      "note": "Variante: ab 3 500 m², außerhalb der Sektoren → SELC = 0,55 × ST. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = (ST × 0,32) - 20",
+      "note": "Variante: 150–1 000 m², im Sektor renforcement du végétal bzw. ceinture verte et sportive → SELC = 0,32 × ST − 20 m². Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = (ST × 0,72) - 420",
+      "note": "Variante: 1 000–3 500 m², in diesen Sektoren → SELC = 0,72 × ST − 420 m². Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 93,
+      "quote": "SELC min = ST × 0,6",
+      "note": "Variante: ab 3 500 m², in diesen Sektoren → SELC = 0,6 × ST. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 95,
+      "quote": "Les espaces libres de construction* doivent respecter les caractéristiques suivantes : être en pleine terre*",
+      "note": "Freiflächen grundsätzlich in pleine terre (Ausnahmen: Gips, instabiler Untergrund, Altlasten)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 97,
+      "quote": "Les arbres et arbustes nouvellement plantés doivent être composés d’au moins 50 % d’espèces régionales*.",
+      "note": "Mindestens 50 % regionale Arten."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 97,
+      "quote": "Les arbres plantés, nouveaux ou en remplacement d’arbres abattus, doivent au moment de la plantation avoir une force d’au moins 10 centimètres.",
+      "note": "Stammumfang beim Pflanzen mindestens 10 cm."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 98,
+      "quote": "Nombre minimum d’unités de plantation = 30 x (S / 100)",
+      "note": "Pflanzdichte: 30 Einheiten je 100 m² Mindestfreifläche (großer Baum 48, mittlerer 16, kleiner 6, Strauch 3 Einheiten). Formel."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 98,
+      "quote": "lorsque la surface des espaces libres de construction* est comprise entre 100 et 150 mètres carrés, il est exigé au minimum un arbre de moyen développement.",
+      "note": "Variante: Freifläche 100–150 m² → mindestens ein mittelgroßer Baum. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 98,
+      "quote": "Arbre de grand développement (15 m et plus à maturité) 6 m 20 m² de surface de terre et 2 m d’épaisseur de terre",
+      "note": "Abstand neuer Bäume zur Fassade: groß 6 m, mittel 4 m, klein 3 m; dazu Erdfläche und -tiefe (Tabelle S. 98)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 99,
+      "quote": "Aucune construction, saillie* ou épaississement* ne doit être édifié à une distance inférieure à quatre fois la circonférence du tronc d’un arbre existant sur le terrain*",
+      "note": "Abstand zu bestehenden Bäumen: mindestens 4 × Stammumfang (gemessen in 1 m Höhe) – wirkt direkt auf die Lage des Hauses."
+    }
+  ]
+}

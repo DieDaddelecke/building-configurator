@@ -1,0 +1,4 @@
+# Echte Reglements für die Messung ohne Modell (BESTANDSAUFNAHME_PLU_PIPELINE S1, S2).
+# PDFs bleiben lokal: alles in diesem Ordner außer dieser Datei ist von Git ausgenommen.
+*
+!.gitignore

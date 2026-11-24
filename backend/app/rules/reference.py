@@ -13,6 +13,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.rules.domain.chapters import detect_structure
+from app.rules.domain.evaluation import StructureReport, evaluate_structure, report_lines
 from app.rules.domain.passages import Passage
 from app.rules.domain.reference import (
     FoundRule,
@@ -145,4 +147,23 @@ def report(reference: ReferenceList, version: RuleSetVersion, measurement: Measu
             f"  {'zusätzlich':<16} {extra.kind}/{extra.building_kind} S. {extra.page} {extra.status} "
             f"{json.dumps(extra.params, ensure_ascii=False)}"
         )
+    return "\n".join(lines)
+
+
+def evaluate_document(page_texts: dict[int, str], references: list[ReferenceList]) -> list[StructureReport]:
+    """Gliederung erkennen und die Referenzlisten daran messen, ohne Datenbank und ohne Modell (S2)."""
+    structure = detect_structure(page_texts)
+    return [evaluate_structure(page_texts, structure, ref.sector, ref.entries) for ref in references]
+
+
+def evaluation_report(page_texts: dict[int, str], references: list[ReferenceList]) -> str:
+    structure = detect_structure(page_texts)
+    lines = [
+        f"Gliederung: {structure.method}, {len(structure.chapters)} Zonenkapitel ("
+        + ", ".join(f"{c.code} {c.first_page}–{c.last_page}" for c in structure.chapters[:12])
+        + (" …" if len(structure.chapters) > 12 else "")
+        + ")"
+    ]
+    for ref in references:
+        lines += report_lines(evaluate_structure(page_texts, structure, ref.sector, ref.entries))
     return "\n".join(lines)

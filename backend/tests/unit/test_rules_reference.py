@@ -171,3 +171,69 @@ def test_a_rule_that_is_only_visible_as_hint_counts_as_named() -> None:
     result = measure(entry, [hint])
     assert (result.results[0].outcome, result.results[0].detail) == ("named_gap", "hint")
     assert result.counts["extra_hints"] == 0
+
+
+LEAD = (
+    "Hors des secteurs de renforcement du végétal, la surface d’espaces libres minimale est : "
+    "SELC min = (ST × "
+)
+SELC = [LEAD + "0,26) – 10 m²", LEAD + "0,67) – 420 m²", LEAD + "0,55)"]
+VARIANTS = parse_entries(
+    [
+        {"kind": "text_only", "building_kind": "any", "expected": "text_only", "page": 93, "quote": quote}
+        for quote in SELC
+    ]
+)
+
+
+def _hint(quote: str, page: int = 93) -> FoundRule:
+    return FoundRule("text_only", "any", "text_only", None, {"summary": "SELC"}, page, quote)
+
+
+def test_variants_with_the_same_beginning_are_not_confused() -> None:
+    """Paris UG.4.1: Die Zitate teilen „SELC min = (ST ×“. Ein gefundener Hinweis belegt nur die Variante mit
+    seinen Zahlen; die anderen fehlen still (S9b)."""
+    assert quotes_overlap(SELC[0], SELC[1])
+    measured = measure(VARIANTS, [_hint(SELC[0])])
+    assert [r.outcome for r in measured.results] == ["hit", "silent_gap", "silent_gap"]
+
+
+def test_one_hint_covers_at_most_one_entry() -> None:
+    """Zwei gleiche Einträge brauchen zwei Hinweise; der längere Treffer wird zuerst zugeordnet."""
+    doubled = parse_entries(
+        [
+            {
+                "kind": "text_only",
+                "building_kind": "any",
+                "expected": "text_only",
+                "page": 93,
+                "quote": SELC[2],
+            },
+            {
+                "kind": "text_only",
+                "building_kind": "any",
+                "expected": "text_only",
+                "page": 93,
+                "quote": SELC[2],
+            },
+        ]
+    )
+    assert [r.outcome for r in measure(doubled, [_hint(SELC[2])]).results] == ["hit", "silent_gap"]
+    both = measure(doubled, [_hint(SELC[2]), _hint(SELC[2] + ".")])
+    assert [r.outcome for r in both.results] == ["hit", "hit"] and not both.extra_hints
+
+
+def test_all_variants_found() -> None:
+    measured = measure(VARIANTS, [_hint(q) for q in reversed(SELC)])
+    assert measured.counts["hit"] == 3 and measured.counts["extra_hints"] == 0
+
+
+def test_open_passage_needs_the_numbers_of_the_variant() -> None:
+    measured = measure(VARIANTS, [], open_passages=[Passage(93, SELC[1])])
+    assert [r.outcome for r in measured.results] == ["silent_gap", "named_gap", "silent_gap"]
+
+
+@pytest.mark.parametrize("name", ["paris_ug.json", "rennes_ud1a.json", "rennes_ud1h.json"])
+def test_sample_lists_are_valid(name: str) -> None:
+    loaded = reference.load_file(reference.SEED_DIR / name)
+    assert loaded.entries and loaded.status == "draft" and len(loaded.sha256) == 64

@@ -16,6 +16,7 @@ rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerte
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 reference-check DATEI [--version N|all]  Auswertung an einer Referenzliste messen (G2, ohne Aufruf)
 reference-import DATEI [--replace]  Referenzliste in die Verwaltung übernehmen
+rules-eval PDF LISTE [LISTE …]  Gliederung eines Reglements an Referenzlisten messen (ohne Modell, ohne DB)
 house-catalog-import DATEI|- [--publish]  Katalogversion des Hausmodells übernehmen (HM3, `-`: stdin)
 """
 
@@ -367,6 +368,20 @@ def cmd_reference_import(args: argparse.Namespace) -> None:
     print(f"Referenzliste {title}: {result.entries_count} Einträge ({result.status})")
 
 
+def cmd_rules_eval(args: argparse.Namespace) -> None:
+    """Gliederung und Erreichbarkeit der Sollwerte messen (BESTANDSAUFNAHME_PLU_PIPELINE S2): liest das PDF
+    wie das Produkt, ohne Datenbank und ohne Aufruf eines Modells."""
+    from app.rules import pdf, reference
+
+    paths = [Path(name) if Path(name).exists() else reference.SEED_DIR / name for name in args.lists]
+    references = [reference.load_file(path) for path in paths]
+    data = Path(args.pdf).read_bytes()
+    text = pdf.read_text(data)
+    for ref in references:
+        print(f"Referenzliste: {ref.title}, Sektor {ref.sector}, {len(ref.entries)} Einträge ({ref.status})")
+    print(reference.evaluation_report(text.pages, references))
+
+
 def cmd_reference_check(args: argparse.Namespace) -> None:
     """Auswertung an einer Referenzliste messen (PLAN_G2_VOLLSTAENDIGKEIT 3.10); ohne Aufruf des Modells."""
     from app.rules import reference
@@ -574,6 +589,10 @@ def main() -> None:
     p_reference_import.add_argument("file", help="Pfad oder Name in app/rules/reference_seed")
     p_reference_import.add_argument("--replace", action="store_true")
     p_reference_import.set_defaults(func=cmd_reference_import)
+    p_eval = sub.add_parser("rules-eval")
+    p_eval.add_argument("pdf", help="Reglement als PDF")
+    p_eval.add_argument("lists", nargs="+", help="Referenzlisten: Pfad oder Name in app/rules/reference_seed")
+    p_eval.set_defaults(func=cmd_rules_eval)
     p_reference = sub.add_parser("reference-check")
     p_reference.add_argument("file", help="Pfad oder Name in app/rules/reference_seed")
     p_reference.add_argument("--version", help="Nummer der Regelwerksversion oder `all`; ohne: die neueste")

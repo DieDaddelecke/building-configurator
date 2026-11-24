@@ -1,0 +1,335 @@
+{
+  "format": "emprise-reference/1",
+  "document": {
+    "title": "PLUi Rennes Métropole, Règlement littéral, Modification n°2 (juin 2025)",
+    "sha256": "fe1beee648ab17479e8fb1ecda83624cc313e3c8c13c022f2233330080c2b8a9"
+  },
+  "zone": "UD1",
+  "sector": "UD1a",
+  "pages": "152–156 (Zone UD1), Titre IV toutes zones S. 95–103 und 111–113",
+  "status": "draft",
+  "note": "ENTWURF 24.11.2026 zur gemeinsamen Prüfung, von Hand aus dem Originaltext. Sektor UD1a. Umfang: Kapazität, Implantation, Höhe, Grün für ein neues Wohngebäude, einschließlich der Regeln aus Titre IV (toutes zones), die für UD1 gelten. Ohne Denkmal- und Sonderfälle (Monuments Historiques, plans de masse, OAP, Zonen mit Überschwemmungsrisiko). Noch nicht enthalten: Dach, Fassade (Titre IV 4.), Stellplätze (7.), Einfriedungen (6.2).",
+  "entries": [
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 95,
+      "quote": "Pour les voies ayant une emprise inférieure à 6 mètres de large, un recul de 3 mètres de l'axe de la voie se substitue à la règle d'implantation à l'alignement",
+      "note": "Titre IV, alle Zonen. Variante: Straße unter 6 m Breite → 3 m ab Straßenachse statt Flucht. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 96,
+      "quote": "Les règles d'implantation en limite séparative ne s'appliquent pas pour les sous-sols et rez-de-chaussée à condition que leur hauteur n'excède pas 1,20 m",
+      "note": "Titre IV: Untergeschoss und Sockel bis 1,20 m über Gelände sind von den Grenzabständen ausgenommen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 99,
+      "quote": "dans une bande de 20 m par rapport à la voie, la hauteur des constructions, s'apprécie par rapport au niveau de la voie.",
+      "note": "Titre IV: Bezugspunkt der Höhe in den ersten 20 m ist die Straße, dahinter das natürliche Gelände. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 100,
+      "quote": "La hauteur des étages courants est de 3,20 m maximum à l'exception des volumes communs à un même logement",
+      "note": "Titre IV: Regelgeschoss Wohnen höchstens 3,20 m – nötig, um Geschosszahlen aus dem Plan in Meter umzurechnen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 101,
+      "quote": "Un attique (*) est composé d'un recul minimal d'1 m de toutes les façades par rapport à l'étage courant ou partiel directement inférieur sachant que le recul cumulé des façades opposées est de 4 m minimum.",
+      "note": "Titre IV: Attika mindestens 1 m zurück, gegenüberliegende Seiten zusammen mindestens 4 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 102,
+      "quote": "L'étage partiel s'implante sur une surface maximum de 70% de l'emprise de l'étage courant directement inférieur",
+      "note": "Titre IV: Teilgeschoss höchstens 70 % des Geschosses darunter."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 103,
+      "quote": "la hauteur maximale des annexes est limitée à 3 mètres à compter du niveau du terrain naturel (*) ou terrain aménagé (*)",
+      "note": "Titre IV: Nebengebäude höchstens 3 m; bei Anbau an Nachbarn bis 4 m."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 111,
+      "quote": "1 arbre (*) par tranche complète de 200 m² de surface de pleine terre (*)",
+      "note": "Zonen U: ein Baum je volle 200 m² Pleine terre."
+    },
+    {
+      "kind": "unsealed_min",
+      "building_kind": "any",
+      "expected": "graphic_reference",
+      "params": {},
+      "page": 112,
+      "quote": "si un pourcentage minimal est défini au règlement graphique sur le plan thématique \"Coefficient de végétalisation\"",
+      "note": "Titre IV: Grünanteil (coefficient de végétalisation) nur aus dem Plan; Etikett V = x% (y% PT), T1–T3, Bonus."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 112,
+      "quote": "Circonférence jusqu'à 25 cm (diamètre 8 cm): 1 arbre (*) nouveau pour 1 supprimé",
+      "note": "UB1 und UD1, Ersatz gefällter Bäume, Stufe 1: bis 25 cm Umfang → 1 neuer Baum. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 112,
+      "quote": "Circonférence entre 26 et 60 cm (diamètre 9 à 20 cm) : 2 arbres (*) nouveaux pour 1 supprimé",
+      "note": "Stufe 2: 26–60 cm → 2 neue Bäume. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 112,
+      "quote": "Circonférence entre 61 et 120 cm (diamètre 21 à 40 cm) : 3 arbres (*) nouveaux pour 1 supprimé",
+      "note": "Stufe 3: 61–120 cm → 3 neue Bäume. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 112,
+      "quote": "Circonférence entre 121 et 180 cm (diamètre 41 à 60 cm) : 4 arbres (*) nouveaux pour 1 supprimé",
+      "note": "Stufe 4: 121–180 cm → 4 neue Bäume. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 112,
+      "quote": "Au-delà d'une circonférence de 181 cm (diamètre supérieur à 60 cm) : 5 arbres (*) nouveaux pour 1 supprimé.",
+      "note": "Stufe 5: über 181 cm → 5 neue Bäume. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 113,
+      "quote": "Les espaces de pleine terre (*) dont un minimum est exigé au règlement graphique sont obligatoirement localisés en fond de terrain et préférentiellement continus.",
+      "note": "UB1, UD1, UE1: Pleine terre im hinteren Grundstücksteil – wirkt auf die Lage des Hauses."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 113,
+      "quote": "Les dalles de couverture des rez-de-chaussée et des aires de stationnement lorsqu'elles sont végétalisées comportent une épaisseur minimale de terre de 0,60 m.",
+      "note": "UB1 und UD1: begrünte Decken mindestens 0,60 m Erde."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 152,
+      "quote": "Profondeur utile 11 m 11 m Nombre de niveaux 3,5 3",
+      "note": "Baukapazität UD1a: Nutztiefe 11 m × Länge der Mittelachse × 3,5 Geschosse = höchstzulässige Geschossfläche. Formel, die Python rechnen kann. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 152,
+      "quote": "La capacité de construction se calcule à partir de la surface utile multiplié par le nombre de niveaux du secteur concerné",
+      "note": "Rechenregel der Kapazität; Eckgrundstück: Summe der Mittelachsen (S. 153)."
+    },
+    {
+      "kind": "setback_street",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {
+        "mode": "alignment"
+      },
+      "page": 153,
+      "quote": "La construction s'implante majoritairement à l'alignement (*).",
+      "note": "Bauen auf der Flucht (überwiegend). Titre IV S. 95 erklärt „majoritairement“: Projektion des Baukörpers aus allen Geschossen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 153,
+      "quote": "En bordure d'un espace vert ou d'un chemin piéton, l'implantation est libre.",
+      "note": "Variante: an Grünfläche oder Fußweg freie Lage. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 153,
+      "quote": "une faille (*) doit être introduite. Elle représente au minimum 15% de ce linéaire avec un minimum de 3 m de large.",
+      "note": "Baulücke (faille) ab 25 m Grundstücksbreite: mindestens 15 % der Breite, mindestens 3 m; ab 5 m teilbar. Wirkt direkt auf den Baukörper."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 155,
+      "quote": "Annexes (*) : elles s'implantent en retrait minimal de 5 m par rapport à l'alignement (*).",
+      "note": "Nebengebäude: mindestens 5 m hinter der Flucht."
+    },
+    {
+      "kind": "setback_rear",
+      "building_kind": "any",
+      "expected": "effective",
+      "params": {
+        "min_m": 6,
+        "height_factor": 1.0,
+        "height_basis": "facade_point"
+      },
+      "page": 155,
+      "quote": "la construction doit respecter une distance supérieure ou égale à sa hauteur (L≥ H) avec une distance minimale de 6 m par rapport aux limites de fond de terrain (*)",
+      "note": "Hintere Grenze: L ≥ H, mindestens 6 m. Nur wenn eine „limite de fond de terrain“ gilt (Definition prüfen). Der Streifen ist auch unterirdisch unbebaubar. Zur Diskussion: Bezugshöhe."
+    },
+    {
+      "kind": "setback_side",
+      "building_kind": "any",
+      "expected": "not_expressible",
+      "params": {},
+      "page": 155,
+      "quote": "Dans une bande d'implantation (*), les constructions sont implantées en limite séparative ou en retrait minimal de 4 m.",
+      "note": "Seitliche Grenzen hängen von der Lage auf dem Grundstück ab (in / hinter der Bande). Varianten in den folgenden Einträgen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 155,
+      "quote": "les constructions sont implantées en limite séparative ou en retrait minimal de 4 m",
+      "note": "Variante in der Bande: auf der Grenze oder mindestens 4 m. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 155,
+      "quote": "un retrait de 2 mètres des limites séparatives est autorisé pour les décrochés architecturaux",
+      "note": "Zusatz: Vor- und Rücksprünge der Fassade dürfen 2 m an die Grenze."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 155,
+      "quote": "Profondeur de la bande d'implantation (*) 15 m",
+      "note": "Tiefe der Bande UD1a: 15 m (UD1h: 14 m). Sektorwert aus der Tabelle."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 155,
+      "quote": "l'implantation se fait en retrait des limites séparatives correspondant au minimum à la hauteur de la construction (L≥ H) située au-dessus de ce premier niveau entier",
+      "note": "Variante hinter der Bande: Erdgeschoss frei, darüber L ≥ H (Höhe über dem ersten Vollgeschoss). Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "max_height",
+      "building_kind": "any",
+      "expected": "graphic_reference",
+      "params": {},
+      "page": 156,
+      "quote": "La hauteur maximale des constructions est définie au règlement graphique sauf pour les cas particuliers suivants",
+      "note": "Höhe aus dem Plan (plan thématique „Hauteur“, H in Metern oder Geschossen). Varianten folgen."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "les constructions doivent s'inscrire à l'intérieur d'un gabarit défini par un plan incliné à 45° dont le point d'attache se situe à l'alignement (*) opposé",
+      "note": "Variante Straße unter 15 m: Gabarit 45° ab gegenüberliegender Flucht, 1 m über Gehweg. Fall für die Regelart Gabarit. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "Pour les terrains de moins de 500 m² et d'une largeur inférieure à 16 m sur voie, la hauteur est limitée à 3 niveaux nonobstant la règle différente au règlement graphique.",
+      "note": "Variante kleines Grundstück (< 500 m² und < 16 m breit): höchstens 3 Geschosse, auch wenn der Plan mehr erlaubt. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "la partie de construction bordant la voie ou emprise ouverte au public (*) la plus étroite peut s'inscrire dans un gabarit (*) équivalent à celui défini pour la voie ou emprise ouverte au public (*) la plus large",
+      "note": "Variante Eckgrundstück: an der schmaleren Straße der Gabarit der breiteren, auf der Tiefe der Bande. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "En dehors de la bande d'implantation, la hauteur est limitée au regard des prospects définis dans la règle d'implantation par rapport aux limites séparatives.",
+      "note": "Variante hinter der Bande: Höhe über L ≥ H begrenzt. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "les constructions doivent s'inscrire à l'intérieur d'un gabarit défini par un plan incliné à 45° dont le point d'attache se situe à l'aplomb de la limite de fond de terrain (*)",
+      "note": "Variante an der hinteren Grenze: Gabarit 45° ab der Grenze. Fall für die Regelart Gabarit. Variante muss in der Analyse erscheinen (Vorgabe Soheyl 24.11.2026)."
+    },
+    {
+      "kind": "text_only",
+      "building_kind": "any",
+      "expected": "text_only",
+      "params": {},
+      "page": 156,
+      "quote": "En cas d'adossement à une construction voisine, la hauteur maximale des constructions peut être sensiblement la même.",
+      "note": "Kann-Vorschrift: bei Anbau etwa die Höhe des Nachbarn."
+    }
+  ]
+}
