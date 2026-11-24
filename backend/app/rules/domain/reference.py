@@ -5,6 +5,10 @@ Eine Referenzliste nennt je Vorschrift den erwarteten Status, die maßgeblichen 
 Verglichen werden nur die Parameter, die der Eintrag nennt: Wo die Zuordnung zum Vokabular strittig ist
 („cuivre“: `metal` oder `other`), lässt die Liste den Parameter weg und erklärt ihn in der Notiz.
 
+Varianten einer Vorschrift teilen oft lange Satzanfänge („SELC min = (ST × …“, Paris UG.4.1). Ein Hinweis
+belegt deshalb nur einen Eintrag, dessen Zahlen alle in seinem Zitat stehen, und jeder Hinweis höchstens
+einen Eintrag (S9b): Eine fehlende Variante zählt als `silent_gap`.
+
 Ergebnis je Eintrag: `hit` (richtig), `wrong_value` (wirksam, aber falsch – das Schlimmste), `named_gap`
 („nicht ermittelt“ oder offene Stelle – sichtbar), `dismissed` (Stelle als „betrifft kein Einfamilienhaus“
 eingestuft), `silent_gap` (nichts davon – die Vorschrift fehlt still). Ziel: kein `wrong_value`, kein
@@ -19,7 +23,7 @@ from typing import Any, Literal, get_args
 from app.rules.domain.assess import rule_key
 from app.rules.domain.kinds import BUILDING_KINDS, PARAM_MODELS, RULE_KINDS
 from app.rules.domain.passages import Passage
-from app.rules.domain.text import quotes_overlap
+from app.rules.domain.text import numbers, quotes_overlap, shared_chars
 
 ExpectedStatus = Literal["effective", "not_regulated", "text_only", "graphic_reference", "not_expressible"]
 EXPECTED_STATUSES: tuple[str, ...] = get_args(ExpectedStatus)
@@ -139,16 +143,51 @@ def _near(entry: ReferenceEntry, page: int | None) -> bool:
     return entry.page is None or page is None or abs(entry.page - page) <= 1
 
 
+def _numbers_fit(entry_quote: str, found_quote: str | None) -> bool:
+    """Jede Zahl des Solls steht auch im gefundenen Zitat (so oft, wie das Soll sie nennt)."""
+    available = numbers(found_quote or "")
+    for value in numbers(entry_quote):
+        index = next((i for i, n in enumerate(available) if abs(n - value) <= NUMBER_TOLERANCE), None)
+        if index is None:
+            return False
+        available.pop(index)
+    return True
+
+
+def _same_place(entry: ReferenceEntry, page: int | None, text: str | None) -> bool:
+    return _near(entry, page) and quotes_overlap(entry.quote, text) and _numbers_fit(entry.quote, text)
+
+
+def _assign_hints(entries: Sequence[ReferenceEntry], hints: Sequence[FoundRule]) -> dict[int, FoundRule]:
+    """Hinweise den Einträgen zuordnen, jeden höchstens einmal: die längste Übereinstimmung zuerst."""
+    pairs = sorted(
+        (
+            (-shared_chars(entry.quote, hint.quote), e, h)
+            for e, entry in enumerate(entries)
+            for h, hint in enumerate(hints)
+            if _same_place(entry, hint.page, hint.quote)
+        ),
+    )
+    assigned: dict[int, FoundRule] = {}
+    used: set[int] = set()
+    for _score, e, h in pairs:
+        if e in assigned or h in used:
+            continue
+        assigned[e] = hints[h]
+        used.add(h)
+    return assigned
+
+
 def _measure_kind(
     entry: ReferenceEntry,
     rule: FoundRule | None,
-    hints: Sequence[FoundRule],
+    hint: FoundRule | None,
     open_passages: Sequence[Passage],
     dismissed: Sequence[Passage],
 ) -> EntryResult:
     if rule is None:
         # Ohne Regel zählt, ob die Vorschrift sichtbar ist: als Hinweis, offene oder verworfene Stelle
-        seen = _measure_hint(entry, hints, open_passages, dismissed)
+        seen = _measure_hint(entry, hint, open_passages, dismissed)
         outcome = "named_gap" if seen.outcome == "hit" else seen.outcome
         return EntryResult(entry, outcome, seen.found, "hint" if seen.outcome == "hit" else seen.detail)
     if rule.status == "unknown":
@@ -169,16 +208,15 @@ def _measure_kind(
 
 def _measure_hint(
     entry: ReferenceEntry,
-    hints: Sequence[FoundRule],
+    hint: FoundRule | None,
     open_passages: Sequence[Passage],
     dismissed: Sequence[Passage],
 ) -> EntryResult:
-    for hint in hints:
-        if _near(entry, hint.page) and quotes_overlap(entry.quote, hint.quote):
-            return EntryResult(entry, "hit", hint)
-    if any(_near(entry, p.page) and quotes_overlap(entry.quote, p.text) for p in open_passages):
+    if hint is not None:
+        return EntryResult(entry, "hit", hint)
+    if any(_same_place(entry, p.page, p.text) for p in open_passages):
         return EntryResult(entry, "named_gap", None, "open_passage")
-    if any(_near(entry, p.page) and quotes_overlap(entry.quote, p.text) for p in dismissed):
+    if any(_same_place(entry, p.page, p.text) for p in dismissed):
         return EntryResult(entry, "dismissed", None, "out_of_scope")
     return EntryResult(entry, "silent_gap")
 
@@ -198,17 +236,25 @@ def measure(
             hints.append(found)
         else:
             by_key.setdefault(rule_key("", found.kind, found.building_kind), found)
+    rule_of = {
+        index: by_key.get(rule_key("", entry.kind, entry.building_kind))
+        for index, entry in enumerate(entries)
+        if entry.expected != "text_only"
+    }
+    # Nur Einträge ohne Regel ihrer Art suchen einen Hinweis
+    seeking = [
+        i for i, entry in enumerate(entries) if entry.expected == "text_only" or rule_of.get(i) is None
+    ]
+    assigned = _assign_hints([entries[i] for i in seeking], hints)
+    hint_of = {seeking[position]: hint for position, hint in assigned.items()}
     results: list[EntryResult] = []
-    used_hints: set[int] = set()
-    for entry in entries:
+    for index, entry in enumerate(entries):
         if entry.expected == "text_only":
-            result = _measure_hint(entry, hints, open_passages, dismissed)
+            result = _measure_hint(entry, hint_of.get(index), open_passages, dismissed)
         else:
-            rule = by_key.get(rule_key("", entry.kind, entry.building_kind))
-            result = _measure_kind(entry, rule, hints, open_passages, dismissed)
-        if result.found is not None and result.found.status == "text_only":
-            used_hints.add(id(result.found))
+            result = _measure_kind(entry, rule_of[index], hint_of.get(index), open_passages, dismissed)
         results.append(result)
+    used_hints = {id(hint) for hint in hint_of.values()}
     keys = {rule_key("", e.kind, e.building_kind) for e in entries if e.expected != "text_only"}
     extra = [
         found

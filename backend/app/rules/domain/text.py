@@ -6,7 +6,7 @@ Bindestriche. Verglichen wird deshalb ohne Leerraum, klein geschrieben, mit vere
 
 import re
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
@@ -244,11 +244,49 @@ def states_not_regulated(quote: str) -> bool:
     return any(marker in plain for marker in NOT_REGULATED_MARKERS)
 
 
+RUNNING_LINE_MIN_PAGES = 3
+RUNNING_LINE_WINDOW = 3
+"""Seiten vor und nach dem Seitenwechsel, auf denen Kopf- und Fußzeilen eines Zitats gesucht werden."""
+
+
+def line_key(line: str) -> str:
+    """Zeile in Vergleichsform, Ziffern als „#“: Kopfzeilen mit Seitenzahl sind auf jeder Seite gleich."""
+    return re.sub(r"\d+", "#", normalize(line))
+
+
+def running_lines(page_texts: Mapping[int, str], pages: Iterable[int]) -> set[str]:
+    """Kopf- und Fußzeilen: Zeilen, die (ohne Ziffern) auf mindestens drei Seiten stehen."""
+    seen: dict[str, int] = {}
+    for page in pages:
+        for key in {line_key(line) for line in page_texts.get(page, "").splitlines() if line.strip()}:
+            seen[key] = seen.get(key, 0) + 1
+    return {key for key, count in seen.items() if count >= RUNNING_LINE_MIN_PAGES}
+
+
+EDGE_LINES = 3
+
+
+def _edge_keys(text: str) -> set[str]:
+    lines = [line for line in text.splitlines() if line.strip()]
+    return {line_key(line) for line in lines[:EDGE_LINES] + lines[-EDGE_LINES:]}
+
+
+def _shared_edges(a: str, b: str) -> set[str]:
+    """Kopf- und Fußzeilen, wenn nur zwei Seiten vorliegen: gleiche Zeilen am Rand beider Seiten."""
+    return _edge_keys(a) & _edge_keys(b)
+
+
+def without_lines(text: str, skip: set[str]) -> str:
+    return "\n".join(line for line in text.splitlines() if not skip or line_key(line) not in skip)
+
+
 def verify_quote(quote: str, pages: dict[int, str], page: int) -> QuoteCheck:
     """Zitat auf der angegebenen Seite suchen; sonst auf der Nachbarseite oder über den Seitenwechsel.
 
     `pages`: Seitennummer im Originaldokument (1-basiert) → Text. Wird das Zitat nur auf einer Nachbarseite
     gefunden, gilt es als belegt und die Seite wird berichtigt (Annahme G2-Zitate, docs/ANNAHMEN.md).
+    Über den Seitenwechsel werden Kopf- und Fußzeilen weggelassen, die auf den umliegenden Seiten
+    wiederkehren; sonst stünde „PLU DE PARIS 67 / 250“ mitten im Satz (Sollwerte Paris UG, Eintrag 7).
     """
     if len(normalize(_ELLIPSIS.sub("", quote))) < QUOTE_MIN_CHARS:
         return QuoteCheck(False, None, 0.0, "quote_too_short")
@@ -256,7 +294,12 @@ def verify_quote(quote: str, pages: dict[int, str], page: int) -> QuoteCheck:
     candidates: list[tuple[int, str]] = [(p, pages[p]) for p in (page, page - 1, page + 1) if p in pages]
     for first in (page, page - 1):
         if first in pages and first + 1 in pages:
-            candidates.append((first, pages[first] + "\n" + pages[first + 1]))
+            window = range(first - RUNNING_LINE_WINDOW, first + 2 + RUNNING_LINE_WINDOW)
+            skip = running_lines(pages, (p for p in window if p in pages)) | _shared_edges(
+                pages[first], pages[first + 1]
+            )
+            joined = without_lines(pages[first], skip) + "\n" + without_lines(pages[first + 1], skip)
+            candidates.append((first, joined))
     if not candidates:
         return QuoteCheck(False, None, 0.0, "page_unknown")
     best_page, best = None, 0.0
@@ -269,6 +312,18 @@ def verify_quote(quote: str, pages: dict[int, str], page: int) -> QuoteCheck:
     if best >= QUOTE_SIMILARITY_MIN:
         return QuoteCheck(True, best_page, round(best, 3))
     return QuoteCheck(False, best_page, round(best, 3), "quote_not_found")
+
+
+def shared_chars(a: str | None, b: str | None) -> int:
+    """Längster gemeinsamer Text zweier Zitate in der Vergleichsform (Zeichen), für die beste Zuordnung."""
+    if not a or not b:
+        return 0
+    left, right = normalize(_ELLIPSIS.sub(" ", a)), normalize(_ELLIPSIS.sub(" ", b))
+    return (
+        SequenceMatcher(None, left, right, autojunk=False)
+        .find_longest_match(0, len(left), 0, len(right))
+        .size
+    )
 
 
 def quotes_overlap(a: str | None, b: str | None) -> bool:

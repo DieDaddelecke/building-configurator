@@ -68,6 +68,12 @@
 - **Hebt auf:** die Festlegung vom 25.09.2026 „nur DNS, graue Wolke“ ([Betrieb](deploy/unraid/README.md) Abschnitt 2).
 - **Folgen:** Cloudflare sieht den Verkehr im Klartext, auch Anmeldedaten und Kundendaten – bewusste Ausnahme von L8 und Plan 6.9 (kein US-Anbieter im Datenweg) für den Datenweg; vor dem öffentlichen Start mit D3 neu bewerten. SSL-Modus „Full (strict)“. Die echte Client-IP kommt als `CF-Connecting-IP`; ohne Übernahme teilen sich Nutzer Rate-Limits und das Audit sieht Cloudflare-Adressen (vor dem öffentlichen Start einrichten). Anfragen sind bei Cloudflare Free auf 100 MB begrenzt (Reglement-Upload bis 100 MB). Bot- und Angriffsschutz von Cloudflare darf den Aufruf der API an Authentik (Token-Abruf) nicht blockieren.
 
+### ADR-12 – KI als letztes Mittel in der PLU-Analyse (24.11.2026, Nutzer)
+
+- **Kontext:** Heute entstehen Regeln nur über das Sprachmodell; die Schranken danach sind deterministisch (Bestandsaufnahme der PLU-Pipeline vom 24.11.2026, Projektordner `plu-pipeline/`).
+- **Entscheidung:** Jede Aufgabe der PLU-Analyse wird zuerst deterministisch gelöst (Textschicht und Texterkennung, Gliederung, Lexikon, Parser, regelbasierte Einstufung). Das Modell kommt nur bei semantischer Mehrdeutigkeit zum Einsatz, danach prüft der Mensch. Eine Passage mit niedrigem Wert wird nie verworfen, sondern eskaliert oder bleibt offen. Ergänzt ADR-01.
+- **Folgen:** Jede deterministische Stufe wird ohne Modell an Sollwerten gemessen (`rules-eval`, Referenzlisten), bevor sie Aufrufe ersetzt. Umsetzung in Etappen: E-PL.
+
 ## 2. Entscheidungen des Umsetzungsplans (D1–D19)
 
 | Nr. | Frage | Stand |
@@ -345,6 +351,20 @@ Plan: [docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) (Prompt v3.1, Phasen HM
 | E-HM-65 | Dach im Import (`domain/roof.py`): Aus der Unterseite des `IfcRoof`-Körpers wird jede Kante der Bezugskontur Traufe (überall gleich hoch, Fläche steigt senkrecht nach innen) oder Giebel; Höhe der Traufen = Auflager. Krüppelwalm über der Mitte eines Giebels, oberer Mansardabschnitt nur dort, wo er an die Traufebene anschließt, je bis zu drei Kandidaten nach Häufigkeit; Überstände je Kantenart. Je Kandidat und Drehung erzeugt der Kern das Dach (`/roof`); erkannt ist die erste Form mit denselben Kantenarten und einer Unterseite gleich auf 1 mm plus dem Rundungsfehler der Neigung (0,01°). Sonst offen `roof_form_not_recognized` mit Grund. Das Büro kann im Entwurf ein geneigtes Dach setzen (`decisions.roof`, Startwerte je Form wie im Demo-Katalog), das das Dach aus dem IFC ersetzt (`roof_set_by_office`); ein Flachdach braucht die Dachdecke aus dem IFC. Der Standard von Dachform und Dachaufbau folgt dem Dach des Templates |
 | E-HM-66 | Ausstattungslinien (`catalog.lines`: Slot → globaler Wert): Die Oberfläche setzt die Werte auf Klick, Werte gleich dem Standard des Templates entfallen wie bei jeder Wahl, Zahlen bleiben gesetzt, Überschreibungen je Raum oder Element bleiben. Gespeichert wird nur die Auswahl; aktiv ist die erste Linie nach `sort_order`, deren Werte alle gelten (`activeLine`), sonst „Eigene Zusammenstellung“. Der Aufpreis einer Linie ist die Preisdifferenz ihrer Werte (E-HM-14) |
 | E-HM-67 | Terrasse und Carport (Slots am Element `site`; ein Wert ohne Typ heißt keiner): Maße rechnet der Kern (`facts.terrace`, `facts.carport`; die Terrasse so breit wie die längste Gartenkante, ohne sie keine). Lage, Zufahrt und Prüfungen (`annex`, `unsealed_min`, `parking`) rechnet Python mit `outbuildings.py` wie im heutigen Konfigurator: Terrasse vor der Gartenkante, Carport nah an der Straße ohne Haus und Terrasse zu berühren, Zufahrten von Carport und Garagentor. Die Kunden-API liefert die gesetzten Nebenbauten für den Lageplan (`outbuildings`) |
+
+### 4.12 PLU-Pipeline nach ADR-12 (E-PL)
+
+Schrittbezeichnungen S1–S14 aus der Bestandsaufnahme vom 24.11.2026 (Projektordner `plu-pipeline/BESTANDSAUFNAHME_PLU_PIPELINE.md`).
+
+| Nr. | Entscheidung |
+|---|---|
+| E-PL-1 | Rangfolge (S9d, Nutzer 24.11.2026): allgemeine Bestimmungen → Zone → Sektor → grafische Festsetzung. Die speziellere Regel ersetzt die allgemeinere (allgemein 14 m, Zone 9 m → 9 m); die ersetzte bleibt unter `alternatives` mit Rolle `superseded`, Ebene, Seite und Zitat sichtbar. Fest in Python (`domain/precedence.py`, `assess.collapse`), nicht im Prompt. Ebene einer Regel: Plan bei Verweis auf die grafische Festsetzung, allgemein auf den allgemeinen Seiten, Sektor, wenn das Zitat einen Sektor einer ebenfalls angefragten Zone nennt, sonst Zone |
+| E-PL-2 | Ergänzung („en complément“, „en outre“, „s'ajoute“, „cumulativement“): beide gelten, maßgeblich die strengere; die andere mit Rolle `also_applies` |
+| E-PL-3 | Überlagerung (Nutzer 24.11.2026): Überschwemmung, Risiken, Servituten d'utilité publique, Denkmalschutz gelten neben der Zone; maßgeblich ist die strengere Regel, die andere erscheint mit Rolle `overlay` bzw. `overlaid` und Fundstelle. Strenger heißt: in allen gemeinsamen Zahlen in dieselbe Richtung (`precedence.DIRECTIONS`), übrige Parameter gleich. Ist das nicht eindeutig, bleibt die Regel `ambiguous` mit allen Fassungen. Widersprüche auf derselben Ebene bleiben `ambiguous` wie bisher |
+| E-PL-4 | Regeln mit Varianten (S9b, Nutzer 24.11.2026): Jede Variante wird mit Wert und Fundstelle wiedergegeben. In der Messung belegt ein Hinweis nur einen Eintrag, dessen Zahlen alle in seinem Zitat stehen, und jeder Hinweis höchstens einen Eintrag (längste Übereinstimmung zuerst); eine fehlende Variante ist `silent_gap` |
+| E-PL-5 | Gliederung (S7): Die laufende Kopfzeile ist der erste Weg; sie gilt, wenn sie mindestens so viele Zonenkapitel findet wie Verzeichnis und Überschriften. Sie trennt Zonenkapitel, Regeln für alle Zonen („Toutes zones“, „Dispositions générales“, `Structure.common_pages`), Begriffe und Anwendungsregeln. Zonencodes in Klammern („ZONE URBAINE GÉNÉRALE (UG)“) und zerrissene Kopfzeilen („Z ONE“) werden erkannt; nummerierte Unterpunkte („2. Implantation“, „UG.3.2“) beenden im Verzeichnis kein Kapitel. Absätze mit Zonencode („dans les zones UB1 et UD1“) gelten nur dort (`chapters.zone_scope`) |
+| E-PL-6 | Messung ohne Modell (S1, S2): Referenzlisten Paris UG, Rennes UD1a und UD1h in `app/rules/reference_seed` (Entwurf); `rules-eval` und `tests/unit/test_rules_samples.py` messen Gliederung und Erreichbarkeit. Die PDFs liegen nur lokal in `plu-proben/` |
+| E-PL-7 | Weitere Entscheidungen vom 24.11.2026, noch nicht umgesetzt: Texterkennung auch im GPU-Weg ohne Bestätigung (S6, hebt E-AN7-6 auf); „Zitat verschluckt eine Vorschrift“ über die Abdeckung (S4); Freigabe je Lauf auch im GPU-Weg mit Status `awaiting_approval` und Kostenschätzung (S5); Regelart „Gabarit“ und Baukapazität als Formel, Python rechnet (S9c) |
 
 ## 5. Wo die übrigen IDs stehen
 

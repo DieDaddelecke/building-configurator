@@ -18,6 +18,7 @@ from typing import Any, Literal, Protocol
 
 from app.rules.domain.extraction import ExtractedRule, VerificationCheck
 from app.rules.domain.kinds import MANDATORY_KINDS, ParamProblem, params_equal, validate_params
+from app.rules.domain.precedence import LEVEL_RANK, RuleLevel, is_complement, is_overlay, stricter
 from app.rules.domain.text import (
     QuoteCheck,
     normalize,
@@ -70,6 +71,9 @@ class AssessedRule:
     alternatives: list[dict[str, Any]] = field(default_factory=list)
     sources: tuple[int, ...] = ()
     """Nummern der Regeln in der Antwort des Modells, aus denen diese Regel entstand (Gegenprüfung)."""
+    level: RuleLevel = "zone"
+    """Ebene der Fundstelle für die Rangfolge (`precedence`): allgemeine Seiten, Zonenkapitel, Sektor,
+    Plan oder überlagernde Vorgabe."""
 
 
 @dataclass(frozen=True)
@@ -205,6 +209,28 @@ def foreign_sector(sector: str, sectors: Iterable[str], quote: str, params: Mapp
     return None
 
 
+def rule_level(
+    rule: ExtractedRule, sector: str, sectors: Iterable[str], documents: DocumentPages, page: int | None
+) -> RuleLevel:
+    """Ebene einer Regel: Plan bei Verweis auf die grafische Festsetzung, überlagernd bei Risiko, Servitut
+    oder Schutz im Zitat, allgemein auf den allgemeinen Seiten, Sektor, wenn das Zitat einen Sektor nennt,
+    dessen Zone auch angefragt ist („Uba“ neben „Ub“), sonst Zone. Ohne belegte Seite gilt die Angabe des
+    Modells (`document`)."""
+    if rule.status == "graphic_reference":
+        return "plan"
+    if is_overlay(rule.quote):
+        return "overlay"
+    general = (
+        page in documents.general and page not in documents.chapter if page else rule.document == "general"
+    )
+    if general:
+        return "general"
+    parents = [s for s in sectors if s != sector and sector.startswith(s)]
+    if parents and any(code == sector for _, _, code in _sector_mentions(rule.quote, [sector])):
+        return "sector"
+    return "zone"
+
+
 def assess_rule(
     rule: ExtractedRule, sectors: set[str], documents: DocumentPages, page_texts: dict[int, str]
 ) -> AssessedRule | None:
@@ -226,6 +252,7 @@ def assess_rule(
         similarity=quote.similarity,
         confidence=rule.confidence,
         notes=rule.notes,
+        level=rule_level(rule, sector, sectors, documents, quote.page),
     )
     if rule.status == "text_only" or rule.kind == "text_only":
         summary = rule.params.get("summary") or rule.notes
@@ -277,13 +304,96 @@ def _key(rule: AssessedRule) -> Key:
     return rule_key(rule.sector, rule.kind, rule.building_kind)
 
 
-def _alternative(rule: AssessedRule) -> dict[str, Any]:
-    return {"status": rule.status, "reason": rule.reason, "params": rule.params, "page": rule.page}
+def _alternative(rule: AssessedRule, role: str | None = None) -> dict[str, Any]:
+    alternative: dict[str, Any] = {
+        "status": rule.status,
+        "reason": rule.reason,
+        "params": rule.params,
+        "page": rule.page,
+    }
+    if role is not None:
+        # Rangfolge (S9d): Die Fassung bleibt mit Ebene und Fundstelle sichtbar
+        alternative |= {"role": role, "level": rule.level, "quote": rule.quote}
+    return alternative
+
+
+def _agree(group: list[AssessedRule]) -> bool:
+    first = group[0]
+    return all(r.status == first.status and params_equal(r.params, first.params) for r in group[1:])
+
+
+def _merged(group: list[AssessedRule], building_kind: str) -> AssessedRule:
+    """Gleichwertige Nennungen: die am besten belegte."""
+    best = max(group, key=lambda r: (r.quote_verified, r.similarity))
+    return replace(
+        best,
+        building_kind=building_kind,
+        confidence=min(r.confidence for r in group),
+        sources=tuple(sorted(s for r in group for s in r.sources)),
+    )
+
+
+def _ambiguous(group: list[AssessedRule], building_kind: str) -> AssessedRule:
+    return replace(
+        group[0],
+        building_kind=building_kind,
+        status="unknown",
+        reason="ambiguous",
+        params={},
+        alternatives=[_alternative(r) for r in group],
+    )
+
+
+def _ranked(group: list[AssessedRule], building_kind: str) -> AssessedRule:
+    """Rangfolge allgemein → Zone → Sektor → Plan, dann Überlagerungen (`precedence`)."""
+    ordinary = [r for r in group if r.level != "overlay"]
+    overlays = [r for r in group if r.level == "overlay"]
+    alternatives: list[dict[str, Any]] = []
+    winner: AssessedRule | None = None
+    if ordinary:
+        top = max(LEVEL_RANK.get(r.level, 1) for r in ordinary)
+        upper = [r for r in ordinary if LEVEL_RANK.get(r.level, 1) == top]
+        lower = [r for r in ordinary if LEVEL_RANK.get(r.level, 1) < top]
+        if not _agree(upper):
+            return _ambiguous(group, building_kind)
+        winner = _merged(upper, building_kind)
+        if lower and is_complement(winner.quote):
+            # „en complément“: Beide gelten, maßgeblich ist die strengere
+            for other in lower:
+                verdict = stricter(winner.kind, winner.status, winner.params, other.status, other.params)
+                if verdict is None:
+                    return _ambiguous(group, building_kind)
+                if verdict == "b":
+                    alternatives.append(_alternative(winner, "also_applies"))
+                    winner = replace(other, building_kind=building_kind)
+                else:
+                    alternatives.append(_alternative(other, "also_applies"))
+        else:
+            alternatives += [_alternative(r, "superseded") for r in lower]
+    if overlays:
+        if not _agree(overlays):
+            return _ambiguous(group, building_kind)
+        overlay = _merged(overlays, building_kind)
+        if winner is None:
+            winner = overlay
+        else:
+            verdict = stricter(winner.kind, winner.status, winner.params, overlay.status, overlay.params)
+            if verdict is None:
+                return _ambiguous(group, building_kind)
+            if verdict == "b":
+                alternatives.append(_alternative(winner, "overlaid"))
+                winner = overlay
+            else:
+                alternatives.append(_alternative(overlay, "overlay"))
+    assert winner is not None
+    return replace(winner, alternatives=list(winner.alternatives) + alternatives)
 
 
 def collapse(rules: Iterable[AssessedRule]) -> list[AssessedRule]:
-    """Eine Regel je Schlüssel. Mehrere gleichwertige Nennungen: die am besten belegte; widersprüchliche:
-    `unknown` („ambiguous“). Hinweise bleiben einzeln, gleiche Fundstellen nur einmal."""
+    """Eine Regel je Schlüssel. Mehrere gleichwertige Nennungen: die am besten belegte. Verschiedene Werte
+    auf verschiedenen Ebenen: die Rangfolge entscheidet (`precedence`), die anderen Fassungen bleiben mit
+    Rolle, Ebene und Fundstelle unter `alternatives`. Widersprüche auf derselben Ebene oder ohne eindeutig
+    strengere Fassung: `unknown` („ambiguous“). Hinweise bleiben einzeln, gleiche Fundstellen nur einmal."""
     grouped: dict[Key, list[AssessedRule]] = defaultdict(list)
     hints: dict[tuple[str, str, str], AssessedRule] = {}
     for rule in rules:
@@ -294,29 +404,13 @@ def collapse(rules: Iterable[AssessedRule]) -> list[AssessedRule]:
     result: list[AssessedRule] = []
     for key in sorted(grouped):
         group = grouped[key]
-        first = group[0]
         building_kind = "any" if all(r.building_kind == "any" for r in group) else key[2]
-        if all(r.status == first.status and params_equal(r.params, first.params) for r in group[1:]):
-            best = max(group, key=lambda r: (r.quote_verified, r.similarity))
-            result.append(
-                replace(
-                    best,
-                    building_kind=building_kind,
-                    confidence=min(r.confidence for r in group),
-                    sources=tuple(sorted(s for r in group for s in r.sources)),
-                )
-            )
+        if _agree(group):
+            result.append(_merged(group, building_kind))
+        elif len({r.level for r in group}) > 1:
+            result.append(_ranked(group, building_kind))
         else:
-            result.append(
-                replace(
-                    first,
-                    building_kind=building_kind,
-                    status="unknown",
-                    reason="ambiguous",
-                    params={},
-                    alternatives=[_alternative(r) for r in group],
-                )
-            )
+            result.append(_ambiguous(group, building_kind))
     return result + list(hints.values())
 
 

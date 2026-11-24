@@ -138,6 +138,8 @@ services:
       - ./packages/domain:/packages/domain:ro
       # Probedateien des Büros, nur lokal (ifc-proben/.gitignore); ohne sie überspringt pytest die Tests
       - ./ifc-proben:/ifc-proben:ro
+      # Echte Reglements für die Messung ohne Modell, nur lokal (plu-proben/.gitignore)
+      - ./plu-proben:/plu-proben:ro
     environment:
       <<: *backend-env
       EMPRISE_ENV: test

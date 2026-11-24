@@ -20,6 +20,7 @@ Hauskonfigurator für Bauinteressenten in Frankreich und „Emprise Analyse“ f
 | `packages/domain/` | Rechenkern des Hausmodells (`@emprise/domain`, TypeScript ohne React und DOM): Geometrie ganzzahlig in 0,1 mm mit `clipper2-ts`, Resolver, Geschosse, Dach als gewichtetes Skelett (`src/roof/`), Mengen, Preis, Regeln, U-Wert, Kompatibilitätsprüfung; `src/contract.gen.ts` aus `openapi.json` erzeugt; eingefrorene Testdaten in `test/fixtures/demo-house/` (flaches Demohaus und R+1), frei änderbarer Demo-Seed in `seed/demo-house/`. Plan: [docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) |
 | `engine/` | Rechendienst (Node 24) mit demselben Kern, nur im Compose-Netz, Port 8090: `/health`, `/evaluate`, `/compatibility` |
 | `ifc-proben/` | Probe-IFCs aus Archicad, nur lokal (nicht in Git, nicht im Build-Kontext); `backend-dev` bindet den Ordner lesend als `/ifc-proben` ein, die Tests nutzen die Probedateien und, sobald vorhanden, die Referenz-IFC des Büros als `demohaus_referenz.ifc` |
+| `plu-proben/` | Echte Reglements (PDF) für die Messung ohne Modell, nur lokal (nicht in Git); `backend-dev` bindet den Ordner lesend als `/plu-proben` ein, `tests/unit/test_rules_samples.py` misst Paris UG und Rennes UD1 an den Referenzlisten in `app/rules/reference_seed`, ohne Dateien übersprungen |
 | `infra/local/` | Lokale Datenbankrollen, OIDC-Testdienst |
 | `deploy/unraid/` | Betrieb bis zur Beta: Emprise-Stack, Authentik, Sicherung, Anleitung |
 | `tools/` | Textabgleich Frontend → Backend (`sync-check-texts.cjs`) |
@@ -97,6 +98,12 @@ Rechenkern und Rechendienst (Tests mit fast-check, der Dienst zusätzlich gebün
 
 ```bash
 cd packages/domain && corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test
+```
+
+Gliederung eines Reglements an Referenzlisten messen, ohne Modell und ohne Datenbank (Zonenkapitel, Regeln für alle Zonen, je Sollwert: Zitat belegt, erreichbar, im Modellkontext):
+
+```bash
+docker compose --profile dev run --rm backend-dev python -m app.cli rules-eval /plu-proben/rennes_metropole_plui_reglement_mod2_2025-06.pdf rennes_ud1a.json rennes_ud1h.json
 ```
 
 Szenarien des Demohauses (P 19.7) als Tabelle, mit den Testdaten oder einem anderen Ordner (`seed/demo-house`):
