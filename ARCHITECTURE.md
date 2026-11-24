@@ -155,9 +155,12 @@ Warteschlange `long`: `plu_import`, `rules_extract`, `rules_document_read`, `rul
 PDF (GPU-Download oder Upload)
  → rules/pdf.py: Text je Seite (pypdf), Scan-Erkennung
  → [Scan, nur Upload] rules/ocr.py: Tesseract lokal, nach Bestätigung
+ → rules/domain/chapters.py: Gliederung aus laufender Kopfzeile, Inhaltsverzeichnis oder Überschriften;
+   Zonenkapitel, Regeln für alle Zonen, Begriffe; Zonenbeschränkung von Absätzen      (deterministisch)
  → source_page + regulation_chapter                         (strukturierte Eingabe)
  → rules/extract.py: Lauf 1 Auswertung (OpenRouter)          → ExtractedRule (Kandidaten)
  → rules/domain/assess.py: Zitat auf der Seite, Zahlen im Zitat, Sektor, Parameter   (deterministisch)
+ → rules/domain/precedence.py: Rangfolge allgemein → Zone → Sektor → Plan, Überlagerungen   (deterministisch)
  → Lauf 2 Gegenprüfung: liest Werte ohne Vorgabe; nur übereinstimmende Werte wirken
  → Lauf 3 Nachsuche: fehlende Pflichtarten und offene Stellen
  → fehlende Pflichtarten = unknown, nie Standardwert
