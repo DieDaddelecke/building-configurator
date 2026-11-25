@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { waehleTreillieres } from "./gemeinde";
+
 // Hausmodell HM4/HM5, Kundenweg bis Speichern (docs/PLAN_HAUSMODELL.md 6): Demohaus auf AD 65 wählen, Fassade ändern,
 // speichern. Der Server rechnet denselben Preis wie der Kern in Chromium (`price_match`). Voraussetzungen wie in
 // rules.spec.ts, zusätzlich die Demohäuser ohne IFC:
@@ -29,8 +31,7 @@ test.describe.serial("Hausmodell: Kundenweg (HM4)", () => {
 
     await page.goto("/grundstueck");
     await page.getByText("Parzellennummer eingeben").click();
-    // In CI gibt es nur Treillières; ein lokaler Stack kann weitere Gemeinden haben
-    await page.getByLabel("Gemeinde").selectOption({ label: "TREILLIERES" });
+    await waehleTreillieres(page);
     await page.getByLabel("Sektion").fill("AD");
     await page.getByLabel("Nummer").fill("65");
     await page.getByRole("button", { name: "Parzelle suchen" }).click();

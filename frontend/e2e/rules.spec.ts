@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { waehleTreillieres } from "./gemeinde";
+
 // Module G2 und G3, Hauptpfad (Plan 4.1 Kriterium 2): Regeln des Grundstücks als Simulation und der daraus
 // abgeleitete Baurahmen. Voraussetzungen wie in site.spec.ts, zusätzlich Planstand und aufgezeichnete
 // Auswertung der Zone Uh (ohne OpenRouter):
@@ -32,8 +34,7 @@ test.describe.serial("Regeln und Baurahmen als Simulation (G2, G3)", () => {
 
     await page.goto("/grundstueck");
     await page.getByText("Parzellennummer eingeben").click();
-    // In CI gibt es nur Treillières; ein lokaler Stack kann weitere Gemeinden haben
-    await page.getByLabel("Gemeinde").selectOption({ label: "TREILLIERES" });
+    await waehleTreillieres(page);
     await page.getByLabel("Sektion").fill("AD");
     await page.getByLabel("Nummer").fill("65");
     await page.getByRole("button", { name: "Parzelle suchen" }).click();
