@@ -2484,6 +2484,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/service/rules/communes/{insee}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Commune
+         * @description Planstand der Gemeinde und ihre Zonen mit dem Stand je Umfang (`house`, `collectif`).
+         */
+        get: operations["get_commune_api_v1_service_rules_communes__insee__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/service/rules/communes/{insee}/zones/{zone_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Zone Rules
+         * @description Regeln der Zone im Umfang mit Zitat, Seite und Link auf das PDF; Format `emprise-rules/1`.
+         */
+        get: operations["get_zone_rules_api_v1_service_rules_communes__insee__zones__zone_code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/session": {
         parameters: {
             query?: never;
@@ -3659,6 +3699,139 @@ export interface components {
             roles: {
                 [key: string]: "street" | "garden" | "side_left" | "side_right";
             };
+        };
+        /** FeedCommuneOut */
+        FeedCommuneOut: {
+            /** Commune Insee */
+            commune_insee: string;
+            /**
+             * Format
+             * @default emprise-rules/1
+             * @constant
+             */
+            format: "emprise-rules/1";
+            plan: components["schemas"]["PlanOut"] | null;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "rnu" | "no_document" | "no_regulation" | "multiple_regulations" | "no_chapters" | "failed";
+            /** Zones */
+            zones: components["schemas"]["FeedZoneOut"][];
+        };
+        /** FeedVersionOut */
+        FeedVersionOut: {
+            /** Coverage */
+            coverage: {
+                [key: string]: number;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Engine Version */
+            engine_version: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model */
+            model: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "extraction" | "office";
+            /** Prompt Version */
+            prompt_version: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "simulated" | "office_reviewed" | "retired";
+            /** Version */
+            version: number;
+        };
+        /** FeedZoneOut */
+        FeedZoneOut: {
+            /** Chapter Code */
+            chapter_code: string | null;
+            /** Code */
+            code: string;
+            /** Label */
+            label: string | null;
+            /** States */
+            states: components["schemas"]["FeedZoneStateOut"][];
+        };
+        /** FeedZoneRefOut */
+        FeedZoneRefOut: {
+            /** Chapter Code */
+            chapter_code: string | null;
+            /** Code */
+            code: string;
+            /** Label */
+            label: string | null;
+        };
+        /** FeedZoneRulesOut */
+        FeedZoneRulesOut: {
+            /** Commune Insee */
+            commune_insee: string;
+            /**
+             * Format
+             * @default emprise-rules/1
+             * @constant
+             */
+            format: "emprise-rules/1";
+            /** Hints */
+            hints: components["schemas"]["RuleOut"][];
+            /** Notices */
+            notices: string[];
+            /** Open Passages */
+            open_passages: components["schemas"]["PassageOut"][];
+            plan: components["schemas"]["PlanOut"];
+            /** Reason */
+            reason: string | null;
+            /** Rules */
+            rules: components["schemas"]["RuleOut"][];
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "house" | "collectif";
+            /**
+             * Simulation
+             * @default true
+             * @constant
+             */
+            simulation: true;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "simulated" | "office_reviewed" | "in_progress" | "not_extracted" | "unavailable";
+            version: components["schemas"]["FeedVersionOut"] | null;
+            zone: components["schemas"]["FeedZoneRefOut"];
+        };
+        /** FeedZoneStateOut */
+        FeedZoneStateOut: {
+            /** Reason */
+            reason: string | null;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "house" | "collectif";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "simulated" | "office_reviewed" | "in_progress" | "not_extracted" | "unavailable";
+            /** Updated At */
+            updated_at: string | null;
         };
         /** FlagIn */
         FlagIn: {
@@ -13027,6 +13200,74 @@ export interface operations {
                 };
                 content: {
                     "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_commune_api_v1_service_rules_communes__insee__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description INSEE-Code der Gemeinde */
+                insee: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedCommuneOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_zone_rules_api_v1_service_rules_communes__insee__zones__zone_code__get: {
+        parameters: {
+            query?: {
+                /** @description Umfang der Auswertung */
+                scope?: "house" | "collectif";
+            };
+            header?: never;
+            path: {
+                /** @description INSEE-Code der Gemeinde */
+                insee: string;
+                zone_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedZoneRulesOut"];
                 };
             };
             /** @description Validation Error */

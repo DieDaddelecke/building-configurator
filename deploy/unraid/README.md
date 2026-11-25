@@ -1,6 +1,6 @@
 # Betrieb
 
-Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026): **Teil A** (Abschnitte 1–9) richtet Emprise auf Unraid ein, **Teil B** (10–26) beschreibt die Module im Betrieb, typische Störungen und Handgriffe. Befehle mit `docker compose exec api …` gelten lokal und auf Unraid (dort im Ordner `deploy/unraid`). Aufbau: [ARCHITECTURE.md](../../ARCHITECTURE.md).
+Betrieb für interne Einführung und Beta (Entscheidung D3 vom 14.09.2026): **Teil A** (Abschnitte 1–9) richtet Emprise auf Unraid ein, **Teil B** (10–27) beschreibt die Module im Betrieb, typische Störungen und Handgriffe. Befehle mit `docker compose exec api …` gelten lokal und auf Unraid (dort im Ordner `deploy/unraid`). Aufbau: [ARCHITECTURE.md](../../ARCHITECTURE.md).
 
 # Teil A – Einrichtung auf Unraid
 
@@ -643,3 +643,37 @@ Haustypen mit mehreren Geschossen und geneigtem Dach; unter `/haus` wählen Kund
 - „Dachform nicht erkannt“ im Importbericht ist kein Betriebsfehler: Das Büro legt das Dach im Entwurf fest ([docs/IFC_IMPORTVERTRAG.md](../../docs/IFC_IMPORTVERTRAG.md) Abschnitt 8).
 
 **Prüfen:** Auf `/haus` zeigt die Ausstattung eines neu freigegebenen Haustyps „Ligne d'équipement“ (DE „Ausstattungslinie“) und „Forme du toit“ (DE „Dachform“); Formen, die sich auf dem Grundriss nicht bauen lassen, stehen gesperrt mit Grund da. Eine andere Linie wählen: Preis und Prüfung ändern sich, unten steht „Enregistré“ (DE „Gespeichert“).
+
+## 27. Regeldienst für die Massenstudie (RD)
+
+Die Massenstudie (`DieDaddelecke/mass-study`) liest Regeln einer Gemeinde und Zone über `GET /api/v1/service/rules/…` mit Service-Token ([docs/API_REGELDIENST.md](../../docs/API_REGELDIENST.md), DECISIONS ADR-12 und 4.12). Migration 0026, keine neue Fahne, kein neuer Job.
+
+**Einrichten**
+
+1. Nach dem Ausliefern (Abschnitt 5, Migration 0026) ein Token für die Massenstudie anlegen und beim Server der Massenstudie als Geheimnis eintragen, nie im Browser:
+
+   ```bash
+   docker compose exec api python -m app.cli service-token-add mass-study --days 365
+   ```
+
+   `service-token-list` zeigt Stand und letzte Nutzung, `service-token-revoke mass-study` sperrt sofort.
+2. Cloudflare (ADR-11): Bot-Schutz und Challenges dürfen `/api/v1/service/` nicht abfangen, sonst bekommt der Server der Massenstudie eine HTML-Seite statt JSON.
+
+**Gemeinde und Zone für Wohnungsbau auswerten (bezahlt, nur mit Go des Nutzers je Lauf)**
+
+1. Planstand importieren (kostenlos): `docker compose exec api python -m app.cli plu-import --commune 91477`. Der Import plant die Hausauswertung aller Kapitel ein; ohne Schlüssel im Worker enden sie `not_configured` und kosten nichts. **Den Schlüssel deshalb nicht in `.env` eintragen**: Sonst nimmt `rules_housekeeping` diese Kapitel auf und wertet sie bezahlt aus (Abschnitt 16).
+2. Stand ansehen: `GET /api/v1/service/rules/communes/91477` (oder `/buero/regeln`); die Zone der Parzelle steht unter `zones`.
+3. Auswerten im Umfang `collectif`, Schlüssel nur für diesen Aufruf:
+
+   ```bash
+   docker compose exec -e EMPRISE_OPENROUTER_API_KEY=DEIN-SCHLUESSEL api python -m app.cli rules-extract --scope collectif --commune 91477 --zone UA
+   ```
+
+   Die Ausgabe nennt Status und Kosten (Größenordnung 1,5–3 $ je Kapitel mit Opus 5.5). Ein zweiter Aufruf mit unveränderter Eingabe endet `skipped unchanged` und kostet nichts; `--force` wertet neu aus und kostet erneut.
+
+**Störungen**
+
+- `401 service_token_invalid`: Token widerrufen, abgelaufen oder falsch kopiert; neu anlegen.
+- `404 commune_unknown`: Planstand der Gemeinde fehlt (Schritt 1).
+- Zone `not_extracted`: Für `collectif` gibt es noch keine Auswertung; sie kommt nicht von selbst (Schritt 3).
+- Zone `unavailable` mit `chapter_not_found`: Für die Zone wurde im règlement kein Kapitel erkannt; das Büro prüft das Dokument.

@@ -12,7 +12,11 @@ cadastre-import [--commune X]  Kataster des Einzugsgebiets importieren (G1)
 flag-set KEY [--role R] [--all] [--off]  Feature-Flag setzen (Plan 4.2)
 plu-import [--commune X] [--force] [--from-dir D]  Planstand aus dem GPU importieren (G2)
 legal-seed                     Vorläufige Einwilligungstexte (A, V) veröffentlichen (Plan A 3.10, V 3.5)
-rules-extract (--chapter ID | --pending) [--force]  Zonenkapitel sofort auswerten (G2, kostet Token)
+rules-extract (--chapter ID | --pending | --commune X --zone Z) [--scope house|collectif] [--force]
+                               Zonenkapitel sofort auswerten (G2, kostet Token; `collectif` nur hier)
+service-token-add NAME [--days N]  Service-Token für einen anderen Dienst anlegen (ADR-12, Recht rules:read)
+service-token-revoke NAME      Service-Token widerrufen
+service-token-list             Service-Token mit Stand
 envelope-check [--commune X] [--zone Z] [--sample N]  Baurahmen über echte Parzellen prüfen (G3)
 reference-check DATEI [--version N|all]  Auswertung an einer Referenzliste messen (G2, ohne Aufruf)
 reference-import DATEI [--replace]  Referenzliste in die Verwaltung übernehmen
@@ -318,7 +322,7 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
     from app.integrations.openrouter import OpenRouterExtractor
     from app.rules.extract import extract_chapter
     from app.rules.model_choice import effective_settings
-    from app.rules.models import RegulationChapter
+    from app.rules.models import RegulationChapter, RulesCommune, Zone
 
     with get_sessionmaker()() as session:
         # Dasselbe Modell wie der Worker: in der Verwaltung gewählt oder aus der Umgebung (VA09)
@@ -336,6 +340,34 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
     with get_sessionmaker()() as session:
         if args.chapter:
             ids = [uuid.UUID(args.chapter)]
+        elif args.commune:
+            # Kapitel der Zone im aktuellen Planstand der Gemeinde (Regeldienst, PLAN_REGELDIENST 3.3)
+            if not args.zone:
+                sys.exit("--commune braucht --zone")
+            plan_id = session.execute(
+                select(RulesCommune.land_use_plan_id).where(RulesCommune.commune_insee == args.commune)
+            ).scalar_one_or_none()
+            chapter_code = session.execute(
+                select(Zone.chapter_code)
+                .where(
+                    Zone.land_use_plan_id == plan_id,
+                    Zone.commune_insee == args.commune,
+                    Zone.code == args.zone,
+                )
+                .limit(1)
+            ).scalar_one_or_none()
+            chapter_id = session.execute(
+                select(RegulationChapter.id).where(
+                    RegulationChapter.land_use_plan_id == plan_id, RegulationChapter.code == chapter_code
+                )
+            ).scalar_one_or_none()
+            if chapter_id is None:
+                sys.exit(
+                    f"{args.commune} {args.zone}: kein Kapitel im aktuellen Planstand (vorher plu-import)"
+                )
+            ids = [chapter_id]
+        elif args.scope != "house":
+            sys.exit("--pending nur für --scope house; collectif je Kapitel oder Zone")
         else:
             ids = list(
                 session.execute(
@@ -344,10 +376,49 @@ def cmd_rules_extract(args: argparse.Namespace) -> None:
             )
     for chapter_id in ids:
         outcome = extract_chapter(
-            sessions, settings, chapter_id, lambda: OpenRouterExtractor(settings), force=args.force
+            sessions,
+            settings,
+            chapter_id,
+            lambda: OpenRouterExtractor(settings),
+            force=args.force,
+            scope=args.scope,
         )
         detail = outcome.detail or ""
         print(f"{chapter_id}: {outcome.status} {detail} ${outcome.cost_usd:.2f} {outcome.counts or ''}")
+
+
+def cmd_service_token_add(args: argparse.Namespace) -> None:
+    """Token einmal ausgeben; danach steht nur die Prüfsumme in der Datenbank (ADR-12)."""
+    from app.platform import service_tokens
+    from app.platform.problems import Problem
+
+    with get_sessionmaker()() as session:
+        try:
+            created = service_tokens.create(session, args.name, args.scope or ["rules:read"], days=args.days)
+        except Problem as exc:
+            sys.exit(f"{args.name}: {exc.code}")
+    print(f"{created.name}: {created.token}")
+    print("Das Token erscheint nur jetzt. Beim Gegenüber als Geheimnis ablegen, nie im Browser.")
+
+
+def cmd_service_token_revoke(args: argparse.Namespace) -> None:
+    from app.platform import service_tokens
+
+    with get_sessionmaker()() as session:
+        if not service_tokens.revoke(session, args.name):
+            sys.exit(f"{args.name}: kein aktives Token")
+    print(f"{args.name}: widerrufen")
+
+
+def cmd_service_token_list(args: argparse.Namespace) -> None:
+    from app.platform import service_tokens
+
+    with get_sessionmaker()() as session:
+        for row in service_tokens.listing(session):
+            state = "widerrufen" if row.revoked_at else "aktiv"
+            expires = f"{row.expires_at:%d.%m.%Y}" if row.expires_at else "unbefristet"
+            used = f"{row.last_used_at:%d.%m.%Y %H:%M}" if row.last_used_at else "nie"
+            print(f"{row.name}: {state}, {','.join(row.scopes)}, bis {expires}, zuletzt {used}")
 
 
 def cmd_reference_import(args: argparse.Namespace) -> None:
@@ -376,9 +447,12 @@ def cmd_reference_check(args: argparse.Namespace) -> None:
     if not path.exists():
         path = reference.SEED_DIR / args.file
     ref = reference.load_file(path)
-    print(f"Referenzliste: {ref.title}, Sektor {ref.sector}, {len(ref.entries)} Einträge ({ref.status})")
+    print(
+        f"Referenzliste: {ref.title}, Sektor {ref.sector}, Umfang {ref.scope}, {len(ref.entries)} Einträge "
+        f"({ref.status})"
+    )
     with get_sessionmaker()() as session:
-        versions = reference.versions_for(session, ref.sha256, ref.sector)
+        versions = reference.versions_for(session, ref.sha256, ref.sector, ref.scope)
         if not versions:
             print("Dieses Dokument ist in dieser Instanz nicht ausgewertet.")
             return
@@ -566,10 +640,29 @@ def main() -> None:
     target = p_extract.add_mutually_exclusive_group(required=True)
     target.add_argument("--chapter", help="ID des Zonenkapitels (Büro: Abdeckung)")
     target.add_argument("--pending", action="store_true", help="alle offenen oder gescheiterten Kapitel")
+    target.add_argument("--commune", help="INSEE-Code; mit --zone das Kapitel dieser Zone")
+    p_extract.add_argument("--zone", help="Zonencode im Planstand der Gemeinde (mit --commune)")
+    p_extract.add_argument(
+        "--scope",
+        choices=["house", "collectif"],
+        default="house",
+        help="Umfang: house (Einfamilienhaus) oder collectif (Wohngebäude, Regeldienst)",
+    )
     p_extract.add_argument(
         "--force", action="store_true", help="auch bei unveränderter Eingabe neu auswerten"
     )
     p_extract.set_defaults(func=cmd_rules_extract)
+    p_token = sub.add_parser("service-token-add")
+    p_token.add_argument("name", help="Name des Dienstes, z. B. mass-study")
+    p_token.add_argument("--days", type=int, help="Gültigkeit in Tagen; ohne Angabe unbefristet")
+    p_token.add_argument(
+        "--scope", action="append", choices=["rules:read"], help="Recht (Standard rules:read)"
+    )
+    p_token.set_defaults(func=cmd_service_token_add)
+    p_token_revoke = sub.add_parser("service-token-revoke")
+    p_token_revoke.add_argument("name")
+    p_token_revoke.set_defaults(func=cmd_service_token_revoke)
+    sub.add_parser("service-token-list").set_defaults(func=cmd_service_token_list)
     p_reference_import = sub.add_parser("reference-import")
     p_reference_import.add_argument("file", help="Pfad oder Name in app/rules/reference_seed")
     p_reference_import.add_argument("--replace", action="store_true")

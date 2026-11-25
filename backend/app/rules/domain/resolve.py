@@ -143,3 +143,23 @@ def apply_override[R: _Keyed](
         else:
             result.append(rule)
     return [*result, correction]
+
+
+def feed_state(
+    version_status: str | None,
+    state_status: str | None,
+    *,
+    chapter_known: bool,
+    state_error: str | None = None,
+) -> ZoneState:
+    """Stand einer Zone für den Regeldienst in einem Umfang (PLAN_REGELDIENST 4.2): Mit Version zählt sie;
+    sonst der Stand der Auswertung. Ein Umfang ohne Auftrag ist `not_extracted` und kommt nicht von selbst."""
+    if version_status is not None:
+        return ZoneState(version_status, updating=state_status in EXTRACTING)
+    if not chapter_known:
+        return ZoneState("unavailable", "chapter_not_found")
+    if state_status is None or state_status == "pending":
+        return ZoneState("not_extracted", state_status)
+    if state_status == "extracting":
+        return ZoneState("in_progress")
+    return ZoneState("unavailable", state_error or state_status)

@@ -223,6 +223,30 @@ class RegulationChapter(UuidPk, Created, Base):
     )
 
 
+class RegulationChapterScope(Base):
+    """Stand der Auswertung eines Kapitels in einem zusätzlichen Umfang (`collectif`, PLAN_REGELDIENST 3.2).
+
+    Der Umfang `house` steht weiter in `regulation_chapter` (Import, Housekeeping, Kundenweg). Zusätzliche
+    Umfänge wertet nur die Kommandozeile aus: kein Job, kein Housekeeping, keine Kosten ohne Auftrag."""
+
+    __tablename__ = "regulation_chapter_scope"
+
+    chapter_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("regulation_chapter.id", ondelete="CASCADE"), primary_key=True
+    )
+    scope: Mapped[str] = mapped_column(String(20), primary_key=True)
+    status: Mapped[str] = mapped_column(String(20), server_default=text("'pending'"))
+    input_hash: Mapped[str | None] = mapped_column(String(64))
+    engine_version: Mapped[str | None] = mapped_column(String(20))
+    error: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        CheckConstraint("scope IN ('collectif')", name="scope_known"),
+        CheckConstraint("status IN ('pending','extracting','succeeded','failed')", name="status_known"),
+    )
+
+
 class RuleExtractionRun(UuidPk, Created, Base):
     """Ein Aufruf des Sprachmodells: Modell, Prompt, Kosten, Rohantwort (Plan 3.4, 6.8). Wird nie gelöscht,
     solange das Kapitel besteht: Die Monatskosten werden daraus berechnet."""
@@ -246,16 +270,20 @@ class RuleExtractionRun(UuidPk, Created, Base):
     duration_ms: Mapped[int | None] = mapped_column(Integer)
     request_id: Mapped[str | None] = mapped_column(String(100))
     output: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    scope: Mapped[str] = mapped_column(String(20), server_default=text("'house'"))
+    """Umfang des Aufrufs (PLAN_REGELDIENST 3.2); die Wiederverwendung hängt am Eingabe-Hash."""
 
     __table_args__ = (
         CheckConstraint("status IN ('succeeded','failed')", name="status_known"),
+        CheckConstraint("scope IN ('house','collectif')", name="scope_known"),
         Index("ix_rule_extraction_run_chapter", "chapter_id", "created_at"),
         Index("ix_rule_extraction_run_created", "created_at"),
     )
 
 
 class RuleSet(UuidPk, Created, Base):
-    """Regelwerk je Zone oder Sektor eines Planstands; `current_version_id` ist die wirksame Version."""
+    """Regelwerk je Zone oder Sektor eines Planstands und Umfang; `current_version_id` ist die wirksame
+    Version."""
 
     __tablename__ = "rule_set"
 
@@ -266,8 +294,13 @@ class RuleSet(UuidPk, Created, Base):
     )
     current_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    scope: Mapped[str] = mapped_column(String(20), server_default=text("'house'"))
+    """`house` für Konfigurator und Analyse; `collectif` nur für den Regeldienst (PLAN_REGELDIENST 3.2)."""
 
-    __table_args__ = (UniqueConstraint("land_use_plan_id", "zone_code", name="uq_rule_set_plan_zone"),)
+    __table_args__ = (
+        UniqueConstraint("land_use_plan_id", "zone_code", "scope", name="uq_rule_set_plan_zone_scope"),
+        CheckConstraint("scope IN ('house','collectif')", name="scope_known"),
+    )
 
 
 class RuleSetVersion(UuidPk, Created, Base):

@@ -3652,6 +3652,396 @@
         "title": "FacadeRolesIn",
         "type": "object"
       },
+      "FeedCommuneOut": {
+        "properties": {
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "format": {
+            "const": "emprise-rules/1",
+            "default": "emprise-rules/1",
+            "title": "Format",
+            "type": "string"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "rnu",
+              "no_document",
+              "no_regulation",
+              "multiple_regulations",
+              "no_chapters",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/FeedZoneOut"
+            },
+            "title": "Zones",
+            "type": "array"
+          }
+        },
+        "required": [
+          "commune_insee",
+          "status",
+          "reason",
+          "plan",
+          "zones"
+        ],
+        "title": "FeedCommuneOut",
+        "type": "object"
+      },
+      "FeedVersionOut": {
+        "properties": {
+          "coverage": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Coverage",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "origin": {
+            "enum": [
+              "extraction",
+              "office"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "status": {
+            "enum": [
+              "simulated",
+              "office_reviewed",
+              "retired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "status",
+          "origin",
+          "model",
+          "prompt_version",
+          "engine_version",
+          "created_at",
+          "coverage"
+        ],
+        "title": "FeedVersionOut",
+        "type": "object"
+      },
+      "FeedZoneOut": {
+        "properties": {
+          "chapter_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Code"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "states": {
+            "items": {
+              "$ref": "#/components/schemas/FeedZoneStateOut"
+            },
+            "title": "States",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "chapter_code",
+          "states"
+        ],
+        "title": "FeedZoneOut",
+        "type": "object"
+      },
+      "FeedZoneRefOut": {
+        "properties": {
+          "chapter_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter Code"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "chapter_code"
+        ],
+        "title": "FeedZoneRefOut",
+        "type": "object"
+      },
+      "FeedZoneRulesOut": {
+        "properties": {
+          "commune_insee": {
+            "title": "Commune Insee",
+            "type": "string"
+          },
+          "format": {
+            "const": "emprise-rules/1",
+            "default": "emprise-rules/1",
+            "title": "Format",
+            "type": "string"
+          },
+          "hints": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Hints",
+            "type": "array"
+          },
+          "notices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notices",
+            "type": "array"
+          },
+          "open_passages": {
+            "items": {
+              "$ref": "#/components/schemas/PassageOut"
+            },
+            "title": "Open Passages",
+            "type": "array"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanOut"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "scope": {
+            "enum": [
+              "house",
+              "collectif"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "simulation": {
+            "const": true,
+            "default": true,
+            "title": "Simulation",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "simulated",
+              "office_reviewed",
+              "in_progress",
+              "not_extracted",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zone": {
+            "$ref": "#/components/schemas/FeedZoneRefOut"
+          }
+        },
+        "required": [
+          "commune_insee",
+          "scope",
+          "zone",
+          "status",
+          "reason",
+          "plan",
+          "version",
+          "rules",
+          "hints",
+          "open_passages",
+          "notices"
+        ],
+        "title": "FeedZoneRulesOut",
+        "type": "object"
+      },
+      "FeedZoneStateOut": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "scope": {
+            "enum": [
+              "house",
+              "collectif"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "simulated",
+              "office_reviewed",
+              "in_progress",
+              "not_extracted",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "scope",
+          "status",
+          "reason",
+          "updated_at"
+        ],
+        "title": "FeedZoneStateOut",
+        "type": "object"
+      },
       "FlagIn": {
         "properties": {
           "description": {
@@ -25242,6 +25632,124 @@
         "summary": "Regulation File",
         "tags": [
           "rules"
+        ]
+      }
+    },
+    "/api/v1/service/rules/communes/{insee}": {
+      "get": {
+        "description": "Planstand der Gemeinde und ihre Zonen mit dem Stand je Umfang (`house`, `collectif`).",
+        "operationId": "get_commune_api_v1_service_rules_communes__insee__get",
+        "parameters": [
+          {
+            "description": "INSEE-Code der Gemeinde",
+            "in": "path",
+            "name": "insee",
+            "required": true,
+            "schema": {
+              "description": "INSEE-Code der Gemeinde",
+              "pattern": "^[0-9][0-9AB][0-9]{3}$",
+              "title": "Insee",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedCommuneOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Commune",
+        "tags": [
+          "rules-service"
+        ]
+      }
+    },
+    "/api/v1/service/rules/communes/{insee}/zones/{zone_code}": {
+      "get": {
+        "description": "Regeln der Zone im Umfang mit Zitat, Seite und Link auf das PDF; Format `emprise-rules/1`.",
+        "operationId": "get_zone_rules_api_v1_service_rules_communes__insee__zones__zone_code__get",
+        "parameters": [
+          {
+            "description": "INSEE-Code der Gemeinde",
+            "in": "path",
+            "name": "insee",
+            "required": true,
+            "schema": {
+              "description": "INSEE-Code der Gemeinde",
+              "pattern": "^[0-9][0-9AB][0-9]{3}$",
+              "title": "Insee",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "zone_code",
+            "required": true,
+            "schema": {
+              "maxLength": 20,
+              "title": "Zone Code",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Umfang der Auswertung",
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "collectif",
+              "description": "Umfang der Auswertung",
+              "enum": [
+                "house",
+                "collectif"
+              ],
+              "title": "Scope",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedZoneRulesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Zone Rules",
+        "tags": [
+          "rules-service"
         ]
       }
     },

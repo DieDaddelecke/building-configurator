@@ -119,6 +119,31 @@ REQUEST = ExtractionRequest(
 )
 
 
+def test_openrouter_sends_the_prompt_of_the_scope() -> None:
+    """Umfang `collectif` (PLAN_REGELDIENST 3.1): eigener Systemprompt, Nachsuche mit eigenem Schema."""
+    from app.rules.domain.extraction import COLLECTIF_SYSTEM_PROMPT, SYSTEM_PROMPT
+
+    seen: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        seen.append(body)
+        tool = body["tools"][0]["function"]["name"]
+        return httpx.Response(
+            200, json=_completion({"gaps": [], "passages": [], "rules": []}, tool_name=tool)
+        )
+
+    extractor = _extractor(handler)
+    extractor.extract(replace(REQUEST, scope="collectif"))
+    extractor.extract(replace(REQUEST, scope="collectif", gaps={"gaps": [], "passages": []}))
+    extractor.extract(REQUEST)
+    assert seen[0]["messages"][0]["content"] == COLLECTIF_SYSTEM_PROMPT
+    reasons = seen[1]["tools"][0]["function"]["parameters"]["properties"]["passages"]["items"]["properties"]
+    assert "single_house" in reasons["reason"]["enum"]
+    assert "single_house" in seen[1]["messages"][1]["content"][-1]["text"]
+    assert seen[2]["messages"][0]["content"] == SYSTEM_PROMPT
+
+
 def test_openrouter_request_shape_and_response() -> None:
     seen: dict[str, Any] = {}
 

@@ -1,6 +1,6 @@
 # Entscheidungen
 
-> Stand 03.10.2026. Maßgebliche Liste der Entscheidungen mit ihren ursprünglichen IDs, auf die der Code verweist. Offene Fragen stehen in [ROADMAP.md](ROADMAP.md) 3, die Fachregeln in [DOMAIN.md](DOMAIN.md).
+> Stand 25.11.2026. Maßgebliche Liste der Entscheidungen mit ihren ursprünglichen IDs, auf die der Code verweist. Offene Fragen stehen in [ROADMAP.md](ROADMAP.md) 3, die Fachregeln in [DOMAIN.md](DOMAIN.md).
 
 **So wird diese Datei gepflegt:** Neue Entscheidungen und Festlegungen kommen hierher, als ADR in Abschnitt 1 (Architektur, Betrieb, Arbeitsweise) oder als Zeile in Abschnitt 4 (Fachfestlegung mit neuer ID `F01` ff.). Eine überholte Entscheidung bleibt stehen und bekommt „aufgehoben durch …“. Die vollständigen Texte der älteren IDs stehen unverändert im Archiv (Abschnitt 5).
 
@@ -67,6 +67,13 @@
 - **Entscheidung:** `building-configurator.aslani.work` und `auth.aslani.work` bleiben „proxied“ (CNAME auf `aslani.work`); TLS zusätzlich am Nginx Proxy Manager (Let's Encrypt).
 - **Hebt auf:** die Festlegung vom 25.09.2026 „nur DNS, graue Wolke“ ([Betrieb](deploy/unraid/README.md) Abschnitt 2).
 - **Folgen:** Cloudflare sieht den Verkehr im Klartext, auch Anmeldedaten und Kundendaten – bewusste Ausnahme von L8 und Plan 6.9 (kein US-Anbieter im Datenweg) für den Datenweg; vor dem öffentlichen Start mit D3 neu bewerten. SSL-Modus „Full (strict)“. Die echte Client-IP kommt als `CF-Connecting-IP`; ohne Übernahme teilen sich Nutzer Rate-Limits und das Audit sieht Cloudflare-Adressen (vor dem öffentlichen Start einrichten). Anfragen sind bei Cloudflare Free auf 100 MB begrenzt (Reglement-Upload bis 100 MB). Bot- und Angriffsschutz von Cloudflare darf den Aufruf der API an Authentik (Token-Abruf) nicht blockieren.
+
+### ADR-12 – Service-Token für andere Dienste (25.11.2026, Nutzer)
+
+- **Kontext:** Die Massenstudie (`DieDaddelecke/mass-study`) soll PLU-Regeln von Emprise als Vorschläge übernehmen (Entscheidung des Nutzers vom 25.11.2026: Anbindung als Dienst über eine API). Zugang gab es nur über die OIDC-Sitzung mit zweitem Faktor; die API-Schlüssel der Organisationen hat ADR-07 entfernt.
+- **Entscheidung:** Tabelle `service_token` (Name, SHA-256 des Tokens, Rechte, Ablauf, Widerruf, letzte Nutzung), angelegt und widerrufen nur über die CLI mit Audit. Zugriffsregel `require_service_token("rules:read")` mit `Authorization: Bearer emps_…`; einziges Recht `rules:read` für die zwei Leserouten unter `/api/v1/service/rules` (docs/API_REGELDIENST.md). Rate-Limit je Token.
+- **Abgrenzung zu ADR-07:** kein Bearer-Zugang zu Projekten, keine Organisation, keine Kosten; das Token handelt nicht als Person. `test_access_policies.py` listet die Routen mit Service-Token.
+- **Folgen:** Das Token liegt beim Gegenüber im Server, nie im Browser. Hinter Cloudflare darf der Bot-Schutz `/api/v1/service/` nicht blockieren (ADR-11, Betrieb 27).
 
 ## 2. Entscheidungen des Umsetzungsplans (D1–D19)
 
@@ -345,6 +352,20 @@ Plan: [docs/PLAN_HAUSMODELL.md](docs/PLAN_HAUSMODELL.md) (Prompt v3.1, Phasen HM
 | E-HM-65 | Dach im Import (`domain/roof.py`): Aus der Unterseite des `IfcRoof`-Körpers wird jede Kante der Bezugskontur Traufe (überall gleich hoch, Fläche steigt senkrecht nach innen) oder Giebel; Höhe der Traufen = Auflager. Krüppelwalm über der Mitte eines Giebels, oberer Mansardabschnitt nur dort, wo er an die Traufebene anschließt, je bis zu drei Kandidaten nach Häufigkeit; Überstände je Kantenart. Je Kandidat und Drehung erzeugt der Kern das Dach (`/roof`); erkannt ist die erste Form mit denselben Kantenarten und einer Unterseite gleich auf 1 mm plus dem Rundungsfehler der Neigung (0,01°). Sonst offen `roof_form_not_recognized` mit Grund. Das Büro kann im Entwurf ein geneigtes Dach setzen (`decisions.roof`, Startwerte je Form wie im Demo-Katalog), das das Dach aus dem IFC ersetzt (`roof_set_by_office`); ein Flachdach braucht die Dachdecke aus dem IFC. Der Standard von Dachform und Dachaufbau folgt dem Dach des Templates |
 | E-HM-66 | Ausstattungslinien (`catalog.lines`: Slot → globaler Wert): Die Oberfläche setzt die Werte auf Klick, Werte gleich dem Standard des Templates entfallen wie bei jeder Wahl, Zahlen bleiben gesetzt, Überschreibungen je Raum oder Element bleiben. Gespeichert wird nur die Auswahl; aktiv ist die erste Linie nach `sort_order`, deren Werte alle gelten (`activeLine`), sonst „Eigene Zusammenstellung“. Der Aufpreis einer Linie ist die Preisdifferenz ihrer Werte (E-HM-14) |
 | E-HM-67 | Terrasse und Carport (Slots am Element `site`; ein Wert ohne Typ heißt keiner): Maße rechnet der Kern (`facts.terrace`, `facts.carport`; die Terrasse so breit wie die längste Gartenkante, ohne sie keine). Lage, Zufahrt und Prüfungen (`annex`, `unsealed_min`, `parking`) rechnet Python mit `outbuildings.py` wie im heutigen Konfigurator: Terrasse vor der Gartenkante, Carport nah an der Straße ohne Haus und Terrasse zu berühren, Zufahrten von Carport und Garagentor. Die Kunden-API liefert die gesetzten Nebenbauten für den Lageplan (`outbuildings`) |
+
+### 4.12 Regeldienst für die Massenstudie (E-RD)
+
+Plan: [docs/PLAN_REGELDIENST.md](docs/PLAN_REGELDIENST.md); Format für die Gegenseite: [docs/API_REGELDIENST.md](docs/API_REGELDIENST.md). Auftrag des Nutzers vom 25.11.2026; die Empfehlungen des Plans gelten mit der Umsetzung als entschieden.
+
+| Nr. | Entscheidung |
+|---|---|
+| E-RD-1 | Umfang der Auswertung `house` (ein Einfamilienhaus, wie bisher) oder `collectif` (Wohngebäude mit mehreren Wohnungen). `collectif` hat einen eigenen Systemprompt und eine eigene Nachsuche (Grund `single_house` statt `multi_dwelling`); Status, Zitat und Parameter sind dieselben. Prompt, Schemata und Eingabe-Hash von `house` bleiben bytegleich (Prüfsummen `a7ad548f037be25e`, `dc4e752f99503cef` im Test) |
+| E-RD-2 | Pflichtarten `collectif`: `setback_street`, `setback_side`, `setback_rear`, `setback_between_buildings`, `max_footprint_ratio`, `max_height`, `unsealed_min`; Dach und Fassade werden gelesen, sind aber keine Pflicht. Schranken (`BOUNDS`) und `ENGINE_VERSION` bleiben; Werte darüber werden `unknown` (`out_of_bounds`) |
+| E-RD-3 | Ablage: `rule_set.scope` mit Eindeutigkeit je Planstand, Zone und Umfang; `rule_extraction_run.scope`; Stand eines zusätzlichen Umfangs in `regulation_chapter_scope`, der von `house` bleibt in `regulation_chapter` (Migration 0026). Kundenweg, Analyse, Abdeckung im Büro und Referenzlisten lesen nur `house` |
+| E-RD-4 | `collectif` wertet nur die CLI aus (`rules-extract --scope collectif --commune X --zone Z` oder `--chapter`): kein Job, kein Housekeeping, keine Auswertung über die API. Jeder Lauf ist bezahlt und braucht das Go des Nutzers |
+| E-RD-5 | Leserouten `GET /service/rules/communes/{insee}` und `…/zones/{zone}?scope=` im Format `emprise-rules/1`; Regeln im Modell `RuleOut`. Nur der aktuelle Planstand der Gemeinde, kein Rückfall auf einen älteren; ohne Auswertung `not_extracted` |
+| E-RD-6 | Prospect zur gegenüberliegenden Straßenseite und Werte nach Wohnungszahl bleiben `text_only` mit Zitat; ein Parameter dafür ändert das gemeinsame Ausgabeschema und damit den Hausprompt und braucht eine eigene Entscheidung |
+| E-RD-7 | Referenzlisten tragen optional `"scope"`; `reference-check` misst dann die Versionen dieses Umfangs |
 
 ## 5. Wo die übrigen IDs stehen
 

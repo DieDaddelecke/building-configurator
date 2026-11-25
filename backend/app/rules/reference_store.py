@@ -162,7 +162,9 @@ def candidates(db: Session) -> list[ReferenceCandidateOut]:
         .join(RegulationChapter, RegulationChapter.id == RuleSet.chapter_id)
         .join(SourceFile, SourceFile.id == RegulationChapter.source_file_id)
         .join(LandUsePlan, LandUsePlan.id == RuleSet.land_use_plan_id)
-        .where(LandUsePlan.status == "active", RuleSet.current_version_id.is_not(None))
+        .where(
+            LandUsePlan.status == "active", RuleSet.current_version_id.is_not(None), RuleSet.scope == "house"
+        )
         .order_by(LandUsePlan.title, RuleSet.zone_code)
     ).all()
     grouped: dict[str, ReferenceCandidateOut] = {}

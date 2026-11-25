@@ -58,6 +58,22 @@ class StaffSession(UuidPk, Created, Base):
     amr: Mapped[list[str]] = mapped_column(ARRAY(String(40)), server_default=text("'{}'"))
 
 
+class ServiceToken(UuidPk, Created, Base):
+    """Zugang eines anderen Dienstes ohne Person (ADR-12, docs/PLAN_REGELDIENST.md 4.1): nur Leserouten mit
+    passendem Recht, keine Projekte. Gespeichert wird nur der SHA-256 des Tokens; angelegt per CLI."""
+
+    __tablename__ = "service_token"
+
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    token_hash: Mapped[bytes] = mapped_column(LargeBinary, unique=True)
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String(40)))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (CheckConstraint("scopes <@ ARRAY['rules:read']::varchar[]", name="scopes_known"),)
+
+
 class Project(UuidPk, Created, Base):
     """Anonymes Kundenprojekt. Modul A ergänzt Kontakt und Anfrage, G1 das Grundstück."""
 

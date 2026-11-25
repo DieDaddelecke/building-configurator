@@ -16,6 +16,7 @@ from app.config import Settings
 from app.platform.db import utcnow
 from app.rules.domain import PROMPT_VERSION
 from app.rules.domain.extraction import TEXT_INPUT_NOTE, DocumentKind, prompt_fingerprint
+from app.rules.domain.kinds import RuleScope
 from app.rules.models import RegulationChapter, RuleExtractionRun, SourceFile
 
 RUNNING_STALE_AFTER = timedelta(minutes=70)
@@ -30,12 +31,15 @@ def input_hash(
     ocr: str | None = None,
     *,
     as_text: bool = False,
+    scope: RuleScope = "house",
 ) -> str:
     """Eingabe der Aufrufe. Die Version der Schranken gehört nicht dazu: Sie ändert nur die Bewertung. Der
     Prompt hängt an der Dokumentart (PLU oder Zusatzdokument, AN3). `ocr` (`ocr_stamp`) zählt nur im
     Textmodus: Dort ändert die Texterkennung die Eingabe, im PDF-Modus sieht das Modell dieselben Seitenbilder
     (AN7, PLAN_AN7_SCAN 3.4). `as_text`: Im PDF-Modus ging ein Auszug über der Grenze der Anbieter als Text
-    (SC06); dann zählt die Texterkennung wie im Textmodus, unter eigener Kennung (REFACTORING_PLAN S18)."""
+    (SC06); dann zählt die Texterkennung wie im Textmodus, unter eigener Kennung (REFACTORING_PLAN S18).
+    `scope`: Umfang `collectif` mit eigenem Prompt (PLAN_REGELDIENST 3.2); für `house` bleibt der Hash wie
+    bisher, damit gespeicherte Läufe gelten."""
     payload = {
         "source": source_sha256,
         "chapter": [chapter.code, chapter.first_page, chapter.last_page],
@@ -45,8 +49,10 @@ def input_hash(
         "effort": settings.rules_effort,
         "runs": settings.rules_runs,
         "gap_search": [settings.rules_gap_search, settings.rules_gap_extra_pages_max],
-        "prompt": [PROMPT_VERSION, prompt_fingerprint(kind)],
+        "prompt": [PROMPT_VERSION, prompt_fingerprint(kind, scope)],
     }
+    if scope != "house":
+        payload["scope"] = scope
     text_input = "text" if settings.rules_input == "text" else "pdf_as_text" if as_text else None
     if text_input:
         # Nur dann: Der Hash der PDF-Auswertungen bleibt, gespeicherte Teilantworten bleiben verwendbar (PU12)

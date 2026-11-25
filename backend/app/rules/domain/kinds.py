@@ -41,6 +41,25 @@ MANDATORY_KINDS: tuple[str, ...] = (
 )
 """Pflichtarten für das Hauptgebäude (Spez. 5.2.4 Spalte „Pflicht“). Fehlt eine, wird sie `unknown`."""
 
+RuleScope = Literal["house", "collectif"]
+"""Umfang einer Auswertung (docs/PLAN_REGELDIENST.md 3): `house` ein neues Einfamilienhaus (Konfigurator,
+Analyse), `collectif` neue Wohngebäude mit mehreren Wohnungen (Regeldienst für die Massenstudie)."""
+SCOPES: tuple[str, ...] = get_args(RuleScope)
+MANDATORY_BY_SCOPE: dict[str, tuple[str, ...]] = {
+    "house": MANDATORY_KINDS,
+    "collectif": (
+        "setback_street",
+        "setback_side",
+        "setback_rear",
+        "setback_between_buildings",
+        "max_footprint_ratio",
+        "max_height",
+        "unsealed_min",
+    ),
+}
+"""Pflichtarten je Umfang. Für Wohnanlagen zählt der Abstand zwischen Gebäuden derselben Parzelle; Dach und
+Fassade bestimmen die Kubatur nicht und sind dort keine Pflicht (PLAN_REGELDIENST 3.1)."""
+
 RoofForm = Literal["gable", "hip", "mono_pitch", "flat", "mansard", "other"]
 ROOF_FORMS: tuple[str, ...] = get_args(RoofForm)
 MATERIALS: tuple[str, ...] = (

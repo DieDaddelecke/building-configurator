@@ -167,7 +167,7 @@ PDF (GPU-Download oder Upload)
  → envelope/domain/derive.py → analysis/domain, configuration/domain                (rein)
 ```
 
-Das Modell liefert nur Kandidaten mit Zitat. Es rechnet nichts und entscheidet nichts Rechtliches; das Ergebnis ist eine Simulation, das Büro prüft nach Kontakt (D11). Die Schnittstelle (`ExtractionRequest`, `RuleExtractor`) liegt in `rules/domain/extraction.py`, der Adapter in `integrations/openrouter.py`. `rules/runs.py::input_hash` entscheidet, ob gespeicherte Antworten wiederverwendet werden; jede Änderung an Prompt oder Schema erzwingt eine neue, bezahlte Auswertung.
+Das Modell liefert nur Kandidaten mit Zitat. Es rechnet nichts und entscheidet nichts Rechtliches; das Ergebnis ist eine Simulation, das Büro prüft nach Kontakt (D11). **Umfang:** Dieselbe Kette läuft im Umfang `house` (Einfamilienhaus; Kunden, Konfigurator, Analyse) oder, nur von Hand über die CLI, im Umfang `collectif` (Wohngebäude) mit eigenem Prompt und eigenen Pflichtarten; dessen Regelwerke (`rule_set.scope`) und Stand (`regulation_chapter_scope`) liest nur der Regeldienst (`rules/feed.py`, `GET /api/v1/service/rules/…`, DECISIONS 4.12). Die Schnittstelle (`ExtractionRequest`, `RuleExtractor`) liegt in `rules/domain/extraction.py`, der Adapter in `integrations/openrouter.py`. `rules/runs.py::input_hash` entscheidet, ob gespeicherte Antworten wiederverwendet werden; jede Änderung an Prompt oder Schema erzwingt eine neue, bezahlte Auswertung.
 
 ### 4.4 Dateien
 
@@ -256,10 +256,11 @@ Typen an der Grenze kommen aus `src/contract.gen.ts`, erzeugt aus `openapi.json`
 |---|---|---|
 | Sitzung | Büro, Architekten (Analyse) | OIDC (Authentik, lokal Testdienst), PKCE, zweiter Faktor Pflicht (`amr`), keine automatische Kontoanlage; Sitzung als Token-Hash in `staff_session` |
 | Projekt-Cookie | Kunden | anonymes Projekt, Token-Hash; Zugangslink per Mail (V) |
+| Service-Token | andere Dienste (Massenstudie) | `Authorization: Bearer emps_…`, Token-Hash in `service_token`, Recht `rules:read` nur für `/api/v1/service/rules/…`; Anlage per CLI (ADR-12) |
 
 - Rollen `architect`, `rules_admin`, `catalog_admin`, `ops`; die drei letzten nur in der Organisation des Betreibers (`operator`).
 - Organisationen mit Mitgliedern trennen die Projekte der Architekten. Fremde Büros bleiben gesperrt (`EMPRISE_EXTERNAL_ORGANISATIONS=false`), bis E-A5 geklärt ist.
-- Genau eine Zugriffsregel je Route (`public`, `require_roles`, `require_project_access`, `require_owned_project`, `checked_in_handler`), per Test über alle Routen erzwungen (`test_access_policies.py`). `/admin`-Routen mit Projekt nennen den Pfadparameter `project_id`; ein Test verhindert das Umgehen über andere Namen.
+- Genau eine Zugriffsregel je Route (`public`, `require_roles`, `require_project_access`, `require_owned_project`, `checked_in_handler`, `require_service_token`), per Test über alle Routen erzwungen (`test_access_policies.py`; die Routen mit Service-Token sind dort aufgezählt). `/admin`-Routen mit Projekt nennen den Pfadparameter `project_id`; ein Test verhindert das Umgehen über andere Namen.
 - Analyse-Routen verlangen ein Projekt der eigenen Organisation (`require_owned_project`); das Kunden-Cookie reicht dort nicht.
 
 Feature-Flags je Modul (`site_selection`, `rules_simulation`, `envelope_simulation`, `inquiry`, `configurator`, `submission`) schalten die Kundenwege frei: intern (Rolle) → Beta → alle.
