@@ -39,21 +39,36 @@ function send(res: ServerResponse, status: number, body: unknown): void {
   res.end(text);
 }
 
-async function readJson(req: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = [];
-  let size = 0;
-  for await (const chunk of req) {
-    size += (chunk as Buffer).length;
-    if (size > MAX_BODY_BYTES) {
-      throw new RequestError(413, "body_too_large");
-    }
-    chunks.push(chunk as Buffer);
-  }
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
-  } catch {
-    throw new RequestError(400, "invalid_json");
-  }
+/**
+ * Rumpf lesen, höchstens MAX_BODY_BYTES. Bei Überschreitung wird der Rest verworfen statt den Strom zu zerstören:
+ * Ein zerstörter Strom trennt die Verbindung, bevor die Antwort 413 ankommt, und der Aufrufer wartet ins Leere.
+ */
+function readJson(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    let tooLarge = false;
+    req.on("data", (chunk: Buffer) => {
+      if (tooLarge) return;
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        tooLarge = true;
+        chunks.length = 0;
+        reject(new RequestError(413, "body_too_large"));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("error", reject);
+    req.on("end", () => {
+      if (tooLarge) return;
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown);
+      } catch {
+        reject(new RequestError(400, "invalid_json"));
+      }
+    });
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
