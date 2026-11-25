@@ -18,7 +18,9 @@ RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@v0.4.7
 WORKDIR /build
 RUN xcaddy build v2.11.4 \
       --replace golang.org/x/crypto=golang.org/x/crypto@v0.57.0 \
-      --replace golang.org/x/net=golang.org/x/net@v0.59.0 \
+      --replace golang.org/x/net=golang.org/x/net@v0.62.0 \
+      --replace github.com/go-jose/go-jose/v4=github.com/go-jose/go-jose/v4@v4.1.6 \
+      --replace github.com/klauspost/compress=github.com/klauspost/compress@v1.18.7 \
       --replace golang.org/x/text=golang.org/x/text@v0.42.0 \
       --replace google.golang.org/grpc=google.golang.org/grpc@v1.83.2
 
