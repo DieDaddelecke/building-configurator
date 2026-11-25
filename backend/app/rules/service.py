@@ -580,7 +580,10 @@ def _rules_for_zones(
     rule_sets = {
         rs.zone_code: rs
         for rs in db.execute(
-            select(RuleSet).where(RuleSet.land_use_plan_id == plan.id, RuleSet.zone_code.in_(codes))
+            # Nur `house`: Regelwerke anderer Umfänge sind für den Regeldienst (PLAN_REGELDIENST 3.2)
+            select(RuleSet).where(
+                RuleSet.land_use_plan_id == plan.id, RuleSet.zone_code.in_(codes), RuleSet.scope == "house"
+            )
         ).scalars()
     }
     pinned = {code: version_id for code, version_id in options.versions.items() if code in rule_sets}

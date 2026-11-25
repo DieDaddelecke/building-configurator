@@ -24,7 +24,6 @@ import openai
 from app.config import Settings
 from app.platform.logging import get_logger
 from app.rules.domain.extraction import (
-    GAP_SCHEMA,
     OUTPUT_SCHEMA,
     TEXT_INPUT_NOTE,
     VERIFICATION_SCHEMA,
@@ -32,6 +31,7 @@ from app.rules.domain.extraction import (
     ExtractionRequest,
     ExtractionResponse,
     gap_instruction,
+    gap_schema,
     system_prompt,
     user_instruction,
     verification_instruction,
@@ -131,6 +131,7 @@ def build_messages(request: ExtractionRequest) -> list[dict[str, Any]]:
             request.general_pages,
             request.chapter_pages,
             request.extra_pages,
+            request.scope,
         )
     elif request.claims is None:
         instruction = user_instruction(
@@ -198,7 +199,7 @@ class OpenRouterExtractor:
         self, request: ExtractionRequest, schema: dict[str, Any], tool_name: str, *, forced: bool
     ) -> Any:
         assert self.client is not None
-        system = system_prompt(request.document_kind)
+        system = system_prompt(request.document_kind, request.scope)
         if not forced:
             system = f"{system}\n\n{TOOL_CALL_HINT.format(tool=tool_name)}"
         return self.client.chat.completions.create(
@@ -214,7 +215,7 @@ class OpenRouterExtractor:
         assert self.client is not None
         started = time.perf_counter()
         if request.gaps is not None:
-            schema, tool_name = GAP_SCHEMA, GAP_TOOL
+            schema, tool_name = gap_schema(request.scope), GAP_TOOL
         elif request.claims is None:
             schema, tool_name = OUTPUT_SCHEMA, EXTRACTION_TOOL
         else:

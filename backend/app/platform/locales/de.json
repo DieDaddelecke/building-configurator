@@ -742,5 +742,14 @@
   "rule_reason.correction": "nicht ermittelt (Korrektur)",
   "rule_reason.not_found_after_search": "nicht ermittelt: nach Nachsuche nicht gefunden",
   "rule_reason.not_expressible": "nicht abbildbar: siehe Hinweis",
-  "rule_reason.scan_unconfirmed": "nicht ermittelt: im Scan nicht sicher lesbar, im Dokument prüfen"
+  "rule_reason.scan_unconfirmed": "nicht ermittelt: im Scan nicht sicher lesbar, im Dokument prüfen",
+  "problem.service_token_required": "Für diesen Dienst ist ein Service-Token nötig (Authorization: Bearer)",
+  "problem.service_token_invalid": "Das Service-Token ist unbekannt, abgelaufen oder widerrufen",
+  "problem.service_token_scope": "Das Service-Token hat für diese Route kein Recht",
+  "problem.service_token_name_invalid": "Der Name des Service-Tokens fehlt oder ist zu lang",
+  "problem.service_token_scope_unknown": "Unbekanntes Recht für ein Service-Token",
+  "problem.service_token_exists": "Ein Service-Token mit diesem Namen gibt es schon",
+  "problem.commune_unknown": "Für diese Gemeinde ist kein Planstand importiert",
+  "problem.commune_without_plan": "Für diese Gemeinde gibt es keinen auswertbaren Planstand",
+  "problem.commune_zone_unknown": "Diese Zone gibt es im aktuellen Planstand der Gemeinde nicht"
 }

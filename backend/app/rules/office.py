@@ -78,7 +78,11 @@ def coverage(db: Session, settings: Settings) -> CoverageOut:
                     .group_by(RuleExtractionRun.chapter_id)
                 ).all()
             }
-            sets = list(db.execute(select(RuleSet).where(RuleSet.land_use_plan_id == plan.id)).scalars())
+            sets = list(
+                db.execute(
+                    select(RuleSet).where(RuleSet.land_use_plan_id == plan.id, RuleSet.scope == "house")
+                ).scalars()
+            )
             current = {
                 v.id: v
                 for v in db.execute(

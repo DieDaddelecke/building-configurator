@@ -742,5 +742,14 @@
   "rule_reason.correction": "non déterminé (correction)",
   "rule_reason.not_found_after_search": "non déterminé : introuvable après recherche complémentaire",
   "rule_reason.not_expressible": "non représentable : voir la remarque",
-  "rule_reason.scan_unconfirmed": "non déterminé : illisible dans le scan, à vérifier dans le document"
+  "rule_reason.scan_unconfirmed": "non déterminé : illisible dans le scan, à vérifier dans le document",
+  "problem.service_token_required": "Ce service exige un jeton de service (Authorization: Bearer)",
+  "problem.service_token_invalid": "Le jeton de service est inconnu, expiré ou révoqué",
+  "problem.service_token_scope": "Le jeton de service n'a pas de droit sur cette route",
+  "problem.service_token_name_invalid": "Le nom du jeton de service manque ou est trop long",
+  "problem.service_token_scope_unknown": "Droit inconnu pour un jeton de service",
+  "problem.service_token_exists": "Un jeton de service porte déjà ce nom",
+  "problem.commune_unknown": "Aucun document d'urbanisme n'est importé pour cette commune",
+  "problem.commune_without_plan": "Cette commune n'a pas de document d'urbanisme exploitable",
+  "problem.commune_zone_unknown": "Cette zone n'existe pas dans le document d'urbanisme actuel de la commune"
 }

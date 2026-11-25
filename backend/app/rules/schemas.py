@@ -526,3 +526,79 @@ class ReferenceMeasurementOut(BaseModel):
     coverage: dict[str, int]
     results: list[MeasuredEntryOut]
     extra: list[FoundRuleOut]
+
+
+# ---------------------------------------------------------------------------
+# Regeldienst für andere Dienste (docs/PLAN_REGELDIENST.md 4, docs/API_REGELDIENST.md): Format
+# `emprise-rules/1`, gelesen mit Service-Token. Regeln im selben Modell wie beim Kunden (`RuleOut`).
+# ---------------------------------------------------------------------------
+
+FEED_FORMAT: Literal["emprise-rules/1"] = "emprise-rules/1"
+FeedScope = Literal["house", "collectif"]
+FeedZoneStatus = Literal["simulated", "office_reviewed", "in_progress", "not_extracted", "unavailable"]
+"""`simulated`/`office_reviewed`: Regeln liegen vor. `in_progress`: Auswertung läuft. `not_extracted`: Für
+diesen Umfang gibt es noch keine Auswertung (kostet; nur auf Auftrag). `unavailable`: mit Grund."""
+
+
+class FeedZoneStateOut(BaseModel):
+    scope: FeedScope
+    status: FeedZoneStatus
+    reason: str | None
+    updated_at: datetime | None
+    """Letzte Änderung des Stands (Auswertung begonnen, beendet oder gescheitert)."""
+
+
+class FeedZoneOut(BaseModel):
+    code: str
+    label: str | None
+    chapter_code: str | None
+    states: list[FeedZoneStateOut]
+
+
+class FeedCommuneOut(BaseModel):
+    format: Literal["emprise-rules/1"] = FEED_FORMAT
+    commune_insee: str
+    status: Literal[
+        "ok", "rnu", "no_document", "no_regulation", "multiple_regulations", "no_chapters", "failed"
+    ]
+    """Stand des Planwerks der Gemeinde (`rules_commune`); nur bei `ok` gibt es Zonen."""
+    reason: str | None
+    plan: PlanOut | None
+    zones: list[FeedZoneOut]
+
+
+class FeedVersionOut(BaseModel):
+    id: uuid.UUID
+    version: int
+    status: Literal["simulated", "office_reviewed", "retired"]
+    origin: Literal["extraction", "office"]
+    model: str | None
+    prompt_version: str | None
+    engine_version: str
+    created_at: datetime
+    coverage: dict[str, int]
+
+
+class FeedZoneRefOut(BaseModel):
+    code: str
+    label: str | None
+    chapter_code: str | None
+
+
+class FeedZoneRulesOut(BaseModel):
+    format: Literal["emprise-rules/1"] = FEED_FORMAT
+    simulation: Literal[True] = True
+    commune_insee: str
+    scope: FeedScope
+    zone: FeedZoneRefOut
+    status: FeedZoneStatus
+    reason: str | None
+    plan: PlanOut
+    version: FeedVersionOut | None
+    rules: list[RuleOut]
+    """Regeln mit Werten (`effective`, `not_regulated`) und offene Regeln (`unknown` mit Grund)."""
+    hints: list[RuleOut]
+    """Vorschriften ohne Parameter (`text_only`, Zusammenfassung in `params.summary`)."""
+    open_passages: list[PassageOut]
+    """Stellen mit Vorschriftscharakter, denen keine Regel zugeordnet ist: selbst prüfen."""
+    notices: list[str]

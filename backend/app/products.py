@@ -29,6 +29,7 @@ ROUTERS: tuple[str, ...] = (
     "app.analysis.api",
     "app.house.api",
     "app.configuration.house_api",
+    "app.rules.feed_api",
 )
 """Reihenfolge bestimmt die Reihenfolge in `openapi.json`; nur hinten anfügen."""
 

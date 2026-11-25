@@ -8,11 +8,12 @@ Bis zur gemeinsamen Verwaltung (Schritt D2) liegen Referenzlisten als Datei vor
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.rules.domain.kinds import SCOPES, RuleScope
 from app.rules.domain.passages import Passage
 from app.rules.domain.reference import (
     FoundRule,
@@ -35,6 +36,8 @@ class ReferenceList:
     status: str
     note: str
     entries: list[ReferenceEntry]
+    scope: RuleScope = "house"
+    """Umfang der Auswertung, an dem gemessen wird (PLAN_REGELDIENST 5)."""
 
 
 def parse_list(data: dict[str, Any]) -> ReferenceList:
@@ -45,6 +48,9 @@ def parse_list(data: dict[str, Any]) -> ReferenceList:
     sector = str(data.get("sector") or "")
     if len(sha256) != 64 or not sector:
         raise ReferenceProblem("document.sha256 and sector required")
+    scope = str(data.get("scope") or "house")
+    if scope not in SCOPES:
+        raise ReferenceProblem(f"scope must be one of {', '.join(SCOPES)}")
     return ReferenceList(
         title=str(document.get("title") or ""),
         sha256=sha256,
@@ -52,6 +58,7 @@ def parse_list(data: dict[str, Any]) -> ReferenceList:
         status=str(data.get("status") or "draft"),
         note=str(data.get("note") or ""),
         entries=parse_entries(data.get("entries") or []),
+        scope=cast(RuleScope, scope),
     )
 
 
@@ -59,7 +66,9 @@ def load_file(path: Path) -> ReferenceList:
     return parse_list(json.loads(path.read_text(encoding="utf-8")))
 
 
-def versions_for(session: Session, sha256: str, sector: str) -> list[RuleSetVersion]:
+def versions_for(
+    session: Session, sha256: str, sector: str, scope: RuleScope = "house"
+) -> list[RuleSetVersion]:
     """Regelwerksversionen des Sektors zum Dokument, älteste zuerst (jüngster aktiver Planstand hier)."""
     plan_id = session.execute(
         select(RegulationChapter.land_use_plan_id)
@@ -76,7 +85,9 @@ def versions_for(session: Session, sha256: str, sector: str) -> list[RuleSetVers
     if plan_id is None:
         return []
     rule_set_id = session.execute(
-        select(RuleSet.id).where(RuleSet.land_use_plan_id == plan_id, RuleSet.zone_code == sector)
+        select(RuleSet.id).where(
+            RuleSet.land_use_plan_id == plan_id, RuleSet.zone_code == sector, RuleSet.scope == scope
+        )
     ).scalar_one_or_none()
     if rule_set_id is None:
         return []

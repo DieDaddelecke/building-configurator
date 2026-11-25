@@ -1,5 +1,6 @@
 """Wer fragt an: Mitarbeitende (Sitzung nach OIDC) oder Kunde (anonymes Projekt-Cookie). Den Zugang über
-API-Schlüssel einer Organisation (AN6) gibt es seit dem 29.09.2026 nicht mehr (REFACTORING_PLAN S8).
+API-Schlüssel einer Organisation (AN6) gibt es seit dem 29.09.2026 nicht mehr (REFACTORING_PLAN S8); andere
+Dienste lesen seit dem 25.11.2026 mit Service-Token ausgewählte Routen (ADR-12, `require_service_token`).
 
 Jeder Endpunkt MUSS genau eine Zugriffsregel aus diesem Modul als Abhängigkeit tragen.
 `tests/integration/test_access_policies.py` prüft das für alle Routen,
@@ -19,9 +20,17 @@ from fastapi import Depends, Request
 from sqlalchemy import and_, select, update
 from sqlalchemy.orm import Session
 
+from app.platform import rate_limit
 from app.platform.auth.tokens import PROJECT_COOKIE, STAFF_COOKIE, hash_token
 from app.platform.db import get_db, get_engine, utcnow
-from app.platform.models import Organisation, OrganisationMember, Project, StaffSession, StaffUser
+from app.platform.models import (
+    Organisation,
+    OrganisationMember,
+    Project,
+    ServiceToken,
+    StaffSession,
+    StaffUser,
+)
 from app.platform.problems import Problem
 
 ACTIVITY_WRITE_INTERVAL = timedelta(minutes=10)
@@ -289,3 +298,55 @@ def require_owned_project(
     if principal is None or project_organisation(db, project_id) != principal.organisation_id:
         raise Problem(404, "not_found")
     return principal
+
+
+SERVICE_TOKEN_PREFIX = "emps_"  # noqa: S105  Präfix, kein Geheimnis
+SERVICE_TOKEN_LIMIT_PER_MINUTE = 120
+
+
+@dataclass(frozen=True)
+class ServicePrincipal:
+    """Ein anderer Dienst mit Service-Token (ADR-12): keine Person, keine Organisation, keine Projekte."""
+
+    token_id: uuid.UUID
+    name: str
+    scopes: frozenset[str]
+
+    @property
+    def actor_id(self) -> str:
+        return f"service:{self.name}"
+
+
+def _bearer(request: Request) -> str | None:
+    header = request.headers.get("authorization") or ""
+    scheme, _, value = header.partition(" ")
+    return value.strip() if scheme.lower() == "bearer" and value.strip() else None
+
+
+def require_service_token(scope: str) -> Callable[..., ServicePrincipal]:
+    """Nur `Authorization: Bearer emps_…` mit dem Recht `scope` (docs/PLAN_REGELDIENST.md 4.1). Cookies
+    zählen hier nicht: Eine Sitzung des Büros öffnet die Route nicht, ein Token keine andere Route."""
+
+    @_policy(f"service:{scope}")
+    def dependency(request: Request, db: Session = Depends(get_db)) -> ServicePrincipal:
+        token = _bearer(request)
+        if token is None:
+            raise Problem(401, "service_token_required", headers={"WWW-Authenticate": "Bearer"})
+        now = utcnow()
+        row = None
+        if token.startswith(SERVICE_TOKEN_PREFIX):
+            row = db.execute(
+                select(ServiceToken).where(
+                    ServiceToken.token_hash == hash_token(token), ServiceToken.revoked_at.is_(None)
+                )
+            ).scalar_one_or_none()
+        if row is None or (row.expires_at is not None and row.expires_at <= now):
+            raise Problem(401, "service_token_invalid", headers={"WWW-Authenticate": "Bearer"})
+        if scope not in row.scopes:
+            raise Problem(403, "service_token_scope")
+        rate_limit.check_value("service_token", str(row.id), SERVICE_TOKEN_LIMIT_PER_MINUTE, 60)
+        if row.last_used_at is None or now - row.last_used_at > ACTIVITY_WRITE_INTERVAL:
+            _touch(ServiceToken, row.id, "last_used_at")
+        return ServicePrincipal(token_id=row.id, name=row.name, scopes=frozenset(row.scopes))
+
+    return dependency

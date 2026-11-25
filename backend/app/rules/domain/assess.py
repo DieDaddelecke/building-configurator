@@ -399,6 +399,7 @@ def _gap_result(
     found: list[AssessedRule],
     absent: Mapping[Key, str],
     not_expressible: Mapping[Key, str | None],
+    mandatory: tuple[str, ...] = MANDATORY_KINDS,
 ) -> AssessedRule | None:
     candidate = collapse(found)[0] if found else None
     if candidate is not None and (
@@ -412,7 +413,7 @@ def _gap_result(
         return existing
     if candidate is not None:
         return candidate
-    if key in absent and key[1] in MANDATORY_KINDS and key[2] == "main":
+    if key in absent and key[1] in mandatory and key[2] == "main":
         return _open_rule(key, "not_found_after_search", absent[key])
     return existing
 
@@ -423,6 +424,7 @@ def fill_gaps(
     gap_keys: set[Key],
     absent: Mapping[Key, str],
     not_expressible: Mapping[Key, str | None],
+    mandatory: tuple[str, ...] = MANDATORY_KINDS,
 ) -> list[AssessedRule]:
     """Ergebnis der Nachsuche einarbeiten (PLAN_G2_VOLLSTAENDIGKEIT 3.6).
 
@@ -443,11 +445,13 @@ def fill_gaps(
         key = _key(rule)
         seen.add(key)
         result = (
-            _gap_result(key, rule, by_key.get(key, []), absent, not_expressible) if key in gap_keys else rule
+            _gap_result(key, rule, by_key.get(key, []), absent, not_expressible, mandatory)
+            if key in gap_keys
+            else rule
         )
         kept.append(result or rule)
     for key in sorted(gap_keys - seen):
-        result = _gap_result(key, None, by_key.get(key, []), absent, not_expressible)
+        result = _gap_result(key, None, by_key.get(key, []), absent, not_expressible, mandatory)
         if result is not None:
             kept.append(result)
     # Nur bestätigte Funde: Ein Fund, der Schranken oder Gegenprüfung nicht besteht, stellt keine geprüfte
@@ -473,12 +477,15 @@ def fill_gaps(
     return collapse(kept + others + hints)
 
 
-def complete(rules: list[AssessedRule], sectors: list[str]) -> list[AssessedRule]:
-    """Fehlende Pflichtarten als `unknown` („missing“) ergänzen und fachlich sortieren."""
+def complete(
+    rules: list[AssessedRule], sectors: list[str], mandatory: tuple[str, ...] = MANDATORY_KINDS
+) -> list[AssessedRule]:
+    """Fehlende Pflichtarten als `unknown` („missing“) ergänzen und fachlich sortieren; `mandatory` je
+    Umfang (`kinds.MANDATORY_BY_SCOPE`)."""
     result = list(rules)
     covered = {(r.sector, r.kind) for r in rules if r.building_kind in ("main", "any")}
     for sector in sectors:
-        for kind in MANDATORY_KINDS:
+        for kind in mandatory:
             if (sector, kind) not in covered:
                 result.append(
                     AssessedRule(
@@ -496,7 +503,7 @@ def complete(rules: list[AssessedRule], sectors: list[str]) -> list[AssessedRule
                         notes="",
                     )
                 )
-    order = {kind: i for i, kind in enumerate(MANDATORY_KINDS)}
+    order = {kind: i for i, kind in enumerate(mandatory)}
     return sorted(result, key=lambda r: (r.sector, order.get(r.kind, 99), r.kind, r.building_kind))
 
 
@@ -509,15 +516,11 @@ class _Countable(Protocol):
     def status(self) -> str: ...
 
 
-def coverage(rules: Iterable[_Countable]) -> dict[str, int]:
+def coverage(rules: Iterable[_Countable], mandatory: tuple[str, ...] = MANDATORY_KINDS) -> dict[str, int]:
     """Zählung je Status und Anteil unbekannter Pflichtarten für Abdeckung und Kennzahlen (Plan 6.8)."""
     counts: dict[str, int] = defaultdict(int)
     for rule in rules:
         counts[rule.status] += 1
-        if (
-            rule.kind in MANDATORY_KINDS
-            and rule.building_kind in ("main", "any")
-            and rule.status == "unknown"
-        ):
+        if rule.kind in mandatory and rule.building_kind in ("main", "any") and rule.status == "unknown":
             counts["mandatory_unknown"] += 1
     return dict(counts)

@@ -26,7 +26,7 @@ from app.platform.db import utcnow
 from app.platform.jobs import enqueue
 from app.platform.logging import get_logger
 from app.rules import pdf
-from app.rules.domain import ENGINE_VERSION, PROMPT_VERSION, lexicon
+from app.rules.domain import ENGINE_VERSION, lexicon
 from app.rules.domain.assess import (
     AssessedRule,
     DocumentPages,
@@ -53,13 +53,15 @@ from app.rules.domain.extraction import (
     parse_gaps,
     parse_output,
     parse_verification,
+    prompt_version,
 )
-from app.rules.domain.kinds import MANDATORY_KINDS
+from app.rules.domain.kinds import MANDATORY_BY_SCOPE, MANDATORY_KINDS, RuleScope
 from app.rules.domain.passages import Passage, chapter_passages, for_search
 from app.rules.domain.passages import coverage as passage_coverage
 from app.rules.models import (
     LandUsePlan,
     RegulationChapter,
+    RegulationChapterScope,
     Rule,
     RuleExtractionRun,
     RulesCommune,
@@ -128,6 +130,21 @@ def release_fallback(session: Session, plan_id: uuid.UUID) -> None:
         )
 
 
+def scope_state(
+    session: Session, chapter: RegulationChapter, scope: RuleScope, *, create: bool = False
+) -> RegulationChapter | RegulationChapterScope | None:
+    """Stand der Auswertung im Umfang: `house` am Kapitel selbst, sonst in `regulation_chapter_scope`
+    (PLAN_REGELDIENST 3.2). Beide tragen `status`, `input_hash`, `engine_version`, `error`, `updated_at`."""
+    if scope == "house":
+        return chapter
+    state = session.get(RegulationChapterScope, (chapter.id, scope))
+    if state is None and create:
+        state = RegulationChapterScope(chapter_id=chapter.id, scope=scope, status="pending")
+        session.add(state)
+        session.flush()
+    return state
+
+
 @dataclass
 class _Calls:
     """Aufrufe eines Kapitels mit Wiederverwendung, Budget, Zeitbudget und Kostenerfassung."""
@@ -160,6 +177,8 @@ class _Calls:
     scan_pages: frozenset[int] = frozenset()
     """Seiten, deren Text per Texterkennung gelesen wurde (AN7)."""
     ocr: str | None = None
+    scope: RuleScope = "house"
+    """Umfang der Auswertung (PLAN_REGELDIENST 3.1): Prompt, Pflichtarten und Ablage des Ergebnisses."""
     cost: float = 0.0
     model: str = ""
     run_ids: list[uuid.UUID] = field(default_factory=list)
@@ -194,9 +213,14 @@ class _Calls:
         general = self._pages_text(self.general_pages) if self.general_pages else None
         return self._pages_text(self.chapter_pages), general
 
+    @property
+    def mandatory(self) -> tuple[str, ...]:
+        return MANDATORY_BY_SCOPE[self.scope]
+
     def _set_chapter(self, status: str, error: str | None = None) -> None:
         with self.sessions() as session:
-            current = session.get(RegulationChapter, self.chapter_id)
+            chapter = session.get(RegulationChapter, self.chapter_id)
+            current = scope_state(session, chapter, self.scope, create=True) if chapter is not None else None
             if current is not None:
                 current.status, current.error, current.updated_at = status, error, utcnow()
                 session.commit()
@@ -228,7 +252,8 @@ class _Calls:
                 run_no=run_no,
                 part=part[:200],
                 input_hash=self.text_digest if as_text else self.digest,
-                prompt_version=PROMPT_VERSION,
+                prompt_version=prompt_version(self.scope),
+                scope=self.scope,
                 created_by=ACTOR,
                 **values,
             )
@@ -297,6 +322,7 @@ class _Calls:
             extra_pdf=extra_pdf,
             extra_pages=extra,
             extra_text=extra_text,
+            scope=self.scope,
         )
         self.in_flight = key
         try:
@@ -444,15 +470,17 @@ class SearchOutcome:
         }
 
 
-def find_gaps(rules: list[AssessedRule], sectors: list[str], text: str) -> list[_Gap]:
+def find_gaps(
+    rules: list[AssessedRule], sectors: list[str], text: str, mandatory: tuple[str, ...] = MANDATORY_KINDS
+) -> list[_Gap]:
     """Lücken nach der Gegenprüfung (PLAN_G2_VOLLSTAENDIGKEIT 3.5): Pflichtarten ohne Wert; im Text genannte
     weitere Arten und Baukörper ohne Regel; offene Regeln mit Zitat (ihr Befund geht mit)."""
     by_key = {rule_key(r.sector, r.kind, r.building_kind): r for r in rules if r.status != "text_only"}
-    kinds = sorted(lexicon.kinds_mentioned(text) - set(MANDATORY_KINDS))
+    kinds = sorted(lexicon.kinds_mentioned(text) - set(mandatory))
     building_kinds = sorted(lexicon.building_kinds_mentioned(text))
     gaps: list[_Gap] = []
     for sector in sectors:
-        wanted = [(kind, "main") for kind in MANDATORY_KINDS] + [(kind, "any") for kind in kinds]
+        wanted = [(kind, "main") for kind in mandatory] + [(kind, "any") for kind in kinds]
         wanted += [(kind, bk) for bk in building_kinds for kind in ("setback_side", "setback_rear")]
         wanted += [(r.kind, r.building_kind) for r in rules if r.sector == sector and r.status == "unknown"]
         seen: set[Key] = set()
@@ -498,7 +526,7 @@ def _gap_search(
     if not calls.settings.rules_gap_search:
         return rules, SearchOutcome(first.total, first.assigned, first.open)
     text = "\n".join(page_texts.get(p, "") for p in calls.chapter_pages + calls.general_pages)
-    gaps = find_gaps(rules, sectors, text)
+    gaps = find_gaps(rules, sectors, text, calls.mandatory)
     asked = for_search(first.open, PASSAGES_FOR_SEARCH)
     if not gaps and not asked:
         return rules, SearchOutcome(first.total, first.assigned, first.open)
@@ -530,7 +558,7 @@ def _gap_search(
             queue[0:0] = _search_parts(part)
             continue
         try:
-            parsed = parse_gaps(output)
+            parsed = parse_gaps(output, calls.scope)
         except ValueError:
             continue
         answers.gaps.update(parsed.gaps)
@@ -572,7 +600,7 @@ def _gap_search(
                 documents.original_page(answer.rules[0].document, page) if page and answer.rules else None
             )
             not_expressible[gap.key] = str(original) if original else None
-    merged = fill_gaps(rules, found, {gap.key for gap in gaps}, absent, not_expressible)
+    merged = fill_gaps(rules, found, {gap.key for gap in gaps}, absent, not_expressible, calls.mandatory)
 
     dismissed = [
         (passage, verdict.reason)
@@ -595,8 +623,10 @@ def extract_chapter(
     final_attempt: bool = True,
     skip_if_running: bool = True,
     deadline: float | None = None,
+    scope: RuleScope = "house",
 ) -> ChapterOutcome:
-    """`deadline` (Zeitpunkt aus `time.monotonic`): kein neuer Aufruf, der danach enden könnte."""
+    """`deadline` (Zeitpunkt aus `time.monotonic`): kein neuer Aufruf, der danach enden könnte. `scope`:
+    Umfang `collectif` nur über die Kommandozeile, Stand in `regulation_chapter_scope` (PLAN_REGELDIENST)."""
     # 1. Lesen
     with sessions() as session:
         chapter = session.get(RegulationChapter, chapter_id)
@@ -617,21 +647,25 @@ def extract_chapter(
             session.commit()
             return ChapterOutcome("failed", "chapter_too_long")
         kind = document_kind(plan.du_type)
+        if kind == "supplement" and scope != "house":
+            return ChapterOutcome("skipped", "scope_not_supported")
         stamp = ocr_stamp(source)
-        digest = input_hash(settings, source.sha256, chapter, kind, stamp)
+        digest = input_hash(settings, source.sha256, chapter, kind, stamp, scope=scope)
         # Ging ein Auszug als Text, trägt das Kapitel diese Kennung; sie folgt der Texterkennung (SC06)
-        text_digest = input_hash(settings, source.sha256, chapter, kind, stamp, as_text=True)
+        text_digest = input_hash(settings, source.sha256, chapter, kind, stamp, as_text=True, scope=scope)
+        state = scope_state(session, chapter, scope, create=True)
+        assert state is not None
         if (
             not force
-            and chapter.status == "succeeded"
-            and chapter.input_hash in (digest, text_digest)
-            and chapter.engine_version == ENGINE_VERSION
+            and state.status == "succeeded"
+            and state.input_hash in (digest, text_digest)
+            and state.engine_version == ENGINE_VERSION
         ):
             return ChapterOutcome("skipped", "unchanged")
         if (
             skip_if_running
-            and chapter.status == "extracting"
-            and utcnow() - chapter.updated_at < RUNNING_STALE_AFTER
+            and state.status == "extracting"
+            and utcnow() - state.updated_at < RUNNING_STALE_AFTER
         ):
             # Ein anderer Job wertet gerade aus; ein zweiter Lauf kostete doppelt, auch mit `force`. Eine
             # Wiederholung desselben Jobs (nach Absturz oder Zeitüberschreitung) setzt skip_if_running=False
@@ -684,7 +718,7 @@ def extract_chapter(
                     reusable[(run.run_no, run.part)] = (run.id, run.output, run.input_hash == text_digest)
                 elif run.error == "max_tokens":
                     split.add((run.run_no, run.part))
-        chapter.status, chapter.error, chapter.updated_at = "extracting", None, utcnow()
+        state.status, state.error, state.updated_at = "extracting", None, utcnow()
         session.commit()
         sectors = sorted(chapter.sectors)
         calls = _Calls(
@@ -709,6 +743,7 @@ def extract_chapter(
             document_kind=kind,
             scan_pages=scan_pages,
             ocr=stamp,
+            scope=scope,
             model=settings.rules_model,
         )
         file_id, plan_id = source.id, plan.id
@@ -758,7 +793,7 @@ def _evaluate(
     if calls.document_kind == "plu":
         rules, outcome = _gap_search(calls, sectors, len(extracted) + 1, rules, page_texts)
     final = (
-        complete(rules, sectors)
+        complete(rules, sectors, calls.mandatory)
         if calls.document_kind == "plu"
         else sorted(rules, key=lambda r: (r.sector, r.kind, r.building_kind))
     )
@@ -775,7 +810,7 @@ def _evaluate(
         # Während der Aufrufe kann ein Sektor dazugekommen sein (zweites Projekt, neue Gemeinde). Der Job
         # dafür endete mit `already_running`; ohne Folgeauftrag bliebe er ohne Regeln (AN2, 7.1 Nr. 11)
         current_digest = input_hash(
-            calls.settings, calls.source_sha256, chapter, calls.document_kind, calls.ocr
+            calls.settings, calls.source_sha256, chapter, calls.document_kind, calls.ocr, scope=calls.scope
         )
         stored_digest = calls.text_digest if calls.text_used else calls.digest
         by_sector: dict[str, list[AssessedRule]] = defaultdict(list)
@@ -783,7 +818,7 @@ def _evaluate(
             by_sector[assessed_rule.sector].append(assessed_rule)
         for sector in sectors:
             sector_rules = by_sector.get(sector, [])
-            counts = coverage(sector_rules)
+            counts = coverage(sector_rules, calls.mandatory)
             for key, value in counts.items():
                 counts_total[key] += value
             _write_version(
@@ -797,9 +832,12 @@ def _evaluate(
                 stored_digest,
                 calls.model,
                 outcome,
+                calls.scope,
             )
         changed_meanwhile = current_digest != calls.digest
-        chapter.status, chapter.input_hash, chapter.engine_version, chapter.error, chapter.updated_at = (
+        state = scope_state(session, chapter, calls.scope, create=True)
+        assert state is not None
+        state.status, state.input_hash, state.engine_version, state.error, state.updated_at = (
             "pending" if changed_meanwhile else "succeeded",
             stored_digest,
             ENGINE_VERSION,
@@ -807,14 +845,17 @@ def _evaluate(
             utcnow(),
         )
         session.flush()
-        if changed_meanwhile:
+        # Andere Umfänge nur von Hand: Ein geänderter Sektor wartet auf den nächsten Auftrag, und der
+        # Rückfall der Kunden auf den vorigen Planstand hängt nur an `house` (PLAN_REGELDIENST 3.3)
+        if calls.scope == "house" and changed_meanwhile:
             _enqueue_follow_up(session, chapter, current_digest)
-        else:
+        elif calls.scope == "house":
             release_fallback(session, plan_id)
         session.commit()
     log.info(
         "rules_extracted",
         chapter=calls.chapter_code,
+        scope=calls.scope,
         sectors=sectors,
         cost_usd=round(calls.cost, 4),
         calls=len(calls.run_ids),
@@ -875,10 +916,15 @@ def _write_version(
     digest: str,
     model: str,
     outcome: "SearchOutcome | None" = None,
+    scope: RuleScope = "house",
 ) -> None:
     rule_set = session.execute(
         select(RuleSet)
-        .where(RuleSet.land_use_plan_id == chapter.land_use_plan_id, RuleSet.zone_code == sector)
+        .where(
+            RuleSet.land_use_plan_id == chapter.land_use_plan_id,
+            RuleSet.zone_code == sector,
+            RuleSet.scope == scope,
+        )
         .with_for_update()
     ).scalar_one_or_none()
     if rule_set is None:
@@ -886,6 +932,7 @@ def _write_version(
             land_use_plan_id=chapter.land_use_plan_id,
             zone_code=sector,
             chapter_id=chapter.id,
+            scope=scope,
             created_by=ACTOR,
         )
         session.add(rule_set)
@@ -909,7 +956,7 @@ def _write_version(
         based_on_id=current.id if current else None,
         extraction_run_ids=list(dict.fromkeys(run_ids)),
         engine_version=ENGINE_VERSION,
-        prompt_version=PROMPT_VERSION,
+        prompt_version=prompt_version(scope),
         model=model,
         input_hash=digest,
         coverage=counts,

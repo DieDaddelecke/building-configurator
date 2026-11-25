@@ -100,3 +100,26 @@ def test_organisation_check_cannot_be_bypassed_by_a_path_name() -> None:
                 open_seen |= {(method, path) for method in route.methods or ()}
     assert not problems, problems
     assert open_seen == OPEN_WITHOUT_PROJECT
+
+
+SERVICE_ROUTES = {
+    # Regeldienst für die Massenstudie, nur lesend (ADR-12, docs/PLAN_REGELDIENST.md 4)
+    ("GET", "/api/v1/service/rules/communes/{insee}", "service:rules:read"),
+    ("GET", "/api/v1/service/rules/communes/{insee}/zones/{zone_code}", "service:rules:read"),
+}
+
+
+def test_service_tokens_reach_only_listed_read_routes() -> None:
+    """Ein Service-Token öffnet nur die hier aufgezählten Routen unter `/api/v1/service/`, und dort gilt keine
+    andere Zugriffsregel; eine neue Route für andere Dienste fällt so im Review auf."""
+    app = create_app()
+    seen: set[tuple[str, str, str]] = set()
+    for route in iter_route_contexts(app.routes):
+        if not isinstance(route.original_route, APIRoute):
+            continue
+        path = str(route.path)
+        policies = _policies(route.dependant)
+        for method in route.methods or ():
+            if path.startswith("/api/v1/service/") or any(p.startswith("service:") for p in policies):
+                seen |= {(method, path, policy) for policy in policies}
+    assert seen == SERVICE_ROUTES
