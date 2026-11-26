@@ -101,7 +101,7 @@ Regeln der Zone in einem Umfang. `scope`: `collectif` (Standard; Wohngebäude mi
 |---|---|
 | `setback_street` | `mode` (`min`, `fixed`, `range`, `alignment`), `min_m`, `max_m`, `band` (`building`: ganzer Baukörper im Band, `facade`: nur die Straßenfassade), `measured_from` |
 | `setback_side`, `setback_rear` | `min_m`, `height_factor` (Prospect: 0.5 für H/2), `height_basis` (`eave`, `ridge`, `facade_point`), `allow_on_boundary`, `on_boundary_max_height_m`, `measured_from`. Abstand = max(`min_m`, `height_factor` × H). Optional `blind_min_m`, `blind_height_factor`: Abstand vor einer Fassade ohne Ansichten („sans vues“); dann gelten `min_m`/`height_factor` für die Fassade mit Ansichten |
-| `setback_between_buildings` | `min_m`, `height_factor` (Gebäude auf derselben Parzelle); optional `blind_min_m`, `blind_height_factor`, wenn keine der beiden Fassaden Ansichten hat |
+| `setback_between_buildings` | `min_m`, `height_factor` (Gebäude auf derselben Parzelle); optional `height_basis` (`eave`, `ridge`, `facade_point`), `blind_min_m`, `blind_height_factor`, wenn keine der beiden Fassaden Ansichten hat |
 | `max_footprint_ratio` | `ratio` (Emprise au sol), `counts_overhangs`, `terrace_counts_above_m` |
 | `max_height` | `eave_m`, `ridge_m`, `parapet_m`, `storeys` (Text, z. B. `R+3+C`), `reference`, `measured_at` |
 | `unsealed_min` | `ratio` (espaces libres), `full_soil_ratio` (pleine terre), `counting` |
