@@ -24,17 +24,17 @@ import openai
 from app.config import Settings
 from app.platform.logging import get_logger
 from app.rules.domain.extraction import (
-    OUTPUT_SCHEMA,
     TEXT_INPUT_NOTE,
-    VERIFICATION_SCHEMA,
     ExtractionError,
     ExtractionRequest,
     ExtractionResponse,
     gap_instruction,
     gap_schema,
+    output_schema,
     system_prompt,
     user_instruction,
     verification_instruction,
+    verification_schema,
 )
 
 SERVICE = "openrouter"
@@ -217,9 +217,9 @@ class OpenRouterExtractor:
         if request.gaps is not None:
             schema, tool_name = gap_schema(request.scope), GAP_TOOL
         elif request.claims is None:
-            schema, tool_name = OUTPUT_SCHEMA, EXTRACTION_TOOL
+            schema, tool_name = output_schema(request.scope), EXTRACTION_TOOL
         else:
-            schema, tool_name = VERIFICATION_SCHEMA, VERIFICATION_TOOL
+            schema, tool_name = verification_schema(request.scope), VERIFICATION_TOOL
         model_name = self.settings.rules_model
         try:
             try:

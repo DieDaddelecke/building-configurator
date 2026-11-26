@@ -223,14 +223,31 @@ def _form_matches(form: float, number: float) -> bool:
     return abs(form - number) <= max(NUMBER_TOLERANCE, abs(number) * 0.001)
 
 
+_HEIGHT_FACTOR_WORDS: tuple[tuple[float, re.Pattern[str]], ...] = (
+    (0.5, re.compile(r"\bmoiti[ée]\s+de\s+la\s+hauteur")),
+    (1 / 3, re.compile(r"\btiers\s+de\s+la\s+hauteur")),
+    (0.25, re.compile(r"\bquart\s+de\s+la\s+hauteur")),
+    (1.0, re.compile(r"[ée]ga(?:le|l)s?\s+(?:au\s+moins\s+)?à\s*:?\s*[-–•]?\s*la\s+hauteur")),
+)
+"""Faktoren der Höhe in Worten („la moitié de la hauteur“, „au moins égale à la hauteur“), Messung
+Palaiseau (docs/PLAN_REGELDIENST.md 9): Die Zahl steht dort nicht im Text."""
+_HEIGHT_FACTORS = frozenset({"height_factor", "blind_height_factor"})
+
+
 def value_positions(name: str, value: float, quote: str) -> list[tuple[int, int]]:
     """Stellen im Zitat, an denen der Wert eines Parameters in einer zulässigen Schreibweise steht."""
     forms = _value_forms(name, value)
-    return [
+    found = [
         (match.start(), match.end())
         for match in _NUMBER.finditer(quote)
         if any(_form_matches(form, float(match.group().replace(",", "."))) for form in forms)
     ]
+    if name in _HEIGHT_FACTORS:
+        lowered = quote.lower()
+        for factor, pattern in _HEIGHT_FACTOR_WORDS:
+            if abs(factor - value) <= 0.01:
+                found += [(m.start(), m.end()) for m in pattern.finditer(lowered)]
+    return found
 
 
 def values_in_quote(values: Mapping[str, float], quote: str) -> list[str]:
