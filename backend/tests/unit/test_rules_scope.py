@@ -267,3 +267,39 @@ def test_height_factor_in_words_is_in_the_quote() -> None:
     assert values_in_quote({"height_factor": 1.0}, "égale à la moitié de la hauteur") == ["height_factor"]
     assert values_in_quote({"height_factor": 0.5}, "au moins égale à la hauteur") == ["height_factor"]
     assert values_in_quote({"min_m": 0.5}, "la moitié de la hauteur") == ["min_m"]
+
+
+def test_height_factor_one_as_second_item_of_the_list() -> None:
+    from app.rules.domain.text import values_in_quote
+
+    # Palaiseau UC2, Abstand zwischen Gebäuden: „la hauteur“ steht als zweiter Punkt nach „égale à :“
+    quote = (
+        "séparant les façades en vis à vis de ces deux constructions doit être au moins égale à : "
+        "- la moitié de la hauteur à l'égout du toit le plus haut, avec un minimum de 5m si aucune des "
+        "façades en vis-à-vis ne comporte des ouvertures créant des vues directes, - la hauteur à l'égout "
+        "du toit le plus haut, avec un minimum de 8m"
+    )
+    values = {"min_m": 8.0, "height_factor": 1.0, "blind_min_m": 5.0, "blind_height_factor": 0.5}
+    assert values_in_quote(values, quote) == []
+    # Ohne „égale à :“ ist „- la hauteur“ kein Beleg für den Faktor 1
+    factor = {"height_factor": 1.0}
+    assert values_in_quote(factor, "- la hauteur à l'égout du toit, avec un minimum de 8m") == [
+        "height_factor"
+    ]
+    assert values_in_quote(factor, "au moins égale à : - la moitié de la hauteur") == ["height_factor"]
+
+
+def test_setback_between_takes_height_basis() -> None:
+    from app.rules.domain.kinds import validate_params
+
+    params = validate_params(
+        "setback_between_buildings",
+        {
+            "min_m": 8,
+            "height_factor": 1,
+            "height_basis": "eave",
+            "blind_min_m": 5,
+            "blind_height_factor": 0.5,
+        },
+    )
+    assert params["height_basis"] == "eave"
