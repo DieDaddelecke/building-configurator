@@ -6,6 +6,7 @@ Der Dokumenttext gilt als Daten: Das Modell kann nur über dieses Schema antwort
 danach durch die Schranken in `assess`.
 """
 
+import copy
 import hashlib
 import json
 from dataclasses import dataclass, field
@@ -14,6 +15,7 @@ from typing import Any, Literal, Protocol
 from app.rules.domain import PROMPT_VERSION, lexicon
 from app.rules.domain.kinds import (
     BUILDING_KINDS,
+    COLLECTIF_ONLY_PARAMS,
     COLOR_FAMILIES,
     MATERIALS,
     PARAM_TYPES,
@@ -32,6 +34,9 @@ _NULLABLE_NUMBER = {"type": ["number", "null"]}
 _NULLABLE_STRING = {"type": ["string", "null"]}
 _NULLABLE_BOOLEAN = {"type": ["boolean", "null"]}
 
+_HOUSE_PARAM_NAMES = sorted(set(PARAM_TYPES) - COLLECTIF_ONLY_PARAMS)
+"""Parameter im Schema des Hauses: dieselben wie vor `COLLECTIF_ONLY_PARAMS` (Prüfsumme, Test)."""
+
 OUTPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -49,7 +54,7 @@ OUTPUT_SCHEMA: dict[str, Any] = {
                         "items": {
                             "type": "object",
                             "properties": {
-                                "name": {"type": "string", "enum": sorted(PARAM_TYPES)},
+                                "name": {"type": "string", "enum": _HOUSE_PARAM_NAMES},
                                 "number": _NULLABLE_NUMBER,
                                 "text": _NULLABLE_STRING,
                                 "flag": _NULLABLE_BOOLEAN,
@@ -274,34 +279,77 @@ SUPPLEMENT_SYSTEM_PROMPT = _SUPPLEMENT_INTRO + _PARAMS
 _PLU_STATUS_AND_QUOTES = _PLU_INTRO[_PLU_INTRO.index("status\n- `regulated`") :]
 """Status, Zitat, Dokument und Seite wie beim Einfamilienhaus; aus dem Hausprompt geschnitten, damit dieser
 bytegleich bleibt (seine Prüfsumme entscheidet über eine Neuauswertung aller Kapitel, RW26)."""
-COLLECTIF_SYSTEM_PROMPT = _COLLECTIF_INTRO + _PLU_STATUS_AND_QUOTES + _PARAMS
+_BETWEEN_LINE = "- setback_between_buildings: min_m, height_factor.\n"
+_COLLECTIF_BLIND = """\
+- Facades without views (collectif only): when a distance (setback_side, setback_rear, \
+setback_between_buildings) depends on whether the facade has openings creating views ("vues", "baies", \
+"ouvertures créant des vues"), give min_m and height_factor for the facade with views and blind_min_m and \
+blind_height_factor for the facade without views, in the same rule. Example: "la hauteur à l'égout avec un \
+minimum de 8 m si la façade comporte des vues ; la moitié de la hauteur avec un minimum de 2,5 m sinon" is \
+min_m 8, height_factor 1, blind_min_m 2.5, blind_height_factor 0.5, height_basis eave.
+"""
+
+
+def _collectif_params() -> str:
+    if _BETWEEN_LINE not in _PARAMS:
+        raise RuntimeError("collectif_params_out_of_date")
+    return _PARAMS.replace(_BETWEEN_LINE, _BETWEEN_LINE + _COLLECTIF_BLIND, 1)
+
+
+COLLECTIF_SYSTEM_PROMPT = _COLLECTIF_INTRO + _PLU_STATUS_AND_QUOTES + _collectif_params()
 """Umfang `collectif` (docs/PLAN_REGELDIENST.md 3.1): Wohngebäude mit mehreren Wohnungen."""
 
 
 VERIFICATION_STATUSES: tuple[str, ...] = (*EXTRACTED_STATUSES, "not_supported")
 
-VERIFICATION_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "checks": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "claim": {"type": "integer"},
-                    "status": {"type": "string", "enum": list(VERIFICATION_STATUSES)},
-                    "params": OUTPUT_SCHEMA["properties"]["rules"]["items"]["properties"]["params"],
-                    "notes": {"type": "string"},
+
+def _collectif_output_schema() -> dict[str, Any]:
+    """Wie `OUTPUT_SCHEMA`, dazu die Parameter nur für `collectif` (`COLLECTIF_ONLY_PARAMS`)."""
+    schema = copy.deepcopy(OUTPUT_SCHEMA)
+    params = schema["properties"]["rules"]["items"]["properties"]["params"]
+    params["items"]["properties"]["name"]["enum"] = sorted(PARAM_TYPES)
+    return schema
+
+
+COLLECTIF_OUTPUT_SCHEMA: dict[str, Any] = _collectif_output_schema()
+
+
+def output_schema(scope: RuleScope = "house") -> dict[str, Any]:
+    return COLLECTIF_OUTPUT_SCHEMA if scope == "collectif" else OUTPUT_SCHEMA
+
+
+def _verification_schema(output: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "checks": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "claim": {"type": "integer"},
+                        "status": {"type": "string", "enum": list(VERIFICATION_STATUSES)},
+                        "params": output["properties"]["rules"]["items"]["properties"]["params"],
+                        "notes": {"type": "string"},
+                    },
+                    "required": ["claim", "status", "params", "notes"],
+                    "additionalProperties": False,
                 },
-                "required": ["claim", "status", "params", "notes"],
-                "additionalProperties": False,
             },
+            "remarks": {"type": "string"},
         },
-        "remarks": {"type": "string"},
-    },
-    "required": ["checks", "remarks"],
-    "additionalProperties": False,
-}
+        "required": ["checks", "remarks"],
+        "additionalProperties": False,
+    }
+
+
+VERIFICATION_SCHEMA: dict[str, Any] = _verification_schema(OUTPUT_SCHEMA)
+COLLECTIF_VERIFICATION_SCHEMA: dict[str, Any] = _verification_schema(COLLECTIF_OUTPUT_SCHEMA)
+
+
+def verification_schema(scope: RuleScope = "house") -> dict[str, Any]:
+    return COLLECTIF_VERIFICATION_SCHEMA if scope == "collectif" else VERIFICATION_SCHEMA
+
 
 VERIFICATION_TASK = """Verification task. Do not extract new rules. The numbered claims below name a \
 sector, a rule kind, a building_kind and a quoted passage, but deliberately not its values. For each \
@@ -336,10 +384,8 @@ def out_of_scope_reasons(scope: RuleScope = "house") -> tuple[str, ...]:
     return COLLECTIF_OUT_OF_SCOPE_REASONS if scope == "collectif" else OUT_OF_SCOPE_REASONS
 
 
-_RULES_ARRAY = OUTPUT_SCHEMA["properties"]["rules"]
-
-
-def _gap_schema(reasons: tuple[str, ...]) -> dict[str, Any]:
+def _gap_schema(reasons: tuple[str, ...], output: dict[str, Any] = OUTPUT_SCHEMA) -> dict[str, Any]:
+    rules_array = output["properties"]["rules"]
     return {
         "type": "object",
         "properties": {
@@ -350,7 +396,7 @@ def _gap_schema(reasons: tuple[str, ...]) -> dict[str, Any]:
                     "properties": {
                         "gap": {"type": "integer"},
                         "verdict": {"type": "string", "enum": list(GAP_VERDICTS)},
-                        "rules": _RULES_ARRAY,
+                        "rules": rules_array,
                         "searched": {"type": "string"},
                     },
                     "required": ["gap", "verdict", "rules", "searched"],
@@ -364,7 +410,7 @@ def _gap_schema(reasons: tuple[str, ...]) -> dict[str, Any]:
                     "properties": {
                         "passage": {"type": "integer"},
                         "verdict": {"type": "string", "enum": list(PASSAGE_VERDICTS)},
-                        "rules": _RULES_ARRAY,
+                        "rules": rules_array,
                         "reason": {"type": "string", "enum": [*reasons, "none"]},
                         "note": {"type": "string"},
                     },
@@ -380,7 +426,7 @@ def _gap_schema(reasons: tuple[str, ...]) -> dict[str, Any]:
 
 
 GAP_SCHEMA: dict[str, Any] = _gap_schema(OUT_OF_SCOPE_REASONS)
-COLLECTIF_GAP_SCHEMA: dict[str, Any] = _gap_schema(COLLECTIF_OUT_OF_SCOPE_REASONS)
+COLLECTIF_GAP_SCHEMA: dict[str, Any] = _gap_schema(COLLECTIF_OUT_OF_SCOPE_REASONS, COLLECTIF_OUTPUT_SCHEMA)
 
 
 def gap_schema(scope: RuleScope = "house") -> dict[str, Any]:
@@ -558,9 +604,9 @@ def prompt_fingerprint(kind: DocumentKind = "plu", scope: RuleScope = "house") -
     payload = json.dumps(
         [
             system_prompt(kind, scope),
-            OUTPUT_SCHEMA,
+            output_schema(scope),
             VERIFICATION_TASK,
-            VERIFICATION_SCHEMA,
+            verification_schema(scope),
             gap_task(scope),
             gap_schema(scope),
             lexicon.TERMS,

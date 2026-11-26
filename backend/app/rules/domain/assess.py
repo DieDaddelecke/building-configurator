@@ -17,7 +17,13 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Literal, Protocol
 
 from app.rules.domain.extraction import ExtractedRule, VerificationCheck
-from app.rules.domain.kinds import MANDATORY_KINDS, ParamProblem, params_equal, validate_params
+from app.rules.domain.kinds import (
+    MANDATORY_KINDS,
+    ParamProblem,
+    agreed_params,
+    params_equal,
+    validate_params,
+)
 from app.rules.domain.text import (
     QuoteCheck,
     normalize,
@@ -281,6 +287,20 @@ def _alternative(rule: AssessedRule) -> dict[str, Any]:
     return {"status": rule.status, "reason": rule.reason, "params": rule.params, "page": rule.page}
 
 
+def _common_params(group: list[AssessedRule]) -> dict[str, Any] | None:
+    """Werte, die alle Nennungen tragen (`agreed_params`), oder `None`, wenn sie sich widersprechen."""
+    first = group[0]
+    params: dict[str, Any] | None = first.params
+    for rule in group[1:]:
+        if params is None or rule.status != first.status:
+            return None
+        if first.status != "effective":
+            params = params if params_equal(rule.params, params) else None
+            continue
+        params = agreed_params(first.kind, params, rule.params)
+    return params
+
+
 def collapse(rules: Iterable[AssessedRule]) -> list[AssessedRule]:
     """Eine Regel je Schlüssel. Mehrere gleichwertige Nennungen: die am besten belegte; widersprüchliche:
     `unknown` („ambiguous“). Hinweise bleiben einzeln, gleiche Fundstellen nur einmal."""
@@ -296,11 +316,13 @@ def collapse(rules: Iterable[AssessedRule]) -> list[AssessedRule]:
         group = grouped[key]
         first = group[0]
         building_kind = "any" if all(r.building_kind == "any" for r in group) else key[2]
-        if all(r.status == first.status and params_equal(r.params, first.params) for r in group[1:]):
+        params = _common_params(group)
+        if params is not None:
             best = max(group, key=lambda r: (r.quote_verified, r.similarity))
             result.append(
                 replace(
                     best,
+                    params=params,
                     building_kind=building_kind,
                     confidence=min(r.confidence for r in group),
                     sources=tuple(sorted(s for r in group for s in r.sources)),
@@ -339,7 +361,8 @@ def claim_for(number: int, rule: ExtractedRule, sectors: Iterable[str]) -> dict[
 
 def verify(rules: list[AssessedRule], checks: Mapping[int, list[VerificationCheck]]) -> list[AssessedRule]:
     """Ergebnis der Gegenprüfung anwenden: Eine wirksame oder belegt nicht geregelte Regel bleibt nur, wenn
-    jede ihrer Quellen in der Gegenprüfung denselben Status und dieselben Werte ergibt."""
+    jede ihrer Quellen in der Gegenprüfung denselben Status und dieselben Werte ergibt. Was nur ein Lauf
+    nennt, regelt `agreed_params`; die Regel trägt danach die Werte, die beide Läufe stützen."""
     result: list[AssessedRule] = []
     for rule in rules:
         if rule.status not in ("effective", "not_regulated"):
@@ -347,8 +370,11 @@ def verify(rules: list[AssessedRule], checks: Mapping[int, list[VerificationChec
             continue
         answers = [answer for source in rule.sources for answer in checks.get(source, [])]
         answered = bool(rule.sources) and all(checks.get(source) for source in rule.sources)
-        if answered and all(_confirms(rule, answer) for answer in answers):
-            result.append(rule)
+        params: dict[str, Any] | None = rule.params
+        for answer in answers if answered else []:
+            params = _confirms(rule, params, answer) if params is not None else None
+        if answered and params is not None:
+            result.append(replace(rule, params=params))
             continue
         result.append(
             replace(
@@ -363,16 +389,19 @@ def verify(rules: list[AssessedRule], checks: Mapping[int, list[VerificationChec
     return result
 
 
-def _confirms(claim: AssessedRule, answer: VerificationCheck) -> bool:
+def _confirms(
+    claim: AssessedRule, params: dict[str, Any], answer: VerificationCheck
+) -> dict[str, Any] | None:
+    """Bestätigte Werte oder `None`."""
     if claim.status == "not_regulated":
-        return answer.status == "not_regulated"
+        return params if answer.status == "not_regulated" else None
     if answer.status != "regulated" or answer.duplicate_params:
-        return False
+        return None
     try:
-        params = validate_params(claim.kind, answer.params)
+        checked = validate_params(claim.kind, answer.params)
     except ParamProblem:
-        return False
-    return params_equal(claim.params, params)
+        return None
+    return agreed_params(claim.kind, params, checked)
 
 
 def _open_rule(key: Key, reason: str, detail: str | None) -> AssessedRule:

@@ -366,6 +366,8 @@ Plan: [docs/PLAN_REGELDIENST.md](docs/PLAN_REGELDIENST.md); Format für die Gege
 | E-RD-5 | Leserouten `GET /service/rules/communes/{insee}` und `…/zones/{zone}?scope=` im Format `emprise-rules/1`; Regeln im Modell `RuleOut`. Nur der aktuelle Planstand der Gemeinde, kein Rückfall auf einen älteren; ohne Auswertung `not_extracted` |
 | E-RD-6 | Prospect zur gegenüberliegenden Straßenseite und Werte nach Wohnungszahl bleiben `text_only` mit Zitat; ein Parameter dafür ändert das gemeinsame Ausgabeschema und damit den Hausprompt und braucht eine eigene Entscheidung |
 | E-RD-7 | Referenzlisten tragen optional `"scope"`; `reference-check` misst dann die Versionen dieses Umfangs |
+| E-RD-8 | Gegenprüfung und Zusammenführen vergleichen über `agreed_params`: Freitext nicht, ein Grenzwert nur eines Laufs nur, wenn dieselbe Zahl von beiden gelesen wurde, Angaben ohne Grenzwert nur eines Laufs entfallen; die Regel trägt die gemeinsamen Werte. Gilt für beide Umfänge, `ENGINE_VERSION` g2-1.3.0 (Messung Palaiseau, PLAN_REGELDIENST 9, Auftrag des Nutzers 26.11.2026) |
+| E-RD-9 | Abstände vor Fassaden ohne Ansichten: `blind_min_m`, `blind_height_factor` bei `setback_side`, `setback_rear`, `setback_between_buildings`; nur im Umfang `collectif` gefragt (eigenes Schema, `COLLECTIF_ONLY_PARAMS`), das Haus bleibt bytegleich. Ergänzt E-RD-6 |
 
 ## 5. Wo die übrigen IDs stehen
 

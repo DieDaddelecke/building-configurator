@@ -90,6 +90,8 @@ PARAM_TYPES: dict[str, ParamType] = {
     "height_factor": "number",
     "height_basis": "text",
     "allow_on_boundary": "flag",
+    "blind_min_m": "number",
+    "blind_height_factor": "number",
     "on_boundary_max_height_m": "number",
     "ratio": "number",
     "counts_overhangs": "text",
@@ -125,10 +127,18 @@ PARAM_TYPES: dict[str, ParamType] = {
 }
 """Alle Parameternamen mit Typ. Das Sprachmodell liefert Parameter als Liste aus Name und Wert."""
 
+COLLECTIF_ONLY_PARAMS = frozenset({"blind_min_m", "blind_height_factor"})
+"""Nur im Umfang `collectif` gefragt (Abstand vor Fassaden ohne Ansichten). Das Schema des Hauses kennt sie
+nicht, damit seine Prüfsumme bleibt (docs/PLAN_REGELDIENST.md 9, B2)."""
+DESCRIPTIVE_PARAMS = frozenset({"counting", "summary"})
+"""Freitext ohne Grenzwert: Die Gegenprüfung vergleicht ihn nicht (zwei Läufe formulieren nie gleich)."""
+
 BOUNDS: dict[str, tuple[float, float]] = {
     "min_m": (0.0, 50.0),
     "max_m": (0.0, 50.0),
     "height_factor": (0.0, 2.0),
+    "blind_min_m": (0.0, 50.0),
+    "blind_height_factor": (0.0, 2.0),
     "on_boundary_max_height_m": (0.0, 15.0),
     "ratio": (0.0, 1.0),
     "terrace_counts_above_m": (0.0, 3.0),
@@ -149,9 +159,11 @@ BOUNDS: dict[str, tuple[float, float]] = {
 }
 """Plausibilitätsgrenzen (Plan 3.4). Werte außerhalb sind eher Lesefehler als echte Festsetzungen."""
 
-PERCENT_PARAMS = frozenset({"ratio", "full_soil_ratio", "min_green_ratio", "height_factor"})
+PERCENT_PARAMS = frozenset(
+    {"ratio", "full_soil_ratio", "min_green_ratio", "height_factor", "blind_height_factor"}
+)
 """Anteile: Im Text darf der Wert auch in Prozent stehen (0,4 ↔ 40 %)."""
-RECIPROCAL_PARAMS = frozenset({"height_factor", "spaces_per_m2_sdp", "trees_per_m2"})
+RECIPROCAL_PARAMS = frozenset({"height_factor", "blind_height_factor", "spaces_per_m2_sdp", "trees_per_m2"})
 """Faktoren und Dichten: Im Text darf der Kehrwert stehen (H/2, 1 place pour 50 m², 1 arbre pour 100 m²).
 Für Längen gilt das nicht, sonst belegte „H/2“ einen Mindestabstand von 0,5 m."""
 BUILDING_SPECIFIC_KINDS = frozenset(
@@ -198,7 +210,10 @@ class SetbackStreet(_Params):
 
 
 class SetbackBoundary(_Params):
-    """Seitliche oder hintere Grenze: `max(min_m, height_factor × H)`; Bauen auf der Grenze optional."""
+    """Seitliche oder hintere Grenze: `max(min_m, height_factor × H)`; Bauen auf der Grenze optional.
+
+    `blind_*` (nur `collectif`): eigener, meist kleinerer Abstand vor einer Fassade ohne Öffnungen, die
+    Ansichten schaffen („sans vues“); dann gelten `min_m`/`height_factor` für die Fassade mit Ansichten."""
 
     min_m: float | None = None
     height_factor: float | None = None
@@ -206,19 +221,27 @@ class SetbackBoundary(_Params):
     allow_on_boundary: bool = False
     on_boundary_max_height_m: float | None = None
     measured_from: Literal["facade", "roof_edge", "any_projection"] = "facade"
+    blind_min_m: float | None = None
+    blind_height_factor: float | None = None
 
     @model_validator(mode="after")
     def _consistent(self) -> "SetbackBoundary":
         if self.min_m is None and self.height_factor is None:
             raise ValueError("min_m_or_height_factor_required")
-        if self.height_factor is not None and self.height_basis is None:
+        factors = (self.height_factor, self.blind_height_factor)
+        if any(f is not None for f in factors) and self.height_basis is None:
             raise ValueError("height_basis_required")
         return self
 
 
 class SetbackBetween(_Params):
+    """Abstand zweier Gebäude auf demselben Grundstück; `blind_*` wie bei `SetbackBoundary`: gilt, wenn
+    keine der beiden Fassaden Ansichten hat."""
+
     min_m: float | None = None
     height_factor: float | None = None
+    blind_min_m: float | None = None
+    blind_height_factor: float | None = None
 
     @model_validator(mode="after")
     def _consistent(self) -> "SetbackBetween":
@@ -435,6 +458,48 @@ def validate_params(kind: str, raw: dict[str, Any]) -> dict[str, Any]:
         raise ParamProblem("invalid_params", "; ".join(messages)) from None
     dumped = parsed.model_dump(exclude_none=True)
     return {k: sorted(v) if isinstance(v, tuple | list) else v for k, v in dumped.items() if v != ()}
+
+
+def _same(left: Any, right: Any, tolerance: float) -> bool:
+    if isinstance(left, float | int) and isinstance(right, float | int) and not isinstance(left, bool):
+        return abs(float(left) - float(right)) <= tolerance
+    return bool(left == right)
+
+
+def agreed_params(
+    kind: str, claim: dict[str, Any], answer: dict[str, Any], tolerance: float = 0.01
+) -> dict[str, Any] | None:
+    """Werte, die beide Läufe tragen (Gegenprüfung, B1 in docs/PLAN_REGELDIENST.md 9); `None` bei Widerspruch.
+
+    - Beide nennen einen Wert: er muss gleich sein; Freitext (`DESCRIPTIVE_PARAMS`) gilt wie die Auswertung.
+    - Nur ein Lauf nennt einen Grenzwert (Zahl mit Schranke): bestätigt nur, wenn dieselbe Zahl in der Regel
+      von beiden gelesen wurde („16 m au point le plus haut“ als Firsthöhe und Attika). Sonst Widerspruch.
+    - Nur ein Lauf nennt eine Angabe ohne Grenzwert (Bezug, Messweise): sie entfällt, statt die Regel zu
+      kippen.
+    Das Ergebnis wird erneut geprüft; fehlt danach eine Pflichtangabe, ist es ein Widerspruch."""
+    merged: dict[str, Any] = {}
+    for key in claim.keys() & answer.keys():
+        if key not in DESCRIPTIVE_PARAMS and not _same(claim[key], answer[key], tolerance):
+            return None
+        merged[key] = claim[key]
+    shared_numbers = [
+        v for k, v in merged.items() if k in BOUNDS and isinstance(v, int | float) and not isinstance(v, bool)
+    ]
+    for source in (claim, answer):
+        for key in source.keys() - merged.keys():
+            if key in DESCRIPTIVE_PARAMS:
+                if source is claim:
+                    merged[key] = claim[key]
+                continue
+            value = source[key]
+            if key in BOUNDS and isinstance(value, int | float) and not isinstance(value, bool):
+                if not any(_same(value, number, tolerance) for number in shared_numbers):
+                    return None
+                merged[key] = value
+    try:
+        return validate_params(kind, merged)
+    except ParamProblem:
+        return None
 
 
 def params_equal(a: dict[str, Any], b: dict[str, Any], tolerance: float = 0.01) -> bool:

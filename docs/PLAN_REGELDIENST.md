@@ -91,4 +91,16 @@ Beschrieben für die Gegenseite in [API_REGELDIENST.md](API_REGELDIENST.md). Die
 ## 8. Ergebnisse
 
 - Umsetzung RD1 und RD2: 25.11.2026, siehe Git-Log und DECISIONS 4.12.
-- Messung: offen, wartet auf Go für den bezahlten Lauf (5).
+- Messung: 26.11.2026 ohne bezahlten Lauf, siehe 9.
+
+## 9. Messung Palaiseau UC2 und Befunde (26.11.2026)
+
+**Aufbau.** Echtes PDF (PLU Palaiseau 2018), eingelesen und in Kapitel geteilt wie im Betrieb (UC2 = S. 95–112). Auswertung, Gegenprüfung, Nachsuche und Gegenprüfung der Funde liefen durch `extract_chapter`; jede Modellanfrage beantwortete ein eigener, blinder Durchlauf desselben Modells ohne OpenRouter (auf Wunsch des Nutzers kostenlos). Abweichungen vom Betrieb: Textschicht statt PDF, Antworten aus der Sitzung. Referenz von Hand aus dem Originaltext (12 Punkte). Unterlagen und wiederholbarer Testlauf liegen bei den Projektdateien, nicht im Repo.
+
+**Ergebnis vor den Änderungen:** 0 falsch; 4 wirksam richtig; 5 richtig offen mit Hinweis; 2 richtig gelesen, aber durch die Gegenprüfung verworfen (Höhe 16 m, Pleine terre 30 %); 1 fehlt (Nebensache). Stellen zu „3 logements et plus“ bleiben jetzt erhalten.
+
+**B1 – Gegenprüfung zu streng.** `params_equal` verlangte dieselben Schlüssel und verglich Freitext wörtlich. Neu `agreed_params` (in `verify` und `collapse`): Freitext (`counting`, `summary`) wird nicht verglichen; ein Grenzwert, den nur ein Lauf nennt, gilt nur, wenn dieselbe Zahl in der Regel von beiden gelesen wurde (16 m als First und Attika); eine Angabe ohne Grenzwert, die nur ein Lauf nennt, entfällt. Verschiedene Werte bleiben ein Widerspruch. Betrifft auch das Haus; Prompt und Prüfsumme bleiben, `ENGINE_VERSION` g2-1.3.0 bewertet gespeicherte Antworten ohne Aufruf neu.
+
+**B2 – Abstände nach Ansichten.** Viele PLU unterscheiden den Abstand vor Fassaden mit und ohne Ansichten („vues“). Neu `blind_min_m` und `blind_height_factor` für `setback_side`, `setback_rear` und `setback_between_buildings`; `min_m`/`height_factor` gelten dann für die Fassade mit Ansichten. Nur im Umfang `collectif`: eigenes Ausgabeschema (`output_schema(scope)`, `verification_schema(scope)`, Nachsuche), Satz im Prompt nur dort. Das Schema des Hauses kennt die Namen nicht (`COLLECTIF_ONLY_PARAMS`), seine Prüfsumme bleibt.
+
+**Nicht behoben:** B3 – „en limite ou en retrait ≥ 1 m“ zur Straße wird `min` 1 m (Bauen auf der Linie geht verloren; `setback_street` hat dafür keine Form). B4 – die Kapitelerkennung nimmt bei Palaiseau nur die Definitionen (S. 242–248) als allgemeine Seiten, nicht die Dispositions générales (S. 5–18).
