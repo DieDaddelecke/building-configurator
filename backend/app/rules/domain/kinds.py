@@ -236,10 +236,12 @@ class SetbackBoundary(_Params):
 
 class SetbackBetween(_Params):
     """Abstand zweier Gebäude auf demselben Grundstück; `blind_*` wie bei `SetbackBoundary`: gilt, wenn
-    keine der beiden Fassaden Ansichten hat."""
+    keine der beiden Fassaden Ansichten hat. `height_basis` optional: Palaiseau misst „à l'égout du toit
+    le plus haut“, das Modell gibt die Bezugshöhe wie bei den Grenzabständen an (E-RD-10)."""
 
     min_m: float | None = None
     height_factor: float | None = None
+    height_basis: Literal["eave", "ridge", "facade_point"] | None = None
     blind_min_m: float | None = None
     blind_height_factor: float | None = None
 

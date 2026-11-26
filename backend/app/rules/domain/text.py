@@ -232,6 +232,9 @@ _HEIGHT_FACTOR_WORDS: tuple[tuple[float, re.Pattern[str]], ...] = (
 """Faktoren der Höhe in Worten („la moitié de la hauteur“, „au moins égale à la hauteur“), Messung
 Palaiseau (docs/PLAN_REGELDIENST.md 9): Die Zahl steht dort nicht im Text."""
 _HEIGHT_FACTORS = frozenset({"height_factor", "blind_height_factor"})
+_LIST_INTRO = re.compile(r"[ée]ga(?:le|l)s?\s+(?:au\s+moins\s+)?à\s*:")
+_LIST_HEIGHT = re.compile(r"(?:^|[\s,;])[-–•]\s*la\s+hauteur")
+"""Aufzählung nach „égale à :“, deren Punkt „- la hauteur …“ den Faktor 1 setzt."""
 
 
 def value_positions(name: str, value: float, quote: str) -> list[tuple[int, int]]:
@@ -247,6 +250,12 @@ def value_positions(name: str, value: float, quote: str) -> list[tuple[int, int]
         for factor, pattern in _HEIGHT_FACTOR_WORDS:
             if abs(factor - value) <= 0.01:
                 found += [(m.start(), m.end()) for m in pattern.finditer(lowered)]
+        if abs(value - 1.0) <= 0.01:
+            # „au moins égale à : - la moitié de la hauteur …, - la hauteur …“: der Faktor 1 ist ein Punkt der
+            # Aufzählung nach „égale à“, nicht direkt daneben (Messung Palaiseau, Abstand zwischen Gebäuden)
+            intro = _LIST_INTRO.search(lowered)
+            if intro is not None:
+                found += [(m.start(), m.end()) for m in _LIST_HEIGHT.finditer(lowered, intro.end())]
     return found
 
 

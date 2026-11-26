@@ -368,6 +368,7 @@ Plan: [docs/PLAN_REGELDIENST.md](docs/PLAN_REGELDIENST.md); Format für die Gege
 | E-RD-7 | Referenzlisten tragen optional `"scope"`; `reference-check` misst dann die Versionen dieses Umfangs |
 | E-RD-8 | Gegenprüfung und Zusammenführen vergleichen über `agreed_params`: Freitext nicht, ein Grenzwert nur eines Laufs nur, wenn dieselbe Zahl von beiden gelesen wurde, Angaben ohne Grenzwert nur eines Laufs entfallen; die Regel trägt die gemeinsamen Werte. Gilt für beide Umfänge, `ENGINE_VERSION` g2-1.3.0 (Messung Palaiseau, PLAN_REGELDIENST 9, Auftrag des Nutzers 26.11.2026) |
 | E-RD-9 | Abstände vor Fassaden ohne Ansichten: `blind_min_m`, `blind_height_factor` bei `setback_side`, `setback_rear`, `setback_between_buildings`; nur im Umfang `collectif` gefragt (eigenes Schema, `COLLECTIF_ONLY_PARAMS`), das Haus bleibt bytegleich. Ergänzt E-RD-6 |
+| E-RD-10 | `setback_between_buildings` nimmt optional `height_basis` wie die Grenzabstände; der Faktor 1 der Höhe gilt auch als Punkt „- la hauteur …“ einer Aufzählung nach „égale à :“. Prompt und Schemas unverändert, `ENGINE_VERSION` g2-1.3.1 (Messung Palaiseau, PLAN_REGELDIENST 9, Auftrag des Nutzers 26.11.2026) |
 
 ## 5. Wo die übrigen IDs stehen
 
