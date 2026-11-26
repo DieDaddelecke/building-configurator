@@ -81,6 +81,16 @@ describe("Regeln als Simulation", () => {
     expect(
       ruleValue(rule({ kind: "setback_side", params: { min_m: 3, height_factor: 0.5, height_basis: "eave" } }), t, "fr"),
     ).toBe("≥ 3 m · 0,5 × hauteur à l'égout");
+    expect(
+      ruleValue(
+        rule({
+          kind: "setback_side",
+          params: { min_m: 8, height_factor: 1, blind_min_m: 2.5, blind_height_factor: 0.5, height_basis: "eave", allow_on_boundary: true },
+        }),
+        t,
+        "fr",
+      ),
+    ).toContain("sans vues : ≥ 2,5 m · 0,5 × hauteur à l'égout");
     expect(ruleValue(rule({ kind: "roof", params: { allowed_forms: ["gable", "hip"], pitch_min_deg: 35, pitch_max_deg: 45 } }), t, "fr")).toBe(
       "deux pans, quatre pans · 35–45°",
     );

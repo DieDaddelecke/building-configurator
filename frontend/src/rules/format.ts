@@ -38,8 +38,15 @@ function boundary(p: Params, t: TFunction, language: string): string {
   }
   let text = parts.join(" · ");
   if (p.allow_on_boundary) text = t("rules.value.orOnBoundary", { value: text });
+  // Fassade ohne Ansichten (nur Umfang collectif, E-RD-9)
+  const blind: string[] = [];
+  if (p.blind_min_m != null) blind.push(`≥ ${metres(p.blind_min_m, language)}`);
+  if (p.blind_height_factor != null) {
+    blind.push(t("rules.value.heightFactor", { factor: num(p.blind_height_factor, language), basis: t(`rules.basis.${String(p.height_basis)}`) }));
+  }
   return join([
     text,
+    blind.length > 0 && t("rules.value.withoutViews", { value: blind.join(" · ") }),
     p.on_boundary_max_height_m != null && t("rules.value.onBoundaryHeight", { value: metres(p.on_boundary_max_height_m, language) }),
     measuredFrom(p, t),
   ]);
